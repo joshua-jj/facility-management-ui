@@ -34,17 +34,21 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
         'fixed inset-0 z-50 flex items-center justify-center pt-10',
         {
           hidden: hidden,
-        //   'relative h-0 p-0': download,
           'bg-[#0000004D] bg-opacity-70': !download,
         }
       )}
     >
       <div onClick={onClickAway} className="absolute inset-0" />
       <div
-        className={classNames(
-          'relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-lg bg-white shadow-lg',
-          className
-        )}
+      className={classNames(
+        "relative max-h-[90vh] w-fit max-w-[90vw] overflow-auto rounded-lg bg-white shadow-lg",
+        "sm:w-[400px] md:w-[500px] lg:w-[600px]",
+        className
+      )}      
+        // className={classNames(
+        //   'relative max-h-[90vh] w-fit max-w-[90vw] overflow-auto rounded-lg bg-white shadow-lg',
+        //   className
+        // )}
       >
         {children}
       </div>

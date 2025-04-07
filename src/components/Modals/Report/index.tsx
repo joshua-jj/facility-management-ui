@@ -1,5 +1,5 @@
 // components/Report.tsx
-import React, { useState, FormEvent } from 'react';
+import React, { useState } from 'react';
 import FullscreenModal from '../';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
@@ -14,12 +14,12 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form state
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [countryCode, setCountryCode] = useState('+234');
-  const [phone, setPhone] = useState('');
-  const [subject, setSubject] = useState('');
-  const [description, setDescription] = useState('');
+  // const [fullName, setFullName] = useState('');
+  // const [email, setEmail] = useState('');
+  // const [countryCode, setCountryCode] = useState('+234');
+  // const [phone, setPhone] = useState('');
+  // const [subject, setSubject] = useState('');
+  // const [description, setDescription] = useState('');
   const [canSubmit, setCanSubmit] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
@@ -27,10 +27,21 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  interface FormData {
+    name: string;
+    email: string;
+    countryCode: string;
+    phone: string;
+    subject: string;
+    description: string;
+  }
+
+  const handleSubmit = (data: FormData) => {
+    // e.preventDefault();
     // TODO: send your data to API
-    console.log({ fullName, email, countryCode, phone, subject, description });
+    console.log('Form submitted:', data);
+    
+    // console.log({ fullName, email, countryCode, phone, subject, description });
     closeModal();
   };
 
@@ -41,7 +52,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
       </button>
 
       <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
-        <div className="bg-white rounded-lg shadow-lg max-w-md mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg mx-auto p-6">
           <h2 className="text-2xl font-semibold text-textColor mb-4">
             Report an issue
           </h2>
@@ -70,8 +81,15 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               }}
               required
             />
+            <TextInput
+              type="text"
+              name="phone"
+              label="Contact number"
+              placeholder="XXXXXXXX"
+              required
+            />
             {/* Contact Number */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700">
                 Contact number
               </label>
@@ -91,7 +109,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
                   className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-            </div>
+            </div> */}
             <TextInput
               type="email"
               name="subject"
@@ -111,7 +129,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
+                className="px-4 py-2 cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
               >
                 Back
               </button>

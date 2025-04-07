@@ -27,7 +27,7 @@ const TextInput: React.FC<TextInputProps> = (props) => {
     };
 
     return (
-        <div className='my-3'>
+        <div className='my-3 w-full'>
             <label className="block text-sm font-medium text-gray-700">
                 {props.required ? `${props.label}*` : props.label}
             </label>
