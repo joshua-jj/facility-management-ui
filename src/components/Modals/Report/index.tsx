@@ -10,6 +10,7 @@ import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { reportConstants } from '@/constants';
+import SuccessModal from './SuccessModal';
 
 interface ReportProps {
   className?: string;
@@ -19,16 +20,10 @@ interface ReportProps {
 const Report: React.FC<ReportProps> = ({ className, children }) => {
   const dispatch = useDispatch();
   const { IsCreatingReport } = useSelector((s: RootState) => s.report);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Form state
-  // const [fullName, setFullName] = useState('');
-  // const [email, setEmail] = useState('');
-  // const [countryCode, setCountryCode] = useState('+234');
-  // const [phone, setPhone] = useState('');
-  // const [subject, setSubject] = useState('');
-  // const [description, setDescription] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [canSubmit, setCanSubmit] = useState(false);
+const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -47,6 +42,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
 
         if (customEvent) {
           setIsModalOpen(false);
+          setIsSuccessOpen(true);
         }
       }
     );
@@ -61,7 +57,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
       </button>
 
       <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
-        <div className="bg-white rounded-lg shadow-lg mx-auto p-6">
+\        <div className="bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] lg:w-[600px]">
           <h2 className="text-2xl font-semibold text-textColor mb-4">
             Report an issue
           </h2>
@@ -77,6 +73,8 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               label="Full name"
               placeholder="Enter name"
               required
+              className="text-[#0F2552] rounded font-medium text-sm" 
+              inputClass='font-normal border border-gray-300 rounded'
             />
             <TextInput
               type="email"
@@ -89,6 +87,8 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
                 required: 'Required!',
               }}
               required
+              className="text-[#0F2552] rounded font-medium text-sm" 
+              inputClass='font-normal border border-gray-300 rounded'
             />
             <TextInput
               type="text"
@@ -96,6 +96,8 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               label="Contact number"
               placeholder="XXXXXXXX"
               required
+              className="text-[#0F2552] rounded font-medium text-sm" 
+              inputClass='font-normal border border-gray-300 rounded'
             />
             {/* Contact Number */}
             {/* <div>
@@ -125,6 +127,8 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               label="Subject of Complaint"
               placeholder="Enter subject"
               required
+              className="text-[#0F2552] rounded font-medium text-sm" 
+              inputClass='font-normal border border-gray-300 rounded'
             />
             <TextArea
               type="text"
@@ -133,7 +137,6 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               placeholder="Add details"
               required
             />
-            {/* Buttons */}
             <div className="flex justify-end space-x-2 pt-4">
               <button
                 type="button"
@@ -145,7 +148,9 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               <button
                 disabled={!canSubmit}
                 type="submit"
-                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition"
+                className={`px-4 py-2 bg-yellow-600 text-white rounded-md transition hover:bg-yellow-700 ${
+                  canSubmit ? 'cursor-pointer' : 'cursor-not-allowed'
+                }`}
               >
                 {IsCreatingReport ? (
                 <div className="flex items-center space-x-2">
@@ -159,6 +164,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
           </Formsy>
         </div>
       </FullscreenModal>
+      <SuccessModal open={isSuccessOpen} onClose={() => setIsSuccessOpen(false)} autoCloseDelay={5000} />
     </>
   );
 };

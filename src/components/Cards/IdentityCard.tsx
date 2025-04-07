@@ -3,23 +3,20 @@ import Link from 'next/link';
 
 interface IdentityCardProps {
   title: string;
+  link: string;
   icon: ReactNode;
   filledIcon: ReactNode;
 }
 
 const IdentityCard: React.FC<IdentityCardProps> = ({
   title,
+  link,
   icon,
   filledIcon,
 }) => {
-  const href =
-    title === 'Egfm Worker'
-      ? '/request/egfm-worker'
-      : '/request/church-ministry';
-
   return (
-    <Link href={href} passHref>
-      <div className="group border border-gray-200 rounded-lg bg-white shadow cursor-pointer flex flex-col justify-center items-center p-8 md:p-[88px] transition-all">
+    <Link href={link} passHref>
+      <div className="group border border-gray-200 rounded-lg bg-white shadow hover:shadow-md cursor-pointer flex flex-col justify-center items-center p-8 md:p-[88px] transition-all">
         <div className="h-11 w-11 bg-[#b2830926] rounded-full mb-4 flex items-center justify-center group-hover:bg-[#b28309] transition-colors">
           <span className="block group-hover:hidden">{icon}</span>
           <span className="hidden group-hover:block">{filledIcon}</span>

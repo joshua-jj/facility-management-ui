@@ -12,6 +12,10 @@ const config: Config = {
         textColor: '#0F2552',
         // You can add custom colors here if needed
       },
+      boxShadow: {
+        pry: '8px 3px 22px 0px rgba(150, 150, 150, 0.15)',
+        sec: '16px 0px 32px 0px rgba(150, 150, 150, 0.25)',
+      },
     },
   },
   plugins: [],
