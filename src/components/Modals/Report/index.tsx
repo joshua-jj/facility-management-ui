@@ -1,9 +1,15 @@
-// components/Report.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 import TextArea from '@/components/Inputs/TextArea';
+import { ReportForm } from '@/types';
+import { reportActions } from '@/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { UnknownAction } from 'redux';
+import { RootState } from '@/redux/reducers';
+import { AppEmitter } from '@/controllers/EventEmitter';
+import { reportConstants } from '@/constants';
 
 interface ReportProps {
   className?: string;
@@ -11,6 +17,8 @@ interface ReportProps {
 }
 
 const Report: React.FC<ReportProps> = ({ className, children }) => {
+  const dispatch = useDispatch();
+  const { IsCreatingReport } = useSelector((s: RootState) => s.report);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form state
@@ -26,24 +34,25 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
   const closeModal = () => setIsModalOpen(false);
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
-
-  interface FormData {
-    name: string;
-    email: string;
-    countryCode: string;
-    phone: string;
-    subject: string;
-    description: string;
-  }
-
-  const handleSubmit = (data: FormData) => {
-    // e.preventDefault();
-    // TODO: send your data to API
-    console.log('Form submitted:', data);
-    
-    // console.log({ fullName, email, countryCode, phone, subject, description });
-    closeModal();
+  
+  const handleSubmit = (data: ReportForm) => {
+    dispatch(reportActions.sendReport(data) as unknown as UnknownAction);
   };
+
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      reportConstants.SEND_REPORT_SUCCESS,
+      (evt: Event) => {
+        const customEvent = evt as CustomEvent;
+
+        if (customEvent) {
+          setIsModalOpen(false);
+        }
+      }
+    );
+
+    return () => listener.remove();
+  }, []);
 
   return (
     <>
@@ -64,14 +73,14 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
           >
             <TextInput
               type="text"
-              name="name"
+              name="complainerName"
               label="Full name"
               placeholder="Enter name"
               required
             />
             <TextInput
-              type="text"
-              name="email"
+              type="email"
+              name="complainerEmail"
               label="Email address"
               placeholder="Enter email"
               validations="isEmail"
@@ -83,7 +92,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
             />
             <TextInput
               type="text"
-              name="phone"
+              name="complainerPhone"
               label="Contact number"
               placeholder="XXXXXXXX"
               required
@@ -111,15 +120,15 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               </div>
             </div> */}
             <TextInput
-              type="email"
-              name="subject"
+              type="text"
+              name="complaintSubject"
               label="Subject of Complaint"
               placeholder="Enter subject"
               required
             />
             <TextArea
-              type="email"
-              name="description"
+              type="text"
+              name="complaintDescription"
               label="Description"
               placeholder="Add details"
               required
@@ -138,7 +147,13 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
                 type="submit"
                 className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition"
               >
-                Submit
+                {IsCreatingReport ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                ) : (
+                  'Submit'
+                )}
               </button>
             </div>
           </Formsy>

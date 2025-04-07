@@ -37,7 +37,9 @@ const TextInput: React.FC<TextInputProps> = (props) => {
                 onChange={changeValue}
                 placeholder={props.placeholder}
                 required={props.required}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    props.value ? 'text-black' : 'text-gray-500'
+                  }`}
             />
         </div>
     );

@@ -45,10 +45,6 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
         "sm:w-[400px] md:w-[500px] lg:w-[600px]",
         className
       )}      
-        // className={classNames(
-        //   'relative max-h-[90vh] w-fit max-w-[90vw] overflow-auto rounded-lg bg-white shadow-lg',
-        //   className
-        // )}
       >
         {children}
       </div>
