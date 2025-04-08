@@ -1,24 +1,16 @@
 import { combineReducers } from 'redux';
-import { reportConstants } from '../../constants';
+import { requestConstants } from '../../constants';
 import { Action, LoadingState } from '@/types';
 
-// interface Event {
-//   id: string;
-//   title: string; // Example property, adjust as needed
-//   // Add other event properties as needed
-// }
-
-// type EventListState = Event[];
-
-const IsCreatingReport = (
+const IsCreatingRequest = (
   state: LoadingState = false,
   action: Action
 ): LoadingState => {
   switch (action.type) {
-    case reportConstants.REQUEST_SEND_REPORT:
+    case requestConstants.REQUEST_CREATE_REQUEST:
       return true;
-    case reportConstants.SEND_REPORT_SUCCESS:
-    case reportConstants.SEND_REPORT_ERROR:
+    case requestConstants.CREATE_REQUEST_SUCCESS:
+    case requestConstants.CREATE_REQUEST_ERROR:
       return false;
     default:
       return state;
@@ -49,7 +41,7 @@ const IsCreatingReport = (
 // };
 
 export interface RootState {
-  IsCreatingReport: (
+  IsCreatingRequest: (
     state: LoadingState | undefined,
     action: Action
   ) => LoadingState;
@@ -58,7 +50,7 @@ export interface RootState {
 }
 
 const rootReducer = combineReducers<RootState>({
-  IsCreatingReport,
+  IsCreatingRequest,
   //   pagination,
   //   list,
 });

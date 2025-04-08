@@ -4,17 +4,17 @@ import { Action, LoadingState } from '@/types';
 
 export interface Department {
   id: string;
-  hodEmail: string; 
-  hodName: string; 
-  hodPhone: string; 
-  name: string; 
-  status: string; 
+  hodEmail: string;
+  hodName: string;
+  hodPhone: string;
+  name: string;
+  status: string;
 }
 
 interface DepartmentsAction extends Action {
-    departments:  Department[];
-  }
-  
+  departments: Department[];
+}
+
 type DepartmentsListState = Department[];
 
 const IsRequestingDepartments = (
@@ -32,7 +32,10 @@ const IsRequestingDepartments = (
   }
 };
 
-const allDepartmentsList = (state: DepartmentsListState = [], action: DepartmentsAction): DepartmentsListState => {
+const allDepartmentsList = (
+  state: DepartmentsListState = [],
+  action: DepartmentsAction
+): DepartmentsListState => {
   switch (action.type) {
     case departmentConstants.GET_ALL_DEPARTMENTS_SUCCESS:
       return action.departments ?? state;
@@ -54,15 +57,21 @@ const allDepartmentsList = (state: DepartmentsListState = [], action: Department
 // };
 
 export interface RootState {
-  IsRequestingDepartments: (state: LoadingState | undefined, action: Action) => LoadingState;
-//   pagination: PaginationState;
-allDepartmentsList: (state: DepartmentsListState | undefined, action: DepartmentsAction) => DepartmentsListState;
+  IsRequestingDepartments: (
+    state: LoadingState | undefined,
+    action: Action
+  ) => LoadingState;
+  //   pagination: PaginationState;
+  allDepartmentsList: (
+    state: DepartmentsListState | undefined,
+    action: DepartmentsAction
+  ) => DepartmentsListState;
 }
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingDepartments,
-//   pagination,
-allDepartmentsList,
+  //   pagination,
+  allDepartmentsList,
 });
 
 export default rootReducer;

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 /* @import "tailwindcss/preflight"; */
 @tailwind utilities;
 
@@ -28,7 +28,7 @@ body {
 }
 
 .text-textColor {
-  color: #0F2552;
+  color: #0f2552;
 }
 @keyframes spin {
   to {

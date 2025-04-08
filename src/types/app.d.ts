@@ -1,23 +1,22 @@
 export interface Environment {
-    baseUrl: string | undefined;
-  }
-  
-  export interface AppConstants {
-    BASE_URI: string | undefined;
-  
-    KEY_PREFIX: string;
+  baseUrl: string | undefined;
+}
 
-    CLEAR_MESSAGES: string;
-    SET_SNACKBAR: string;
-    CLEAR_SNACKBAR: string;
+export interface AppConstants {
+  BASE_URI: string | undefined;
 
-  }
-  
-  export interface SetSnackBarPayload {
-    type: 'success' | 'error' | 'warning' | 'info';
-    message: string;
-    variant: 'success' | 'error' | 'warning' | 'info';
-  }
+  KEY_PREFIX: string;
+
+  CLEAR_MESSAGES: string;
+  SET_SNACKBAR: string;
+  CLEAR_SNACKBAR: string;
+}
+
+export interface SetSnackBarPayload {
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  variant: 'success' | 'error' | 'warning' | 'info';
+}
 
 export interface Action {
   id?: number;

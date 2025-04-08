@@ -14,7 +14,7 @@ export const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export const createRequest = (
   url: string = '',
-  config: RequestConfig = {},
+  config: RequestConfig = {}
 ): Request => {
   const validMethods = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'PATCH'];
   const defaultConfig: RequestInit = {
@@ -32,7 +32,7 @@ export const createRequest = (
   if (!validMethods.includes(config.method?.toUpperCase() || '')) {
     // Use optional chaining
     throw new Error(
-      "config method property value must be one of ['GET','POST','HEAD','PUT','DELETE']",
+      "config method property value must be one of ['GET','POST','HEAD','PUT','DELETE']"
     );
   }
 
@@ -69,7 +69,7 @@ export const createRequestWithToken =
     if (!validMethods.includes(config.method?.toUpperCase() || '')) {
       // Use optional chaining
       throw new Error(
-        "config method property value must be one of ['GET','POST','HEAD','PUT','DELETE']",
+        "config method property value must be one of ['GET','POST','HEAD','PUT','DELETE']"
       );
     }
 
@@ -107,7 +107,7 @@ export const createMultiPartRequestWithToken =
 
     if (validMethods.indexOf(config.method.toUpperCase()) === -1) {
       throw new Error(
-        "config method property value must be one of ['GET','POST','HEAD','PUT','DELETE']",
+        "config method property value must be one of ['GET','POST','HEAD','PUT','DELETE']"
       );
     }
 
@@ -153,7 +153,7 @@ interface ParsedResponse {
 }
 
 export const parseResponse = async (
-  response: Response,
+  response: Response
 ): Promise<ParsedResponse> => {
   try {
     const contentType = response.headers.get('content-type');
@@ -180,7 +180,7 @@ export interface StorageObject {
 
 export const setObjectInStorage = async (
   key: string,
-  object: StorageObject | boolean,
+  object: StorageObject | boolean
 ): Promise<boolean> => {
   try {
     await localForage.setItem(key, object);
@@ -196,7 +196,7 @@ interface StoredObject {
 }
 
 export const getObjectFromStorage = async (
-  key: string,
+  key: string
 ): Promise<StoredObject | null> => {
   try {
     const object = await localForage.getItem<StoredObject>(key);
@@ -271,7 +271,7 @@ export const toFormData = (data: Record<string, string | Blob>): FormData => {
 
 export function validImageFileTypes(
   file: File | null,
-  setState: (message: string) => void,
+  setState: (message: string) => void
 ): boolean | undefined {
   const imgMaxSize = 1024 * 1024; // assuming 1MB
   const imageFileTypes = ['image/png', 'image/jpeg', 'image/jpg'];
@@ -284,7 +284,7 @@ export function validImageFileTypes(
     setState('Image size should not exceed 1MB');
   } else if (!imageFileTypes.includes(file.type)) {
     setState(
-      'Selected file is not an image type, please choose one of the types: .png, .jpg, .jpeg',
+      'Selected file is not an image type, please choose one of the types: .png, .jpg, .jpeg'
     );
   } else {
     setState('');

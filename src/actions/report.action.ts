@@ -12,5 +12,5 @@ const sendReport = (data: ReportForm): SendReportAction => ({
 });
 
 export const reportActions = {
-    sendReport,
+  sendReport,
 };

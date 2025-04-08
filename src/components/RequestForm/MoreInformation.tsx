@@ -17,7 +17,11 @@ interface MoreInformationProps {
 }
 
 const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
-  const handleChange = (currentValues: { location?: string; return_date?: string; description?: string }) => {
+  const handleChange = (currentValues: {
+    location?: string;
+    return_date?: string;
+    description?: string;
+  }) => {
     setData({
       location: currentValues.location || '',
       returnDate: currentValues.return_date || '',

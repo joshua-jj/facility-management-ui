@@ -7,9 +7,9 @@ interface GetDepartmentItemsAction {
 
 const getDepartmentItems = (id: string): GetDepartmentItemsAction => ({
   type: itemConstants.GET_DEPARTMENT_ITEMS,
-  data: id
+  data: id,
 });
 
 export const itemActions = {
-    getDepartmentItems,
+  getDepartmentItems,
 };

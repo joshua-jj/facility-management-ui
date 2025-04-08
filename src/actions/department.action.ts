@@ -9,5 +9,5 @@ const getAllDepartments = (): GetAllDepartmentsAction => ({
 });
 
 export const departmentActions = {
-    getAllDepartments,
+  getAllDepartments,
 };

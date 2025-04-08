@@ -18,7 +18,12 @@ interface RequestDetailsProps {
 }
 
 const RequestDetails: React.FC<RequestDetailsProps> = ({ data, setData }) => {
-  const handleChange = (currentValues: { ministry_name?: string; requester_name?: string; email?: string; contact_number?: string }) => {
+  const handleChange = (currentValues: {
+    ministry_name?: string;
+    requester_name?: string;
+    email?: string;
+    contact_number?: string;
+  }) => {
     setData({
       ministryName: currentValues.ministry_name || '',
       requesterName: currentValues.requester_name || '',

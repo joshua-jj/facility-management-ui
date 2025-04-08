@@ -1,18 +1,13 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
-import { reportConstants } from '@/constants';
+import { requestConstants } from '@/constants';
 import { appActions } from '@/actions';
 import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
-import { ReportForm, SetSnackBarPayload } from '@/types';
+import { RequestForm, SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
-// interface ActionWithPayload<T> {
-//   type: string;
-//   payload?: T;
-// }
-
-interface SendReportAction {
-  type: typeof reportConstants.SEND_REPORT;
-  data: ReportForm;
+interface CreateRequestAction {
+  type: typeof requestConstants.CREATE_REQUEST;
+  data: RequestForm;
 }
 
 interface ResetPasswordData {
@@ -40,18 +35,18 @@ interface ApiError {
   error?: string;
 }
 
-function* sendReport({ data }: SendReportAction) {
-  yield put({ type: reportConstants.REQUEST_SEND_REPORT });
+function* createNewRequest({ data }: CreateRequestAction) {
+  yield put({ type: requestConstants.REQUEST_CREATE_REQUEST });
 
   try {
     if (data) {
-      const reportUri = `${reportConstants.REPORT_URI}/new`;
-      const reportReq = createRequest(reportUri, {
+      const requestUri = `${requestConstants.REQUEST_URI}/new`;
+      const requestReq = createRequest(requestUri, {
         method: 'POST',
         body: JSON.stringify(data),
       });
 
-      const response: ResetPasswordData = yield call(fetch, reportReq);
+      const response: ResetPasswordData = yield call(fetch, requestReq);
       yield call(checkStatus, response as unknown as Response);
 
       const jsonResponse: ParsedResponse = yield call(
@@ -60,18 +55,11 @@ function* sendReport({ data }: SendReportAction) {
       );
 
       yield put({
-        type: reportConstants.SEND_REPORT_SUCCESS,
-        report: jsonResponse?.data,
+        type: requestConstants.CREATE_REQUEST_SUCCESS,
+        request: jsonResponse?.data,
       });
 
-      const payload: SetSnackBarPayload = {
-        type: 'success',
-        message: 'Report saved successfully!',
-        variant: 'success',
-      };
-      yield put(appActions.setSnackBar(payload));
-
-      AppEmitter.emit(reportConstants.SEND_REPORT_SUCCESS, jsonResponse);
+      AppEmitter.emit(requestConstants.CREATE_REQUEST_SUCCESS, jsonResponse);
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -80,7 +68,7 @@ function* sendReport({ data }: SendReportAction) {
         (error as ApiError).response as unknown as Response
       );
       yield put({
-        type: reportConstants.SEND_REPORT_ERROR,
+        type: requestConstants.CREATE_REQUEST_ERROR,
         error: res?.error,
       });
       const payload: SetSnackBarPayload = {
@@ -93,7 +81,7 @@ function* sendReport({ data }: SendReportAction) {
       return;
     }
     yield put({
-      type: reportConstants.SEND_REPORT_ERROR,
+      type: requestConstants.CREATE_REQUEST_ERROR,
       error:
         ((error as ApiError)?.error || (error as ApiError)?.message) ??
         'Something went wrong',
@@ -109,10 +97,10 @@ function* sendReport({ data }: SendReportAction) {
   }
 }
 
-function* sendReportWatcher() {
-  yield takeLatest(reportConstants.SEND_REPORT, sendReport);
+function* createNewRequestWatcher() {
+  yield takeLatest(requestConstants.CREATE_REQUEST, createNewRequest);
 }
 
 export default function* rootSaga() {
-  yield all([sendReportWatcher()]);
+  yield all([createNewRequestWatcher()]);
 }

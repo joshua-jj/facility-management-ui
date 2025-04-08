@@ -40,10 +40,10 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
     >
       <div onClick={onClickAway} className="absolute inset-0" />
       <div
-      className={classNames(
-        "relative max-h-[90vh] w-fit max-w-[90vw] overflow-auto rounded-lg bg-white shadow-lg",
-        className
-      )}      
+        className={classNames(
+          'relative max-h-[90vh] w-fit max-w-[90vw] overflow-auto rounded-lg bg-white shadow-lg',
+          className
+        )}
       >
         {children}
       </div>

@@ -4,18 +4,18 @@ import { Action, LoadingState } from '@/types';
 
 export interface Items {
   id: number;
-  availableQuantity: number; 
-  condition: string; 
-  fragile: boolean; 
-  name: string; 
-  storeId: number; 
-  storeName: string; 
+  availableQuantity: number;
+  condition: string;
+  fragile: boolean;
+  name: string;
+  storeId: number;
+  storeName: string;
   requestedQuantity?: number;
 }
 interface DepartmentItemsAction extends Action {
-    items:  Items[];
-  }
-  
+  items: Items[];
+}
+
 type DepartmentItemsListState = Items[];
 
 const IsRequestingDepartmentItems = (
@@ -33,7 +33,10 @@ const IsRequestingDepartmentItems = (
   }
 };
 
-const allDepartmentItemsList = (state: DepartmentItemsListState = [], action: DepartmentItemsAction): DepartmentItemsListState => {
+const allDepartmentItemsList = (
+  state: DepartmentItemsListState = [],
+  action: DepartmentItemsAction
+): DepartmentItemsListState => {
   switch (action.type) {
     case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
       return action.items ?? state;
@@ -55,15 +58,21 @@ const allDepartmentItemsList = (state: DepartmentItemsListState = [], action: De
 // };
 
 export interface RootState {
-  IsRequestingDepartmentItems: (state: LoadingState | undefined, action: Action) => LoadingState;
-//   pagination: PaginationState;
-allDepartmentItemsList: (state: DepartmentItemsListState | undefined, action: DepartmentItemsAction) => DepartmentItemsListState;
+  IsRequestingDepartmentItems: (
+    state: LoadingState | undefined,
+    action: Action
+  ) => LoadingState;
+  //   pagination: PaginationState;
+  allDepartmentItemsList: (
+    state: DepartmentItemsListState | undefined,
+    action: DepartmentItemsAction
+  ) => DepartmentItemsListState;
 }
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingDepartmentItems,
-//   pagination,
-allDepartmentItemsList,
+  //   pagination,
+  allDepartmentItemsList,
 });
 
 export default rootReducer;

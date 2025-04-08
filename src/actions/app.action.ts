@@ -12,8 +12,8 @@ const clearMessages = (): Action => ({
 });
 
 const setSnackBar = (data: SetSnackBarPayload): SetSnackBarAction => ({
-    type: appConstants.SET_SNACKBAR,
-    data,
+  type: appConstants.SET_SNACKBAR,
+  data,
 });
 
 export const appActions = {

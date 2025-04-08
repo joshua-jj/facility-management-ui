@@ -1,5 +1,5 @@
-import "@/styles/globals.css";
-import type { AppProps } from "next/app";
+import '@/styles/globals.css';
+import type { AppProps } from 'next/app';
 import { Montserrat } from 'next/font/google';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';

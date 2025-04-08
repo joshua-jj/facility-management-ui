@@ -147,7 +147,10 @@ const RequestForm: React.FC = () => {
   const canSubmit = () => {
     const { items, requestDetails, moreInformation } = formData;
     return (
-      items.every((item) => item.name && item.requestedQuantity && item.requestedQuantity > 0) &&
+      items.every(
+        (item) =>
+          item.name && item.requestedQuantity && item.requestedQuantity > 0
+      ) &&
       requestDetails.ministryName &&
       requestDetails.requesterName &&
       requestDetails.email &&

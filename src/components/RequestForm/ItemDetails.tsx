@@ -10,23 +10,29 @@ import { Items } from '@/redux/reducers/item.reducer';
 interface ItemDetailsProps {
   items: Items[];
   setItems: (items: Items[]) => void;
-//   setItems: React.Dispatch<React.SetStateAction<Items[]>>;
+  //   setItems: React.Dispatch<React.SetStateAction<Items[]>>;
   addItem: () => void;
 }
 
-const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) => {
+const ItemDetails: React.FC<ItemDetailsProps> = ({
+  items,
+  setItems,
+  addItem,
+}) => {
   const dispatch = useDispatch();
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
   const { allDepartmentItemsList } = useSelector((s: RootState) => s.item);
 
   const [search, setSearch] = useState('');
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); 
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
   const [department, setDepartment] = useState<Department | null>(null);
 
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
-    dispatch(itemActions.getDepartmentItems(department.id) as unknown as UnknownAction);
+    dispatch(
+      itemActions.getDepartmentItems(department.id) as unknown as UnknownAction
+    );
     setDepartmentIsOpen(false);
   };
 
@@ -41,12 +47,12 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) =
             storeName: selectedItem.storeName,
             condition: selectedItem.condition,
             fragile: selectedItem.fragile,
-            requestedQuantity: 1, 
+            requestedQuantity: 1,
           }
         : i
     );
     setItems(updatedItems);
-    setOpenDropdownId(null); 
+    setOpenDropdownId(null);
   };
 
   const handleQuantityChange = (item: Items, delta: number) => {
@@ -55,7 +61,10 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) =
         const requestedQuantity = (i.requestedQuantity || 0) + delta;
         return {
           ...i,
-          requestedQuantity: Math.max(1, Math.min(requestedQuantity, i.availableQuantity || 0)),
+          requestedQuantity: Math.max(
+            1,
+            Math.min(requestedQuantity, i.availableQuantity || 0)
+          ),
         };
       }
       return i;
@@ -70,7 +79,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) =
       id: index + 1,
     }));
     setItems(reindexedItems);
-    setOpenDropdownId(null); 
+    setOpenDropdownId(null);
   };
 
   const filteredDepartments = allDepartmentsList.filter((department) =>
@@ -147,7 +156,9 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) =
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setOpenDropdownId(openDropdownId === item.id ? null : item.id)}
+                onClick={() =>
+                  setOpenDropdownId(openDropdownId === item.id ? null : item.id)
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
               >
                 {item.name || 'Select item'}
@@ -180,7 +191,8 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) =
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
                       >
                         <span className="mr-4">
-                          {availableItem.name} ({availableItem.availableQuantity})
+                          {availableItem.name} (
+                          {availableItem.availableQuantity})
                         </span>
                         <span
                           className={`text-[0.65rem] p-1 rounded ${
@@ -189,7 +201,9 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) =
                               : 'text-[#D32F2F] bg-[rgba(211, 47, 47, 0.1)]'
                           }`}
                         >
-                          {availableItem.availableQuantity > 0 ? 'Available' : 'Unavailable'}
+                          {availableItem.availableQuantity > 0
+                            ? 'Available'
+                            : 'Unavailable'}
                         </span>
                       </li>
                     ))}
@@ -224,7 +238,9 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, setItems, addItem }) =
               <button
                 onClick={() => handleQuantityChange(item, 1)}
                 className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-r"
-                disabled={(item.requestedQuantity || 0) >= (item.availableQuantity || 0)}
+                disabled={
+                  (item.requestedQuantity || 0) >= (item.availableQuantity || 0)
+                }
               >
                 +
               </button>

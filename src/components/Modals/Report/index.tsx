@@ -23,13 +23,13 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [canSubmit, setCanSubmit] = useState(false);
-const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
-  
+
   const handleSubmit = (data: ReportForm) => {
     dispatch(reportActions.sendReport(data) as unknown as UnknownAction);
   };
@@ -57,7 +57,8 @@ const [isSuccessOpen, setIsSuccessOpen] = useState(false);
       </button>
 
       <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
-\        <div className="bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] lg:w-[600px]">
+        \{' '}
+        <div className="bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] lg:w-[600px]">
           <h2 className="text-2xl font-semibold text-textColor mb-4">
             Report an issue
           </h2>
@@ -73,8 +74,8 @@ const [isSuccessOpen, setIsSuccessOpen] = useState(false);
               label="Full name"
               placeholder="Enter name"
               required
-              className="text-[#0F2552] rounded font-medium text-sm" 
-              inputClass='font-normal border border-gray-300 rounded'
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             <TextInput
               type="email"
@@ -87,8 +88,8 @@ const [isSuccessOpen, setIsSuccessOpen] = useState(false);
                 required: 'Required!',
               }}
               required
-              className="text-[#0F2552] rounded font-medium text-sm" 
-              inputClass='font-normal border border-gray-300 rounded'
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             <TextInput
               type="text"
@@ -96,8 +97,8 @@ const [isSuccessOpen, setIsSuccessOpen] = useState(false);
               label="Contact number"
               placeholder="XXXXXXXX"
               required
-              className="text-[#0F2552] rounded font-medium text-sm" 
-              inputClass='font-normal border border-gray-300 rounded'
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             {/* Contact Number */}
             {/* <div>
@@ -127,8 +128,8 @@ const [isSuccessOpen, setIsSuccessOpen] = useState(false);
               label="Subject of Complaint"
               placeholder="Enter subject"
               required
-              className="text-[#0F2552] rounded font-medium text-sm" 
-              inputClass='font-normal border border-gray-300 rounded'
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             <TextArea
               type="text"
@@ -153,9 +154,9 @@ const [isSuccessOpen, setIsSuccessOpen] = useState(false);
                 }`}
               >
                 {IsCreatingReport ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
                 ) : (
                   'Submit'
                 )}
@@ -164,7 +165,11 @@ const [isSuccessOpen, setIsSuccessOpen] = useState(false);
           </Formsy>
         </div>
       </FullscreenModal>
-      <SuccessModal open={isSuccessOpen} onClose={() => setIsSuccessOpen(false)} autoCloseDelay={5000} />
+      <SuccessModal
+        open={isSuccessOpen}
+        onClose={() => setIsSuccessOpen(false)}
+        autoCloseDelay={5000}
+      />
     </>
   );
 };
