@@ -3,7 +3,7 @@ import { departmentConstants } from '../../constants';
 import { Action, LoadingState } from '@/types';
 
 export interface Department {
-  id: string;
+  id: number;
   hodEmail: string;
   hodName: string;
   hodPhone: string;

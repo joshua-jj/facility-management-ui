@@ -1,7 +1,7 @@
 import { RequestConstants } from '@/types';
 import { appConstants } from './app.constant';
 
-const report: string = 'complaint';
+const request: string = 'request';
 
 export const requestConstants: RequestConstants = {
   REQUEST_CREATE_REQUEST: 'REQUEST_CREATE_REQUEST',
@@ -10,5 +10,5 @@ export const requestConstants: RequestConstants = {
 
   CREATE_REQUEST: 'CREATE_REQUEST',
 
-  REQUEST_URI: `${appConstants.BASE_URI}${report}`,
+  REQUEST_URI: `${appConstants.BASE_URI}${request}`,
 };

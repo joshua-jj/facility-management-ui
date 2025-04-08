@@ -2,10 +2,10 @@ import { itemConstants } from '../constants';
 
 interface GetDepartmentItemsAction {
   type: typeof itemConstants.GET_DEPARTMENT_ITEMS;
-  data: string;
+  data: number;
 }
 
-const getDepartmentItems = (id: string): GetDepartmentItemsAction => ({
+const getDepartmentItems = (id: number): GetDepartmentItemsAction => ({
   type: itemConstants.GET_DEPARTMENT_ITEMS,
   data: id,
 });

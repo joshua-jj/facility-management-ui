@@ -12,22 +12,22 @@ export interface RequestForm {
   requesterName: string;
   requesterEmail: string;
   requesterPhone: string;
-  isMinistry: false;
+  isMinistry: boolean;
   ministryName: string;
-  isChurch: false;
-  churchName: string;
-  requesterDepartmentId: number;
+  isChurch?: boolean;
+  churchName?: string;
+  requesterDepartmentId: number | undefined;
   locationOfUse: string;
   durationOfUse: string;
   dateOfReturn: string;
   descriptionOfRequest: string;
-  items: [
-    {
-      storeId: number;
-      itemId: number;
-      quantityLeased: number;
-      conditionBeforeLease: boolean;
-      leasedDate: string;
-    },
-  ];
+  //   items: [
+  //     {
+  //       storeId: number;
+  //       itemId: number;
+  //       quantityLeased: number;
+  //     //   quantityLeased?: number;
+  //       conditionBeforeLease: string;
+  //     },
+  //   ];
 }

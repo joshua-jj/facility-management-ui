@@ -3,10 +3,12 @@ import ItemDetails from './ItemDetails';
 import { CaretIcon } from '../Icons';
 import RequestDetails from './RequestDetails';
 import MoreInformation from './MoreInformation';
-import { useDispatch } from 'react-redux';
-import { departmentActions } from '@/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Items } from '@/redux/reducers/item.reducer';
+import { Department } from '@/redux/reducers/department.reducer';
+import { RootState } from '@/redux/reducers';
 
 const steps = ['Item(s) Details', 'Request Details', 'More Information'];
 
@@ -27,6 +29,7 @@ interface FormData {
 
 const RequestForm: React.FC = () => {
   const dispatch = useDispatch();
+  const { IsCreatingRequest } = useSelector((s: RootState) => s.request);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     items: [
@@ -53,7 +56,7 @@ const RequestForm: React.FC = () => {
       description: '',
     },
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [department, setDepartment] = useState<Department | null>(null);
 
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
@@ -91,8 +94,29 @@ const RequestForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
+    // setIsSubmitting(true);
     console.log('formData:', formData);
+    const requestData = {
+      requesterName: formData.requestDetails.requesterName,
+      requesterEmail: formData.requestDetails.email,
+      requesterPhone: formData.requestDetails.contactNumber,
+      isMinistry: true,
+      ministryName: formData.requestDetails.ministryName,
+      requesterDepartmentId: department?.id,
+      locationOfUse: formData.moreInformation.location,
+      durationOfUse: '1 week',
+      dateOfReturn: formData.moreInformation.returnDate,
+      descriptionOfRequest: formData.moreInformation.description,
+      items: formData.items.map((item) => ({
+        storeId: item.storeId,
+        itemId: item.id,
+        quantityLeased: item.requestedQuantity || 0,
+        conditionBeforeLease: item.condition,
+      })),
+    };
+    dispatch(
+      requestActions.createRequest(requestData) as unknown as UnknownAction
+    );
 
     // try {
     //   const response = await fetch('/api/submit-request', {
@@ -186,6 +210,8 @@ const RequestForm: React.FC = () => {
       {currentStep === 0 && (
         <ItemDetails
           items={formData.items}
+          department={department}
+          setDepartment={setDepartment}
           setItems={(items) => setFormData((prev) => ({ ...prev, items }))}
           addItem={addItem}
         />
@@ -227,10 +253,10 @@ const RequestForm: React.FC = () => {
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={!canSubmit() || isSubmitting}
+            disabled={!canSubmit() || IsCreatingRequest}
             className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer flex items-center justify-center disabled:opacity-50"
           >
-            {isSubmitting ? (
+            {IsCreatingRequest ? (
               <div className="flex items-center space-x-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 <span>Loading...</span>

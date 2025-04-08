@@ -9,14 +9,18 @@ import { Items } from '@/redux/reducers/item.reducer';
 
 interface ItemDetailsProps {
   items: Items[];
+  department: Department | null;
   setItems: (items: Items[]) => void;
-  //   setItems: React.Dispatch<React.SetStateAction<Items[]>>;
+  //   setDepartment: React.Dispatch<React.SetStateAction<Department | null>>;
+  setDepartment: (department: Department | null) => void;
   addItem: () => void;
 }
 
 const ItemDetails: React.FC<ItemDetailsProps> = ({
   items,
+  department,
   setItems,
+  setDepartment,
   addItem,
 }) => {
   const dispatch = useDispatch();
@@ -26,7 +30,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
   const [search, setSearch] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
-  const [department, setDepartment] = useState<Department | null>(null);
+  //   const [department, setDepartment] = useState<Department | null>(null);
 
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
@@ -42,6 +46,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
         ? {
             ...i,
             name: selectedItem.name,
+            id: selectedItem.id,
             availableQuantity: selectedItem.availableQuantity,
             storeId: selectedItem.storeId,
             storeName: selectedItem.storeName,
