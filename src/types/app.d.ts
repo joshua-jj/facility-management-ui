@@ -22,6 +22,7 @@ export interface Environment {
 export interface Action {
   id?: number;
   data?: unknown;
+  departments?: unknown;
   user?: unknown;
   message?: unknown;
   type: string;

@@ -1,10 +1,10 @@
 export interface RequestConstants {
-    REQUEST_SEND_REPORT: string;
-    SEND_REPORT_SUCCESS: string;
-    SEND_REPORT_ERROR: string;
+    REQUEST_CREATE_REQUEST: string;
+    CREATE_REQUEST_SUCCESS: string;
+    CREATE_REQUEST_ERROR: string;
   
-    SEND_REPORT: string;
+    CREATE_REQUEST: string;
   
-    REPORT_URI: string;
+    REQUEST_URI: string;
   }
   
