@@ -11,8 +11,8 @@ const LandingPage: FC = () => {
     <Layout>
       <div className="flex flex-col md:flex-row justify-start md:justify-center items-center gap-8 md:gap-20 w-full h-full mt-8">
         <IdentityCard
-        title="Egfm Worker"
-        link="/request/egfm-worker"
+          title="Egfm Worker"
+          link="/request/egfm-worker"
           icon={<ProfileIcon />}
           filledIcon={<ProfileBoldIcon />}
         />

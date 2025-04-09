@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 /* @import "tailwindcss/preflight"; */
 @tailwind utilities;
 
@@ -28,5 +28,19 @@ body {
 }
 
 .text-textColor {
-  color: #0F2552;
+  color: #0f2552;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@layer utilities {
+  .animate-slow-spin {
+    animation: spin 2s linear infinite;
+  }
 }

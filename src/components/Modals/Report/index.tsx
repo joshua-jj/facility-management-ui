@@ -1,9 +1,16 @@
-// components/Report.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 import TextArea from '@/components/Inputs/TextArea';
+import { ReportForm } from '@/types';
+import { reportActions } from '@/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { UnknownAction } from 'redux';
+import { RootState } from '@/redux/reducers';
+import { AppEmitter } from '@/controllers/EventEmitter';
+import { reportConstants } from '@/constants';
+import SuccessModal from './SuccessModal';
 
 interface ReportProps {
   className?: string;
@@ -11,39 +18,37 @@ interface ReportProps {
 }
 
 const Report: React.FC<ReportProps> = ({ className, children }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { IsCreatingReport } = useSelector((s: RootState) => s.report);
 
-  // Form state
-  // const [fullName, setFullName] = useState('');
-  // const [email, setEmail] = useState('');
-  // const [countryCode, setCountryCode] = useState('+234');
-  // const [phone, setPhone] = useState('');
-  // const [subject, setSubject] = useState('');
-  // const [description, setDescription] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [canSubmit, setCanSubmit] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
-  interface FormData {
-    name: string;
-    email: string;
-    countryCode: string;
-    phone: string;
-    subject: string;
-    description: string;
-  }
-
-  const handleSubmit = (data: FormData) => {
-    // e.preventDefault();
-    // TODO: send your data to API
-    console.log('Form submitted:', data);
-    
-    // console.log({ fullName, email, countryCode, phone, subject, description });
-    closeModal();
+  const handleSubmit = (data: ReportForm) => {
+    dispatch(reportActions.sendReport(data) as unknown as UnknownAction);
   };
+
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      reportConstants.SEND_REPORT_SUCCESS,
+      (evt: Event) => {
+        const customEvent = evt as CustomEvent;
+
+        if (customEvent) {
+          setIsModalOpen(false);
+          setIsSuccessOpen(true);
+        }
+      }
+    );
+
+    return () => listener.remove();
+  }, []);
 
   return (
     <>
@@ -52,7 +57,8 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
       </button>
 
       <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
-        <div className="bg-white rounded-lg shadow-lg mx-auto p-6">
+        \{' '}
+        <div className="bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] lg:w-[600px]">
           <h2 className="text-2xl font-semibold text-textColor mb-4">
             Report an issue
           </h2>
@@ -64,14 +70,16 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
           >
             <TextInput
               type="text"
-              name="name"
+              name="complainerName"
               label="Full name"
               placeholder="Enter name"
               required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             <TextInput
-              type="text"
-              name="email"
+              type="email"
+              name="complainerEmail"
               label="Email address"
               placeholder="Enter email"
               validations="isEmail"
@@ -80,13 +88,17 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
                 required: 'Required!',
               }}
               required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             <TextInput
               type="text"
-              name="phone"
+              name="complainerPhone"
               label="Contact number"
               placeholder="XXXXXXXX"
               required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             {/* Contact Number */}
             {/* <div>
@@ -111,20 +123,21 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               </div>
             </div> */}
             <TextInput
-              type="email"
-              name="subject"
+              type="text"
+              name="complaintSubject"
               label="Subject of Complaint"
               placeholder="Enter subject"
               required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
             />
             <TextArea
-              type="email"
-              name="description"
+              type="text"
+              name="complaintDescription"
               label="Description"
               placeholder="Add details"
               required
             />
-            {/* Buttons */}
             <div className="flex justify-end space-x-2 pt-4">
               <button
                 type="button"
@@ -136,14 +149,27 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               <button
                 disabled={!canSubmit}
                 type="submit"
-                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition"
+                className={`px-4 py-2 bg-yellow-600 text-white rounded-md transition hover:bg-yellow-700 ${
+                  canSubmit ? 'cursor-pointer' : 'cursor-not-allowed'
+                }`}
               >
-                Submit
+                {IsCreatingReport ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  'Submit'
+                )}
               </button>
             </div>
           </Formsy>
         </div>
       </FullscreenModal>
+      <SuccessModal
+        open={isSuccessOpen}
+        onClose={() => setIsSuccessOpen(false)}
+        autoCloseDelay={5000}
+      />
     </>
   );
 };
