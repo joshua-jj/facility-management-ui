@@ -9,6 +9,9 @@ import { UnknownAction } from 'redux';
 import { Items } from '@/redux/reducers/item.reducer';
 import { Department } from '@/redux/reducers/department.reducer';
 import { RootState } from '@/redux/reducers';
+import SuccessModal from '../Modals/SuccessModal';
+import { requestConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 const steps = ['Item(s) Details', 'Request Details', 'More Information'];
 
@@ -31,6 +34,8 @@ const RequestForm: React.FC = () => {
   const dispatch = useDispatch();
   const { IsCreatingRequest } = useSelector((s: RootState) => s.request);
   const [currentStep, setCurrentStep] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [department, setDepartment] = useState<Department | null>(null);
   const [formData, setFormData] = useState<FormData>({
     items: [
       {
@@ -56,11 +61,25 @@ const RequestForm: React.FC = () => {
       description: '',
     },
   });
-  const [department, setDepartment] = useState<Department | null>(null);
 
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
   }, [dispatch]);
+
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      requestConstants.CREATE_REQUEST_SUCCESS,
+      (evt: Event) => {
+        const customEvent = evt as CustomEvent;
+
+        if (customEvent) {
+          setShowSuccessModal(true);
+        }
+      }
+    );
+
+    return () => listener.remove();
+  }, []);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -95,7 +114,7 @@ const RequestForm: React.FC = () => {
 
   const handleSubmit = async () => {
     // setIsSubmitting(true);
-    console.log('formData:', formData);
+    // console.log('formData:', formData);
     const requestData = {
       requesterName: formData.requestDetails.requesterName,
       requesterEmail: formData.requestDetails.email,
@@ -185,89 +204,99 @@ const RequestForm: React.FC = () => {
   };
 
   return (
-    <div className="w-md mx-auto p-6 bg-white rounded-md shadow hover:shadow-md">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Request Form</h1>
-      <div className="flex items-center mb-6">
-        {steps.map((step, index) => (
-          <div key={index} className="flex items-center">
-            <span
-              className={`text-[.75rem] leading-6 tracking-wide font-[600] ${
-                index === currentStep ? 'text-yellow-500' : 'text-[#848A95]'
-              }`}
-            >
-              {step}
-            </span>
-            {index < steps.length - 1 && (
-              <span className="mx-[0.6rem] text-[.8rem] font-semibold text-[#848A95]">
-                <CaretIcon />
+    <>
+      <div className="w-md mx-auto p-6 bg-white rounded-md shadow hover:shadow-md">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Request Form</h1>
+        <div className="flex items-center mb-6">
+          {steps.map((step, index) => (
+            <div key={index} className="flex items-center">
+              <span
+                className={`text-[.75rem] leading-6 tracking-wide font-[600] ${
+                  index === currentStep ? 'text-yellow-500' : 'text-[#848A95]'
+                }`}
+              >
+                {step}
               </span>
-            )}
-          </div>
-        ))}
-      </div>
+              {index < steps.length - 1 && (
+                <span className="mx-[0.6rem] text-[.8rem] font-semibold text-[#848A95]">
+                  <CaretIcon />
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
 
-      {/* Step Content */}
-      {currentStep === 0 && (
-        <ItemDetails
-          items={formData.items}
-          department={department}
-          setDepartment={setDepartment}
-          setItems={(items) => setFormData((prev) => ({ ...prev, items }))}
-          addItem={addItem}
-        />
-      )}
-      {currentStep === 1 && (
-        <RequestDetails
-          data={formData.requestDetails}
-          setData={(requestDetails) =>
-            setFormData((prev) => ({ ...prev, requestDetails }))
-          }
-        />
-      )}
-      {currentStep === 2 && (
-        <MoreInformation
-          data={formData.moreInformation}
-          setData={(moreInformation) =>
-            setFormData((prev) => ({ ...prev, moreInformation }))
-          }
-        />
-      )}
-
-      <div className="flex justify-end gap-4 items-center mt-6">
-        <button
-          onClick={handleBack}
-          className={`px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 cursor-pointer ${
-            currentStep === 0 ? 'hidden' : ''
-          }`}
-          disabled={currentStep === 0}
-        >
-          Back
-        </button>
-        {currentStep < steps.length - 1 ? (
-          <button
-            onClick={handleNext}
-            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer"
-          >
-            Continue
-          </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit() || IsCreatingRequest}
-            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer flex items-center justify-center disabled:opacity-50"
-          >
-            {IsCreatingRequest ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Loading...</span>
-              </div>
-            ) : (
-              'Submit'
-            )}
-          </button>
+        {/* Step Content */}
+        {currentStep === 0 && (
+          <ItemDetails
+            items={formData.items}
+            department={department}
+            setDepartment={setDepartment}
+            setItems={(items) => setFormData((prev) => ({ ...prev, items }))}
+            addItem={addItem}
+          />
         )}
+        {currentStep === 1 && (
+          <RequestDetails
+            data={formData.requestDetails}
+            setData={(requestDetails) =>
+              setFormData((prev) => ({ ...prev, requestDetails }))
+            }
+          />
+        )}
+        {currentStep === 2 && (
+          <MoreInformation
+            data={formData.moreInformation}
+            setData={(moreInformation) =>
+              setFormData((prev) => ({ ...prev, moreInformation }))
+            }
+          />
+        )}
+
+        <div className="flex justify-end gap-4 items-center mt-6">
+          <button
+            onClick={handleBack}
+            className={`px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 cursor-pointer ${
+              currentStep === 0 ? 'hidden' : ''
+            }`}
+            disabled={currentStep === 0}
+          >
+            Back
+          </button>
+
+          {currentStep < steps.length - 1 ? (
+            <button
+              onClick={handleNext}
+              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer"
+            >
+              Continue
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit() || IsCreatingRequest}
+              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer flex items-center justify-center disabled:opacity-50"
+            >
+              {IsCreatingRequest ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Loading...</span>
+                </div>
+              ) : (
+                'Submit'
+              )}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+
+      <SuccessModal 
+        setShowSuccessModal={setShowSuccessModal} 
+        showSuccessModal={showSuccessModal} 
+        subMessage="A ticket has been sent to your mail." 
+        message="Request submitted successfully" 
+      />
+    </>
   );
 };
 

@@ -51,3 +51,19 @@ export const DeleteIcon: React.FC<Props> = (props) => (
     />
   </svg>
 );
+
+export const GreenCheck: React.FC<Props> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={38}
+    height={37}
+    fill="none"
+    {...props}
+  >
+    <rect width={38} height={36.994} fill="#34C759" rx={18.497} />
+    <path
+      fill="currentColor" // #fff
+      d="M15.812 24.994a1.923 1.923 0 0 1-1.362-.564l-4.118-4.117a1.135 1.135 0 0 1 1.605-1.604l3.875 3.874 10.25-10.25a1.135 1.135 0 0 1 1.606 1.604L17.174 24.43c-.361.361-.851.564-1.362.564Z"
+    />
+  </svg>
+);

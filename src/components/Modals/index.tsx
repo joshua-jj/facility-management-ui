@@ -34,7 +34,7 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
         'fixed inset-0 z-50 flex items-center justify-center pt-10',
         {
           hidden: hidden,
-          'bg-[#0000004D] bg-opacity-70': !download,
+          'bg-[#000000b0] bg-opacity-30': !download,
         }
       )}
     >

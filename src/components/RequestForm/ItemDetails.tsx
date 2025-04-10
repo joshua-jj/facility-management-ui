@@ -145,7 +145,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
         </div>
       </div>
       {allDepartmentItemsList?.length > 0 &&
-        items.map((item) => (
+        items?.map((item) => (
           <div key={item.id} className="mb-6 group">
             <div className="flex justify-between items-center">
               <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
