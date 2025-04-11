@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { SVGProps } from 'react';
 import { withFormsy } from 'formsy-react';
 
 interface TextInputProps {
-  label: string;
+  label?: string;
   type: string;
   value?: string;
   className?: string;
@@ -13,6 +13,8 @@ interface TextInputProps {
   onValueChange?: (value: string) => void;
   clearError?: () => void;
   valError?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: SVGProps<SVGSVGElement> | any;
 }
 
 const TextInput: React.FC<TextInputProps> = (props) => {
@@ -29,6 +31,7 @@ const TextInput: React.FC<TextInputProps> = (props) => {
 
   return (
     <div className={`my-3 w-full ${props.className}`}>
+      {props.icon && props.icon}
       <label className="block text-sm text-gray-700">
         {props.required ? `${props.label}*` : props.label}
       </label>
