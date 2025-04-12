@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import { requestConstants } from '../../constants';
+import { requestConstants } from '@/constants';
 import { Action, LoadingState } from '@/types';
 
 const IsCreatingRequest = (

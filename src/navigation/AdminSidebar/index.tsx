@@ -1,6 +1,6 @@
 import { EGFMLogoIcon } from '@/components/Icons';
 import Link from 'next/link';
-import React, { useCallback } from 'react'
+import React, { useCallback } from 'react';
 import { pageRoutes } from '../pageRoutes';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
@@ -10,9 +10,9 @@ const AdminSidebar = () => {
 
   const activeRoute = useCallback(
     (link: string) => {
-        return router?.pathname === link;
+      return router?.pathname === link;
     },
-    [router?.pathname],
+    [router?.pathname]
   );
 
   return (
@@ -27,7 +27,13 @@ const AdminSidebar = () => {
       </Link>
       <ul className="pt-6">
         {pageRoutes?.map((pageRoute, index) => (
-          <li key={index} className={classNames("my-5 capitalize text-xs text-[#0F2552] hover:text-[#B28309] transition", {'text-[#B28309]': activeRoute(pageRoute?.link)})}>
+          <li
+            key={index}
+            className={classNames(
+              'my-5 capitalize text-xs text-[#0F2552] hover:text-[#B28309] transition',
+              { 'text-[#B28309]': activeRoute(pageRoute?.link) }
+            )}
+          >
             <Link href={pageRoute?.link} className="flex items-center gap-x-4">
               <div className="scale-[90%]">{pageRoute?.icon}</div>
               <span className="font-medium">{pageRoute?.label}</span>
@@ -36,7 +42,7 @@ const AdminSidebar = () => {
         ))}
       </ul>
     </div>
-  )
-}
+  );
+};
 
-export default AdminSidebar
+export default AdminSidebar;

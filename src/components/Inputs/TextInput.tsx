@@ -14,7 +14,7 @@ interface TextInputProps {
   clearError?: () => void;
   valError?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: SVGProps<SVGSVGElement> | any;
+  icon?: SVGProps<SVGSVGElement> | any;
 }
 
 const TextInput: React.FC<TextInputProps> = (props) => {

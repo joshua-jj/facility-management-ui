@@ -7,11 +7,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Items } from '@/redux/reducers/item.reducer';
-import { Department } from '@/redux/reducers/department.reducer';
+// import { Department } from '@/redux/reducers/department.reducer';
 import { RootState } from '@/redux/reducers';
 import SuccessModal from '../Modals/SuccessModal';
 import { requestConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
+import { Department } from '@/types';
 
 const steps = ['Item(s) Details', 'Request Details', 'More Information'];
 
@@ -290,11 +291,11 @@ const RequestForm: React.FC = () => {
         </div>
       </div>
 
-      <SuccessModal 
-        setShowSuccessModal={setShowSuccessModal} 
-        showSuccessModal={showSuccessModal} 
-        subMessage="A ticket has been sent to your mail." 
-        message="Request submitted successfully" 
+      <SuccessModal
+        setShowSuccessModal={setShowSuccessModal}
+        showSuccessModal={showSuccessModal}
+        subMessage="A ticket has been sent to your mail."
+        message="Request submitted successfully"
       />
     </>
   );

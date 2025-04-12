@@ -135,7 +135,7 @@ export const DashboardIcon: React.FC<Props> = (props) => (
       y={1}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path
@@ -178,7 +178,7 @@ export const RequestsIcon: React.FC<Props> = (props) => (
       y={2}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path
@@ -232,7 +232,7 @@ export const StoreIcon: React.FC<Props> = (props) => (
       y={2}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path
@@ -306,7 +306,7 @@ export const GeneratorLogIcon: React.FC<Props> = (props) => (
       y={2}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path
@@ -349,7 +349,7 @@ export const ReportsIcon: React.FC<Props> = (props) => (
       y={3}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path

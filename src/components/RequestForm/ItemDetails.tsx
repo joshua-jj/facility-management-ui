@@ -3,9 +3,10 @@ import { CaretIcon, DeleteIcon, SearchIcon } from '../Icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
-import { Department } from '@/redux/reducers/department.reducer';
+// import { Department } from '@/redux/reducers/department.reducer';
 import { itemActions } from '@/actions';
 import { Items } from '@/redux/reducers/item.reducer';
+import { Department } from '@/types';
 
 interface ItemDetailsProps {
   items: Items[];

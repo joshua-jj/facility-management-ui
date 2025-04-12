@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import AdminLayout from '@/components/Layout/AdminLayout';
-import React, { useState } from 'react'
-import { format, parseISO, isWithinInterval } from "date-fns";
+import React, { useState } from 'react';
+import { format, parseISO, isWithinInterval } from 'date-fns';
 import { Column, Table } from '@/components/Table';
 import { Pagination } from '@/components/Pagination';
 import Formsy from 'formsy-react';
@@ -11,22 +11,40 @@ type Employee = {
   id: number;
   name: string;
   department: string;
-  status: "active" | "inactive" | "on leave";
+  status: 'active' | 'inactive' | 'on leave';
   startDate: string;
 };
 
 const employees: Employee[] = [
-  { id: 1, name: "Alice", department: "HR", status: "active", startDate: "2023-01-10" },
-  { id: 2, name: "Bob", department: "IT", status: "on leave", startDate: "2022-09-05" },
-  { id: 3, name: "Carol", department: "Finance", status: "inactive", startDate: "2021-03-15" },
+  {
+    id: 1,
+    name: 'Alice',
+    department: 'HR',
+    status: 'active',
+    startDate: '2023-01-10',
+  },
+  {
+    id: 2,
+    name: 'Bob',
+    department: 'IT',
+    status: 'on leave',
+    startDate: '2022-09-05',
+  },
+  {
+    id: 3,
+    name: 'Carol',
+    department: 'Finance',
+    status: 'inactive',
+    startDate: '2021-03-15',
+  },
 ];
 
 const Requests = () => {
-  const [statusFilter, setStatusFilter] = useState("");
-  const [deptFilter, setDeptFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState('');
+  const [deptFilter, setDeptFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
@@ -40,7 +58,9 @@ const Requests = () => {
             end: parseISO(dateTo),
           })
         : true;
-    const matchSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = emp.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
 
     return matchStatus && matchDept && matchDate && matchSearch;
   });
@@ -50,26 +70,24 @@ const Requests = () => {
   const paginated = filtered.slice(start, start + pageSize);
 
   const columns: Column<Employee>[] = [
-    { key: "id", header: "ID" },
-    { key: "name", header: "Name" },
-    { key: "department", header: "Department" },
-    { key: "status", header: "Status" },
+    { key: 'id', header: 'ID' },
+    { key: 'name', header: 'Name' },
+    { key: 'department', header: 'Department' },
+    { key: 'status', header: 'Status' },
     {
-      key: "startDate",
-      header: "Start Date",
+      key: 'startDate',
+      header: 'Start Date',
       render: (value: string | number, row: Employee) => (
-        <span>{format(parseISO(String(value)), "yyyy-MM-dd")}</span>
+        <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>
       ),
-    }
+    },
   ];
 
   return (
     <AdminLayout>
       <div className="p-8 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-
         {/* Filters */}
         <Formsy className="flex flex-wrap gap-4 items-end">
-
           {/* Search */}
           <div className="w-full sm:max-w-xs">
             {/* <TextInput */}
@@ -87,7 +105,9 @@ const Requests = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Status
+            </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -101,7 +121,9 @@ const Requests = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Department</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Department
+            </label>
             <select
               value={deptFilter}
               onChange={(e) => setDeptFilter(e.target.value)}
@@ -115,7 +137,9 @@ const Requests = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">From</label>
+            <label className="block text-sm font-medium text-gray-700">
+              From
+            </label>
             <input
               type="date"
               value={dateFrom}
@@ -125,7 +149,9 @@ const Requests = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">To</label>
+            <label className="block text-sm font-medium text-gray-700">
+              To
+            </label>
             <input
               type="date"
               value={dateTo}

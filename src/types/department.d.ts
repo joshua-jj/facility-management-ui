@@ -7,3 +7,31 @@ export interface DepartmentConstants {
 
   DEPARTMENT_URI: string;
 }
+export interface DepartmentForm {
+  hodEmail: string;
+  hodName: string;
+  hodPhone: string;
+  name: string;
+}
+
+export interface Department {
+  id: number;
+  hodEmail: string;
+  hodName: string;
+  hodPhone: string;
+  name: string;
+  status?: string;
+}
+export interface DepartmentState {
+  departments: Department[];
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+  message: string | null;
+  department: Department | null;
+  departmentForm: DepartmentForm;
+  pagination: PaginationState;
+  loadingState: LoadingState;
+  paginationState: PaginationState;
+  loadingState: LoadingState;
+}

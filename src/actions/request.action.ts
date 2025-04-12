@@ -1,5 +1,5 @@
 import { RequestForm } from '@/types';
-import { requestConstants } from '../constants';
+import { requestConstants } from '@/constants';
 
 interface CreateRequestAction {
   type: typeof requestConstants.CREATE_REQUEST;

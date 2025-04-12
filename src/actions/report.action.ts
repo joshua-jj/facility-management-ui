@@ -1,5 +1,5 @@
 import { ReportForm } from '@/types';
-import { reportConstants } from '../constants';
+import { reportConstants } from '@/constants';
 
 interface SendReportAction {
   type: typeof reportConstants.SEND_REPORT;
