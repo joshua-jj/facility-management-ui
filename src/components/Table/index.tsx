@@ -14,14 +14,14 @@ type TableProps<T> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function Table<T extends Record<string, any>>({ columns, data }: TableProps<T>) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-100">
+        <div className="overflow-x-auto w-full rounded border border-gray-200 shadow-sm">
+            <table className="min-w-full ">
+                <thead className="bg-[#F2F2F2]">
                     <tr>
                         {columns.map((col) => (
                             <th
                                 key={String(col.key)}
-                                className="px-4 py-3 text-left text-sm font-semibold text-gray-700"
+                                className="px-4 py-3 text-left text-sm font-semibold text-gray-700 text-nowrap"
                             >
                                 {col.header}
                             </th>

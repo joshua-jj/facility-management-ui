@@ -12,7 +12,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, className }) => {
   return (
     <div className="h-screen overflow-hidden w-full bg-gray-50 grid grid-cols-1 sm:grid-cols-[1fr_5.4fr]">
       <AdminSidebar />
-      <div className="">
+      <div className="overflow-y-auto">
         <AdminHeader />
         <main className={`text-[#0F2552] p-8 ${className}`}>{children}</main>
       </div>
