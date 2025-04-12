@@ -1,4 +1,4 @@
-import { appConstants } from '../constants';
+import { appConstants } from '@/constants';
 import { Action } from '@reduxjs/toolkit';
 import { SetSnackBarPayload } from '@/types';
 

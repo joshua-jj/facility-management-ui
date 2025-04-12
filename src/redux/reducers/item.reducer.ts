@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import { itemConstants } from '../../constants';
+import { itemConstants } from '@/constants';
 import { Action, LoadingState } from '@/types';
 
 export interface Items {

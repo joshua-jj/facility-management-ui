@@ -31,3 +31,45 @@ export interface RequestForm {
   //     },
   //   ];
 }
+export interface Request {
+  id: number;
+  requesterName: string;
+  requesterEmail: string;
+  requesterPhone: string;
+  isMinistry: boolean;
+  ministryName: string;
+  isChurch?: boolean;
+  churchName?: string;
+  requesterDepartmentId: number | undefined;
+  locationOfUse: string;
+  durationOfUse: string;
+  dateOfReturn: string;
+  descriptionOfRequest: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface RequestState {
+  requests: Request[];
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+  message: string | null;
+  request: Request | null;
+  requestForm: RequestForm;
+  pagination: PaginationState;
+  loadingState: LoadingState;
+  paginationState: PaginationState;
+}
+export interface RequestAction {
+  type: string;
+  data?: Request[];
+  request?: Request;
+  message?: string;
+  error?: string;
+  loading?: boolean;
+  success?: boolean;
+  requestForm?: RequestForm;
+  pagination?: PaginationState;
+  loadingState?: LoadingState;
+  paginationState?: PaginationState;
+}

@@ -15,3 +15,38 @@ export interface ReportForm {
   complaintSubject: string;
   complaintDescription: string;
 }
+export interface Report {
+  id: number;
+  complainerPhone: number;
+  complainerName: string;
+  complainerEmail: string;
+  complaintSubject: string;
+  complaintDescription: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface ReportState {
+  reports: Report[];
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+  message: string | null;
+  report: Report | null;
+  reportForm: ReportForm;
+  pagination: PaginationState;
+  loadingState: LoadingState;
+  paginationState: PaginationState;
+}
+export interface ReportAction {
+  type: string;
+  data?: Report[];
+  report?: Report;
+  message?: string;
+  error?: string;
+  loading?: boolean;
+  success?: boolean;
+  reportForm?: ReportForm;
+  pagination?: PaginationState;
+  loadingState?: LoadingState;
+  paginationState?: PaginationState;
+}

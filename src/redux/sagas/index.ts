@@ -4,6 +4,7 @@ import departmentRootSaga from './department.saga';
 import itemRootSaga from './item.saga';
 import reportRootSaga from './report.saga';
 import requestRootSaga from './request.saga';
+import storeRootSaga from './store.saga';
 // import userRootSaga from './user.saga';
 
 export default function* rootSaga() {
@@ -13,6 +14,7 @@ export default function* rootSaga() {
     itemRootSaga(),
     reportRootSaga(),
     requestRootSaga(),
+    storeRootSaga(),
     //  userRootSaga()
   ]);
 }

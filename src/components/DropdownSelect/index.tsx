@@ -69,7 +69,7 @@ export default function CustomSelect({
                                         setIsOpen(false);
                                         setSearch('');
                                     }}
-                                    className={`cursor-pointer px-4 py-2 hover:bg-blue-100 ${
+                                    className={`cursor-pointer capitalize text-xs px-4 py-2 hover:bg-blue-100 ${
                                         option.value === value ? 'bg-blue-50 font-semibold' : ''
                                     } flex items-center justify-between`}
                                 >

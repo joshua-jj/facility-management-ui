@@ -1,4 +1,4 @@
-import { departmentConstants } from '../constants';
+import { departmentConstants } from '@/constants';
 
 interface GetAllDepartmentsAction {
   type: typeof departmentConstants.GET_ALL_DEPARTMENTS;

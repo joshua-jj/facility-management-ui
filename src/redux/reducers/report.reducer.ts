@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import { reportConstants } from '../../constants';
+import { reportConstants } from '@/constants';
 import { Action, LoadingState } from '@/types';
 
 // interface Event {

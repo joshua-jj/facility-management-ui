@@ -75,7 +75,9 @@ const Requests = () => {
             end: parseISO(dateTo),
           })
         : true;
-    const matchSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = emp.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
 
     return matchStatus && matchDept && matchDate && matchSearch;
   });
@@ -118,7 +120,6 @@ const Requests = () => {
   return (
     <AdminLayout>
       <div className="p-8 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-
         {/* Filters */}
         <Formsy className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
