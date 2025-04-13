@@ -25,7 +25,7 @@ const allStoresList = (
 ): StoresListState => {
   switch (action.type) {
     case storeConstants.GET_STORES_SUCCESS:
-      return action.data ?? state;
+      return action.stores ?? state;
     default:
       return state;
   }

@@ -1,4 +1,5 @@
 export * from './app';
+export * from './authentication';
 export * from './department';
 export * from './generator';
 export * from './item';

@@ -5,13 +5,13 @@ import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 // import { Department } from '@/redux/reducers/department.reducer';
 import { itemActions } from '@/actions';
-import { Items } from '@/redux/reducers/item.reducer';
-import { Department } from '@/types';
+// import { Items } from '@/redux/reducers/item.reducer';
+import { Department, Item } from '@/types';
 
 interface ItemDetailsProps {
-  items: Items[];
+  items: Item[];
   department: Department | null;
-  setItems: (items: Items[]) => void;
+  setItems: (items: Item[]) => void;
   //   setDepartment: React.Dispatch<React.SetStateAction<Department | null>>;
   setDepartment: (department: Department | null) => void;
   addItem: () => void;
@@ -41,7 +41,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
     setDepartmentIsOpen(false);
   };
 
-  const handleSelect = (item: Items, selectedItem: Items) => {
+  const handleSelect = (item: Item, selectedItem: Item) => {
     const updatedItems = items.map((i) =>
       i.id === item.id
         ? {
@@ -61,7 +61,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
     setOpenDropdownId(null);
   };
 
-  const handleQuantityChange = (item: Items, delta: number) => {
+  const handleQuantityChange = (item: Item, delta: number) => {
     const updatedItems = items.map((i) => {
       if (i.id === item.id) {
         const requestedQuantity = (i.requestedQuantity || 0) + delta;
@@ -78,7 +78,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
     setItems(updatedItems);
   };
 
-  const handleDelete = (item: Items) => {
+  const handleDelete = (item: Item) => {
     const updatedItems = items.filter((obj) => obj.id !== item.id);
     const reindexedItems = updatedItems.map((obj, index) => ({
       ...obj,
@@ -91,7 +91,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
   const filteredDepartments = allDepartmentsList.filter((department) =>
     department.name.toLowerCase().includes(search.toLowerCase())
   );
-  const filteredItems = allDepartmentItemsList.filter((item: Items) =>
+  const filteredItems = allDepartmentItemsList.filter((item: Item) =>
     item.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -202,12 +202,12 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
                         </span>
                         <span
                           className={`text-[0.65rem] p-1 rounded ${
-                            availableItem.availableQuantity > 0
+                            (availableItem.availableQuantity ?? 0) > 0
                               ? 'text-[#00A35C] bg-[rgba(0, 163, 92, 0.1)]'
                               : 'text-[#D32F2F] bg-[rgba(211, 47, 47, 0.1)]'
                           }`}
                         >
-                          {availableItem.availableQuantity > 0
+                          {(availableItem.availableQuantity ?? 0) > 0
                             ? 'Available'
                             : 'Unavailable'}
                         </span>

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import AdminLayout from '@/components/Layout/AdminLayout';
-import React, { useEffect, useState } from 'react'
-import { format, parseISO, isWithinInterval } from "date-fns";
+import React, { useEffect, useState } from 'react';
+import { format, parseISO, isWithinInterval } from 'date-fns';
 import { Column, Table } from '@/components/Table';
 import { Pagination } from '@/components/Pagination';
 import Formsy from 'formsy-react';
@@ -17,44 +17,128 @@ type Users = {
   name: string;
   email: string;
   phone: string;
-  status: "collected" | "pending" | "approved" | "assigned" | "declined";
+  status: 'collected' | 'pending' | 'approved' | 'assigned' | 'declined';
   return_date: string;
 };
 
 const employees: Users[] = [
-  { id: 1, name: "Leo King", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'collected' },
-  { id: 2, name: "Sandra Lopez", email: "john@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'pending' },
-  { id: 3, name: "Indiana King", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'approved' },
-  { id: 4, name: "Samson Deen", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'declined' },
-  { id: 5, name: "Sunday Adam", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
-  { id: 6, name: "Emmanuella Olorunsagba", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
-  { id: 7, name: "Chimezule Uchendu", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
-  { id: 8, name: "Stephen Amagba", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
-  { id: 9, name: "Lara Clara", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
-  { id: 10, name: "Clay Kamma", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
-  { id: 11, name: "John El", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
-  { id: 12, name: "David Akpan", email: "leo@gmail.com", phone: "726-555-3962", return_date: "2023-01-10", status: 'assigned' },
+  {
+    id: 1,
+    name: 'Leo King',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'collected',
+  },
+  {
+    id: 2,
+    name: 'Sandra Lopez',
+    email: 'john@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'pending',
+  },
+  {
+    id: 3,
+    name: 'Indiana King',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'approved',
+  },
+  {
+    id: 4,
+    name: 'Samson Deen',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'declined',
+  },
+  {
+    id: 5,
+    name: 'Sunday Adam',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
+  {
+    id: 6,
+    name: 'Emmanuella Olorunsagba',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
+  {
+    id: 7,
+    name: 'Chimezule Uchendu',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
+  {
+    id: 8,
+    name: 'Stephen Amagba',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
+  {
+    id: 9,
+    name: 'Lara Clara',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
+  {
+    id: 10,
+    name: 'Clay Kamma',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
+  {
+    id: 11,
+    name: 'John El',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
+  {
+    id: 12,
+    name: 'David Akpan',
+    email: 'leo@gmail.com',
+    phone: '726-555-3962',
+    return_date: '2023-01-10',
+    status: 'assigned',
+  },
 ];
 
 const optionsFilter = [
-  {value: '1', label: 'approved'},
-  {value: '2', label: 'assigned'},
-  {value: '3', label: 'collected'},
-  {value: '4', label: 'declined'},
-  {value: '5', label: 'pending'},
+  { value: '1', label: 'approved' },
+  { value: '2', label: 'assigned' },
+  { value: '3', label: 'collected' },
+  { value: '4', label: 'declined' },
+  { value: '5', label: 'pending' },
 ];
 
 const Requests = () => {
   const dispatch = useDispatch();
-  const [statusFilter, setStatusFilter] = useState("");
-  const [deptFilter, setDeptFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState('');
+  const [deptFilter, setDeptFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-  
+
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
   }, [dispatch]);
@@ -63,7 +147,7 @@ const Requests = () => {
     ...obj,
     label: obj.name,
     value: obj.id.toString(),
-  }))
+  }));
 
   const filtered = employees.filter((emp) => {
     const matchStatus = statusFilter ? emp.status === statusFilter : true;
@@ -81,39 +165,46 @@ const Requests = () => {
 
     return matchStatus && matchDept && matchDate && matchSearch;
   });
-  
+
   const pageSize = 10;
   // const totalPages = Math.ceil(filtered.length / pageSize);
   const start = (currentPage - 1) * pageSize;
   const paginated = filtered.slice(start, start + pageSize);
 
   const columns: Column<Users>[] = [
-    { key: "name", header: "CHURCH/MINISTRY/NAME" },
-    { key: "email", header: "EMAIL ADDRESS" },
-    { key: "phone", header: "PHONE NUMBER" },
+    { key: 'name', header: 'CHURCH/MINISTRY/NAME' },
+    { key: 'email', header: 'EMAIL ADDRESS' },
+    { key: 'phone', header: 'PHONE NUMBER' },
     {
-      key: "return_date",
-      header: "RETURN DATE",
+      key: 'return_date',
+      header: 'RETURN DATE',
       render: (value: string | number, row: Users) => {
-        return (
-          <span>{format(parseISO(String(value)), "yyyy-MM-dd")}</span>
-        )
-      }
+        return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
+      },
     },
-    { 
-      key: "status", 
-      header: "STATUS",
+    {
+      key: 'status',
+      header: 'STATUS',
       render: (value: string | number, row: Users) => {
         return (
-          <span className={classNames("border rounded uppercase text-xs p-1", {
-            'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]': value === 'collected',
-            'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]': value === 'assigned',
-            'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]': value === 'approved',
-            'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]': value === 'pending',
-            'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]': value === 'declined',
-          })}>{value}</span>
-        )
-      }
+          <span
+            className={classNames('border rounded uppercase text-xs p-1', {
+              'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+                value === 'collected',
+              'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+                value === 'assigned',
+              'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+                value === 'approved',
+              'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+                value === 'pending',
+              'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+                value === 'declined',
+            })}
+          >
+            {value}
+          </span>
+        );
+      },
     },
   ];
 
@@ -140,7 +231,12 @@ const Requests = () => {
 
             {/* FILTER */}
             <div className="filter relative">
-              <button onClick={() => setShowFilterOptions((prev) => !prev)} className="px-3 py-2 rounded border border-[rgba(15,37,82,0.2)]">Filter</button>
+              <button
+                onClick={() => setShowFilterOptions((prev) => !prev)}
+                className="px-3 py-2 rounded border border-[rgba(15,37,82,0.2)]"
+              >
+                Filter
+              </button>
               {showFilterOptions && (
                 <div className="filter-options absolute bg-white rounded mt-[0.2rem] right-0 min-w-full w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
                   <h4 className="px-4 py-3 font-semibold">Filter by</h4>
@@ -181,8 +277,12 @@ const Requests = () => {
                     </div>
 
                     <div className="flex items-center justify-end">
-                      <button className="rounded text-[#B28309] border border-[#B28309] text-xs px-3 py-2 mr-3 hover:bg-[#ffffff98] transition cursor-pointer">Reset</button>
-                      <button className="rounded bg-[#B28309] border border-[#B28309] text-white text-xs px-3 py-2 hover:bg-[#B2830998] hover:border-[#B2830998] transition cursor-pointer">Apply</button>
+                      <button className="rounded text-[#B28309] border border-[#B28309] text-xs px-3 py-2 mr-3 hover:bg-[#ffffff98] transition cursor-pointer">
+                        Reset
+                      </button>
+                      <button className="rounded bg-[#B28309] border border-[#B28309] text-white text-xs px-3 py-2 hover:bg-[#B2830998] hover:border-[#B2830998] transition cursor-pointer">
+                        Apply
+                      </button>
                     </div>
                   </div>
                 </div>

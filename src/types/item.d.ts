@@ -3,7 +3,12 @@ export interface ItemConstants {
   GET_DEPARTMENT_ITEMS_SUCCESS: string;
   GET_DEPARTMENT_ITEMS_ERROR: string;
 
+  REQUEST_GET_ALL_ITEMS: string;
+  GET_ALL_ITEMS_SUCCESS: string;
+  GET_ALL_ITEMS_ERROR: string;
+
   GET_DEPARTMENT_ITEMS: string;
+  GET_ALL_ITEMS: string;
 
   ITEM_URI: string;
 }
@@ -16,15 +21,29 @@ export interface ItemForm {
   itemLocation: string;
 }
 export interface Item {
+  fragile?: boolean;
+  storeId?: number;
+  storeName?: string;
   id: number;
-  itemName: string;
-  itemDescription: string;
-  itemCategory: string;
-  itemStatus: string;
-  itemQuantity: number;
-  itemLocation: string;
-  createdAt: string;
-  updatedAt: string;
+  name: string;
+  requestedQuantity?: number;
+  //   itemDescription?: string;
+  //   itemCategory?: string;
+  status?: string;
+  //   itemLocation: string;
+  actualQuantity?: string;
+  availableQuantity?: number;
+  condition?: string;
+  department?: {
+    id: number;
+    name: string;
+    hodName: string;
+    hodEmail: string;
+    hodPhone: string;
+    status: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 export interface ItemState {
   items: Item[];

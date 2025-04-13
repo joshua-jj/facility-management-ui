@@ -1,7 +1,14 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
-import { itemConstants } from '@/constants';
+import { authConstants, itemConstants } from '@/constants';
 // import { appActions } from '@/actions';
-import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
+import {
+  checkStatus,
+  parseResponse,
+  createRequest,
+  createRequestWithToken,
+  getObjectFromStorage,
+} from '@/utilities/helpers';
+import { Item } from '@/types';
 // import { SetSnackBarPayload } from '@/types';
 // import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -10,11 +17,10 @@ interface GetDepartmentItemsAction {
   data: string;
 }
 
-interface DepartmentData {
+interface User {
+  user: { [key: string]: unknown };
+  refreshToken: string;
   token: string;
-  redirect: string;
-  password: string;
-  nonce?: string;
 }
 
 interface ParsedResponse {
@@ -35,11 +41,7 @@ interface ApiError {
   error?: string;
 }
 
-// function* getDepartmentItems() {
 function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
-  console.log('got hereeeee');
-  console.log('getDepartmentItems', data);
-
   yield put({ type: itemConstants.REQUEST_GET_DEPARTMENT_ITEMS });
 
   try {
@@ -48,7 +50,7 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
       method: 'GET',
     });
 
-    const response: DepartmentData = yield call(fetch, itemReq);
+    const response: Item = yield call(fetch, itemReq);
     yield call(checkStatus, response as unknown as Response);
 
     const jsonResponse: ParsedResponse = yield call(
@@ -82,10 +84,63 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
   }
 }
 
+function* getAllItems() {
+  yield put({ type: itemConstants.REQUEST_GET_ALL_ITEMS });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    const itemUri = `${itemConstants.ITEM_URI}`;
+    // const itemReq = createRequest(itemUri, {
+    //   method: 'GET',
+    // });
+
+    const requestFn = () =>
+      createRequestWithToken(itemUri, { method: 'GET' })(user?.token as string);
+    const itemReq: Request = yield call(requestFn);
+    const response: Item = yield call(fetch, itemReq);
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
+
+    yield put({
+      type: itemConstants.GET_ALL_ITEMS_SUCCESS,
+      items: jsonResponse?.data,
+    });
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: itemConstants.GET_ALL_ITEMS_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: itemConstants.GET_ALL_ITEMS_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+  }
+}
+
 function* getDepartmentItemsWatcher() {
   yield takeLatest(itemConstants.GET_DEPARTMENT_ITEMS, getDepartmentItems);
 }
+function* getAllItemsWatcher() {
+  yield takeLatest(itemConstants.GET_ALL_ITEMS, getAllItems);
+}
 
 export default function* rootSaga() {
-  yield all([getDepartmentItemsWatcher()]);
+  yield all([getDepartmentItemsWatcher(), getAllItemsWatcher()]);
 }

@@ -17,12 +17,12 @@ export interface MaintenanceForm {
 }
 export interface MaintenanceLog {
   id: number;
-  maintenanceName: string;
-  maintenanceStatus: string;
-  maintenanceType: string;
-  maintenanceDescription: string;
+  servicedItem: string;
+  artisanName: string;
+  artisanPhone: string;
+  description: string;
   maintenanceDate: string;
-  maintenanceDuration: number;
+  costOfMaintenance: number;
   createdAt: string;
   updatedAt: string;
 }

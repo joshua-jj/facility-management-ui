@@ -41,7 +41,7 @@ export interface StoreState {
 }
 export interface StoreAction {
   type: string;
-  data?: Store[];
+  stores?: Store[];
   store?: Store;
   message?: string;
   error?: string;

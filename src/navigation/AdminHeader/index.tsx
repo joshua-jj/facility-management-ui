@@ -33,7 +33,9 @@ const AdminHeader = () => {
 
   return (
     <div className="bg-white h-[4.8rem] sticky top-0 z-50 px-8 flex items-center justify-between border-l-[0.5px] border-[#E1E3E7] text-[#0F2552] shadow-[0px_16px_32px_0px_rgba(189,189,189,0.25)]">
-      <h1 className="capitalize font-semibold">{getPageNames(router.pathname)}</h1>
+      <h1 className="capitalize font-semibold">
+        {getPageNames(router.pathname)}
+      </h1>
       <div className="flex items-center gap-x-6">
         <div className="group relative inline-block">
           <button className="flex items-center text-xs gap-x-2 px-3 py-3 text-white bg-[#B28309] hover:bg-[#B2830998] transition rounded cursor-pointer capitalize">

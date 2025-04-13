@@ -6,18 +6,18 @@ import MoreInformation from './MoreInformation';
 import { useDispatch, useSelector } from 'react-redux';
 import { departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
-import { Items } from '@/redux/reducers/item.reducer';
+// import { Items } from '@/redux/reducers/item.reducer';
 // import { Department } from '@/redux/reducers/department.reducer';
 import { RootState } from '@/redux/reducers';
 import SuccessModal from '../Modals/SuccessModal';
 import { requestConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
-import { Department } from '@/types';
+import { Department, Item } from '@/types';
 
 const steps = ['Item(s) Details', 'Request Details', 'More Information'];
 
 interface FormData {
-  items: Items[];
+  items: Item[];
   requestDetails: {
     ministryName: string;
     requesterName: string;

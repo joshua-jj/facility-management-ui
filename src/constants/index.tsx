@@ -1,4 +1,5 @@
 export * from './app.constant';
+export * from './authentication.constant';
 export * from './department.constant';
 export * from './generator.constant';
 export * from './item.constant';

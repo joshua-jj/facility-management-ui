@@ -1,4 +1,5 @@
 export * from './app.action';
+export * from './authentication.action';
 export * from './department.action';
 export * from './generator.action';
 export * from './item.action';

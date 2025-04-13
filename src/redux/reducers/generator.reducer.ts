@@ -1,8 +1,14 @@
 import { combineReducers } from 'redux';
 import { generatorConstants } from '@/constants';
-import { LoadingState, GeneratorLog, GeneratorAction } from '@/types';
+import { LoadingState, GeneratorLog, Action, GeneratorAction } from '@/types';
 
 type GeneratorLogState = GeneratorLog[];
+
+interface AllGeneratorLogsAction extends Action {
+  logs: {
+    items: GeneratorLog[];
+  };
+}
 
 const IsRequestingGeneratorLogs = (
   state: LoadingState = false,
@@ -21,11 +27,11 @@ const IsRequestingGeneratorLogs = (
 
 const allGeneratorLogsList = (
   state: GeneratorLogState = [],
-  action: GeneratorAction
+  action: AllGeneratorLogsAction
 ): GeneratorLogState => {
   switch (action.type) {
     case generatorConstants.GET_GENERATOR_LOGS_SUCCESS:
-      return action.data ?? state;
+      return action.logs?.items ?? state;
     default:
       return state;
   }
@@ -38,7 +44,7 @@ export interface RootState {
   ) => LoadingState;
   allGeneratorLogsList: (
     state: GeneratorLogState | undefined,
-    action: GeneratorAction
+    action: AllGeneratorLogsAction
   ) => GeneratorLogState;
 }
 

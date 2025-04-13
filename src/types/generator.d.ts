@@ -19,16 +19,23 @@ export interface GeneratorForm {
 }
 export interface GeneratorLog {
   id: number;
-  generatorName: string;
-  generatorStatus: string;
-  generatorPower: number;
-  generatorFuel: number;
-  generatorTemperature: number;
-  generatorVoltage: number;
-  generatorCurrent: number;
-  generatorFrequency: number;
-  createdAt: string;
-  updatedAt: string;
+  nameOfMeeting: string;
+  generatorType: string;
+  meetingLocation: string;
+  onTime: string;
+  offTime: string;
+  hoursUsed: string;
+  engineStartHours: string;
+  // generatorName: string;
+  // generatorStatus: string;
+  // generatorPower: number;
+  // generatorFuel: number;
+  // generatorTemperature: number;
+  // generatorVoltage: number;
+  // generatorCurrent: number;
+  // generatorFrequency: number;
+  // createdAt: string;
+  // updatedAt: string;
 }
 export interface GeneratorState {
   generators: GeneratorLog[];
@@ -45,7 +52,7 @@ export interface GeneratorState {
 }
 export interface GeneratorAction {
   type: string;
-  data?: GeneratorLog[];
+  logs?: GeneratorLog[];
   generator?: GeneratorLog;
   message?: string;
   error?: string;

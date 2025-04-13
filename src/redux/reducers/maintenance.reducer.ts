@@ -1,8 +1,19 @@
 import { combineReducers } from 'redux';
 import { maintenanceConstants } from '@/constants';
-import { LoadingState, MaintenanceLog, MaintenanceAction } from '@/types';
+import {
+  LoadingState,
+  MaintenanceLog,
+  Action,
+  MaintenanceAction,
+} from '@/types';
 
 type MaintenanceLogsState = MaintenanceLog[];
+
+interface AllMaintenanceLogsAction extends Action {
+  logs: {
+    items: MaintenanceLog[];
+  };
+}
 
 const IsRequestingMaintenanceLogs = (
   state: LoadingState = false,
@@ -21,11 +32,11 @@ const IsRequestingMaintenanceLogs = (
 
 const allMaintenanceLogsList = (
   state: MaintenanceLogsState = [],
-  action: MaintenanceAction
+  action: AllMaintenanceLogsAction
 ): MaintenanceLogsState => {
   switch (action.type) {
     case maintenanceConstants.GET_MAINTENANCE_LOGS_SUCCESS:
-      return action.data ?? state;
+      return action.logs?.items ?? state;
     default:
       return state;
   }
@@ -38,7 +49,7 @@ export interface RootState {
   ) => LoadingState;
   allMaintenanceLogsList: (
     state: MaintenanceLogsState | undefined,
-    action: MaintenanceAction
+    action: AllMaintenanceLogsAction
   ) => MaintenanceLogsState;
 }
 
