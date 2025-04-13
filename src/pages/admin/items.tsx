@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import AdminLayout from '@/components/Layout/AdminLayout';
 import React, { useEffect, useState } from 'react';
 import { Column, Table } from '@/components/Table';
@@ -8,6 +9,9 @@ import { RootState } from '@/redux/reducers';
 import { itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Item } from '@/types';
+import { isWithinInterval, parseISO } from 'date-fns';
+import classNames from 'classnames';
+import { Pagination } from '@/components/Pagination';
 import AddItem from '@/components/Modals/AddItem';
 
 const optionsFilter = [
@@ -24,7 +28,8 @@ const Items = () => {
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  // const [currentPage, setCurrentPage] = useState(1);
+  const [dateTo, setDateTo] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { IsRequestingAllItems, allItemsList } = useSelector(
     (s: RootState) => s.item
@@ -40,6 +45,28 @@ const Items = () => {
     value: obj.id.toString(),
   }));
 
+  const filtered = allItemsList?.filter((emp) => {
+      const matchStatus = statusFilter ? emp.status === statusFilter : true;
+      const matchDept = deptFilter ? emp.name === deptFilter : true;
+      const matchDate =
+        dateFrom && dateTo
+          ? isWithinInterval(parseISO(emp.createdAt!), {
+              start: parseISO(dateFrom),
+              end: parseISO(dateTo),
+            })
+          : true;
+      const matchSearch = emp.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+  
+      return matchStatus && matchDept && matchDate && matchSearch;
+    });
+
+    const pageSize = 10;
+    // const totalPages = Math.ceil(filtered.length / pageSize);
+    const start = (currentPage - 1) * pageSize;
+    const paginated = filtered.slice(start, start + pageSize);
+
   const columns: Column<Item>[] = [
     { key: 'name', header: 'ITEM TITLE' },
     {
@@ -50,8 +77,59 @@ const Items = () => {
     // { key: 'department', header: 'DEPARTMENT' },
     { key: 'actualQuantity', header: 'TOTAL ITEMS' },
     { key: 'availableQuantity', header: 'AVAILABLE ITEMS' },
-    { key: 'condition', header: 'CONDITION' },
-    { key: 'status', header: 'STATUS' },
+    { key: 'condition', header: 'CONDITION',
+      render: (value: string | number, row: Item) => {
+        return (
+          <span
+            className={classNames('border rounded uppercase text-xs p-1', {
+              // 'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+              //   value === 'collected',
+              // 'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+              //   value === 'assigned',
+              'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+                value === 'Good',
+              // 'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+              //   value === 'pending',
+              'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+                value === 'Bad',
+            })}
+          >
+            {value}
+          </span>
+        );
+      },
+    },
+    { key: 'status', header: 'STATUS',
+      render: (value: string | number, row: Item) => {
+        return (
+          <span
+            className={classNames('border rounded uppercase text-xs p-1', {
+              'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+                value === 'B',
+              'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+                value === 'C',
+              'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+                value === 'A',
+              'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+                value === 'D',
+              'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+                value === 'E',
+            })}
+          >
+            {value}
+          </span>
+        );
+      },
+    },
+    // { 
+    //   key: 'action', 
+    //   // header: 'STATUS',
+    //   render: (value: string | number, row: Item) => {
+    //     return (
+    //       <ActionDropDown />
+    //     );
+    //   },
+    // },
   ];
 
   return (
