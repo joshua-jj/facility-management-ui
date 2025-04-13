@@ -40,7 +40,12 @@ const Items = () => {
 
   const columns: Column<Item>[] = [
     { key: 'name', header: 'ITEM TITLE' },
-    { key: 'department', header: 'DEPARTMENT' },
+    {
+      key: 'department',
+      header: 'DEPARTMENT',
+      render: (_, row: Item) => row.department?.name || 'N/A', // Access department.name
+    },
+    // { key: 'department', header: 'DEPARTMENT' },
     { key: 'actualQuantity', header: 'TOTAL ITEMS' },
     { key: 'availableQuantity', header: 'AVAILABLE ITEMS' },
     { key: 'condition', header: 'CONDITION' },
