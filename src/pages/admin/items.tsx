@@ -8,7 +8,7 @@ import { RootState } from '@/redux/reducers';
 import { itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Item } from '@/types';
-import AddDepartment from '@/components/Modals/AddDepartment';
+import AddItem from '@/components/Modals/AddItem';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -132,9 +132,9 @@ const Items = () => {
               Download CSV
             </button>
             <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-              <AddDepartment className="text-start w-full cursor-pointer">
+              <AddItem className="text-start w-full cursor-pointer">
                 Create Item
-              </AddDepartment>
+              </AddItem>
             </button>
           </div>
         </Formsy>

@@ -6,6 +6,7 @@ import {
   parseResponse,
   createRequest,
   setObjectInStorage,
+  clearObjectFromStorage,
 } from '@/utilities/helpers';
 import { SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -102,10 +103,24 @@ function* login({ data }: LoginAction) {
   }
 }
 
+function* logout() {
+  yield put({ type: authConstants.LOGGING_OUT });
+  try {
+    yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+    yield put({ type: authConstants.LOGOUT_SUCCESS });
+  } catch {
+    yield put({ type: authConstants.LOGOUT_FAILURE });
+  }
+}
+
 function* loginWatcher() {
   yield takeLatest(authConstants.LOGIN, login);
 }
+function* logoutWatcher() {
+  yield takeLatest(authConstants.LOGOUT, logout);
+}
 
 export default function* rootSaga() {
-  yield all([loginWatcher()]);
+  yield all([loginWatcher(), logoutWatcher()]);
 }

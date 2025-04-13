@@ -129,7 +129,7 @@ const MaintenanceLogs = () => {
             </button>
             <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
               <AddDepartment className="text-start w-full cursor-pointer">
-                Create Generator Log
+                Create Maintenance Log
               </AddDepartment>
             </button>
           </div>

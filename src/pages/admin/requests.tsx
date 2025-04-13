@@ -8,9 +8,10 @@ import Formsy from 'formsy-react';
 import CustomSelect from '@/components/DropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { departmentActions } from '@/actions';
+import { departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import classNames from 'classnames';
+import { Request } from '@/types';
 
 type Users = {
   id: number;
@@ -138,9 +139,13 @@ const Requests = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  const { IsRequestingRequests, allRequestsList } = useSelector(
+    (s: RootState) => s.request
+  );
 
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+    dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
   }, [dispatch]);
 
   const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
@@ -171,41 +176,42 @@ const Requests = () => {
   const start = (currentPage - 1) * pageSize;
   const paginated = filtered.slice(start, start + pageSize);
 
-  const columns: Column<Users>[] = [
-    { key: 'name', header: 'CHURCH/MINISTRY/NAME' },
-    { key: 'email', header: 'EMAIL ADDRESS' },
-    { key: 'phone', header: 'PHONE NUMBER' },
+  const columns: Column<Request>[] = [
+    { key: 'createdBy', header: 'CHURCH/MINISTRY/NAME' },
+    { key: 'requesterHodEmail', header: 'EMAIL ADDRESS' },
+    { key: 'requesterHodEmail', header: 'PHONE NUMBER' },
     {
-      key: 'return_date',
+      key: 'dateOfReturn',
       header: 'RETURN DATE',
-      render: (value: string | number, row: Users) => {
+      render: (value: string | number, row: Request) => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
-    {
-      key: 'status',
-      header: 'STATUS',
-      render: (value: string | number, row: Users) => {
-        return (
-          <span
-            className={classNames('border rounded uppercase text-xs p-1', {
-              'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-                value === 'collected',
-              'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-                value === 'assigned',
-              'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-                value === 'approved',
-              'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-                value === 'pending',
-              'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-                value === 'declined',
-            })}
-          >
-            {value}
-          </span>
-        );
-      },
-    },
+    // {
+    //   key: 'summary',
+    //   header: 'STATUS',
+    //     render: (value: string | number, row: Request) => {
+    //       const status = row.summary?.requestStatus;
+    //     return (
+    //       <span
+    //         className={classNames('border rounded uppercase text-xs p-1', {
+    //           'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+    //             value === 'collected',
+    //           'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+    //             value === 'assigned',
+    //           'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+    //             value === 'approved',
+    //           'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+    //             value === 'pending',
+    //           'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+    //             value === 'declined',
+    //         })}
+    //       >
+    //         {value}
+    //       </span>
+    //     );
+    //   },
+    // },
   ];
 
   return (
@@ -295,7 +301,12 @@ const Requests = () => {
         </Formsy>
 
         {/* Table */}
-        <Table columns={columns} data={paginated || filtered} />
+        <Table
+          loading={IsRequestingRequests}
+          columns={columns}
+          data={allRequestsList}
+        />
+        {/* <Table loading={IsRequestingRequests} columns={columns} data={paginated || filtered} /> */}
 
         <Pagination
           currentPage={currentPage}

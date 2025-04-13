@@ -2,15 +2,6 @@ import { combineReducers } from 'redux';
 import { departmentConstants } from '@/constants';
 import { Action, Department, LoadingState } from '@/types';
 
-// export interface Department {
-//   id: number;
-//   hodEmail: string;
-//   hodName: string;
-//   hodPhone: string;
-//   name: string;
-//   status: string;
-// }
-
 interface DepartmentsAction extends Action {
   departments: Department[];
 }

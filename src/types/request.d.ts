@@ -3,7 +3,12 @@ export interface RequestConstants {
   CREATE_REQUEST_SUCCESS: string;
   CREATE_REQUEST_ERROR: string;
 
+  REQUEST_GET_ALL_REQUESTS: string;
+  GET_ALL_REQUESTS_SUCCESS: string;
+  GET_ALL_REQUESTS_ERROR: string;
+
   CREATE_REQUEST: string;
+  GET_ALL_REQUESTS: string;
 
   REQUEST_URI: string;
 }
@@ -34,7 +39,9 @@ export interface RequestForm {
 export interface Request {
   id: number;
   requesterName: string;
+  createdBy: string;
   requesterEmail: string;
+  requesterHodEmail: string;
   requesterPhone: string;
   isMinistry: boolean;
   ministryName: string;
@@ -47,6 +54,11 @@ export interface Request {
   descriptionOfRequest: string;
   createdAt: string;
   updatedAt: string;
+  summary?: {
+    id: number;
+    requestStatus: string;
+    status: string;
+  };
 }
 export interface RequestState {
   requests: Request[];
@@ -62,7 +74,10 @@ export interface RequestState {
 }
 export interface RequestAction {
   type: string;
-  data?: Request[];
+  // requests?: Request[];
+  requests: {
+    items: Request[];
+  };
   request?: Request;
   message?: string;
   error?: string;

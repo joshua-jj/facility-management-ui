@@ -6,11 +6,20 @@ export interface LoginAction {
   data: LoginForm;
 }
 
+export interface LogoutAction {
+  type: typeof authConstants.LOGOUT;
+}
+
 const login = (data: LoginForm): LoginAction => ({
   type: authConstants.LOGIN,
   data,
 });
 
+const logout = (): LogoutAction => ({
+  type: authConstants.LOGOUT,
+});
+
 export const authActions = {
   login,
+  logout,
 };

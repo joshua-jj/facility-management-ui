@@ -1,9 +1,13 @@
 import { RequestForm } from '@/types';
 import { requestConstants } from '@/constants';
 
-interface CreateRequestAction {
+export interface CreateRequestAction {
   type: typeof requestConstants.CREATE_REQUEST;
   data: RequestForm;
+}
+
+interface GetAllRequestsAction {
+  type: typeof requestConstants.GET_ALL_REQUESTS;
 }
 
 const createRequest = (data: RequestForm): CreateRequestAction => ({
@@ -11,6 +15,11 @@ const createRequest = (data: RequestForm): CreateRequestAction => ({
   data,
 });
 
+const getAllRequests = (): GetAllRequestsAction => ({
+  type: requestConstants.GET_ALL_REQUESTS,
+});
+
 export const requestActions = {
   createRequest,
+  getAllRequests,
 };

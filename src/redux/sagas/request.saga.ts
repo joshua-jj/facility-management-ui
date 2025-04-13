@@ -1,13 +1,20 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
-import { requestConstants } from '@/constants';
-import { appActions } from '@/actions';
-import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
-import { RequestForm, SetSnackBarPayload } from '@/types';
+import { authConstants, requestConstants } from '@/constants';
+import { appActions, CreateRequestAction } from '@/actions';
+import {
+  checkStatus,
+  parseResponse,
+  createRequest,
+  getObjectFromStorage,
+  createRequestWithToken,
+} from '@/utilities/helpers';
+import { Request as CustomRequest, SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
-interface CreateRequestAction {
-  type: typeof requestConstants.CREATE_REQUEST;
-  data: RequestForm;
+interface User {
+  user: { [key: string]: unknown };
+  refreshToken: string;
+  token: string;
 }
 
 interface ResetPasswordData {
@@ -23,9 +30,6 @@ interface ParsedResponse {
   data: {
     user: { [key: string]: unknown };
     id: string;
-    redirect_url: string;
-    source?: string;
-    token: string;
   };
 }
 
@@ -97,10 +101,64 @@ function* createNewRequest({ data }: CreateRequestAction) {
   }
 }
 
+function* getAllRequests() {
+  yield put({ type: requestConstants.REQUEST_GET_ALL_REQUESTS });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    const storeUri = `${requestConstants.REQUEST_URI}`;
+
+    const requestFn = () =>
+      createRequestWithToken(storeUri, { method: 'GET' })(
+        user?.token as string
+      );
+    const storeReq: Request = yield call(requestFn);
+
+    const response: CustomRequest = yield call(fetch, storeReq);
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
+
+    yield put({
+      type: requestConstants.GET_ALL_REQUESTS_SUCCESS,
+      requests: jsonResponse?.data,
+    });
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: requestConstants.GET_ALL_REQUESTS_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: requestConstants.GET_ALL_REQUESTS_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+  }
+}
+
 function* createNewRequestWatcher() {
   yield takeLatest(requestConstants.CREATE_REQUEST, createNewRequest);
 }
 
+function* getAllRequestsWatcher() {
+  yield takeLatest(requestConstants.GET_ALL_REQUESTS, getAllRequests);
+}
+
 export default function* rootSaga() {
-  yield all([createNewRequestWatcher()]);
+  yield all([createNewRequestWatcher(), getAllRequestsWatcher()]);
 }
