@@ -37,7 +37,7 @@ export function Table<T extends Record<string, any>>({
               {columns.map((col) => (
                 <td
                   key={String(col.key)}
-                  className="px-4 py-3 text-sm text-gray-800"
+                  className="px-4 py-3 text-sm text-gray-800 text-nowrap"
                 >
                   {col.render
                     ? col.render(row[col.key], row)
