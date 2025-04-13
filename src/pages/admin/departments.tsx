@@ -26,7 +26,9 @@ const Departments = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  const { IsRequestingDepartments, allDepartmentsList } = useSelector(
+    (s: RootState) => s.department
+  );
 
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
@@ -129,7 +131,11 @@ const Departments = () => {
             </button>
           </div>
         </Formsy>
-        <Table columns={columns} data={allDepartmentsList} />
+        <Table
+          loading={IsRequestingDepartments}
+          columns={columns}
+          data={allDepartmentsList}
+        />
       </div>
     </AdminLayout>
   );

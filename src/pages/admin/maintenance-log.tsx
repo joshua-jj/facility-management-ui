@@ -26,7 +26,7 @@ const MaintenanceLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { allMaintenanceLogsList } = useSelector(
+  const { IsRequestingMaintenanceLogs, allMaintenanceLogsList } = useSelector(
     (s: RootState) => s.maintenance
   );
 
@@ -134,7 +134,11 @@ const MaintenanceLogs = () => {
             </button>
           </div>
         </Formsy>
-        <Table columns={columns} data={allMaintenanceLogsList} />
+        <Table
+          loading={IsRequestingMaintenanceLogs}
+          columns={columns}
+          data={allMaintenanceLogsList}
+        />
       </div>
     </AdminLayout>
   );

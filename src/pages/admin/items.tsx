@@ -26,7 +26,9 @@ const Items = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { allItemsList } = useSelector((s: RootState) => s.item);
+  const { IsRequestingAllItems, allItemsList } = useSelector(
+    (s: RootState) => s.item
+  );
 
   useEffect(() => {
     dispatch(itemActions.getAllItems() as unknown as UnknownAction);
@@ -136,7 +138,11 @@ const Items = () => {
             </button>
           </div>
         </Formsy>
-        <Table columns={columns} data={allItemsList} />
+        <Table
+          loading={IsRequestingAllItems}
+          columns={columns}
+          data={allItemsList}
+        />
       </div>
     </AdminLayout>
   );

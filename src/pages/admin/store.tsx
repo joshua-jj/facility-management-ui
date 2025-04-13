@@ -26,7 +26,9 @@ const Stores = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { allStoresList } = useSelector((s: RootState) => s.store);
+  const { IsRequestingStores, allStoresList } = useSelector(
+    (s: RootState) => s.store
+  );
 
   useEffect(() => {
     dispatch(storeActions.getStores() as unknown as UnknownAction);
@@ -124,7 +126,11 @@ const Stores = () => {
             </button>
           </div>
         </Formsy>
-        <Table columns={columns} data={allStoresList} />
+        <Table
+          loading={IsRequestingStores}
+          columns={columns}
+          data={allStoresList}
+        />
       </div>
     </AdminLayout>
   );

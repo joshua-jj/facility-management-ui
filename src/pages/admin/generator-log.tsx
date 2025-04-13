@@ -26,7 +26,9 @@ const GeneratorLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { allGeneratorLogsList } = useSelector((s: RootState) => s.generator);
+  const { IsRequestingGeneratorLogs, allGeneratorLogsList } = useSelector(
+    (s: RootState) => s.generator
+  );
 
   useEffect(() => {
     dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
@@ -131,7 +133,11 @@ const GeneratorLogs = () => {
             </button>
           </div>
         </Formsy>
-        <Table columns={columns} data={allGeneratorLogsList} />
+        <Table
+          loading={IsRequestingGeneratorLogs}
+          columns={columns}
+          data={allGeneratorLogsList}
+        />
       </div>
     </AdminLayout>
   );
