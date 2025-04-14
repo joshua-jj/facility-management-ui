@@ -13,6 +13,7 @@ interface AllMaintenanceLogsAction extends Action {
   logs: {
     items: MaintenanceLog[];
   };
+  log: MaintenanceLog[];
 }
 
 const IsRequestingMaintenanceLogs = (
@@ -30,6 +31,21 @@ const IsRequestingMaintenanceLogs = (
   }
 };
 
+const IsSearchingMaintenanceLog = (
+  state: LoadingState = false,
+  action: MaintenanceAction
+): LoadingState => {
+  switch (action.type) {
+    case maintenanceConstants.REQUEST_SEARCH_MAINTENANCE_LOG:
+      return true;
+    case maintenanceConstants.SEARCH_MAINTENANCE_LOG_SUCCESS:
+    case maintenanceConstants.SEARCH_MAINTENANCE_LOG_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allMaintenanceLogsList = (
   state: MaintenanceLogsState = [],
   action: AllMaintenanceLogsAction
@@ -37,6 +53,8 @@ const allMaintenanceLogsList = (
   switch (action.type) {
     case maintenanceConstants.GET_MAINTENANCE_LOGS_SUCCESS:
       return action.logs?.items ?? state;
+    case maintenanceConstants.SEARCH_MAINTENANCE_LOG_SUCCESS:
+      return action.log ?? state;
     default:
       return state;
   }
@@ -44,6 +62,10 @@ const allMaintenanceLogsList = (
 
 export interface RootState {
   IsRequestingMaintenanceLogs: (
+    state: LoadingState | undefined,
+    action: MaintenanceAction
+  ) => LoadingState;
+  IsSearchingMaintenanceLog: (
     state: LoadingState | undefined,
     action: MaintenanceAction
   ) => LoadingState;
@@ -55,6 +77,7 @@ export interface RootState {
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingMaintenanceLogs,
+  IsSearchingMaintenanceLog,
   allMaintenanceLogsList,
 });
 

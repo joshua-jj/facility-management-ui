@@ -30,11 +30,13 @@ const Items = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { IsRequestingAllItems, IsSearchingItem, allItemsList } = useSelector(
-    (s: RootState) => s.item
-  );
+  const { IsRequestingAllItems, IsSearchingItem, allItemsList, pagination } =
+    useSelector((s: RootState) => s.item);
+  const { meta } = pagination;
+  const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
+  console.log('pagination', pagination);
 
   useEffect(() => {
     dispatch(itemActions.getAllItems() as unknown as UnknownAction);
@@ -148,6 +150,10 @@ const Items = () => {
     // },
   ];
 
+  const handleChangePage = (page: number) => {
+    dispatch(itemActions.getAllItems({ page }) as unknown as UnknownAction);
+  };
+
   return (
     <PrivateRoute>
       <AdminLayout>
@@ -239,6 +245,13 @@ const Items = () => {
             searching={IsSearchingItem}
             columns={columns}
             data={allItemsList}
+            currentPage={currentPage}
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalItems={totalItems}
+            pageSize={itemsPerPage}
+            onPageChange={handleChangePage}
           />
         </div>
       </AdminLayout>

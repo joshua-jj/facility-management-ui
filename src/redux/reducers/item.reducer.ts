@@ -1,6 +1,7 @@
 import { combineReducers } from 'redux';
 import { itemConstants } from '@/constants';
-import { Action, Item, LoadingState } from '@/types';
+import { Action, Item, LoadingState, PaginationState } from '@/types';
+import { updateObject } from '@/utilities/reducerUtility';
 
 export interface Items {
   id: number;
@@ -18,6 +19,14 @@ interface DepartmentItemsAction extends Action {
 interface AllItemsAction extends Action {
   items: {
     items: Item[];
+    links: { [key: string]: string | number | null };
+    meta: {
+      currentPage: number;
+      itemCount: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+    };
   };
   item: Item[];
 }
@@ -95,17 +104,38 @@ const allItemsList = (
   }
 };
 
-// const pagination = (
-//   state: PaginationState = null,
-//   action: Action
-// ): PaginationState => {
-//   switch (action.type) {
-//     case eventConstants.GET_ALL_EVENTS_SUCCESS:
-//       return action.pagination ?? state;
-//     default:
-//       return state;
-//   }
-// };
+const pagination = (
+  state: PaginationState = {
+    links: {
+      first: null,
+      last: null,
+      next: null,
+      previous: null,
+    },
+    meta: {
+      currentPage: 0,
+      itemCount: 0,
+      itemsPerPage: 0,
+      totalItems: 0,
+      totalPages: 0,
+    },
+  },
+  action: AllItemsAction
+): PaginationState => {
+  switch (action.type) {
+    case itemConstants.GET_ALL_ITEMS_SUCCESS: {
+      const { links, meta } = action.items;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
+    default:
+      return state;
+  }
+};
 
 export interface RootState {
   IsRequestingDepartmentItems: (
@@ -114,7 +144,6 @@ export interface RootState {
   ) => LoadingState;
   IsRequestingAllItems: (state: LoadingState, action: Action) => LoadingState;
   IsSearchingItem: (state: LoadingState, action: Action) => LoadingState;
-  //   pagination: PaginationState;
   allDepartmentItemsList: (
     state: DepartmentItemsListState | undefined,
     action: DepartmentItemsAction
@@ -123,15 +152,20 @@ export interface RootState {
     state: AllItemsListState | undefined,
     action: AllItemsAction
   ) => AllItemsListState;
+  pagination: (
+    state: PaginationState | undefined,
+    action: AllItemsAction
+  ) => PaginationState;
+  // pagination: PaginationState;
 }
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingDepartmentItems,
   IsRequestingAllItems,
   IsSearchingItem,
-  //   pagination,
   allDepartmentItemsList,
   allItemsList,
+  pagination,
 });
 
 export default rootReducer;

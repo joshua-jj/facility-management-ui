@@ -3,9 +3,24 @@ export interface MaintenanceConstants {
   GET_MAINTENANCE_LOGS_SUCCESS: string;
   GET_MAINTENANCE_LOGS_ERROR: string;
 
+  REQUEST_SEARCH_MAINTENANCE_LOG: string;
+  SEARCH_MAINTENANCE_LOG_SUCCESS: string;
+  SEARCH_MAINTENANCE_LOG_ERROR: string;
+
   GET_MAINTENANCE_LOGS: string;
+  SEARCH_MAINTENANCE_LOG: string;
 
   MAINTENANCE_URI: string;
+}
+export interface PaginationState {
+  links: { [key: string]: string | number | null };
+  meta: {
+    currentPage: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
 }
 export interface MaintenanceForm {
   maintenanceName: string;

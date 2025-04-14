@@ -10,7 +10,7 @@ import {
   clearObjectFromStorage,
 } from '@/utilities/helpers';
 import { Item } from '@/types';
-import { SearchItemAction } from '@/actions';
+import { GetAllItemsAction, SearchItemAction } from '@/actions';
 // import { SetSnackBarPayload } from '@/types';
 // import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -86,7 +86,7 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
   }
 }
 
-function* getAllItems() {
+function* getAllItems({ data }: GetAllItemsAction) {
   yield put({ type: itemConstants.REQUEST_GET_ALL_ITEMS });
 
   try {
@@ -94,7 +94,11 @@ function* getAllItems() {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const itemUri = `${itemConstants.ITEM_URI}`;
+    let itemUri = `${itemConstants.ITEM_URI}`;
+
+    if (data?.page) {
+      itemUri = `${itemUri}?page=${data.page}`;
+    }
 
     const requestFn = () =>
       createRequestWithToken(itemUri, { method: 'GET' })(user?.token as string);

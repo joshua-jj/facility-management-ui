@@ -4,8 +4,9 @@ interface GetDepartmentItemsAction {
   type: typeof itemConstants.GET_DEPARTMENT_ITEMS;
   data: number;
 }
-interface GetAllItemsAction {
+export interface GetAllItemsAction {
   type: typeof itemConstants.GET_ALL_ITEMS;
+  data?: { page: number };
 }
 
 export interface SearchItemAction {
@@ -18,8 +19,9 @@ const getDepartmentItems = (id: number): GetDepartmentItemsAction => ({
   data: id,
 });
 
-const getAllItems = (): GetAllItemsAction => ({
+const getAllItems = (data?: { page: number }): GetAllItemsAction => ({
   type: itemConstants.GET_ALL_ITEMS,
+  data,
 });
 
 const searchItem = (data: { text: string }): SearchItemAction => ({

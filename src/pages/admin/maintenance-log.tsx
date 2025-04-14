@@ -27,15 +27,32 @@ const MaintenanceLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { IsRequestingMaintenanceLogs, allMaintenanceLogsList } = useSelector(
-    (s: RootState) => s.maintenance
-  );
+  const {
+    IsRequestingMaintenanceLogs,
+    IsSearchingMaintenanceLog,
+    allMaintenanceLogsList,
+  } = useSelector((s: RootState) => s.maintenance);
 
   useEffect(() => {
     dispatch(
       maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction
     );
   }, [dispatch]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    if (!query) {
+      dispatch(
+        maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction
+      );
+    }
+    setSearchQuery(query);
+    dispatch(
+      maintenanceActions.searchMaintenanceLog({
+        text: query,
+      }) as unknown as UnknownAction
+    );
+  };
 
   const allDepartmentsArray = allMaintenanceLogsList?.map((obj) => ({
     ...obj,
@@ -63,10 +80,11 @@ const MaintenanceLogs = () => {
                   name="searchQuery"
                   value={searchQuery}
                   placeholder="Search"
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // setCurrentPage(1); // reset on new search
-                  }}
+                  onChange={handleSearch}
+                  // onChange={(e) => {
+                  //   setSearchQuery(e.target.value);
+                  //   // setCurrentPage(1); // reset on new search
+                  // }}
                   className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
@@ -138,6 +156,7 @@ const MaintenanceLogs = () => {
           </Formsy>
           <Table
             loading={IsRequestingMaintenanceLogs}
+            searching={IsSearchingMaintenanceLog}
             columns={columns}
             data={allMaintenanceLogsList}
           />

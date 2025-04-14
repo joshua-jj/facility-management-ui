@@ -11,6 +11,7 @@ type TableProps<T> = {
   data: T[];
   loading: boolean;
   searching?: boolean;
+  currentPage?: number;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,10 +20,11 @@ export function Table<T extends Record<string, any>>({
   data,
   loading,
   searching,
+  currentPage,
 }: TableProps<T>) {
   return (
     <div className="overflow-x-auto w-full rounded border border-gray-200 shadow-sm">
-      {(data?.length === 0 && loading) || searching ? (
+      {((data?.length === 0 || currentPage !== 1) && loading) || searching ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-[#B28309] border-t-transparent rounded-full animate-spin"></div>
         </div>

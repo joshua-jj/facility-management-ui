@@ -28,11 +28,11 @@ export interface Action {
   error?: string;
 }
 
-interface Pagination {
-  currentPage: number;
-  totalPages: number;
-  // Add other pagination properties as needed
-}
+// interface Pagination {
+//   currentPage: number;
+//   totalPages: number;
+//   // Add other pagination properties as needed
+// }
 
 export type LoadingState = boolean;
-export type PaginationState = Pagination | null;
+// export type PaginationState = Pagination | null;
