@@ -13,8 +13,13 @@ import { useRouter } from 'next/router';
 
 const Login: FC = () => {
   const router = useRouter();
+  const query = router?.query;
+  const decodedFrom = decodeURIComponent(
+    Array.isArray(query?.from) ? query.from[0] : (query?.from ?? '')
+  );
   const dispatch = useDispatch();
   const { IsLoggingIn } = useSelector((s: RootState) => s.auth);
+
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
 
   const handleSubmit = (data: LoginForm) => {
@@ -27,6 +32,13 @@ const Login: FC = () => {
       (evt: Event) => {
         const customEvent = evt as CustomEvent;
         const data = customEvent.detail?.data;
+
+        if (data && decodedFrom?.length) {
+          router.push({
+            pathname: decodedFrom,
+          });
+          return;
+        }
 
         if (data) {
           router.push('/admin/dashboard');

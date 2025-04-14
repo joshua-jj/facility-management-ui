@@ -8,7 +8,7 @@ import reportRootReducer from './report.reducer';
 import requestRootReducer from './request.reducer';
 // import snackbarRootReducer from './snackbar.reducer';
 import storeRootReducer from './store.reducer';
-// import userRootReducer from './user.reducer';
+import userRootReducer from './user.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
@@ -20,7 +20,7 @@ const rootReducer = combineReducers({
   request: requestRootReducer,
   //   snackbar: snackbarRootReducer,
   store: storeRootReducer,
-  //   user: userRootReducer,
+  user: userRootReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

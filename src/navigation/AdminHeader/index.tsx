@@ -3,14 +3,16 @@ import { CaretIcon } from '@/components/Icons';
 import LetteredAvatar from '@/components/LetteredAvatar';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import AddItem from '@/components/Modals/AddItem';
+import { RootState } from '@/redux/reducers';
 import { useRouter } from 'next/router';
 import React from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 
 const AdminHeader = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { userDetails } = useSelector((s: RootState) => s.user);
 
   const getPageNames = (link: string) => {
     switch (link) {
@@ -78,7 +80,11 @@ const AdminHeader = () => {
         </div>
 
         <div className="relative group">
-          <LetteredAvatar name="adam" size={34} className="" />
+          <LetteredAvatar
+            name={userDetails?.firstName}
+            size={34}
+            className="cursor-pointer"
+          />
           <ul className="absolute right-0 mt-[0.1rem] p-1 min-w-[7rem] bg-white shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)] rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
             <li
               onClick={handleLogout}
