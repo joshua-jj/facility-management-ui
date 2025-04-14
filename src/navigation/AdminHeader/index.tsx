@@ -3,6 +3,7 @@ import { CaretIcon } from '@/components/Icons';
 import LetteredAvatar from '@/components/LetteredAvatar';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import AddItem from '@/components/Modals/AddItem';
+import AddStore from '@/components/Modals/AddStore';
 import { RootState } from '@/redux/reducers';
 import { useRouter } from 'next/router';
 import React from 'react';
@@ -62,8 +63,10 @@ const AdminHeader = () => {
             {/* <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs px-3 py-[0.4rem] capitalize cursor-pointer">
               add generator
             </li> */}
-            <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs px-3 py-[0.4rem] capitalize cursor-pointer">
-              create store
+            <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+              <AddStore className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                create store
+              </AddStore>
             </li>
             <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
               <AddDepartment className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">

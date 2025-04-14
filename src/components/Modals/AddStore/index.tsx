@@ -12,7 +12,7 @@ interface AddItemModalProps {
   // open: boolean;
 }
 
-const AddItem: React.FC<AddItemModalProps> = ({
+const AddStore: React.FC<AddItemModalProps> = ({
   className,
   children,
   // onClose,
@@ -65,43 +65,6 @@ const AddItem: React.FC<AddItemModalProps> = ({
               inputClass="font-normal border border-gray-300 rounded"
             />
 
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">
-              Quantity
-            </label>
-            <div className="flex items-center text-[#0F2552] gap-4 mb-6">
-              <button
-                // onClick={() => handleQuantityChange(item, -1)}
-                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-l"
-                // disabled={(item.requestedQuantity || 0) <= 1}
-              >
-                -
-              </button>
-              <div className="w-6/10 h-10 border border-gray-300 flex items-center justify-center">
-                <input
-                  type="text"
-                  // value={item.requestedQuantity || 0}
-                  readOnly
-                  className="w-full text-center border-none focus:outline-none"
-                />
-              </div>
-              <button
-                // onClick={() => handleQuantityChange(item, 1)}
-                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-r"
-                // disabled={
-                // (item.requestedQuantity || 0) >= (item.availableQuantity || 0)
-                // }
-              >
-                +
-              </button>
-            </div>
-
-            <button
-              // onClick={addItem}
-              className="w-full h-12 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-            >
-              Add more item
-            </button>
-
             <button
               onClick={handleSubmit}
               // disabled={!canSubmit() || IsCreatingRequest}
@@ -130,4 +93,4 @@ const AddItem: React.FC<AddItemModalProps> = ({
   );
 };
 
-export default AddItem;
+export default AddStore;

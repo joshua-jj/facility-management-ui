@@ -8,8 +8,8 @@ import { RootState } from '@/redux/reducers';
 import { storeActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Store } from '@/types';
-import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
+import AddStore from '@/components/Modals/AddStore';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -134,9 +134,9 @@ const Stores = () => {
                 Download CSV
               </button>
               <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-                <AddDepartment className="text-start w-full cursor-pointer">
+                <AddStore className="text-start w-full cursor-pointer">
                   Create Store
-                </AddDepartment>
+                </AddStore>
               </button>
             </div>
           </Formsy>
