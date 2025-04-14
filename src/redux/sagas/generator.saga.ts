@@ -5,6 +5,7 @@ import {
   parseResponse,
   createRequestWithToken,
   getObjectFromStorage,
+  clearObjectFromStorage,
 } from '@/utilities/helpers';
 import { GeneratorLog } from '@/types';
 
@@ -45,6 +46,13 @@ function* getGeneratorLogs() {
     const logsReq: Request = yield call(requestFn);
 
     const response: GeneratorLog = yield call(fetch, logsReq);
+
+    if (response.status === 401) {
+      yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+      yield put({ type: authConstants.TOKEN_HAS_EXPIRED });
+      return;
+    }
     yield call(checkStatus, response as unknown as Response);
 
     const jsonResponse: ParsedResponse = yield call(

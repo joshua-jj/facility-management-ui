@@ -7,6 +7,7 @@ import {
   createRequest,
   getObjectFromStorage,
   createRequestWithToken,
+  clearObjectFromStorage,
 } from '@/utilities/helpers';
 import { Request as CustomRequest, SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -118,6 +119,12 @@ function* getAllRequests() {
     const storeReq: Request = yield call(requestFn);
 
     const response: CustomRequest = yield call(fetch, storeReq);
+    if (response.status === 401) {
+      yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+      yield put({ type: authConstants.TOKEN_HAS_EXPIRED });
+      return;
+    }
     yield call(checkStatus, response as unknown as Response);
 
     const jsonResponse: ParsedResponse = yield call(

@@ -25,6 +25,7 @@ export interface MaintenanceLog {
   costOfMaintenance: number;
   createdAt: string;
   updatedAt: string;
+  status: number;
 }
 export interface MaintenanceState {
   maintenanceLogs: MaintenanceLog[];

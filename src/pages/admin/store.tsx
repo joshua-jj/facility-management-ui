@@ -27,13 +27,24 @@ const Stores = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { IsRequestingStores, allStoresList } = useSelector(
+  const { IsRequestingStores, IsSearchingStore, allStoresList } = useSelector(
     (s: RootState) => s.store
   );
 
   useEffect(() => {
     dispatch(storeActions.getStores() as unknown as UnknownAction);
   }, [dispatch]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    if (!query) {
+      dispatch(storeActions.getStores() as unknown as UnknownAction);
+    }
+    setSearchQuery(query);
+    dispatch(
+      storeActions.searchStore({ text: query }) as unknown as UnknownAction
+    );
+  };
 
   const allDepartmentsArray = allStoresList?.map((obj) => ({
     ...obj,
@@ -55,10 +66,11 @@ const Stores = () => {
                   name="searchQuery"
                   value={searchQuery}
                   placeholder="Search"
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // setCurrentPage(1); // reset on new search
-                  }}
+                  onChange={handleSearch}
+                  // onChange={(e) => {
+                  //   setSearchQuery(e.target.value);
+                  //   // setCurrentPage(1); // reset on new search
+                  // }}
                   className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
@@ -130,6 +142,7 @@ const Stores = () => {
           </Formsy>
           <Table
             loading={IsRequestingStores}
+            searching={IsSearchingStore}
             columns={columns}
             data={allStoresList}
           />

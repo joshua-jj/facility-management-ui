@@ -54,6 +54,7 @@ export interface Request {
   descriptionOfRequest: string;
   createdAt: string;
   updatedAt: string;
+  status: number;
   summary?: {
     id: number;
     requestStatus: string;

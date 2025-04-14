@@ -2,7 +2,7 @@ import AdminLayout from '@/components/Layout/AdminLayout';
 import React, { useEffect, useState } from 'react';
 import { Column, Table } from '@/components/Table';
 import Formsy from 'formsy-react';
-import CustomSelect from '@/components/DropdownSelect';
+// import CustomSelect from '@/components/DropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { departmentActions } from '@/actions';
@@ -11,22 +11,21 @@ import { Department } from '@/types';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
 
-const optionsFilter = [
-  { value: '1', label: 'approved' },
-  { value: '2', label: 'assigned' },
-  { value: '3', label: 'collected' },
-  { value: '4', label: 'declined' },
-  { value: '5', label: 'pending' },
-];
+// const optionsFilter = [
+//   { value: '1', label: 'approved' },
+//   { value: '2', label: 'assigned' },
+//   { value: '3', label: 'collected' },
+//   { value: '4', label: 'declined' },
+//   { value: '5', label: 'pending' },
+// ];
 
 const Departments = () => {
   const dispatch = useDispatch();
-  const [statusFilter, setStatusFilter] = useState('');
-  const [deptFilter, setDeptFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
+  // const [statusFilter, setStatusFilter] = useState('');
+  // const [deptFilter, setDeptFilter] = useState('');
+  // const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  // const [currentPage, setCurrentPage] = useState(1);
-  const [showFilterOptions, setShowFilterOptions] = useState(false);
+  // const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { IsRequestingDepartments, allDepartmentsList } = useSelector(
     (s: RootState) => s.department
   );
@@ -35,17 +34,20 @@ const Departments = () => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
   }, [dispatch]);
 
-  const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
-    ...obj,
-    label: obj.name,
-    value: obj.id.toString(),
-  }));
+  const filteredDepartments = allDepartmentsList?.filter(
+    (department) =>
+      department.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      department.hodName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      department.hodEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      department.hodPhone?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const columns: Column<Department>[] = [
     { key: 'name', header: 'DEPARTMENT TITLE' },
     { key: 'hodName', header: 'HOD NAME' },
     { key: 'hodEmail', header: 'EMAIL ADDRESS' },
     { key: 'hodPhone', header: 'PHONE NUMBER' },
+    { key: 'hodPhone', header: 'NO. ITEM' },
   ];
 
   return (
@@ -62,12 +64,11 @@ const Departments = () => {
                   placeholder="Search"
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    // setCurrentPage(1); // reset on new search
                   }}
                   className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
-              <div className="filter relative">
+              {/* <div className="filter relative">
                 <button
                   onClick={() => setShowFilterOptions((prev) => !prev)}
                   className="px-3 py-2 rounded border border-[rgba(15,37,82,0.2)]"
@@ -86,21 +87,17 @@ const Departments = () => {
                           value={statusFilter}
                           onChange={setStatusFilter}
                           placeholder="Status"
-                          // showSelectedLabel
                         />
                       </div>
-
                       <div className="mb-4">
                         <CustomSelect
                           options={allDepartmentsArray}
                           value={deptFilter}
                           onChange={setDeptFilter}
                           placeholder="Department"
-                          // showSelectedLabel
                         />
                       </div>
                       <div className="mb-4">
-                        {/* <label className="block text-sm font-medium text-gray-700">From</label> */}
                         <input
                           type="date"
                           value={dateFrom}
@@ -120,7 +117,7 @@ const Departments = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
             <div>
               <button className="csv text-xs cursor-pointer text-[#B28309] px-3 py-3">
@@ -136,7 +133,7 @@ const Departments = () => {
           <Table
             loading={IsRequestingDepartments}
             columns={columns}
-            data={allDepartmentsList}
+            data={filteredDepartments}
           />
         </div>
       </AdminLayout>

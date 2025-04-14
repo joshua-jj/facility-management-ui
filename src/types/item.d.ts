@@ -7,11 +7,17 @@ export interface ItemConstants {
   GET_ALL_ITEMS_SUCCESS: string;
   GET_ALL_ITEMS_ERROR: string;
 
+  REQUEST_SEARCH_ITEM: string;
+  SEARCH_ITEM_SUCCESS: string;
+  SEARCH_ITEM_ERROR: string;
+
   GET_DEPARTMENT_ITEMS: string;
   GET_ALL_ITEMS: string;
+  SEARCH_ITEM: string;
 
   ITEM_URI: string;
 }
+
 export interface ItemForm {
   itemName: string;
   itemDescription: string;
@@ -29,7 +35,7 @@ export interface Item {
   requestedQuantity?: number;
   //   itemDescription?: string;
   //   itemCategory?: string;
-  status?: string;
+  status?: string | number;
   //   itemLocation: string;
   actualQuantity?: string;
   availableQuantity?: number;

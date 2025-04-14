@@ -19,6 +19,7 @@ interface AllItemsAction extends Action {
   items: {
     items: Item[];
   };
+  item: Item[];
 }
 
 type DepartmentItemsListState = Items[];
@@ -54,6 +55,21 @@ const IsRequestingAllItems = (
   }
 };
 
+const IsSearchingItem = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case itemConstants.REQUEST_SEARCH_ITEM:
+      return true;
+    case itemConstants.SEARCH_ITEM_SUCCESS:
+    case itemConstants.SEARCH_ITEM_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allDepartmentItemsList = (
   state: DepartmentItemsListState = [],
   action: DepartmentItemsAction
@@ -72,6 +88,8 @@ const allItemsList = (
   switch (action.type) {
     case itemConstants.GET_ALL_ITEMS_SUCCESS:
       return action.items?.items ?? state;
+    case itemConstants.SEARCH_ITEM_SUCCESS:
+      return action.item ?? state;
     default:
       return state;
   }
@@ -95,6 +113,7 @@ export interface RootState {
     action: Action
   ) => LoadingState;
   IsRequestingAllItems: (state: LoadingState, action: Action) => LoadingState;
+  IsSearchingItem: (state: LoadingState, action: Action) => LoadingState;
   //   pagination: PaginationState;
   allDepartmentItemsList: (
     state: DepartmentItemsListState | undefined,
@@ -109,6 +128,7 @@ export interface RootState {
 const rootReducer = combineReducers<RootState>({
   IsRequestingDepartmentItems,
   IsRequestingAllItems,
+  IsSearchingItem,
   //   pagination,
   allDepartmentItemsList,
   allItemsList,

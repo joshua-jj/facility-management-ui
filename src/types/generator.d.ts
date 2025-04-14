@@ -26,6 +26,7 @@ export interface GeneratorLog {
   offTime: string;
   hoursUsed: string;
   engineStartHours: string;
+  status?: number;
   // generatorName: string;
   // generatorStatus: string;
   // generatorPower: number;
