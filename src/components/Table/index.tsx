@@ -44,7 +44,10 @@ export function Table<T extends Record<string, any>>({
           </thead>
           <tbody className="bg-white">
             {data?.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-gray-50 border-b-[0.5px] border-[#E4E5E7]">
+              <tr
+                key={rowIndex}
+                className="hover:bg-gray-50 border-b-[0.5px] border-[#E4E5E7]"
+              >
                 {columns.map((col) => (
                   <td
                     key={String(col.key)}

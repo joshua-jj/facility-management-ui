@@ -7,6 +7,7 @@ import {
   ReportsIcon,
   RequestsIcon,
   StoreIcon,
+  // UsersIcon,
 } from '@/components/Icons';
 
 export const pageRoutes = [
@@ -38,4 +39,5 @@ export const pageRoutes = [
     icon: <GeneratorLogIcon />,
   },
   { id: 8, label: 'reports', link: '/admin/reports', icon: <ReportsIcon /> },
+  { id: 8, label: 'users', link: '/admin/users', icon: <ReportsIcon /> },
 ];

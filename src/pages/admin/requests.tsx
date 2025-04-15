@@ -80,12 +80,12 @@ const Requests = () => {
   // const paginated = filtered.slice(start, start + pageSize);
 
   const handleUpdate = (data: object) => {
-    console.log("🚀 ~ handleUpdate ~ data:", data)
-  }
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+  };
 
   const handleDelete = (data: object) => {
-    console.log("🚀 ~ handleDelete ~ data:", data)
-  }
+    console.log('🚀 ~ handleDelete ~ data:', data);
+  };
 
   const columns: Column<Request>[] = [
     { key: 'createdBy', header: 'CHURCH/MINISTRY/NAME' },
@@ -98,16 +98,16 @@ const Requests = () => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
-        {
-          key: 'id',
-          header: '.',
-          render: (value: string | number, row: object) => (
-            <ActionDropDown 
-              handleUpdate={() => handleUpdate(row)}
-              handleDelete={() => handleDelete(row)}
-            />
-          ),
-        },
+    {
+      key: 'id',
+      header: '.',
+      render: (value: string | number, row: object) => (
+        <ActionDropDown
+          handleUpdate={() => handleUpdate(row)}
+          handleDelete={() => handleDelete(row)}
+        />
+      ),
+    },
     // {
     //   key: 'summary',
     //   header: 'STATUS',

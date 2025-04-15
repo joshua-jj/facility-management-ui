@@ -398,7 +398,7 @@ export const FilterIcon: React.FC<Props> = (props) => (
       y={4}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path
@@ -433,7 +433,9 @@ export const DotsIcon: React.FC<Props> = (props) => (
     fill="none"
     {...props}
   >
-    <g fill="currentColor" clipPath="url(#a)"> {/* #0F2552 */}
+    <g fill="currentColor" clipPath="url(#a)">
+      {' '}
+      {/* #0F2552 */}
       <path d="M7.5 3.417A1.458 1.458 0 1 0 7.5.5a1.458 1.458 0 0 0 0 2.917ZM7.5 8.958a1.458 1.458 0 1 0 0-2.917 1.458 1.458 0 0 0 0 2.917ZM7.5 14.5a1.458 1.458 0 1 0 0-2.917 1.458 1.458 0 0 0 0 2.917Z" />
     </g>
     <defs>

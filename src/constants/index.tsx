@@ -7,3 +7,4 @@ export * from './maintenance.constant';
 export * from './report.constant';
 export * from './request.constant';
 export * from './store.constant';
+export * from './user.constant';

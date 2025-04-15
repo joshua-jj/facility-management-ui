@@ -33,6 +33,8 @@ const AdminHeader = () => {
         return 'generator log';
       case '/admin/reports':
         return 'reports';
+      case '/admin/users':
+        return 'users';
       default:
         return '';
     }

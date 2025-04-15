@@ -83,12 +83,12 @@ const Items = () => {
   const paginated = filtered.slice(start, start + pageSize);
 
   const handleUpdate = (data: object) => {
-    console.log("🚀 ~ handleUpdate ~ data:", data)
-  }
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+  };
 
   const handleDelete = (data: object) => {
-    console.log("🚀 ~ handleDelete ~ data:", data)
-  }
+    console.log('🚀 ~ handleDelete ~ data:', data);
+  };
 
   const columns: Column<Item>[] = [
     { key: 'name', header: 'ITEM TITLE' },
@@ -106,18 +106,21 @@ const Items = () => {
       render: (value: string | number, row: Item) => {
         return (
           <span
-            className={classNames('border rounded-[2px] uppercase text-[0.6rem] p-1', {
-              // 'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-              //   value === 'collected',
-              // 'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-              //   value === 'assigned',
-              'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-                value === 'Good',
-              // 'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-              //   value === 'pending',
-              'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-                value === 'Bad',
-            })}
+            className={classNames(
+              'border rounded-[2px] uppercase text-[0.6rem] p-1',
+              {
+                // 'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+                //   value === 'collected',
+                // 'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+                //   value === 'assigned',
+                'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+                  value === 'Good',
+                // 'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+                //   value === 'pending',
+                'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+                  value === 'Bad',
+              }
+            )}
           >
             {value}
           </span>
@@ -130,18 +133,21 @@ const Items = () => {
       render: (value: string | number, row: Item) => {
         return (
           <span
-            className={classNames('border rounded-[2px] uppercase text-[0.6rem] p-1', {
-              'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-                value === 'B',
-              'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-                value === 'C',
-              'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-                value === 'A',
-              'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-                value === 'D',
-              'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-                value === 'E',
-            })}
+            className={classNames(
+              'border rounded-[2px] uppercase text-[0.6rem] p-1',
+              {
+                'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+                  value === 'B',
+                'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+                  value === 'C',
+                'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+                  value === 'A',
+                'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+                  value === 'D',
+                'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+                  value === 'E',
+              }
+            )}
           >
             {value}
           </span>
@@ -152,7 +158,7 @@ const Items = () => {
       key: 'id',
       header: '.',
       render: (value: string | number, row: Item) => (
-        <ActionDropDown 
+        <ActionDropDown
           handleUpdate={() => handleUpdate(row)}
           handleDelete={() => handleDelete(row)}
         />

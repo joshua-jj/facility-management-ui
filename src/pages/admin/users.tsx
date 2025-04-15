@@ -5,12 +5,12 @@ import Formsy from 'formsy-react';
 import CustomSelect from '@/components/DropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { generatorActions } from '@/actions';
+import { userActions } from '@/actions';
 import { UnknownAction } from 'redux';
-import { GeneratorLog } from '@/types';
-import AddDepartment from '@/components/Modals/AddDepartment';
+import { Users as User } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
-import ActionDropDown from '@/components/ActionDropDown';
+import AddStore from '@/components/Modals/AddStore';
+// import ActionDropDown from '@/components/ActionDropDown';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -20,53 +20,69 @@ const optionsFilter = [
   { value: '5', label: 'pending' },
 ];
 
-const GeneratorLogs = () => {
+const Users = () => {
   const dispatch = useDispatch();
   const [statusFilter, setStatusFilter] = useState('');
-  const [deptFilter, setDeptFilter] = useState('');
+  //   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { IsRequestingGeneratorLogs, allGeneratorLogsList } = useSelector(
-    (s: RootState) => s.generator
+  const { IsRequestingUsers, IsSearchingUser, allUsersList } = useSelector(
+    (s: RootState) => s.user
   );
 
   useEffect(() => {
-    dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
+    dispatch(userActions.getUsers() as unknown as UnknownAction);
   }, [dispatch]);
 
-  const allDepartmentsArray = allGeneratorLogsList?.map((obj) => ({
-    ...obj,
-    label: obj.nameOfMeeting,
-    value: obj.id.toString(),
-  }));
-
-  const handleUpdate = (data: object) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    if (!query) {
+      dispatch(userActions.getUsers() as unknown as UnknownAction);
+    }
+    setSearchQuery(query);
+    dispatch(
+      userActions.searchUser({ text: query }) as unknown as UnknownAction
+    );
   };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
+  console.log('🚀 ~ allUsersList:', allUsersList);
 
-  const columns: Column<GeneratorLog>[] = [
-    { key: 'nameOfMeeting', header: 'MEETING TITLE' },
-    // { key: 'hodName', header: 'GENERATOR USED' },
-    { key: 'meetingLocation', header: 'LOCATION' },
-    { key: 'onTime', header: 'ON TIME' },
-    { key: 'offTime', header: 'OFF TIME' },
-    { key: 'offTime', header: 'DATE' },
+  //   const allDepartmentsArray = allUsersList?.map((obj) => ({
+  //     ...obj,
+  //     label: obj.name,
+  //     value: obj.id.toString(),
+  //   }));
+
+  //   const handleUpdate = (data: object) => {
+  //     console.log("🚀 ~ handleUpdate ~ data:", data)
+  //   }
+
+  //   const handleDelete = (data: object) => {
+  //     console.log("🚀 ~ handleDelete ~ data:", data)
+  //   }
+
+  const columns: Column<User>[] = [
+    { key: 'firstName', header: 'FIRST NAME' },
+    { key: 'lastName', header: 'LAST NAME' },
+    { key: 'email', header: 'EMAIL' },
+    { key: 'phoneNumber', header: 'PHONE NUMBER' },
     {
-      key: 'id',
-      header: '.',
-      render: (value: string | number, row: object) => (
-        <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
-        />
-      ),
+      key: 'role',
+      header: 'ROLE',
+      render: (_, row: User) => row.role?.name || 'N/A', // Access department.name
     },
+    // {
+    //   key: 'id',
+    //   header: '.',
+    //   render: (value: string | number, row: object) => (
+    //     <ActionDropDown
+    //       handleUpdate={() => handleUpdate(row)}
+    //       handleDelete={() => handleDelete(row)}
+    //     />
+    //   ),
+    // },
   ];
 
   return (
@@ -81,10 +97,11 @@ const GeneratorLogs = () => {
                   name="searchQuery"
                   value={searchQuery}
                   placeholder="Search"
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // setCurrentPage(1); // reset on new search
-                  }}
+                  onChange={handleSearch}
+                  // onChange={(e) => {
+                  //   setSearchQuery(e.target.value);
+                  //   // setCurrentPage(1); // reset on new search
+                  // }}
                   className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
@@ -112,13 +129,13 @@ const GeneratorLogs = () => {
                       </div>
 
                       <div className="mb-4">
-                        <CustomSelect
+                        {/* <CustomSelect
                           options={allDepartmentsArray}
                           value={deptFilter}
                           onChange={setDeptFilter}
                           placeholder="Department"
                           // showSelectedLabel
-                        />
+                        /> */}
                       </div>
                       <div className="mb-4">
                         {/* <label className="block text-sm font-medium text-gray-700">From</label> */}
@@ -148,16 +165,17 @@ const GeneratorLogs = () => {
                 Download CSV
               </button>
               <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-                <AddDepartment className="text-start w-full cursor-pointer">
-                  Create Generator Log
-                </AddDepartment>
+                <AddStore className="text-start w-full cursor-pointer">
+                  Create User
+                </AddStore>
               </button>
             </div>
           </Formsy>
           <Table
-            loading={IsRequestingGeneratorLogs}
+            loading={IsRequestingUsers}
+            searching={IsSearchingUser}
             columns={columns}
-            data={allGeneratorLogsList}
+            data={allUsersList}
           />
         </div>
       </AdminLayout>
@@ -165,4 +183,4 @@ const GeneratorLogs = () => {
   );
 };
 
-export default GeneratorLogs;
+export default Users;
