@@ -38,8 +38,6 @@ const Items = () => {
     useSelector((s: RootState) => s.item);
   const { meta } = pagination;
   const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
-  console.log('pagination', pagination);
-  console.log('allItemsList', allItemsList);
 
   useEffect(() => {
     dispatch(itemActions.getAllItems() as unknown as UnknownAction);
