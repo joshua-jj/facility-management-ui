@@ -20,6 +20,7 @@ export interface Department {
   hodName: string;
   hodPhone: string;
   name: string;
+  itemCount: number;
   status?: string;
 }
 export interface DepartmentState {

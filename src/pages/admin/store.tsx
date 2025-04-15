@@ -54,20 +54,20 @@ const Stores = () => {
   }));
 
   const handleUpdate = (data: object) => {
-    console.log("🚀 ~ handleUpdate ~ data:", data)
-  }
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+  };
 
   const handleDelete = (data: object) => {
-    console.log("🚀 ~ handleDelete ~ data:", data)
-  }
+    console.log('🚀 ~ handleDelete ~ data:', data);
+  };
 
   const columns: Column<Store>[] = [
-  { key: 'name', header: 'STORE TITLE' },
+    { key: 'name', header: 'STORE TITLE' },
     {
       key: 'id',
       header: '.',
       render: (value: string | number, row: object) => (
-        <ActionDropDown 
+        <ActionDropDown
           handleUpdate={() => handleUpdate(row)}
           handleDelete={() => handleDelete(row)}
         />

@@ -1,0 +1,148 @@
+import { call, put, takeLatest, all } from 'typed-redux-saga';
+import { authConstants, userConstants } from '@/constants';
+import {
+  checkStatus,
+  parseResponse,
+  createRequestWithToken,
+  getObjectFromStorage,
+  clearObjectFromStorage,
+} from '@/utilities/helpers';
+import { Users } from '@/types';
+import { SearchUserAction } from '@/actions';
+
+interface User {
+  user: { [key: string]: unknown };
+  refreshToken: string;
+  token: string;
+}
+interface ParsedResponse {
+  message: string;
+  error: string;
+  items: {
+    user: { [key: string]: unknown };
+    id: string;
+    redirect_url: string;
+    source?: string;
+    token: string;
+  };
+}
+
+interface ApiError {
+  response?: Response;
+  message?: string;
+  error?: string;
+}
+
+function* getUsers() {
+  yield put({ type: userConstants.REQUEST_GET_USERS });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    const userUri = `${userConstants.USER_URI}`;
+
+    const requestFn = () =>
+      createRequestWithToken(userUri, { method: 'GET' })(user?.token as string);
+    const userReq: Request = yield call(requestFn);
+
+    const response: Users = yield call(fetch, userReq);
+    if (response.status === 401) {
+      yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+      yield put({ type: authConstants.TOKEN_HAS_EXPIRED });
+      return;
+    }
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
+
+    yield put({
+      type: userConstants.GET_USERS_SUCCESS,
+      users: jsonResponse?.items,
+    });
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: userConstants.GET_USERS_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: userConstants.GET_USERS_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+  }
+}
+
+function* searchUser({ data }: SearchUserAction) {
+  yield put({ type: userConstants.REQUEST_SEARCH_USER });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    const userUri = `${userConstants.USER_URI}/search?q=${data.text}`;
+
+    const requestFn = () =>
+      createRequestWithToken(userUri, { method: 'GET' })(user?.token as string);
+    const userReq: Request = yield call(requestFn);
+
+    const response: User = yield call(fetch, userReq);
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
+
+    yield put({
+      type: userConstants.SEARCH_USER_SUCCESS,
+      user: jsonResponse,
+    });
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: userConstants.SEARCH_USER_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: userConstants.SEARCH_USER_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+  }
+}
+
+function* getUsersWatcher() {
+  yield takeLatest(userConstants.GET_USERS, getUsers);
+}
+
+function* searchUserWatcher() {
+  yield takeLatest(userConstants.SEARCH_USER, searchUser);
+}
+
+export default function* rootSaga() {
+  yield all([getUsersWatcher(), searchUserWatcher()]);
+}

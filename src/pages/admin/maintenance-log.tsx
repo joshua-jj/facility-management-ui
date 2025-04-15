@@ -62,12 +62,12 @@ const MaintenanceLogs = () => {
   }));
 
   const handleUpdate = (data: object) => {
-    console.log("🚀 ~ handleUpdate ~ data:", data)
-  }
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+  };
 
   const handleDelete = (data: object) => {
-    console.log("🚀 ~ handleDelete ~ data:", data)
-  }
+    console.log('🚀 ~ handleDelete ~ data:', data);
+  };
 
   const columns: Column<MaintenanceLog>[] = [
     { key: 'servicedItem', header: 'SERVICED ITEM' },
@@ -75,16 +75,16 @@ const MaintenanceLogs = () => {
     { key: 'artisanName', header: 'ARTISAN NAME' },
     { key: 'artisanPhone', header: 'ARTISAN NUMBER' },
     { key: 'maintenanceDate', header: 'DATE' },
-        {
-          key: 'id',
-          header: '.',
-          render: (value: string | number, row: object) => (
-            <ActionDropDown 
-              handleUpdate={() => handleUpdate(row)}
-              handleDelete={() => handleDelete(row)}
-            />
-          ),
-        },
+    {
+      key: 'id',
+      header: '.',
+      render: (value: string | number, row: object) => (
+        <ActionDropDown
+          handleUpdate={() => handleUpdate(row)}
+          handleDelete={() => handleDelete(row)}
+        />
+      ),
+    },
   ];
 
   return (

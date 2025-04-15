@@ -12,6 +12,7 @@ export interface StoreConstants {
 
   STORE_URI: string;
 }
+
 export interface StoreForm {
   storeName: string;
   storeLocation: string;

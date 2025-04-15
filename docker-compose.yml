@@ -1,6 +1,6 @@
 services:
   web:
-    container_name: nextjs-dev
+    container_name: egfm-dev
     build:
       context: .
       dockerfile: Dockerfile
