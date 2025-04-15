@@ -1,4 +1,5 @@
 import React from 'react';
+import { CaretIcon } from '../Icons';
 
 type PaginationProps = {
   currentPage: number;
@@ -33,7 +34,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   // const endItem = Math.min(startItem + pageSize - 1, totalItems);
 
   return (
-    <div className="flex flex-wrap justify-between items-center mt-4 gap-4">
+    <div className="flex flex-wrap justify-between items-center px-6 py-4 gap-4">
       {/* <p className="text-sm text-gray-600">
                 Showing {startItem} - {endItem} of {totalItems}
             </p> */}
@@ -61,33 +62,33 @@ export const Pagination: React.FC<PaginationProps> = ({
           id="jump"
           value={currentPage}
           onChange={(e) => onPageChange(Number(e.target.value))}
-          className="rounded border-gray-300 text-sm shadow-sm"
+          className="rounded-[16px] px-3 py-1 border-[rgba(15,37,82,0.15)] text-sm shadow-sm"
         >
           {Array.from({ length: totalPages }, (_, i) => (
-            <option key={i + 1} value={i + 1}>
+            <option key={i + 1} value={i + 1} className="">
               {i + 1}
             </option>
           ))}
         </select>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <button
           onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
           disabled={currentPage === 1}
-          className="px-2 py-1 rounded cursor-pointer bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+          className="rotate-[180deg] rounded-[50%] text-xs font-medium text-center h-[2rem] w-[2rem] border border-[rgba(15,37,82,0.15)] hover:border-none flex items-center justify-center cursor-pointer disabled:cursor-not-allowed bg-transparent hover:bg-gray-300 disabled:opacity-50"
         >
-          Prev
+          <CaretIcon />
         </button>
 
         {getVisiblePages().map((page) => (
           <button
             key={page}
             onClick={() => onPageChange(page)}
-            className={`px-3 py-1 rounded ${
+            className={`rounded-[50%] text-xs font-medium text-center h-[2rem] w-[2rem] ${
               page === currentPage
-                ? 'bg-blue-600 text-white cursor-pointer'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer'
+                ? 'bg-[#B28309] text-white cursor-pointer'
+                : 'bg-transparent hover:bg-[#B2830998] hover:text-white text-gray-700 cursor-pointer disabled:cursor-not-allowed'
             }`}
           >
             {page}
@@ -97,9 +98,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
           disabled={currentPage === totalPages}
-          className="px-2 py-1 rounded cursor-pointer bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+          className="rounded-[50%] text-xs font-medium text-center h-[2rem] w-[2rem] border border-[rgba(15,37,82,0.15)] hover:border-none flex items-center justify-center cursor-pointer disabled:cursor-not-allowed bg-transparent hover:bg-gray-300 disabled:opacity-50"
         >
-          Next
+          <CaretIcon />
         </button>
       </div>
     </div>

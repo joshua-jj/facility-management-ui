@@ -23,32 +23,32 @@ export function Table<T extends Record<string, any>>({
   currentPage,
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto w-full rounded border border-gray-200 shadow-sm">
+    <div className="overflow-x-auto w-full">
       {((data?.length === 0 || currentPage !== 1) && loading) || searching ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-[#B28309] border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : (
         <table className="min-w-full ">
-          <thead className="bg-[#F2F2F2]">
-            <tr>
+          <thead className="bg-[#F2F2F2] border-none">
+            <tr className="border-none">
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
-                  className="px-4 py-3 text-left text-sm font-semibold text-gray-700 text-nowrap"
+                  className="px-3 py-4 first:pl-6 text-left text-xs font-semibold text-gray-700 text-nowrap"
                 >
                   {col.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
+          <tbody className="bg-white">
             {data?.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-gray-50">
+              <tr key={rowIndex} className="hover:bg-gray-50 border-b-[0.5px] border-[#E4E5E7]">
                 {columns.map((col) => (
                   <td
                     key={String(col.key)}
-                    className="px-4 py-3 text-sm text-gray-800"
+                    className="px-3 py-4 first:pl-6 text-[0.8rem] text-gray-800 text-nowrap"
                   >
                     {col.render
                       ? col.render(row[col.key], row)

@@ -30,7 +30,7 @@ const AdminSidebar = () => {
           <li
             key={index}
             className={classNames(
-              'my-5 capitalize text-xs text-[#0F2552] hover:text-[#B28309] transition',
+              'my-5 capitalize text-[0.8rem] text-[#0F2552] hover:text-[#B28309] transition',
               { 'text-[#B28309]': activeRoute(pageRoute?.link) }
             )}
           >

@@ -375,3 +375,71 @@ export const ReportsIcon: React.FC<Props> = (props) => (
     />
   </svg>
 );
+
+export const FilterIcon: React.FC<Props> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={20}
+    height={20}
+    fill="none"
+    {...props}
+  >
+    <path
+      fill="currentColor" // #0F2552
+      fillRule="evenodd"
+      d="M8.48 15.22H3.492a.594.594 0 0 1 0-1.188H8.48a.594.594 0 0 1 0 1.187ZM15.693 7.546h-4.988a.594.594 0 0 1 0-1.188h4.988a.594.594 0 0 1 0 1.188Z"
+      clipRule="evenodd"
+    />
+    <mask
+      id="a"
+      width={6}
+      height={6}
+      x={2}
+      y={4}
+      maskUnits="userSpaceOnUse"
+      style={{
+        maskType: "luminance",
+      }}
+    >
+      <path
+        fill="#fff"
+        fillRule="evenodd"
+        d="M2.875 4.458h4.929V9.36H2.875V4.46Z"
+        clipRule="evenodd"
+      />
+    </mask>
+    <g mask="url(#a)">
+      <path
+        fill="currentColor" // #0F2552
+        fillRule="evenodd"
+        d="M5.34 5.646c-.704 0-1.278.566-1.278 1.264 0 .696.574 1.263 1.277 1.263A1.27 1.27 0 0 0 6.616 6.91c0-.698-.572-1.264-1.277-1.264Zm0 3.714a2.46 2.46 0 0 1-2.465-2.45 2.462 2.462 0 0 1 2.464-2.452c1.36 0 2.465 1.1 2.465 2.452a2.46 2.46 0 0 1-2.465 2.45Z"
+        clipRule="evenodd"
+      />
+    </g>
+    <path
+      fill="currentColor" // #0F2552
+      fillRule="evenodd"
+      d="M14.265 13.331c-.704 0-1.277.567-1.277 1.264 0 .697.573 1.263 1.277 1.263a1.27 1.27 0 0 0 1.276-1.263c0-.697-.572-1.264-1.276-1.264Zm0 3.715c-1.359 0-2.465-1.1-2.465-2.451a2.461 2.461 0 0 1 2.465-2.451 2.46 2.46 0 0 1 2.464 2.45 2.46 2.46 0 0 1-2.464 2.452Z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+export const DotsIcon: React.FC<Props> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={15}
+    height={15}
+    fill="none"
+    {...props}
+  >
+    <g fill="currentColor" clipPath="url(#a)"> {/* #0F2552 */}
+      <path d="M7.5 3.417A1.458 1.458 0 1 0 7.5.5a1.458 1.458 0 0 0 0 2.917ZM7.5 8.958a1.458 1.458 0 1 0 0-2.917 1.458 1.458 0 0 0 0 2.917ZM7.5 14.5a1.458 1.458 0 1 0 0-2.917 1.458 1.458 0 0 0 0 2.917Z" />
+    </g>
+    <defs>
+      <clipPath id="a">
+        <path fill="#fff" d="M.5.5h14v14H.5z" />
+      </clipPath>
+    </defs>
+  </svg>
+);

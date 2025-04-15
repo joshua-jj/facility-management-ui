@@ -10,6 +10,7 @@ import { UnknownAction } from 'redux';
 import { MaintenanceLog } from '@/types';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
+import ActionDropDown from '@/components/ActionDropDown';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -60,12 +61,30 @@ const MaintenanceLogs = () => {
     value: obj.id.toString(),
   }));
 
+  const handleUpdate = (data: object) => {
+    console.log("🚀 ~ handleUpdate ~ data:", data)
+  }
+
+  const handleDelete = (data: object) => {
+    console.log("🚀 ~ handleDelete ~ data:", data)
+  }
+
   const columns: Column<MaintenanceLog>[] = [
     { key: 'servicedItem', header: 'SERVICED ITEM' },
     { key: 'costOfMaintenance', header: 'COST ' },
     { key: 'artisanName', header: 'ARTISAN NAME' },
     { key: 'artisanPhone', header: 'ARTISAN NUMBER' },
     { key: 'maintenanceDate', header: 'DATE' },
+        {
+          key: 'id',
+          header: '.',
+          render: (value: string | number, row: object) => (
+            <ActionDropDown 
+              handleUpdate={() => handleUpdate(row)}
+              handleDelete={() => handleDelete(row)}
+            />
+          ),
+        },
   ];
 
   return (

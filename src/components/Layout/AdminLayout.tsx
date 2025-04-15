@@ -14,7 +14,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, className }) => {
       <AdminSidebar />
       <div className="overflow-y-auto">
         <AdminHeader />
-        <main className={`text-[#0F2552] p-8 ${className}`}>{children}</main>
+        <main className={`text-[#0F2552] p-8 pb-20 ${className}`}>{children}</main>
       </div>
     </div>
   );

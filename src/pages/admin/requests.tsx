@@ -13,6 +13,7 @@ import { UnknownAction } from 'redux';
 import classNames from 'classnames';
 import { Request } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
+import ActionDropDown from '@/components/ActionDropDown';
 
 type Users = {
   id: number;
@@ -22,105 +23,6 @@ type Users = {
   status: 'collected' | 'pending' | 'approved' | 'assigned' | 'declined';
   return_date: string;
 };
-
-const employees: Users[] = [
-  {
-    id: 1,
-    name: 'Leo King',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'collected',
-  },
-  {
-    id: 2,
-    name: 'Sandra Lopez',
-    email: 'john@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'pending',
-  },
-  {
-    id: 3,
-    name: 'Indiana King',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'approved',
-  },
-  {
-    id: 4,
-    name: 'Samson Deen',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'declined',
-  },
-  {
-    id: 5,
-    name: 'Sunday Adam',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-  {
-    id: 6,
-    name: 'Emmanuella Olorunsagba',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-  {
-    id: 7,
-    name: 'Chimezule Uchendu',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-  {
-    id: 8,
-    name: 'Stephen Amagba',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-  {
-    id: 9,
-    name: 'Lara Clara',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-  {
-    id: 10,
-    name: 'Clay Kamma',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-  {
-    id: 11,
-    name: 'John El',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-  {
-    id: 12,
-    name: 'David Akpan',
-    email: 'leo@gmail.com',
-    phone: '726-555-3962',
-    return_date: '2023-01-10',
-    status: 'assigned',
-  },
-];
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -155,27 +57,35 @@ const Requests = () => {
     value: obj.id.toString(),
   }));
 
-  const filtered = employees.filter((emp) => {
-    const matchStatus = statusFilter ? emp.status === statusFilter : true;
-    const matchDept = deptFilter ? emp.name === deptFilter : true;
-    const matchDate =
-      dateFrom && dateTo
-        ? isWithinInterval(parseISO(emp.return_date), {
-            start: parseISO(dateFrom),
-            end: parseISO(dateTo),
-          })
-        : true;
-    const matchSearch = emp.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+  // const filtered = allRequestsList.filter((emp) => {
+  //   const matchStatus = statusFilter ? emp.status === statusFilter : true;
+  //   const matchDept = deptFilter ? emp.name === deptFilter : true;
+  //   const matchDate =
+  //     dateFrom && dateTo
+  //       ? isWithinInterval(parseISO(emp.return_date), {
+  //           start: parseISO(dateFrom),
+  //           end: parseISO(dateTo),
+  //         })
+  //       : true;
+  //   const matchSearch = emp.name
+  //     .toLowerCase()
+  //     .includes(searchQuery.toLowerCase());
 
-    return matchStatus && matchDept && matchDate && matchSearch;
-  });
+  //   return matchStatus && matchDept && matchDate && matchSearch;
+  // });
 
   const pageSize = 10;
   // const totalPages = Math.ceil(filtered.length / pageSize);
-  const start = (currentPage - 1) * pageSize;
-  const paginated = filtered.slice(start, start + pageSize);
+  // const start = (currentPage - 1) * pageSize;
+  // const paginated = filtered.slice(start, start + pageSize);
+
+  const handleUpdate = (data: object) => {
+    console.log("🚀 ~ handleUpdate ~ data:", data)
+  }
+
+  const handleDelete = (data: object) => {
+    console.log("🚀 ~ handleDelete ~ data:", data)
+  }
 
   const columns: Column<Request>[] = [
     { key: 'createdBy', header: 'CHURCH/MINISTRY/NAME' },
@@ -188,6 +98,16 @@ const Requests = () => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
+        {
+          key: 'id',
+          header: '.',
+          render: (value: string | number, row: object) => (
+            <ActionDropDown 
+              handleUpdate={() => handleUpdate(row)}
+              handleDelete={() => handleDelete(row)}
+            />
+          ),
+        },
     // {
     //   key: 'summary',
     //   header: 'STATUS',
@@ -308,11 +228,10 @@ const Requests = () => {
             columns={columns}
             data={allRequestsList}
           />
-          {/* <Table loading={IsRequestingRequests} columns={columns} data={paginated || filtered} /> */}
 
           <Pagination
             currentPage={currentPage}
-            totalItems={filtered.length}
+            totalItems={allRequestsList?.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
             // onPageSizeChange={(size) => {

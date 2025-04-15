@@ -10,6 +10,7 @@ import { UnknownAction } from 'redux';
 import { GeneratorLog } from '@/types';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
+import ActionDropDown from '@/components/ActionDropDown';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -41,6 +42,14 @@ const GeneratorLogs = () => {
     value: obj.id.toString(),
   }));
 
+  const handleUpdate = (data: object) => {
+    console.log("🚀 ~ handleUpdate ~ data:", data)
+  }
+
+  const handleDelete = (data: object) => {
+    console.log("🚀 ~ handleDelete ~ data:", data)
+  }
+
   const columns: Column<GeneratorLog>[] = [
     { key: 'nameOfMeeting', header: 'MEETING TITLE' },
     // { key: 'hodName', header: 'GENERATOR USED' },
@@ -48,6 +57,16 @@ const GeneratorLogs = () => {
     { key: 'onTime', header: 'ON TIME' },
     { key: 'offTime', header: 'OFF TIME' },
     { key: 'offTime', header: 'DATE' },
+        {
+          key: 'id',
+          header: '.',
+          render: (value: string | number, row: object) => (
+            <ActionDropDown 
+              handleUpdate={() => handleUpdate(row)}
+              handleDelete={() => handleDelete(row)}
+            />
+          ),
+        },
   ];
 
   return (

@@ -14,6 +14,8 @@ import classNames from 'classnames';
 import { Pagination } from '@/components/Pagination';
 import AddItem from '@/components/Modals/AddItem';
 import PrivateRoute from '@/components/PrivateRoute';
+import { FilterIcon } from '@/components/Icons';
+import ActionDropDown from '@/components/ActionDropDown';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -37,6 +39,7 @@ const Items = () => {
   const { meta } = pagination;
   const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
   console.log('pagination', pagination);
+  console.log('allItemsList', allItemsList);
 
   useEffect(() => {
     dispatch(itemActions.getAllItems() as unknown as UnknownAction);
@@ -81,6 +84,14 @@ const Items = () => {
   const start = (currentPage - 1) * pageSize;
   const paginated = filtered.slice(start, start + pageSize);
 
+  const handleUpdate = (data: object) => {
+    console.log("🚀 ~ handleUpdate ~ data:", data)
+  }
+
+  const handleDelete = (data: object) => {
+    console.log("🚀 ~ handleDelete ~ data:", data)
+  }
+
   const columns: Column<Item>[] = [
     { key: 'name', header: 'ITEM TITLE' },
     {
@@ -97,7 +108,7 @@ const Items = () => {
       render: (value: string | number, row: Item) => {
         return (
           <span
-            className={classNames('border rounded uppercase text-xs p-1', {
+            className={classNames('border rounded-[2px] uppercase text-[0.6rem] p-1', {
               // 'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
               //   value === 'collected',
               // 'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
@@ -121,7 +132,7 @@ const Items = () => {
       render: (value: string | number, row: Item) => {
         return (
           <span
-            className={classNames('border rounded uppercase text-xs p-1', {
+            className={classNames('border rounded-[2px] uppercase text-[0.6rem] p-1', {
               'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
                 value === 'B',
               'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
@@ -139,15 +150,16 @@ const Items = () => {
         );
       },
     },
-    // {
-    //   key: 'action',
-    //   // header: 'STATUS',
-    //   render: (value: string | number, row: Item) => {
-    //     return (
-    //       <ActionDropDown />
-    //     );
-    //   },
-    // },
+    {
+      key: 'id',
+      header: '.',
+      render: (value: string | number, row: Item) => (
+        <ActionDropDown 
+          handleUpdate={() => handleUpdate(row)}
+          handleDelete={() => handleDelete(row)}
+        />
+      ),
+    },
   ];
 
   const handleChangePage = (page: number) => {
@@ -157,8 +169,8 @@ const Items = () => {
   return (
     <PrivateRoute>
       <AdminLayout>
-        <div className="p-8 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          <Formsy className="flex items-center justify-between mb-4">
+        <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+          <Formsy className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               <div className="w-[17rem]">
                 <input
@@ -171,15 +183,15 @@ const Items = () => {
                   //   setSearchQuery(e.target.value);
                   //   // setCurrentPage(1); // reset on new search
                   // }}
-                  className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
+                  className="px-3 py-[0.65rem] block w-full text-xs rounded border border-[rgba(15,37,82,0.2)]"
                 />
               </div>
               <div className="filter relative">
                 <button
                   onClick={() => setShowFilterOptions((prev) => !prev)}
-                  className="px-3 py-2 rounded border border-[rgba(15,37,82,0.2)]"
+                  className="px-3 py-2 text-xs flex items-center rounded border border-[rgba(15,37,82,0.2)]"
                 >
-                  Filter
+                  <FilterIcon className="mr-1" /> Filter
                 </button>
                 {showFilterOptions && (
                   <div className="filter-options absolute bg-white rounded mt-[0.2rem] right-0 min-w-full w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
