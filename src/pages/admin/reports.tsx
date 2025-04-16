@@ -2,7 +2,6 @@ import CustomSelect from '@/components/DropdownSelect';
 import { DotsIcon, FilterIcon } from '@/components/Icons';
 import AdminLayout from '@/components/Layout/AdminLayout';
 import LetterAvatar from '@/components/LetteredAvatar';
-import Report from '@/components/Modals/Report';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { RootState } from '@/redux/reducers';
 import classNames from 'classnames';
@@ -61,7 +60,7 @@ const Reports = () => {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between gap-4 mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6 z-50">
         <div className="w-[17rem]">
           <input
             type="text"
@@ -84,7 +83,7 @@ const Reports = () => {
             <FilterIcon className="mr-1" /> Filter
           </button>
           {showFilterOptions && (
-            <div className="filter-options absolute bg-white rounded mt-[0.2rem] right-0 min-w-full w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
+            <div className="filter-options absolute bg-white rounded mt-[0.2rem] right-0 min-w-full w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))] z-50">
               <h4 className="px-4 py-3 font-semibold">Filter by</h4>
               <hr className="m-0 p-0 border border-[rgba(228,229,231,1)]" />
 
@@ -151,7 +150,7 @@ const Reports = () => {
                 name="Ronnie Spinka" 
                 size={30} 
                 singleLetter 
-                className="text-xs !bg-[rgba(243,245,247,1)] border border-[rgba(225,227,231,1)] shadow-[16px_4px_32px_0px_rgba(189,189,189,0.3)]" 
+                className="text-xs !text-[#2E4168] !bg-[rgba(243,245,247,1)] border border-[rgba(225,227,231,1)] shadow-[16px_4px_32px_0px_rgba(189,189,189,0.3)]" 
               />
               <span className="capitalize text-xs">{item.username}</span>
             </div>
