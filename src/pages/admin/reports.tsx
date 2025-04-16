@@ -1,7 +1,11 @@
 import CustomSelect from '@/components/DropdownSelect';
-import { FilterIcon } from '@/components/Icons';
+import { DotsIcon, FilterIcon } from '@/components/Icons';
 import AdminLayout from '@/components/Layout/AdminLayout';
+import LetterAvatar from '@/components/LetteredAvatar';
+import Report from '@/components/Modals/Report';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { RootState } from '@/redux/reducers';
+import classNames from 'classnames';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -11,6 +15,23 @@ const optionsFilter = [
   { value: '3', label: 'collected' },
   { value: '4', label: 'declined' },
   { value: '5', label: 'pending' },
+];
+
+interface ReportTypes {
+  id: number;
+  title: string;
+  username: string;
+  status: string;
+  description: string;
+}
+
+const reports = [
+  {id: 1, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+  {id: 2, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+  {id: 3, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+  {id: 4, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+  {id: 5, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+  {id: 6, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
 ];
 
 const Reports = () => {
@@ -40,7 +61,7 @@ const Reports = () => {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div className="w-[17rem]">
           <input
             type="text"
@@ -52,13 +73,13 @@ const Reports = () => {
             //   setSearchQuery(e.target.value);
             //   // setCurrentPage(1); // reset on new search
             // }}
-            className="px-3 py-[0.65rem] block w-full text-xs rounded border border-[rgba(15,37,82,0.2)]"
+            className="bg-[#ffffff] px-3 py-[0.65rem] block w-full text-xs rounded border border-[rgba(15,37,82,0.2)]"
           />
         </div>
         <div className="filter relative">
           <button
             onClick={() => setShowFilterOptions((prev) => !prev)}
-            className="px-3 py-2 text-xs flex items-center rounded border border-[rgba(15,37,82,0.2)]"
+            className="bg-[#ffffff] px-3 py-2 text-xs flex items-center rounded border border-[rgba(15,37,82,0.2)]"
           >
             <FilterIcon className="mr-1" /> Filter
           </button>
@@ -110,9 +131,58 @@ const Reports = () => {
           )}
         </div>
       </div>
-      
+
+      <div className="grid grid-cols-3 gap-4">
+        {reports.map((item, index) => (
+          <div key={index} className="p-6 relative rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)]">
+            <div className={classNames("inline-flex px-1 py-1 rounded-[3px] text-[0.6rem] font-semibold uppercase border", {
+              'text-[rgba(255,153,0,1)] bg-[rgba(255,153,0,0.15)] border-[rgba(255,153,0,0.1)]': item.status === 'pending',
+              'text-[rgba(0,163,92,1)] bg-[rgba(0,163,92,0.15)] border-[rgba(0,163,92,0.1)]': item.status === 'treated',
+            })}>
+              {item.status}
+            </div>
+            <div className="absolute top-[1rem] right-[1rem]">
+              <Dropdown {...item} />
+            </div>
+            <h4 className="font-semibold text-[0.82rem] pt-3 pb-1">{item.title}</h4>
+            <p className="text-[0.82rem] pb-4">{item.description}</p>
+            <div className="flex items-center gap-2">
+              <LetterAvatar 
+                name="Ronnie Spinka" 
+                size={30} 
+                singleLetter 
+                className="text-xs !bg-[rgba(243,245,247,1)] border border-[rgba(225,227,231,1)] shadow-[16px_4px_32px_0px_rgba(189,189,189,0.3)]" 
+              />
+              <span className="capitalize text-xs">{item.username}</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </AdminLayout>
   );
 };
 
 export default Reports;
+
+const Dropdown = (props: ReportTypes) => {
+  console.log("🚀 ~ Dropdown ~ props:", props)
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const ref = useOnClickOutside<HTMLDivElement>(() => setShowDropdown(false));
+
+  return (
+    <>
+      <DotsIcon onClick={() => setShowDropdown((prev) => !prev)} className="rotate-[90deg] cursor-pointer" />
+        {showDropdown && (
+          <div ref={ref} className="relative">
+            <button className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
+              open
+            </button>
+            {/* <Report className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
+              open
+            </Report> */}
+          </div>
+        )}
+    </>
+  )
+}
