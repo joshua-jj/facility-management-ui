@@ -5,7 +5,7 @@ import { format, parseISO, isWithinInterval } from 'date-fns';
 import { Column, Table } from '@/components/Table';
 import { Pagination } from '@/components/Pagination';
 import Formsy from 'formsy-react';
-import CustomSelect from '@/components/DropdownSelect';
+import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { departmentActions, requestActions } from '@/actions';
@@ -138,9 +138,9 @@ const Requests = () => {
   return (
     <PrivateRoute>
       <AdminLayout>
-        <div className="p-8 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+        <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
           {/* Filters */}
-          <Formsy className="flex items-center justify-between mb-4">
+          <Formsy className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               {/* Search */}
               <div className="w-[17rem]">
@@ -173,7 +173,7 @@ const Requests = () => {
                     <div className="p-4">
                       {/* status filter */}
                       <div className="mb-4">
-                        <CustomSelect
+                        <CustomDropdownSelect
                           options={optionsFilter}
                           value={statusFilter}
                           onChange={setStatusFilter}
@@ -183,7 +183,7 @@ const Requests = () => {
                       </div>
 
                       <div className="mb-4">
-                        <CustomSelect
+                        <CustomDropdownSelect
                           options={allDepartmentsArray}
                           value={deptFilter}
                           onChange={setDeptFilter}

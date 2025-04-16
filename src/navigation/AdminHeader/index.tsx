@@ -46,7 +46,7 @@ const AdminHeader = () => {
   };
 
   return (
-    <div className="bg-white h-[4.8rem] sticky top-0 z-50 px-8 flex items-center justify-between border-l-[0.5px] border-[#E1E3E7] text-[#0F2552] shadow-[0px_16px_32px_0px_rgba(189,189,189,0.25)]">
+    <div className="bg-white h-[4.8rem] sticky top-0 z-[5001] px-8 flex items-center justify-between border-l-[0.5px] border-[#E1E3E7] text-[#0F2552] shadow-[0px_16px_32px_0px_rgba(189,189,189,0.25)]">
       <h1 className="capitalize font-semibold">
         {getPageNames(router.pathname)}
       </h1>
