@@ -8,7 +8,7 @@ interface Option {
   value: string;
 }
 
-interface CustomSelectProps {
+interface CustomDropdownSelectProps {
   options: Option[];
   value: string;
   onChange: (value: string) => void;
@@ -16,13 +16,13 @@ interface CustomSelectProps {
   showSelectedLabel?: boolean;
 }
 
-export default function CustomSelect({
+export default function CustomDropdownSelect({
   options,
   value,
   onChange,
   placeholder = 'Select an option',
   showSelectedLabel = false,
-}: CustomSelectProps) {
+}: CustomDropdownSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
 

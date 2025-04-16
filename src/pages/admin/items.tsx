@@ -3,7 +3,7 @@ import AdminLayout from '@/components/Layout/AdminLayout';
 import React, { useEffect, useState } from 'react';
 import { Column, Table } from '@/components/Table';
 import Formsy from 'formsy-react';
-import CustomSelect from '@/components/DropdownSelect';
+import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { itemActions } from '@/actions';
@@ -204,7 +204,7 @@ const Items = () => {
 
                     <div className="p-4">
                       <div className="mb-4">
-                        <CustomSelect
+                        <CustomDropdownSelect
                           options={optionsFilter}
                           value={statusFilter}
                           onChange={setStatusFilter}
@@ -214,7 +214,7 @@ const Items = () => {
                       </div>
 
                       <div className="mb-4">
-                        <CustomSelect
+                        <CustomDropdownSelect
                           options={allDepartmentsArray}
                           value={deptFilter}
                           onChange={setDeptFilter}

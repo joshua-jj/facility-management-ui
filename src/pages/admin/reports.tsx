@@ -1,4 +1,4 @@
-import CustomSelect from '@/components/DropdownSelect';
+import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { DotsIcon, FilterIcon } from '@/components/Icons';
 import AdminLayout from '@/components/Layout/AdminLayout';
 import LetterAvatar from '@/components/LetteredAvatar';
@@ -89,7 +89,7 @@ const Reports = () => {
 
               <div className="p-4">
                 <div className="mb-4">
-                  <CustomSelect
+                  <CustomDropdownSelect
                     options={optionsFilter}
                     value={statusFilter}
                     onChange={setStatusFilter}
@@ -99,7 +99,7 @@ const Reports = () => {
                 </div>
 
                 <div className="mb-4">
-                  <CustomSelect
+                  <CustomDropdownSelect
                     options={allDepartmentsArray}
                     value={deptFilter}
                     onChange={setDeptFilter}

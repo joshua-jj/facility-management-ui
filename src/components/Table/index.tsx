@@ -23,7 +23,7 @@ export function Table<T extends Record<string, any>>({
   currentPage,
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto w-full">
+    <div className="overflow-auto scrollbar-hidden w-full">
       {((data?.length === 0 || currentPage !== 1) && loading) || searching ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-[#B28309] border-t-transparent rounded-full animate-spin"></div>
@@ -51,7 +51,7 @@ export function Table<T extends Record<string, any>>({
                 {columns.map((col) => (
                   <td
                     key={String(col.key)}
-                    className="px-3 py-4 first:pl-6 text-[0.8rem] text-gray-800 text-nowrap"
+                    className="px-3 py-4 first:pl-6 last:relative text-[0.8rem] text-gray-800 text-nowrap"
                   >
                     {col.render
                       ? col.render(row[col.key], row)
