@@ -6,5 +6,6 @@ export * from './item';
 export * from './maintenance';
 export * from './report';
 export * from './request';
+export * from './role';
 export * from './store';
 export * from './user';

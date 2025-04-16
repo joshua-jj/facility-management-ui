@@ -7,8 +7,13 @@ export interface UserConstants {
   SEARCH_USER_SUCCESS: string;
   SEARCH_USER_ERROR: string;
 
+  REQUEST_CREATE_USER: string;
+  CREATE_USER_SUCCESS: string;
+  CREATE_USER_ERROR: string;
+
   GET_USERS: string;
   SEARCH_USER: string;
+  CREATE_USER: string;
 
   USER_URI: string;
 }
@@ -73,4 +78,13 @@ export interface UserAction {
   success?: boolean;
   userForm?: UserDetail;
   loadingState?: LoadingState;
+}
+
+export interface CreateUserForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  roleId: number;
+  departmentId?: number;
 }

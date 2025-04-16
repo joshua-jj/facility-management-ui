@@ -6,6 +6,7 @@ import itemRootReducer from './item.reducer';
 import maintenanceRootReducer from './maintenance.reducer';
 import reportRootReducer from './report.reducer';
 import requestRootReducer from './request.reducer';
+import roleRootReducer from './role.reducer';
 // import snackbarRootReducer from './snackbar.reducer';
 import storeRootReducer from './store.reducer';
 import userRootReducer from './user.reducer';
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   maintenance: maintenanceRootReducer,
   report: reportRootReducer,
   request: requestRootReducer,
+  role: roleRootReducer,
   //   snackbar: snackbarRootReducer,
   store: storeRootReducer,
   user: userRootReducer,

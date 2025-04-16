@@ -6,5 +6,6 @@ export * from './item.constant';
 export * from './maintenance.constant';
 export * from './report.constant';
 export * from './request.constant';
+export * from './role.constant';
 export * from './store.constant';
 export * from './user.constant';
