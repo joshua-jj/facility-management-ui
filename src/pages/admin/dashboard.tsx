@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { requestActions } from '@/actions';
+import BarChart from '@/components/BarChart';
 import { DueReturnsIcon, TotalItemsIcon, TotalReportsIcon, TotalRequestsIcon } from '@/components/Icons';
 import AdminLayout from '@/components/Layout/AdminLayout';
 import { Column, Table } from '@/components/Table';
@@ -10,6 +11,8 @@ import Link from 'next/link';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
+import DoughnutChart from '@/components/DoughnutChart';
+import Calendar from '@/components/Calendar';
 
 const stats = [
   {id: 1, icon: <TotalRequestsIcon />, label: 'total requests', value: 14},
@@ -68,7 +71,7 @@ const Dashboard = () => {
         <div className="col-span-7 p-0">
           <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
             <div className="px-4 py-5 flex items-center justify-between">
-              <h1 className="font-semibold">Requests</h1>
+              <h1 className="text-sm font-semibold">Requests</h1>
               <div className="">
                 <Link href="/admin/requests" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
               </div>
@@ -79,17 +82,30 @@ const Dashboard = () => {
               columns={columns}
             />
           </div>
-          <div className="p-4 bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-            bar chart
+          <div className="p-6 bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-sm font-semibold">Generator Usage</h1>
+              <div className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">
+                date
+              </div>
+            </div>
+            <BarChart />
           </div>
         </div>
 
         <div className="col-span-3 flex flex-col justify-between">
-          <div className="p-4 bg-white mb-6 h-[45%] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-            calendar
+          <div className="p-4 bg-white mb-6 h-[45%] min-h-[22rem] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Maintenance Schedule</h2>
+            </div>
+            <Calendar />
           </div>
-          <div className="p-4 bg-white mb-6 h-[55%] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-            pie chart
+          <div className="p-6 bg-white mb-6 h-[55%] min-h-[22rem] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-sm font-semibold">Item Condition</h1>
+              <hr className="" />
+            </div>
+            <DoughnutChart />
           </div>
         </div>
       </div>
@@ -98,7 +114,7 @@ const Dashboard = () => {
         <div className="col-span-5 p-0">
           <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
             <div className="px-4 py-5 flex items-center justify-between">
-              <h1 className="font-semibold">Reports</h1>
+              <h1 className="text-sm font-semibold">Reports</h1>
               <div className="">
                 <Link href="/admin/reports" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
               </div>
@@ -113,7 +129,7 @@ const Dashboard = () => {
         <div className="col-span-5 p-0">
           <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
             <div className="px-4 py-5 flex items-center justify-between">
-              <h1 className="font-semibold">Due Returns</h1>
+              <h1 className="text-sm font-semibold">Due Returns</h1>
               <div className="">
                 <Link href="/admin/dashboard" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
               </div>
