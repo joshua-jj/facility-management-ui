@@ -65,21 +65,65 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-10 gap-4">
-        <div className="col-span-7 p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          <div className="px-4 py-5 flex items-center justify-between">
-            <h1 className="font-semibold">Requests</h1>
-            <div className="">
-              <Link href="/admin/requests" className="rounded px-2 py-1 border border-[]">View All</Link>
+        <div className="col-span-7 p-0">
+          <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            <div className="px-4 py-5 flex items-center justify-between">
+              <h1 className="font-semibold">Requests</h1>
+              <div className="">
+                <Link href="/admin/requests" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
+              </div>
             </div>
+            <Table
+              data={allRequestsList?.slice(0, 5)}
+              loading={IsRequestingRequests}
+              columns={columns}
+            />
           </div>
-          <Table
-            loading={IsRequestingRequests}
-            data={allRequestsList}
-            columns={columns}
-          />
+          <div className="p-4 bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            bar chart
+          </div>
         </div>
-        <div className="col-span-3 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          right
+
+        <div className="col-span-3 flex flex-col justify-between">
+          <div className="p-4 bg-white mb-6 h-[45%] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            calendar
+          </div>
+          <div className="p-4 bg-white mb-6 h-[55%] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            pie chart
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-10 gap-4">
+        <div className="col-span-5 p-0">
+          <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            <div className="px-4 py-5 flex items-center justify-between">
+              <h1 className="font-semibold">Reports</h1>
+              <div className="">
+                <Link href="/admin/reports" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
+              </div>
+            </div>
+            <Table
+              data={allRequestsList?.slice(0, 5)}
+              loading={IsRequestingRequests}
+              columns={columns}
+            />
+          </div>
+        </div>
+        <div className="col-span-5 p-0">
+          <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            <div className="px-4 py-5 flex items-center justify-between">
+              <h1 className="font-semibold">Due Returns</h1>
+              <div className="">
+                <Link href="/admin/dashboard" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
+              </div>
+            </div>
+            <Table
+              data={allRequestsList?.slice(0, 5)}
+              loading={IsRequestingRequests}
+              columns={columns}
+            />
+          </div>
         </div>
       </div>
     </AdminLayout>

@@ -9,7 +9,7 @@ type Props = {
 };
 
 const ActionDropDown = (props: Props) => {
-  console.log('🚀 ~ ActionDropDown ~ props:', props);
+  // console.log('🚀 ~ ActionDropDown ~ props:', props);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const ref = useOnClickOutside<HTMLUListElement>(() => setShowDropdown(false));
