@@ -31,7 +31,7 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
   return createPortal(
     <div
       className={classNames(
-        'fixed inset-0 z-50 flex items-center justify-center pt-10',
+        'fixed inset-0 z-[6001] flex items-center justify-center pt-10',
         {
           hidden: hidden,
           'bg-[#000000b0] bg-opacity-30': !download,
