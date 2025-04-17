@@ -4,11 +4,15 @@ interface LetterAvatarProps {
   name: string;
   size?: number;
   className?: string;
+  singleLetter?: boolean;
 }
 
-const getInitials = (name: string): string => {
+const getInitials = (name: string, singleLetter: boolean): string => {
   const parts = name.trim().split(' ');
-  if (parts.length === 1) return parts[0][0]?.toUpperCase();
+  if (parts.length === 0) return '?';
+  if (singleLetter || parts.length === 1) {
+    return parts[0][0]?.toUpperCase() ?? '?';
+  }
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 };
 
@@ -35,8 +39,9 @@ const LetterAvatar: React.FC<LetterAvatarProps> = ({
   name,
   size = 48,
   className = '',
+  singleLetter = false,
 }) => {
-  const initials = getInitials(name);
+  const initials = getInitials(name, singleLetter);
 
   const [bgColor, textColor] = useMemo(() => {
     const bg = getRandomColor();
@@ -47,7 +52,7 @@ const LetterAvatar: React.FC<LetterAvatarProps> = ({
 
   return (
     <div
-      className={`rounded-full flex items-center justify-center font-medium ${className}`}
+      className={`flex items-center justify-center font-medium ${className}`}
       style={{
         width: size,
         height: size,
