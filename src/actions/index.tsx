@@ -6,5 +6,6 @@ export * from './item.action';
 export * from './maintenance.action';
 export * from './report.action';
 export * from './request.action';
+export * from './role.action';
 export * from './store.action';
 export * from './user.action';

@@ -34,7 +34,7 @@ const AdminHeader = () => {
       case '/admin/reports':
         return 'reports';
       case '/admin/users':
-        return 'users';
+        return 'user management';
       default:
         return '';
     }

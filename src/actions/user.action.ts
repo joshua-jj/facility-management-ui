@@ -1,4 +1,5 @@
 import { userConstants } from '@/constants';
+import { CreateUserForm } from '@/types';
 
 interface GetUsersAction {
   type: typeof userConstants.GET_USERS;
@@ -7,6 +8,10 @@ interface GetUsersAction {
 export interface SearchUserAction {
   type: typeof userConstants.SEARCH_USER;
   data: { text: string };
+}
+export interface CreateUserAction {
+  type: typeof userConstants.CREATE_USER;
+  data: CreateUserForm;
 }
 
 const getUsers = (): GetUsersAction => ({
@@ -18,7 +23,13 @@ const searchUser = (data: { text: string }): SearchUserAction => ({
   data,
 });
 
+const createUser = (data: CreateUserForm): CreateUserAction => ({
+  type: userConstants.CREATE_USER,
+  data,
+});
+
 export const userActions = {
   getUsers,
   searchUser,
+  createUser,
 };

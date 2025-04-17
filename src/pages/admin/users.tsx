@@ -5,11 +5,11 @@ import Formsy from 'formsy-react';
 import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { userActions } from '@/actions';
+import { departmentActions, roleActions, userActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Users as User } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
-import AddStore from '@/components/Modals/AddStore';
+import AddUser from '@/components/Modals/AddUser';
 // import ActionDropDown from '@/components/ActionDropDown';
 
 const optionsFilter = [
@@ -34,6 +34,8 @@ const Users = () => {
 
   useEffect(() => {
     dispatch(userActions.getUsers() as unknown as UnknownAction);
+    dispatch(roleActions.getRoles() as unknown as UnknownAction);
+    dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
   }, [dispatch]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,9 +167,9 @@ const Users = () => {
                 Download CSV
               </button>
               <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-                <AddStore className="text-start w-full cursor-pointer">
+                <AddUser className="text-start w-full cursor-pointer">
                   Create User
-                </AddStore>
+                </AddUser>
               </button>
             </div>
           </Formsy>

@@ -60,6 +60,21 @@ const IsSearchingUser = (
   }
 };
 
+const IsCreatingUser = (
+  state: LoadingState = false,
+  action: UserAction
+): LoadingState => {
+  switch (action.type) {
+    case userConstants.REQUEST_CREATE_USER:
+      return true;
+    case userConstants.CREATE_USER_SUCCESS:
+    case userConstants.CREATE_USER_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allUsersList = (
   state: UsersListState = [],
   action: UserAction
@@ -84,6 +99,10 @@ export interface RootState {
     state: LoadingState | undefined,
     action: UserAction
   ) => LoadingState;
+  IsCreatingUser: (
+    state: LoadingState | undefined,
+    action: UserAction
+  ) => LoadingState;
   allUsersList: (
     state: UsersListState | undefined,
     action: UserAction
@@ -94,6 +113,7 @@ const rootReducer = combineReducers<RootState>({
   userDetails,
   IsRequestingUsers,
   IsSearchingUser,
+  IsCreatingUser,
   allUsersList,
 });
 
