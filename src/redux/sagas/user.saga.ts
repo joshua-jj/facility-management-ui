@@ -142,9 +142,9 @@ function* createUser({ data }: CreateUserAction) {
 
   try {
     const user: User | null = yield call(
-        getObjectFromStorage,
-        authConstants.USER_KEY
-      );
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
 
     if (data) {
       const userUri = `${userConstants.USER_URI}/initiate-new-user`;
@@ -165,6 +165,10 @@ function* createUser({ data }: CreateUserAction) {
       yield put({
         type: userConstants.CREATE_USER_SUCCESS,
         user: jsonResponse?.data,
+      });
+
+      yield put({
+        type: userConstants.GET_USERS,
       });
 
       AppEmitter.emit(userConstants.CREATE_USER_SUCCESS, jsonResponse);

@@ -1,12 +1,15 @@
+import { reportActions } from '@/actions';
 import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { DotsIcon, FilterIcon } from '@/components/Icons';
 import AdminLayout from '@/components/Layout/AdminLayout';
 import LetterAvatar from '@/components/LetteredAvatar';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { RootState } from '@/redux/reducers';
+import { Report } from '@/types';
 import classNames from 'classnames';
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { UnknownAction } from 'redux';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -16,24 +19,28 @@ const optionsFilter = [
   { value: '5', label: 'pending' },
 ];
 
-interface ReportTypes {
-  id: number;
-  title: string;
-  username: string;
-  status: string;
-  description: string;
-}
+// interface ReportTypes {
+//   id: number;
+//   title: string;
+//   username: string;
+//   status: string;
+//   description: string;
+// }
 
-const reports = [
-  {id: 1, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-  {id: 2, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-  {id: 3, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-  {id: 4, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-  {id: 5, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-  {id: 6, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-];
+// const reports = [
+//   {id: 1, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+//   {id: 2, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+//   {id: 3, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+//   {id: 4, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+//   {id: 5, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+//   {id: 6, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
+// ];
 
 const Reports = () => {
+  const dispatch = useDispatch();
+  const { IsRequestingReports, IsSearchingReport, allReportsList } =
+    useSelector((s: RootState) => s.report);
+
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,22 +48,37 @@ const Reports = () => {
   const [dateFrom, setDateFrom] = useState('');
   const { allItemsList } = useSelector((s: RootState) => s.item);
 
+  useEffect(() => {
+    dispatch(reportActions.getReports() as unknown as UnknownAction);
+  }, [dispatch]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    if (!query) {
+      dispatch(reportActions.getReports() as unknown as UnknownAction);
+    }
+    setSearchQuery(query);
+    dispatch(
+      reportActions.searchReport({ text: query }) as unknown as UnknownAction
+    );
+  };
+
   const allDepartmentsArray = allItemsList?.map((obj) => ({
     ...obj,
     label: obj.name,
     value: obj.id.toString(),
   }));
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    // if (!query) {
-    //   dispatch(itemActions.getAllItems() as unknown as UnknownAction);
-    // }
-    setSearchQuery(query);
-    // dispatch(
-    //   itemActions.searchItem({ text: query }) as unknown as UnknownAction
-    // );
-  };
+  // const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const query = e.target.value;
+  //   // if (!query) {
+  //   //   dispatch(itemActions.getAllItems() as unknown as UnknownAction);
+  //   // }
+  //   setSearchQuery(query);
+  //   // dispatch(
+  //   //   itemActions.searchItem({ text: query }) as unknown as UnknownAction
+  //   // );
+  // };
 
   return (
     <AdminLayout>
@@ -68,10 +90,6 @@ const Reports = () => {
             value={searchQuery}
             placeholder="Search"
             onChange={handleSearch}
-            // onChange={(e) => {
-            //   setSearchQuery(e.target.value);
-            //   // setCurrentPage(1); // reset on new search
-            // }}
             className="bg-[#ffffff] px-3 py-[0.65rem] block w-full text-xs rounded border border-[rgba(15,37,82,0.2)]"
           />
         </div>
@@ -130,58 +148,79 @@ const Reports = () => {
           )}
         </div>
       </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        {reports.map((item, index) => (
-          <div key={index} className="p-6 relative rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)]">
-            <div className={classNames("inline-flex px-1 py-1 rounded-[3px] text-[0.6rem] font-semibold uppercase border", {
-              'text-[rgba(255,153,0,1)] bg-[rgba(255,153,0,0.15)] border-[rgba(255,153,0,0.1)]': item.status === 'pending',
-              'text-[rgba(0,163,92,1)] bg-[rgba(0,163,92,0.15)] border-[rgba(0,163,92,0.1)]': item.status === 'treated',
-            })}>
-              {item.status}
+      {IsRequestingReports || IsSearchingReport ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-[#B28309] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-4">
+          {allReportsList.map((item, index) => (
+            <div
+              key={index}
+              className="p-6 relative rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)]"
+            >
+              <div
+                className={classNames(
+                  'inline-flex px-1 py-1 rounded-[3px] text-[0.6rem] font-semibold uppercase border',
+                  {
+                    'text-[rgba(255,153,0,1)] bg-[rgba(255,153,0,0.15)] border-[rgba(255,153,0,0.1)]':
+                      item.status === 'pending',
+                    'text-[rgba(0,163,92,1)] bg-[rgba(0,163,92,0.15)] border-[rgba(0,163,92,0.1)]':
+                      item.status === 'treated',
+                  }
+                )}
+              >
+                {item.status}
+              </div>
+              <div className="absolute top-[1rem] right-[1rem]">
+                <Dropdown {...item} />
+              </div>
+              <h4 className="font-semibold text-[0.82rem] pt-3 pb-1">
+                {item.complaintSubject}
+              </h4>
+              <p className="text-[0.82rem] pb-4">{item.complaintDescription}</p>
+              <div className="flex items-center gap-2">
+                <LetterAvatar
+                  name={item.createdBy}
+                  size={30}
+                  singleLetter
+                  className="text-xs !text-[#2E4168] !bg-[rgba(243,245,247,1)] border border-[rgba(225,227,231,1)] shadow-[16px_4px_32px_0px_rgba(189,189,189,0.3)]"
+                />
+                <span className="capitalize text-xs">{item.createdBy}</span>
+                {/* <span className="capitalize text-xs">{item.username}</span> */}
+              </div>
             </div>
-            <div className="absolute top-[1rem] right-[1rem]">
-              <Dropdown {...item} />
-            </div>
-            <h4 className="font-semibold text-[0.82rem] pt-3 pb-1">{item.title}</h4>
-            <p className="text-[0.82rem] pb-4">{item.description}</p>
-            <div className="flex items-center gap-2">
-              <LetterAvatar 
-                name="Ronnie Spinka" 
-                size={30} 
-                singleLetter 
-                className="text-xs !text-[#2E4168] !bg-[rgba(243,245,247,1)] border border-[rgba(225,227,231,1)] shadow-[16px_4px_32px_0px_rgba(189,189,189,0.3)]" 
-              />
-              <span className="capitalize text-xs">{item.username}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </AdminLayout>
   );
 };
 
 export default Reports;
 
-const Dropdown = (props: ReportTypes) => {
-  console.log("🚀 ~ Dropdown ~ props:", props)
+const Dropdown = (props: Report) => {
+  console.log('🚀 ~ Dropdown ~ props:', props);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const ref = useOnClickOutside<HTMLDivElement>(() => setShowDropdown(false));
 
   return (
     <>
-      <DotsIcon onClick={() => setShowDropdown((prev) => !prev)} className="rotate-[90deg] cursor-pointer" />
-        {showDropdown && (
-          <div ref={ref} className="relative">
-            <button className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
-              open
-            </button>
-            {/* <Report className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
+      <DotsIcon
+        onClick={() => setShowDropdown((prev) => !prev)}
+        className="rotate-[90deg] cursor-pointer"
+      />
+      {showDropdown && (
+        <div ref={ref} className="relative">
+          <button className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
+            open
+          </button>
+          {/* <Report className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
               open
             </Report> */}
-          </div>
-        )}
+        </div>
+      )}
     </>
-  )
-}
+  );
+};
