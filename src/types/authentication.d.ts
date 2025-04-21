@@ -2,6 +2,15 @@ export interface LoginForm {
   email: string;
   password: string;
 }
+export interface ResendLinkForm {
+  email: string;
+}
+
+export interface ChangePasswordForm {
+  oldPassword: string;
+  newPassword: string;
+  email: string;
+}
 
 export interface AuthConstants {
   LOGIN: string;
@@ -34,6 +43,7 @@ export interface AuthConstants {
   USER_ROLE_ID: number;
 
   LOGIN_URI: string;
+  AUTH_URI: string;
 }
 
 export interface AuthAction {

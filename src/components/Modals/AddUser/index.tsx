@@ -67,8 +67,8 @@ const AddUser: React.FC<AddItemModalProps> = ({
   };
 
   const handleSubmit = (data: CreateUserForm) => {
-    console.log('data', data);
-    data.roleId = role?.id as number;
+    data.role = role?.id as number;
+    data.departmentId = department?.id;
 
     dispatch(userActions.createUser(data) as unknown as UnknownAction);
   };

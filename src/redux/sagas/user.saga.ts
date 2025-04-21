@@ -147,7 +147,7 @@ function* createUser({ data }: CreateUserAction) {
     );
 
     if (data) {
-      const userUri = `${userConstants.USER_URI}/initiate-new-user`;
+      const userUri = `${userConstants.USER_URI}/initiate`;
       const userReq = createRequestWithToken(userUri, {
         method: 'POST',
         body: JSON.stringify(data),

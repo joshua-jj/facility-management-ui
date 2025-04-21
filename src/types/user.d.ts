@@ -85,6 +85,6 @@ export interface CreateUserForm {
   lastName: string;
   email: string;
   phoneNumber: string;
-  roleId: number;
+  role: number;
   departmentId?: number;
 }

@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { requestActions } from '@/actions';
 import BarChart from '@/components/BarChart';
-import { DueReturnsIcon, TotalItemsIcon, TotalReportsIcon, TotalRequestsIcon } from '@/components/Icons';
+import {
+  DueReturnsIcon,
+  TotalItemsIcon,
+  TotalReportsIcon,
+  TotalRequestsIcon,
+} from '@/components/Icons';
 import AdminLayout from '@/components/Layout/AdminLayout';
 import { Column, Table } from '@/components/Table';
 import { RootState } from '@/redux/reducers';
@@ -15,16 +20,18 @@ import DoughnutChart from '@/components/DoughnutChart';
 import Calendar from '@/components/Calendar';
 
 const stats = [
-  {id: 1, icon: <TotalRequestsIcon />, label: 'total requests', value: 14},
-  {id: 2, icon: <DueReturnsIcon />, label: 'due returns', value: 18},
-  {id: 3, icon: <TotalReportsIcon />, label: 'total reports', value: 6},
-  {id: 4, icon: <TotalItemsIcon />, label: 'total items', value: 100},
+  { id: 1, icon: <TotalRequestsIcon />, label: 'total requests', value: 14 },
+  { id: 2, icon: <DueReturnsIcon />, label: 'due returns', value: 18 },
+  { id: 3, icon: <TotalReportsIcon />, label: 'total reports', value: 6 },
+  { id: 4, icon: <TotalItemsIcon />, label: 'total items', value: 100 },
 ];
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { IsRequestingRequests, allRequestsList } = useSelector((s: RootState) => s.request);
-  console.log("🚀 ~ Dashboard ~ allRequestsList:", allRequestsList)
+  const { IsRequestingRequests, allRequestsList } = useSelector(
+    (s: RootState) => s.request
+  );
+  console.log('🚀 ~ Dashboard ~ allRequestsList:', allRequestsList);
 
   useEffect(() => {
     dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
@@ -57,7 +64,10 @@ const Dashboard = () => {
     <AdminLayout>
       <div className="grid grid-cols-4 gap-4 mb-6">
         {stats?.map((stat, index) => (
-          <div key={index} className="p-5 rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.11)]">
+          <div
+            key={index}
+            className="p-5 rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.11)]"
+          >
             <div className="flex items-center mb-4">
               {stat.icon}
               <span className="uppercase text-xs ml-3">{stat.label}</span>
@@ -73,7 +83,12 @@ const Dashboard = () => {
             <div className="px-4 py-5 flex items-center justify-between">
               <h1 className="text-sm font-semibold">Requests</h1>
               <div className="">
-                <Link href="/admin/requests" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
+                <Link
+                  href="/admin/requests"
+                  className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs"
+                >
+                  View All
+                </Link>
               </div>
             </div>
             <Table
@@ -116,7 +131,12 @@ const Dashboard = () => {
             <div className="px-4 py-5 flex items-center justify-between">
               <h1 className="text-sm font-semibold">Reports</h1>
               <div className="">
-                <Link href="/admin/reports" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
+                <Link
+                  href="/admin/reports"
+                  className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs"
+                >
+                  View All
+                </Link>
               </div>
             </div>
             <Table
@@ -131,7 +151,12 @@ const Dashboard = () => {
             <div className="px-4 py-5 flex items-center justify-between">
               <h1 className="text-sm font-semibold">Due Returns</h1>
               <div className="">
-                <Link href="/admin/dashboard" className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs">View All</Link>
+                <Link
+                  href="/admin/dashboard"
+                  className="rounded px-2 py-1 border border-[#E4E5E7] text-[#848A95] text-xs"
+                >
+                  View All
+                </Link>
               </div>
             </div>
             <Table
