@@ -65,7 +65,7 @@ function* getUsers() {
 
     yield put({
       type: userConstants.GET_USERS_SUCCESS,
-      users: jsonResponse?.items,
+      users: jsonResponse?.data,
     });
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -113,7 +113,7 @@ function* searchUser({ data }: SearchUserAction) {
 
     yield put({
       type: userConstants.SEARCH_USER_SUCCESS,
-      user: jsonResponse,
+      user: jsonResponse?.data,
     });
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {

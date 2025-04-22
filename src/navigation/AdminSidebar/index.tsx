@@ -4,15 +4,23 @@ import React, { useCallback } from 'react';
 import { pageRoutes } from '../pageRoutes';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/reducers';
 
 const AdminSidebar = () => {
   const router = useRouter();
+  const { userDetails } = useSelector((s: RootState) => s.user);
 
   const activeRoute = useCallback(
     (link: string) => {
       return router?.pathname === link;
     },
     [router?.pathname]
+  );
+  console.log('🚀 ~ userDetails:', userDetails);
+
+  const filteredRoutes = pageRoutes.filter((route) =>
+    route.allowedRoles ? route.allowedRoles.includes(userDetails?.roleId) : true
   );
 
   return (
@@ -26,7 +34,8 @@ const AdminSidebar = () => {
         </div>
       </Link>
       <ul className="pt-6">
-        {pageRoutes?.map((pageRoute, index) => (
+        {filteredRoutes?.map((pageRoute, index) => (
+          // {pageRoutes?.map((pageRoute, index) => (
           <li
             key={index}
             className={classNames(

@@ -6,12 +6,14 @@ import { ReactNode } from 'react';
 type LayoutProps = {
   children: ReactNode;
   query?: string;
+  allowedRoles?: number[];
 };
 
-const PrivateRoute: React.FC<LayoutProps> = ({ children }) => {
+const PrivateRoute: React.FC<LayoutProps> = ({ children, allowedRoles }) => {
   const IsAuthenticated = useSelector(
     (state: RootState) => state.auth.IsAuthenticated
   );
+  const { userDetails } = useSelector((s: RootState) => s.user);
 
   const router = useRouter();
 
@@ -23,6 +25,11 @@ const PrivateRoute: React.FC<LayoutProps> = ({ children }) => {
       },
     });
 
+    return null;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(userDetails?.roleId)) {
+    router.replace('/admin/login');
     return null;
   }
 

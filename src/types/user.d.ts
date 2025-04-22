@@ -55,6 +55,7 @@ export interface UserDetail {
   lastName: string;
   phoneNumber: string;
   role: string;
+  roleId: number;
 }
 
 export interface UserState {

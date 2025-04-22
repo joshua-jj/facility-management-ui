@@ -1,8 +1,23 @@
 import { combineReducers } from 'redux';
 import { storeConstants } from '@/constants';
-import { LoadingState, Store, StoreAction } from '@/types';
+import { Action, LoadingState, Store, StoreAction } from '@/types';
 
 type StoresListState = Store[];
+
+interface AllStoresAction extends Action {
+  stores: {
+    items: Store[];
+    links: { [key: string]: string | number | null };
+    meta: {
+      currentPage: number;
+      itemCount: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+    };
+  };
+  store: Store[];
+}
 
 const IsRequestingStores = (
   state: LoadingState = false,
@@ -36,11 +51,11 @@ const IsSearchingStore = (
 
 const allStoresList = (
   state: StoresListState = [],
-  action: StoreAction
+  action: AllStoresAction
 ): StoresListState => {
   switch (action.type) {
     case storeConstants.GET_STORES_SUCCESS:
-      return action.stores ?? state;
+      return action.stores?.items ?? state;
     case storeConstants.SEARCH_STORE_SUCCESS:
       return action.store ?? state;
     default:
@@ -59,7 +74,7 @@ export interface RootState {
   ) => LoadingState;
   allStoresList: (
     state: StoresListState | undefined,
-    action: StoreAction
+    action: AllStoresAction
   ) => StoresListState;
 }
 

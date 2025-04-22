@@ -15,6 +15,8 @@ const ChangePassword: FC = () => {
   const router = useRouter();
   const query = router?.query;
 
+  console.log('query', query);
+
   const dispatch = useDispatch();
   const { IsChangingPassword } = useSelector((s: RootState) => s.auth);
 
@@ -22,6 +24,7 @@ const ChangePassword: FC = () => {
 
   const handleSubmit = (data: ChangePasswordForm) => {
     data.email = query?.email as string;
+    data.token = query?.accessToken as string;
 
     dispatch(authActions.changePassword(data) as unknown as UnknownAction);
   };
@@ -31,9 +34,10 @@ const ChangePassword: FC = () => {
       authConstants.CHANGE_PASSWORD_SUCCESS,
       (evt: Event) => {
         const customEvent = evt as CustomEvent;
-        const data = customEvent.detail?.data;
+        const data = customEvent.detail;
+        console.log('🚀 ~ data:', data);
 
-        if (data) {
+        if (data?.message) {
           router.push('/admin/login');
           return;
         }

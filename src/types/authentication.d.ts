@@ -10,6 +10,7 @@ export interface ChangePasswordForm {
   oldPassword: string;
   newPassword: string;
   email: string;
+  token: string;
 }
 
 export interface AuthConstants {

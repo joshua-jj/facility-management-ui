@@ -1,5 +1,5 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
-import { authConstants, userConstants } from '@/constants';
+import { authConstants } from '@/constants';
 import { appActions } from '@/actions';
 import {
   checkStatus,
@@ -7,6 +7,7 @@ import {
   createRequest,
   setObjectInStorage,
   clearObjectFromStorage,
+  createRequestWithToken,
 } from '@/utilities/helpers';
 import { SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -15,13 +16,6 @@ import {
   LoginAction,
   ResendEmailAction,
 } from '@/actions/authentication.action';
-
-// interface ResetPasswordData {
-//   token: string;
-//   redirect: string;
-//   password: string;
-//   nonce?: string;
-// }
 
 interface ParsedResponse {
   message: string;
@@ -173,14 +167,24 @@ function* changePassword({ data }: ChangePasswordAction) {
   yield put({ type: authConstants.REQUEST_CHANGE_PASSWORD });
 
   try {
+    // const user: User | null = yield call(
+    //       getObjectFromStorage,
+    //       authConstants.USER_KEY
+    //     );
     if (data) {
-      const resendUri = `${userConstants.USER_URI}/modify-password/${data.email}`;
-      const resendReq = createRequest(resendUri, {
+      const changePasswordUri = `${authConstants.AUTH_URI}/change-password`;
+      // const resendReq = createRequest(resendUri, {
+      //   method: 'PATCH',
+      //   body: JSON.stringify(data),
+      // });
+      const changePasswordReq = createRequestWithToken(changePasswordUri, {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
+      const req: Request = yield call(changePasswordReq, data?.token as string);
+      const response: ResendEmailAction = yield call(fetch, req);
 
-      const response: ResendEmailAction = yield call(fetch, resendReq);
+      // const response: ResendEmailAction = yield call(fetch, resendReq);
       yield call(checkStatus, response as unknown as Response);
 
       const jsonResponse: ParsedResponse = yield call(
@@ -190,7 +194,7 @@ function* changePassword({ data }: ChangePasswordAction) {
 
       yield put({
         type: authConstants.CHANGE_PASSWORD_SUCCESS,
-        user: jsonResponse?.data.user,
+        user: jsonResponse,
       });
 
       AppEmitter.emit(authConstants.CHANGE_PASSWORD_SUCCESS, jsonResponse);

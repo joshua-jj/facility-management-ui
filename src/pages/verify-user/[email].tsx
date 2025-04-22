@@ -12,6 +12,7 @@ import { RootState } from '@/redux/reducers';
 interface VerifyUserProps {
   success: boolean;
   message: string;
+  accessToken: string;
 }
 
 export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
@@ -21,7 +22,9 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
   const { token } = ctx.query as { token?: string };
 
   if (!token) {
-    return { props: { success: false, message: 'Missing token' } };
+    return {
+      props: { success: false, message: 'Missing token', accessToken: '' },
+    };
   }
 
   try {
@@ -41,6 +44,7 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
       props: {
         success: true,
         message: resp.data?.message || 'Your account has been verified!',
+        accessToken: resp.data?.data.accessToken ?? '',
       },
     };
   } catch (err: unknown) {
@@ -55,12 +59,17 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
       props: {
         success: false,
         message: errorMessage,
+        accessToken: '',
       },
     };
   }
 };
 
-const VerifyUserPage: NextPage<VerifyUserProps> = ({ success, message }) => {
+const VerifyUserPage: NextPage<VerifyUserProps> = ({
+  success,
+  message,
+  accessToken,
+}) => {
   const dispatch = useDispatch();
   const { IsResendingEmail } = useSelector((s: RootState) => s.auth);
 
@@ -72,9 +81,11 @@ const VerifyUserPage: NextPage<VerifyUserProps> = ({ success, message }) => {
       const data = {
         email: email as string,
       };
+
       dispatch(authActions.resendEmail(data) as unknown as UnknownAction);
     }
   };
+  console.log('token', accessToken);
 
   return (
     <Layout>
@@ -82,15 +93,14 @@ const VerifyUserPage: NextPage<VerifyUserProps> = ({ success, message }) => {
         <h1 className="text-2xl font-bold mb-4">Email Verification</h1>
         <p className={success ? 'text-green-600' : 'text-red-600'}>{message}</p>
 
-        {success ? (
+        {success && accessToken ? (
           <button
             onClick={() =>
               router.push({
                 pathname: '/admin/change-password',
-                query: { email },
+                query: { email, accessToken },
               })
             }
-            // onClick={() => router.push('/admin/change-password')}
             className="mt-6 px-4 py-2 cursor-pointer bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Change your password

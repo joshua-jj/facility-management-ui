@@ -66,9 +66,11 @@ const AddUser: React.FC<AddItemModalProps> = ({
     setDepartmentIsOpen(false);
   };
 
+  console.log('allDepartmentsList', allDepartmentsList);
+
   const handleSubmit = (data: CreateUserForm) => {
     data.role = role?.id as number;
-    data.departmentId = department?.id;
+    data.departmentId = Number(department?.id);
 
     dispatch(userActions.createUser(data) as unknown as UnknownAction);
   };
