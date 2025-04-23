@@ -19,12 +19,9 @@ interface User {
 interface ParsedResponse {
   message: string;
   error: string;
-  items: {
+  data: {
     user: { [key: string]: unknown };
     id: string;
-    redirect_url: string;
-    source?: string;
-    token: string;
   };
 }
 
@@ -66,7 +63,7 @@ function* getStores() {
 
     yield put({
       type: storeConstants.GET_STORES_SUCCESS,
-      stores: jsonResponse?.items,
+      stores: jsonResponse?.data,
     });
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {

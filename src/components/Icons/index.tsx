@@ -481,7 +481,7 @@ export const TotalReportsIcon: React.FC<Props> = (props) => (
       y={7}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path
@@ -555,7 +555,7 @@ export const TotalRequestsIcon: React.FC<Props> = (props) => (
       y={6}
       maskUnits="userSpaceOnUse"
       style={{
-        maskType: "luminance",
+        maskType: 'luminance',
       }}
     >
       <path

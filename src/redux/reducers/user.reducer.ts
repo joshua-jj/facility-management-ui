@@ -5,6 +5,21 @@ import { Action, LoadingState, Users, UserAction, UserDetail } from '@/types';
 type UserDetailsState = UserDetail;
 type UsersListState = Users[];
 
+interface AllUsersAction extends Action {
+  users: {
+    items: Users[];
+    links: { [key: string]: string | number | null };
+    meta: {
+      currentPage: number;
+      itemCount: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+    };
+  };
+  user: Users[];
+}
+
 const userDetails = (
   state: UserDetailsState = {
     email: '',
@@ -12,6 +27,7 @@ const userDetails = (
     lastName: '',
     phoneNumber: '',
     role: '',
+    roleId: 0,
     id: 0,
     // Add other required fields with default values
   },
@@ -77,11 +93,11 @@ const IsCreatingUser = (
 
 const allUsersList = (
   state: UsersListState = [],
-  action: UserAction
+  action: AllUsersAction
 ): UsersListState => {
   switch (action.type) {
     case userConstants.GET_USERS_SUCCESS:
-      return action.users ?? state;
+      return action.users?.items ?? state;
     case userConstants.SEARCH_USER_SUCCESS:
       return action.user ?? state;
     default:
@@ -105,7 +121,7 @@ export interface RootState {
   ) => LoadingState;
   allUsersList: (
     state: UsersListState | undefined,
-    action: UserAction
+    action: AllUsersAction
   ) => UsersListState;
 }
 

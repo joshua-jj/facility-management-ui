@@ -65,7 +65,7 @@ function* getUsers() {
 
     yield put({
       type: userConstants.GET_USERS_SUCCESS,
-      users: jsonResponse?.items,
+      users: jsonResponse?.data,
     });
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -113,7 +113,7 @@ function* searchUser({ data }: SearchUserAction) {
 
     yield put({
       type: userConstants.SEARCH_USER_SUCCESS,
-      user: jsonResponse,
+      user: jsonResponse?.data,
     });
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -142,12 +142,12 @@ function* createUser({ data }: CreateUserAction) {
 
   try {
     const user: User | null = yield call(
-        getObjectFromStorage,
-        authConstants.USER_KEY
-      );
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
 
     if (data) {
-      const userUri = `${userConstants.USER_URI}/initiate-new-user`;
+      const userUri = `${userConstants.USER_URI}/initiate`;
       const userReq = createRequestWithToken(userUri, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -165,6 +165,10 @@ function* createUser({ data }: CreateUserAction) {
       yield put({
         type: userConstants.CREATE_USER_SUCCESS,
         user: jsonResponse?.data,
+      });
+
+      yield put({
+        type: userConstants.GET_USERS,
       });
 
       AppEmitter.emit(userConstants.CREATE_USER_SUCCESS, jsonResponse);

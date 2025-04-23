@@ -29,18 +29,18 @@ export default function MultiSelect({
   const containerRef = useRef<HTMLDivElement>(null);
   const listboxId = 'custom-multiselect-listbox';
 
-  const toggleDropdown = () => setIsOpen(prev => !prev);
+  const toggleDropdown = () => setIsOpen((prev) => !prev);
 
-  const filteredOptions = options.filter(option =>
+  const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleSelect = (option: Option) => {
-    const isSelected = selected.some(o => o.value === option.value);
+    const isSelected = selected.some((o) => o.value === option.value);
 
     if (multiple) {
       if (isSelected) {
-        onChange(selected.filter(o => o.value !== option.value));
+        onChange(selected.filter((o) => o.value !== option.value));
       } else {
         onChange([...selected, option]);
       }
@@ -51,7 +51,12 @@ export default function MultiSelect({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (multiple && e.key === 'Backspace' && search === '' && selected.length > 0) {
+    if (
+      multiple &&
+      e.key === 'Backspace' &&
+      search === '' &&
+      selected.length > 0
+    ) {
       onChange(selected.slice(0, selected.length - 1));
       return;
     }
@@ -62,9 +67,11 @@ export default function MultiSelect({
     }
 
     if (e.key === 'ArrowDown') {
-      setHighlightedIndex(i => (i + 1) % filteredOptions.length);
+      setHighlightedIndex((i) => (i + 1) % filteredOptions.length);
     } else if (e.key === 'ArrowUp') {
-      setHighlightedIndex(i => (i - 1 + filteredOptions.length) % filteredOptions.length);
+      setHighlightedIndex(
+        (i) => (i - 1 + filteredOptions.length) % filteredOptions.length
+      );
     } else if (e.key === 'Enter') {
       e.preventDefault();
       handleSelect(filteredOptions[highlightedIndex]);
@@ -75,7 +82,10 @@ export default function MultiSelect({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -103,16 +113,16 @@ export default function MultiSelect({
         className="flex flex-wrap items-center gap-1 px-3 py-2 cursor-text min-h-[42px]"
       >
         {multiple ? (
-          selected.map(option => (
+          selected.map((option) => (
             <span
               key={option.value}
               className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-sm flex items-center gap-1"
             >
               {option.label}
               <button
-                onClick={e => {
+                onClick={(e) => {
                   e.stopPropagation();
-                  onChange(selected.filter(o => o.value !== option.value));
+                  onChange(selected.filter((o) => o.value !== option.value));
                 }}
                 className="text-xs hover:text-red-500 focus:outline-none"
                 aria-label={`Remove ${option.label}`}
@@ -134,7 +144,7 @@ export default function MultiSelect({
           className="flex-1 min-w-[50px] outline-none text-sm py-1"
           placeholder={selected.length === 0 ? placeholder : ''}
           value={search}
-          onChange={e => {
+          onChange={(e) => {
             setSearch(e.target.value);
             setHighlightedIndex(0);
           }}
@@ -147,7 +157,7 @@ export default function MultiSelect({
       {multiple && selected.length > 0 && (
         <button
           className="absolute top-2 right-2 text-xs text-gray-400 hover:text-red-500 focus:outline-none"
-          onClick={e => {
+          onClick={(e) => {
             e.stopPropagation();
             onChange([]);
           }}
@@ -175,7 +185,7 @@ export default function MultiSelect({
             <li className="px-4 py-2 text-gray-500">No results found</li>
           )}
           {filteredOptions.map((option, index) => {
-            const isSelected = selected.some(o => o.value === option.value);
+            const isSelected = selected.some((o) => o.value === option.value);
             const isHighlighted = index === highlightedIndex;
             return (
               <li
@@ -188,7 +198,9 @@ export default function MultiSelect({
                 } hover:bg-blue-100`}
               >
                 <span>{option.label}</span>
-                {isSelected && <span className="text-blue-600 font-bold">✓</span>}
+                {isSelected && (
+                  <span className="text-blue-600 font-bold">✓</span>
+                )}
               </li>
             );
           })}

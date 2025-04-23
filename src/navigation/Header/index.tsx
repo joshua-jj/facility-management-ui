@@ -6,6 +6,11 @@ import { useRouter } from 'next/router';
 
 const Header: React.FC = () => {
   const router = useRouter();
+  const routes = [
+    '/admin/login',
+    '/verify-user/[email]',
+    '/admin/change-password',
+  ];
 
   return (
     <>
@@ -16,7 +21,7 @@ const Header: React.FC = () => {
             Logistics
           </span>
         </Link>
-        {router.pathname !== '/admin/login' && (
+        {!routes.includes(router.pathname) && (
           <Report className="bg-[#b28309] text-white cursor-pointer rounded-[3px] py-3 px-4 text-[13px] font-semibold mx-2 transition duration-300">
             Report an Issue
           </Report>

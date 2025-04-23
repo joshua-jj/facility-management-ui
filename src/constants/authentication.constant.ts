@@ -34,4 +34,5 @@ export const authConstants: AuthConstants = {
   USER_ROLE_ID: 2,
 
   LOGIN_URI: `${appConstants.BASE_URI}${authentication}/login`,
+  AUTH_URI: `${appConstants.BASE_URI}${authentication}`,
 };

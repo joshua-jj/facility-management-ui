@@ -10,6 +10,7 @@ import { UnknownAction } from 'redux';
 import { Users as User } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddUser from '@/components/Modals/AddUser';
+import ActionDropDown from '@/components/ActionDropDown';
 // import ActionDropDown from '@/components/ActionDropDown';
 
 const optionsFilter = [
@@ -57,38 +58,39 @@ const Users = () => {
   //     value: obj.id.toString(),
   //   }));
 
-  //   const handleUpdate = (data: object) => {
-  //     console.log("🚀 ~ handleUpdate ~ data:", data)
-  //   }
+  const handleUpdate = (data: object) => {
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+  };
 
-  //   const handleDelete = (data: object) => {
-  //     console.log("🚀 ~ handleDelete ~ data:", data)
-  //   }
+  const handleDelete = (data: object) => {
+    console.log('🚀 ~ handleDelete ~ data:', data);
+  };
 
   const columns: Column<User>[] = [
     { key: 'firstName', header: 'FIRST NAME' },
     { key: 'lastName', header: 'LAST NAME' },
     { key: 'email', header: 'EMAIL' },
     { key: 'phoneNumber', header: 'PHONE NUMBER' },
-    {
-      key: 'role',
-      header: 'ROLE',
-      render: (_, row: User) => row.role?.name || 'N/A', // Access department.name
-    },
+    { key: 'role', header: 'ROLE' },
     // {
-    //   key: 'id',
-    //   header: '.',
-    //   render: (value: string | number, row: object) => (
-    //     <ActionDropDown
-    //       handleUpdate={() => handleUpdate(row)}
-    //       handleDelete={() => handleDelete(row)}
-    //     />
-    //   ),
+    //   key: 'role',
+    //   header: 'ROLE',
+    //   render: (_, row: User) => row.role?.name || 'N/A', // Access department.name
     // },
+    {
+      key: 'id',
+      header: '.',
+      render: (value: string | number, row: object) => (
+        <ActionDropDown
+          handleUpdate={() => handleUpdate(row)}
+          handleDelete={() => handleDelete(row)}
+        />
+      ),
+    },
   ];
 
   return (
-    <PrivateRoute>
+    <PrivateRoute allowedRoles={[1, 5]}>
       <AdminLayout>
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
           <Formsy className="flex items-center justify-between px-6 py-4">

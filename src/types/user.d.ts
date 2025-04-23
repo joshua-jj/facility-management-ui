@@ -55,6 +55,7 @@ export interface UserDetail {
   lastName: string;
   phoneNumber: string;
   role: string;
+  roleId: number;
 }
 
 export interface UserState {
@@ -85,6 +86,6 @@ export interface CreateUserForm {
   lastName: string;
   email: string;
   phoneNumber: string;
-  roleId: number;
+  role: number;
   departmentId?: number;
 }
