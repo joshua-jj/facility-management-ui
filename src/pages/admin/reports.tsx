@@ -1,7 +1,7 @@
 import { reportActions } from '@/actions';
 import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { DotsIcon, FilterIcon } from '@/components/Icons';
-import AdminLayout from '@/components/Layout/AdminLayout';
+import Layout from '@/components/Layout';
 import LetterAvatar from '@/components/LetteredAvatar';
 import PrivateRoute from '@/components/PrivateRoute';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
@@ -83,7 +83,7 @@ const Reports = () => {
 
   return (
     <PrivateRoute allowedRoles={[1, 2, 4, 5]}>
-      <AdminLayout>
+      <Layout>
         <div className="flex items-center justify-between gap-4 mb-6 z-50">
           <div className="w-[17rem]">
             <input
@@ -197,7 +197,7 @@ const Reports = () => {
             ))}
           </div>
         )}
-      </AdminLayout>
+      </Layout>
     </PrivateRoute>
   );
 };

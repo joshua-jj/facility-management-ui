@@ -2,7 +2,7 @@ import React, { FC, useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import TextInput from '@/components/Inputs/TextInput';
 import Formsy from 'formsy-react';
-import { LoginForm } from '@/types';
+import { ChangePasswordForm } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { authActions } from '@/actions';
@@ -11,37 +11,34 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 import { authConstants } from '@/constants';
 import { useRouter } from 'next/router';
 
-const Login: FC = () => {
+const ChangePassword: FC = () => {
   const router = useRouter();
   const query = router?.query;
-  const decodedFrom = decodeURIComponent(
-    Array.isArray(query?.from) ? query.from[0] : (query?.from ?? '')
-  );
+
+  console.log('query', query);
+
   const dispatch = useDispatch();
-  const { IsLoggingIn } = useSelector((s: RootState) => s.auth);
+  const { IsChangingPassword } = useSelector((s: RootState) => s.auth);
 
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
 
-  const handleSubmit = (data: LoginForm) => {
-    dispatch(authActions.login(data) as unknown as UnknownAction);
+  const handleSubmit = (data: ChangePasswordForm) => {
+    data.email = query?.email as string;
+    data.token = query?.accessToken as string;
+
+    dispatch(authActions.changePassword(data) as unknown as UnknownAction);
   };
 
   useEffect(() => {
     const listener = AppEmitter.addListener(
-      authConstants.LOGIN_SUCCESS,
+      authConstants.CHANGE_PASSWORD_SUCCESS,
       (evt: Event) => {
         const customEvent = evt as CustomEvent;
-        const data = customEvent.detail?.data;
+        const data = customEvent.detail;
+        console.log('🚀 ~ data:', data);
 
-        if (data && decodedFrom?.length) {
-          router.push({
-            pathname: decodedFrom,
-          });
-          return;
-        }
-
-        if (data) {
-          router.push('/admin/dashboard');
+        if (data?.message) {
+          router.push('/login');
           return;
         }
       }
@@ -60,30 +57,38 @@ const Login: FC = () => {
           onInvalid={() => setCanSubmit(false)}
           className="w-md p-8 bg-white shadow-[8px_3px_22px_0px_rgba(150, 150, 150, 0.15)] rounded"
         >
-          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">Login</h1>
+          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">
+            Change Password
+          </h1>
           <TextInput
             inputClass="text-[#0F2552]"
-            type="text"
-            name="email"
-            label="Username/Email address"
+            type="password"
+            name="oldPassword"
+            label="Old Password"
           />
           <TextInput
             inputClass="text-[#0F2552]"
             type="password"
-            name="password"
-            label="Password"
+            name="newPassword"
+            label="New Password"
+          />
+          <TextInput
+            inputClass="text-[#0F2552]"
+            type="password"
+            name="confirmNewPassword"
+            label="Confirm New Password"
           />
           <button
             disabled={!canSubmit}
             className="bg-[#B28309] rounded text-center w-full py-3 mt-5 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
             type="submit"
           >
-            {IsLoggingIn ? (
+            {IsChangingPassword ? (
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : (
-              'Login'
+              'Change Password'
             )}
           </button>
         </Formsy>
@@ -92,4 +97,4 @@ const Login: FC = () => {
   );
 };
 
-export default Login;
+export default ChangePassword;

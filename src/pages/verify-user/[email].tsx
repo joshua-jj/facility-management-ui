@@ -97,13 +97,13 @@ const VerifyUserPage: NextPage<VerifyUserProps> = ({
           <button
             onClick={() =>
               router.push({
-                pathname: '/admin/change-password',
+                pathname: '/change-password',
                 query: { email, accessToken },
               })
             }
             className="mt-6 px-4 py-2 cursor-pointer bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Change your password
+            Proceed to Change password
           </button>
         ) : (
           <button

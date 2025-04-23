@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import AdminLayout from '@/components/Layout/AdminLayout';
+import Layout from '@/components/Layout';
 import React, { useEffect, useState } from 'react';
 import { format, parseISO, isWithinInterval } from 'date-fns';
 import { Column, Table } from '@/components/Table';
@@ -137,7 +137,7 @@ const Requests = () => {
 
   return (
     <PrivateRoute>
-      <AdminLayout>
+      <Layout>
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
           {/* Filters */}
           <Formsy className="flex items-center justify-between px-6 py-4">
@@ -240,7 +240,7 @@ const Requests = () => {
             // }}
           />
         </div>
-      </AdminLayout>
+      </Layout>
     </PrivateRoute>
   );
 };
