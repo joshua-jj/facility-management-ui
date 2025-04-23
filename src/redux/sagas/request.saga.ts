@@ -1,6 +1,10 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { authConstants, requestConstants } from '@/constants';
-import { appActions, CreateRequestAction } from '@/actions';
+import {
+  appActions,
+  CreateRequestAction,
+  GetDepartmentRequestsAction,
+} from '@/actions';
 import {
   checkStatus,
   parseResponse,
@@ -158,6 +162,62 @@ function* getAllRequests() {
   }
 }
 
+function* getDepartmentRequests({ data }: GetDepartmentRequestsAction) {
+  yield put({ type: requestConstants.REQUEST_GET_DEPARTMENT_REQUESTS });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    const storeUri = `${requestConstants.REQUEST_URI}/all/${data?.departmentId}`;
+
+    const requestFn = () =>
+      createRequestWithToken(storeUri, { method: 'GET' })(
+        user?.token as string
+      );
+    const storeReq: Request = yield call(requestFn);
+
+    const response: CustomRequest = yield call(fetch, storeReq);
+    if (response.status === 401) {
+      yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+      yield put({ type: authConstants.TOKEN_HAS_EXPIRED });
+      return;
+    }
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
+
+    yield put({
+      type: requestConstants.GET_DEPARTMENT_REQUESTS_SUCCESS,
+      requests: jsonResponse?.data,
+    });
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: requestConstants.GET_DEPARTMENT_REQUESTS_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: requestConstants.GET_DEPARTMENT_REQUESTS_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+  }
+}
+
 function* createNewRequestWatcher() {
   yield takeLatest(requestConstants.CREATE_REQUEST, createNewRequest);
 }
@@ -166,6 +226,17 @@ function* getAllRequestsWatcher() {
   yield takeLatest(requestConstants.GET_ALL_REQUESTS, getAllRequests);
 }
 
+function* getDepartmentRequestsWatcher() {
+  yield takeLatest(
+    requestConstants.GET_DEPARTMENT_REQUESTS,
+    getDepartmentRequests
+  );
+}
+
 export default function* rootSaga() {
-  yield all([createNewRequestWatcher(), getAllRequestsWatcher()]);
+  yield all([
+    createNewRequestWatcher(),
+    getAllRequestsWatcher(),
+    getDepartmentRequestsWatcher(),
+  ]);
 }

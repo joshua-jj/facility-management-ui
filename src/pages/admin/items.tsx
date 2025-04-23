@@ -34,14 +34,26 @@ const Items = () => {
   const [dateTo, setDateTo] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
+  const { userDetails } = useSelector((s: RootState) => s.user);
   const { IsRequestingAllItems, IsSearchingItem, allItemsList, pagination } =
     useSelector((s: RootState) => s.item);
   const { meta } = pagination;
   const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
 
+  // useEffect(() => {
+  //   dispatch(itemActions.getAllItems() as unknown as UnknownAction);
+  // }, [dispatch]);
   useEffect(() => {
-    dispatch(itemActions.getAllItems() as unknown as UnknownAction);
-  }, [dispatch]);
+    if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
+      dispatch(
+        itemActions.getDepartmentItems(
+          userDetails.departmentId
+        ) as unknown as UnknownAction
+      );
+    } else {
+      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
+    }
+  }, [dispatch, userDetails]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;

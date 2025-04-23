@@ -56,6 +56,7 @@ export interface UserDetail {
   phoneNumber: string;
   role: string;
   roleId: number;
+  departmentId?: number;
 }
 
 export interface UserState {

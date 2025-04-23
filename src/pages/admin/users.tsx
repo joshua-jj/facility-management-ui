@@ -90,7 +90,7 @@ const Users = () => {
   ];
 
   return (
-    <PrivateRoute allowedRoles={[1, 5]}>
+    <PrivateRoute allowedRoles={[1, 4, 5]}>
       <AdminLayout>
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
           <Formsy className="flex items-center justify-between px-6 py-4">

@@ -26,8 +26,12 @@ const IsRequestingRequests = (
   switch (action.type) {
     case requestConstants.REQUEST_GET_ALL_REQUESTS:
       return true;
+    case requestConstants.REQUEST_GET_DEPARTMENT_REQUESTS:
+      return true;
     case requestConstants.GET_ALL_REQUESTS_SUCCESS:
     case requestConstants.GET_ALL_REQUESTS_ERROR:
+    case requestConstants.GET_DEPARTMENT_REQUESTS_SUCCESS:
+    case requestConstants.GET_DEPARTMENT_REQUESTS_ERROR:
       return false;
     default:
       return state;
@@ -40,6 +44,8 @@ const allRequestsList = (
 ): RequestsListState => {
   switch (action.type) {
     case requestConstants.GET_ALL_REQUESTS_SUCCESS:
+      return action.requests?.items ?? state;
+    case requestConstants.GET_DEPARTMENT_REQUESTS_SUCCESS:
       return action.requests?.items ?? state;
     default:
       return state;
