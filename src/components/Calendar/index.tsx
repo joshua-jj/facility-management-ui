@@ -101,7 +101,7 @@ const Calendar: React.FC = () => {
                     <div
                         key={day.format('YYYY-MM-DD')}
                         title={day.isToday() ? 'Today' : eventsForMonth.some(event => event.date === day.format('YYYY-MM-DD')) ? 'Event' : ''}
-                        className={`text-center text-xs p-2 rounded-[50%] cursor-pointer ${
+                        className={`text-center flex items-center justify-center text-xs p-2 rounded-[50%] cursor-pointer ${
                             day.isToday() ? 'bg-blue-100' : ''
                             } ${eventsForMonth.some(event => event.date === day.format('YYYY-MM-DD')) ? 'bg-[#B28309] text-[#ffffff]' : ''}`
                         }
