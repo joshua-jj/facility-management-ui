@@ -124,7 +124,8 @@ const RequestForm: React.FC = () => {
       ministryName: formData.requestDetails.ministryName,
       requesterDepartmentId: department?.id,
       locationOfUse: formData.moreInformation.location,
-      durationOfUse: '1 week',
+      // durationOfUse: '1 week',
+      // durationOfUse: formData.moreInformation.returnDate,
       dateOfReturn: formData.moreInformation.returnDate,
       descriptionOfRequest: formData.moreInformation.description,
       items: formData.items.map((item) => ({

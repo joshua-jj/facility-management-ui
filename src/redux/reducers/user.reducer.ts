@@ -28,6 +28,7 @@ const userDetails = (
     phoneNumber: '',
     role: '',
     roleId: 0,
+    departmentId: 0,
     id: 0,
     // Add other required fields with default values
   },

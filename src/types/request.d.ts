@@ -7,8 +7,13 @@ export interface RequestConstants {
   GET_ALL_REQUESTS_SUCCESS: string;
   GET_ALL_REQUESTS_ERROR: string;
 
+  REQUEST_GET_DEPARTMENT_REQUESTS: string;
+  GET_DEPARTMENT_REQUESTS_SUCCESS: string;
+  GET_DEPARTMENT_REQUESTS_ERROR: string;
+
   CREATE_REQUEST: string;
   GET_ALL_REQUESTS: string;
+  GET_DEPARTMENT_REQUESTS: string;
 
   REQUEST_URI: string;
 }
@@ -23,7 +28,7 @@ export interface RequestForm {
   churchName?: string;
   requesterDepartmentId: number | undefined;
   locationOfUse: string;
-  durationOfUse: string;
+  // durationOfUse: string;
   dateOfReturn: string;
   descriptionOfRequest: string;
   //   items: [

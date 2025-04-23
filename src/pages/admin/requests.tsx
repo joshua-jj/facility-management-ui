@@ -45,11 +45,20 @@ const Requests = () => {
   const { IsRequestingRequests, allRequestsList } = useSelector(
     (s: RootState) => s.request
   );
+  const { userDetails } = useSelector((s: RootState) => s.user);
 
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
-    dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
-  }, [dispatch]);
+    if (userDetails?.roleId === 3) {
+      dispatch(
+        requestActions.getDepartmentRequests({
+          departmentId: userDetails?.departmentId ?? 0,
+        }) as unknown as UnknownAction
+      );
+    } else {
+      dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
+    }
+  }, [dispatch, userDetails]);
 
   const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
     ...obj,
@@ -98,6 +107,12 @@ const Requests = () => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
+    {
+      key: 'summary',
+      header: 'STATUS',
+      render: (_, row: Request) => row.summary?.requestStatus || 'N/A', // Access department.name
+    },
+
     {
       key: 'id',
       header: '.',
