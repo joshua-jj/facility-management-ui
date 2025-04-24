@@ -80,7 +80,7 @@ const ChangePassword: FC = () => {
           />
           <button
             disabled={!canSubmit}
-            className="bg-[#B28309] rounded text-center w-full py-3 mt-5 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
+            className="bg-[#B28309] rounded text-center w-full py-3 mt-8 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
             type="submit"
           >
             {IsChangingPassword ? (

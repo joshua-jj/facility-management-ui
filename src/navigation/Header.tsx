@@ -17,6 +17,7 @@ import { useIsAuthRoute } from '@/hooks';
 
 const Header = () => {
   const router = useRouter();
+  const pathname = router.pathname;
   const dispatch = useDispatch();
   const authRoutes = useIsAuthRoute();
   const { userDetails } = useSelector((s: RootState) => s.user);
@@ -53,7 +54,7 @@ const Header = () => {
 
   return (
     <>
-      {authRoutes ? (
+      {authRoutes || pathname.startsWith('/request') ? (
         <header className="flex items-center justify-between px-[35px] h-[4.5rem] border border-[#e1e3e7] bg-white shadow-[0_16px_32px_0_rgba(189,189,189,0.25)] cursor-pointer relative">
           <Link href="/" passHref className="flex items-center">
             <EgfmLogo />
@@ -61,7 +62,7 @@ const Header = () => {
               Logistics
             </span>
           </Link>
-          {!authRoutes && (
+          {router.pathname === '/' || pathname.startsWith('/request') && (
             <Report className="bg-[#b28309] text-white cursor-pointer rounded-[3px] py-3 px-4 text-[13px] font-semibold mx-2 transition duration-300">
               Report an Issue
             </Report>

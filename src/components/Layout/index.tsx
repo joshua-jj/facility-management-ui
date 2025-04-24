@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import Header from '@/navigation/Header';
 import Sidebar from '@/navigation/Sidebar';
 import { useIsAuthRoute } from '@/hooks';
+import { useRouter } from 'next/router';
 
 type LayoutProps = {
   children: ReactNode;
@@ -10,11 +11,13 @@ type LayoutProps = {
 };
 
 const Layout: React.FC<LayoutProps> = ({ children, className }) => {
+  const router = useRouter();
+  const pathname = router.pathname;
   const authRoutes = useIsAuthRoute();
 
   return (
     <>
-      {authRoutes ? (
+      {authRoutes || pathname.startsWith('/request') ? (
         <div className="h-screen overflow-y-scroll overflow-x-hidden scrollbar scrollbar-thin scrollbar-thumb-[#707070] bg-gray-50 scrollbar-track-transparent">
           <Header />
           <main>{children}</main>
