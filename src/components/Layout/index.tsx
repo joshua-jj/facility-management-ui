@@ -3,13 +3,13 @@ import Header from '@/navigation/Header';
 import Sidebar from '@/navigation/Sidebar';
 import { useIsAuthRoute } from '@/hooks';
 
-type AdminLayoutProps = {
+type LayoutProps = {
   children: ReactNode;
   className?: string;
   query?: string;
 };
 
-const Layout: React.FC<AdminLayoutProps> = ({ children, className }) => {
+const Layout: React.FC<LayoutProps> = ({ children, className }) => {
   const authRoutes = useIsAuthRoute();
 
   return (

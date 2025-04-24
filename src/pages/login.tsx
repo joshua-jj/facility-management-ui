@@ -75,7 +75,7 @@ const Login: FC = () => {
             name="password"
             label="Password"
           />
-          <Link href="/admin/forgot-password" className="text-[#0F2552] text-sm font-semibold hover:underline">Forgot password?</Link>
+          <Link href="/forgot-password" className="text-[#0F2552] text-sm font-semibold hover:underline">Forgot password?</Link>
           <button
             disabled={!canSubmit}
             className="bg-[#B28309] rounded text-center w-full py-3 mt-8 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
