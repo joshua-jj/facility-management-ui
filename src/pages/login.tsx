@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import Layout from '@/components/Layout';
+// import Layout from '@/components/Layout';
 import TextInput from '@/components/Inputs/TextInput';
 import Formsy from 'formsy-react';
 import { LoginForm } from '@/types';
@@ -10,6 +10,8 @@ import { UnknownAction } from 'redux';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { authConstants } from '@/constants';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+import Layout from '@/components/Layout';
 
 const Login: FC = () => {
   const router = useRouter();
@@ -58,7 +60,7 @@ const Login: FC = () => {
           onValidSubmit={handleSubmit}
           onValid={() => setCanSubmit(true)}
           onInvalid={() => setCanSubmit(false)}
-          className="w-md p-8 bg-white shadow-[8px_3px_22px_0px_rgba(150, 150, 150, 0.15)] rounded"
+          className="w-md p-8 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
         >
           <h1 className="text-[#0F2552] font-bold text-[1.5rem]">Login</h1>
           <TextInput
@@ -73,9 +75,10 @@ const Login: FC = () => {
             name="password"
             label="Password"
           />
+          <Link href="/forgot-password" className="text-[#0F2552] text-sm font-semibold hover:underline">Forgot password?</Link>
           <button
             disabled={!canSubmit}
-            className="bg-[#B28309] rounded text-center w-full py-3 mt-5 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
+            className="bg-[#B28309] rounded text-center w-full py-3 mt-8 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
             type="submit"
           >
             {IsLoggingIn ? (

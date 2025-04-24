@@ -38,7 +38,7 @@ const ChangePassword: FC = () => {
         console.log('🚀 ~ data:', data);
 
         if (data?.message) {
-          router.push('/admin/login');
+          router.push('/login');
           return;
         }
       }

@@ -7,7 +7,7 @@ import {
   TotalReportsIcon,
   TotalRequestsIcon,
 } from '@/components/Icons';
-import AdminLayout from '@/components/Layout/AdminLayout';
+import Layout from '@/components/Layout';
 import { Column, Table } from '@/components/Table';
 import { RootState } from '@/redux/reducers';
 import { Request } from '@/types';
@@ -63,7 +63,7 @@ const Dashboard = () => {
 
   return (
     <PrivateRoute>
-      <AdminLayout>
+      <Layout>
         <div className="grid grid-cols-4 gap-4 mb-6">
           {stats?.map((stat, index) => (
             <div
@@ -169,7 +169,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      </AdminLayout>
+      </Layout>
     </PrivateRoute>
   );
 };

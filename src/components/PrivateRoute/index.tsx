@@ -19,7 +19,7 @@ const PrivateRoute: React.FC<LayoutProps> = ({ children, allowedRoles }) => {
 
   if (!IsAuthenticated) {
     router.replace({
-      pathname: `/admin/login`,
+      pathname: `/login`,
       query: {
         from: encodeURIComponent(router.pathname),
       },
@@ -29,7 +29,7 @@ const PrivateRoute: React.FC<LayoutProps> = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(userDetails?.roleId)) {
-    router.replace('/admin/login');
+    router.replace('/login');
     return null;
   }
 
