@@ -17,22 +17,22 @@ const Layout: React.FC<LayoutProps> = ({ children, className }) => {
 
   return (
     <>
-      {authRoutes || pathname.startsWith('/request') ? (
+      {(authRoutes || pathname.startsWith('/request')) ? (
         <div className="h-screen overflow-y-scroll overflow-x-hidden scrollbar scrollbar-thin scrollbar-thumb-[#707070] bg-gray-50 scrollbar-track-transparent">
           <Header />
           <main>{children}</main>
         </div>
       ) : (
-      <div className="h-screen overflow-hidden w-full bg-gray-50 grid grid-cols-1 sm:grid-cols-[1fr_5.4fr]">
-        <Sidebar />
-        <div className="overflow-y-auto">
-          <Header />
-          <main className={`text-[#0F2552] p-8 pb-20 ${className}`}>
-            {children}
-          </main>
+        <div className="h-screen overflow-hidden w-full bg-gray-50 grid grid-cols-1 sm:grid-cols-[1fr_5.4fr]">
+          <Sidebar />
+          <div className="overflow-y-auto">
+            <Header />
+            <main className={`text-[#0F2552] p-8 pb-20 ${className}`}>
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 };

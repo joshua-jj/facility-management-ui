@@ -39,7 +39,7 @@ export const getValidString = (input: string | null | undefined): string => {
 export const useIsAuthRoute = () => {
    const {pathname} = useRouter();
 
-   const routes = ['/', '/login', '/forgot-password', '/reset-password', '/change-password', '/verify-user/[email]'];
+   const routes = ['/', '/landing', '/login', '/forgot-password', '/reset-password', '/change-password', '/verify-user/[email]'];
 
    const checker = (route: string) => routes.indexOf(route) !== -1;
 

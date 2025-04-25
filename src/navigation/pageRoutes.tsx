@@ -75,3 +75,30 @@ export const pageRoutes = [
     allowedRoles: [5, 1],
   },
 ];
+
+export const getPageNames = (link: string) => {
+  switch (link) {
+    case '/admin/dashboard':
+      return 'dashboard';
+    case '/admin/requests':
+      return 'requests';
+    case '/admin/request/[id]':
+      return 'requests';
+    case '/admin/items':
+      return 'items';
+    case '/admin/store':
+      return 'store';
+    case '/admin/departments':
+      return 'departments';
+    case '/admin/maintenance-log':
+      return 'maintenance log';
+    case '/admin/generator-log':
+      return 'generator log';
+    case '/admin/reports':
+      return 'reports';
+    case '/admin/users':
+      return 'user management';
+    default:
+      return '';
+  }
+};

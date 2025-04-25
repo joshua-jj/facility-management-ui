@@ -14,6 +14,7 @@ import EgfmLogo from '../../public/assets/logos/logo.svg';
 import Link from 'next/link';
 import Report from '@/components/Modals/Report';
 import { useIsAuthRoute } from '@/hooks';
+import { getPageNames } from './pageRoutes';
 
 const Header = () => {
   const router = useRouter();
@@ -22,31 +23,6 @@ const Header = () => {
   const authRoutes = useIsAuthRoute();
   const { userDetails } = useSelector((s: RootState) => s.user);
 
-  const getPageNames = (link: string) => {
-    switch (link) {
-      case '/admin/dashboard':
-        return 'dashboard';
-      case '/admin/requests':
-        return 'requests';
-      case '/admin/items':
-        return 'items';
-      case '/admin/store':
-        return 'store';
-      case '/admin/departments':
-        return 'departments';
-      case '/admin/maintenance-log':
-        return 'maintenance log';
-      case '/admin/generator-log':
-        return 'generator log';
-      case '/admin/reports':
-        return 'reports';
-      case '/admin/users':
-        return 'user management';
-      default:
-        return '';
-    }
-  };
-
   const handleLogout = () => {
     router.push('/login');
     dispatch(authActions.logout() as unknown as UnknownAction);
@@ -54,7 +30,7 @@ const Header = () => {
 
   return (
     <>
-      {authRoutes || pathname.startsWith('/request') ? (
+      {(authRoutes || pathname.startsWith('/request')) ? (
         <header className="flex items-center justify-between px-[35px] h-[4.5rem] border border-[#e1e3e7] bg-white shadow-[0_16px_32px_0_rgba(189,189,189,0.25)] cursor-pointer relative">
           <Link href="/" passHref className="flex items-center">
             <EgfmLogo />
@@ -62,7 +38,7 @@ const Header = () => {
               Logistics
             </span>
           </Link>
-          {router.pathname === '/' || pathname.startsWith('/request') && (
+          {(router.pathname === '/' || router.pathname === '/landing' || pathname.startsWith('/request')) && (
             <Report className="bg-[#b28309] text-white cursor-pointer rounded-[3px] py-3 px-4 text-[13px] font-semibold mx-2 transition duration-300">
               Report an Issue
             </Report>
