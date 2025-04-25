@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Layout from '@/components/Layout';
 import React, { useEffect, useState } from 'react';
-import { format, parseISO, isWithinInterval } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Column, Table } from '@/components/Table';
 import { Pagination } from '@/components/Pagination';
 import Formsy from 'formsy-react';
@@ -10,19 +10,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
-import classNames from 'classnames';
-import { Request } from '@/types';
+import type { Request } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
-import ActionDropDown from '@/components/ActionDropDown';
-
-type Users = {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'collected' | 'pending' | 'approved' | 'assigned' | 'declined';
-  return_date: string;
-};
+import { DotsIcon } from '@/components/Icons';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
+import { useRouter } from 'next/router';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -32,21 +24,66 @@ const optionsFilter = [
   { value: '5', label: 'pending' },
 ];
 
+type Props = {
+  row: Request;
+}
+
+const Dropdown = (row: Props) => {
+  const router = useRouter();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const ref = useOnClickOutside<HTMLUListElement>(() => setShowDropdown(false));
+
+  const handleOpen = (data: Props) => {  
+    console.log("🚀 ~ handleOpen ~ data:", data);
+    router.push(
+      {
+        pathname: '/admin/request/[id]',
+        query: { id: data?.row?.id }
+      },
+      `/admin/request/${data?.row?.id}`
+    );
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setShowDropdown((prev) => !prev)}
+        className="cursor-pointer"
+      >
+        <DotsIcon />
+      </button>
+      {showDropdown && (
+        <ul
+          ref={ref}
+          className="absolute right-[2rem] bg-white z-50 py-1 shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)]"
+        >
+          <li
+            onClick={() => handleOpen(row)}
+            className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"
+          >
+            open
+          </li>
+        </ul>
+      )}
+    </>
+  )
+}
+
 const Requests = () => {
   const dispatch = useDispatch();
   const [statusFilter, setStatusFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  const { userDetails } = useSelector((s: RootState) => s.user);
   const { IsRequestingRequests, allRequestsList } = useSelector(
     (s: RootState) => s.request
   );
-  const { userDetails } = useSelector((s: RootState) => s.user);
-
+  
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
     if (userDetails?.roleId === 3) {
@@ -60,41 +97,13 @@ const Requests = () => {
     }
   }, [dispatch, userDetails]);
 
+  const pageSize = 10;
+
   const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
     ...obj,
     label: obj.name,
     value: obj.id.toString(),
   }));
-
-  // const filtered = allRequestsList.filter((emp) => {
-  //   const matchStatus = statusFilter ? emp.status === statusFilter : true;
-  //   const matchDept = deptFilter ? emp.name === deptFilter : true;
-  //   const matchDate =
-  //     dateFrom && dateTo
-  //       ? isWithinInterval(parseISO(emp.return_date), {
-  //           start: parseISO(dateFrom),
-  //           end: parseISO(dateTo),
-  //         })
-  //       : true;
-  //   const matchSearch = emp.name
-  //     .toLowerCase()
-  //     .includes(searchQuery.toLowerCase());
-
-  //   return matchStatus && matchDept && matchDate && matchSearch;
-  // });
-
-  const pageSize = 10;
-  // const totalPages = Math.ceil(filtered.length / pageSize);
-  // const start = (currentPage - 1) * pageSize;
-  // const paginated = filtered.slice(start, start + pageSize);
-
-  const handleUpdate = (data: object) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
-  };
-
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
 
   const columns: Column<Request>[] = [
     { key: 'createdBy', header: 'CHURCH/MINISTRY/NAME' },
@@ -115,45 +124,15 @@ const Requests = () => {
     {
       key: 'id',
       header: '.',
-      render: (value: string | number, row: object) => (
-        <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
-        />
-      ),
+      render: (value: string | number, row: Request) => <Dropdown row={row} />,
     },
-    // {
-    //   key: 'summary',
-    //   header: 'STATUS',
-    //     render: (value: string | number, row: Request) => {
-    //       const status = row.summary?.requestStatus;
-    //     return (
-    //       <span
-    //         className={classNames('border rounded uppercase text-xs p-1', {
-    //           'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-    //             value === 'collected',
-    //           'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-    //             value === 'assigned',
-    //           'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-    //             value === 'approved',
-    //           'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-    //             value === 'pending',
-    //           'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-    //             value === 'declined',
-    //         })}
-    //       >
-    //         {value}
-    //       </span>
-    //     );
-    //   },
-    // },
   ];
 
   return (
     <PrivateRoute>
       <Layout>
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          {/* Filters */}
+          {/* =========== Filters ================= */}
           <Formsy className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               {/* Search */}
@@ -236,7 +215,6 @@ const Requests = () => {
             </button>
           </Formsy>
 
-          {/* Table */}
           <Table
             loading={IsRequestingRequests}
             columns={columns}

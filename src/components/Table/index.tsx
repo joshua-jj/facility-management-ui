@@ -22,7 +22,6 @@ export function Table<T extends Record<string, any>>({
   searching,
   currentPage,
 }: TableProps<T>) {
-  console.log('data', data);
 
   return (
     <div className="overflow-auto scrollbar-hidden w-full">

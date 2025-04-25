@@ -14,6 +14,7 @@ import EgfmLogo from '../../public/assets/logos/logo.svg';
 import Link from 'next/link';
 import Report from '@/components/Modals/Report';
 import { useIsAuthRoute } from '@/hooks';
+import { getPageNames } from './pageRoutes';
 
 const Header = () => {
   const router = useRouter();
@@ -21,31 +22,6 @@ const Header = () => {
   const dispatch = useDispatch();
   const authRoutes = useIsAuthRoute();
   const { userDetails } = useSelector((s: RootState) => s.user);
-
-  const getPageNames = (link: string) => {
-    switch (link) {
-      case '/admin/dashboard':
-        return 'dashboard';
-      case '/admin/requests':
-        return 'requests';
-      case '/admin/items':
-        return 'items';
-      case '/admin/store':
-        return 'store';
-      case '/admin/departments':
-        return 'departments';
-      case '/admin/maintenance-log':
-        return 'maintenance log';
-      case '/admin/generator-log':
-        return 'generator log';
-      case '/admin/reports':
-        return 'reports';
-      case '/admin/users':
-        return 'user management';
-      default:
-        return '';
-    }
-  };
 
   const handleLogout = () => {
     router.push('/login');

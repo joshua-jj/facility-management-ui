@@ -14,6 +14,7 @@ interface CustomDropdownSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   showSelectedLabel?: boolean;
+  noSearch?: boolean;
 }
 
 export default function CustomDropdownSelect({
@@ -22,6 +23,7 @@ export default function CustomDropdownSelect({
   onChange,
   placeholder = 'Select an option',
   showSelectedLabel = false,
+  noSearch,
 }: CustomDropdownSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -38,7 +40,7 @@ export default function CustomDropdownSelect({
     <div className="relative space-y-2">
       <button
         type="button"
-        className="w-full bg-white border border-gray-300 rounded shadow-sm px-4 py-2 text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full bg-white border border-gray-300 rounded shadow-sm px-4 py-3 text-left text-sm flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 capitalize"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
@@ -47,18 +49,20 @@ export default function CustomDropdownSelect({
 
       {isOpen && (
         <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded shadow-lg max-h-72 overflow-hidden">
-          <div className="p-2 border-b border-gray-200">
-            <div className="flex items-center space-x-2 bg-gray-100 px-2 py-1 rounded-md">
-              <SearchIcon className="h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-transparent outline-none text-sm"
-              />
+          {!noSearch && (
+            <div className="p-2 border-b border-gray-200">
+              <div className="flex items-center space-x-2 bg-gray-100 px-2 py-1 rounded-md">
+                <SearchIcon className="h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-transparent outline-none text-sm"
+                />
+              </div>
             </div>
-          </div>
+          )}
           <ul className="max-h-52 overflow-auto">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
