@@ -34,15 +34,15 @@ interface AllItemsAction extends Action {
 type DepartmentItemsListState = Items[];
 type AllItemsListState = Item[];
 
-const IsRequestingDepartmentItems = (
+const IsRequestingAllDepartmentItems = (
   state: LoadingState = false,
   action: Action
 ): LoadingState => {
   switch (action.type) {
-    case itemConstants.REQUEST_GET_DEPARTMENT_ITEMS:
+    case itemConstants.REQUEST_GET_ALL_DEPARTMENT_ITEMS:
       return true;
-    case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
-    case itemConstants.GET_DEPARTMENT_ITEMS_ERROR:
+    case itemConstants.GET_ALL_DEPARTMENT_ITEMS_SUCCESS:
+    case itemConstants.GET_ALL_DEPARTMENT_ITEMS_ERROR:
       return false;
     default:
       return state;
@@ -55,9 +55,12 @@ const IsRequestingAllItems = (
 ): LoadingState => {
   switch (action.type) {
     case itemConstants.REQUEST_GET_ALL_ITEMS:
+    case itemConstants.REQUEST_GET_DEPARTMENT_ITEMS:
       return true;
     case itemConstants.GET_ALL_ITEMS_SUCCESS:
     case itemConstants.GET_ALL_ITEMS_ERROR:
+    case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
+    case itemConstants.GET_DEPARTMENT_ITEMS_ERROR:
       return false;
     default:
       return state;
@@ -84,7 +87,7 @@ const allDepartmentItemsList = (
   action: DepartmentItemsAction
 ): DepartmentItemsListState => {
   switch (action.type) {
-    case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
+    case itemConstants.GET_ALL_DEPARTMENT_ITEMS_SUCCESS:
       return action.items ?? state;
     default:
       return state;
@@ -96,6 +99,8 @@ const allItemsList = (
 ): AllItemsListState => {
   switch (action.type) {
     case itemConstants.GET_ALL_ITEMS_SUCCESS:
+      return action.items?.items ?? state;
+    case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
       return action.items?.items ?? state;
     case itemConstants.SEARCH_ITEM_SUCCESS:
       return action.item ?? state;
@@ -132,13 +137,22 @@ const pagination = (
 
       return updateObject(state, result);
     }
+    case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS: {
+      const { links, meta } = action.items;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
     default:
       return state;
   }
 };
 
 export interface RootState {
-  IsRequestingDepartmentItems: (
+  IsRequestingAllDepartmentItems: (
     state: LoadingState | undefined,
     action: Action
   ) => LoadingState;
@@ -160,7 +174,7 @@ export interface RootState {
 }
 
 const rootReducer = combineReducers<RootState>({
-  IsRequestingDepartmentItems,
+  IsRequestingAllDepartmentItems,
   IsRequestingAllItems,
   IsSearchingItem,
   allDepartmentItemsList,

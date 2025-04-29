@@ -46,9 +46,9 @@ const Items = () => {
   useEffect(() => {
     if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
       dispatch(
-        itemActions.getDepartmentItems(
-          userDetails.departmentId
-        ) as unknown as UnknownAction
+        itemActions.getDepartmentItems({
+          departmentId: userDetails.departmentId,
+        }) as unknown as UnknownAction
       );
     } else {
       dispatch(itemActions.getAllItems() as unknown as UnknownAction);
@@ -179,7 +179,16 @@ const Items = () => {
   ];
 
   const handleChangePage = (page: number) => {
-    dispatch(itemActions.getAllItems({ page }) as unknown as UnknownAction);
+    if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
+      dispatch(
+        itemActions.getDepartmentItems({
+          departmentId: userDetails.departmentId,
+          page,
+        }) as unknown as UnknownAction
+      );
+    } else {
+      dispatch(itemActions.getAllItems({ page }) as unknown as UnknownAction);
+    }
   };
 
   return (

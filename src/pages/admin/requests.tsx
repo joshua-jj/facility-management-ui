@@ -26,7 +26,7 @@ const optionsFilter = [
 
 type Props = {
   row: Request;
-}
+};
 
 const Dropdown = (row: Props) => {
   const router = useRouter();
@@ -34,12 +34,12 @@ const Dropdown = (row: Props) => {
 
   const ref = useOnClickOutside<HTMLUListElement>(() => setShowDropdown(false));
 
-  const handleOpen = (data: Props) => {  
-    console.log("🚀 ~ handleOpen ~ data:", data);
+  const handleOpen = (data: Props) => {
+    console.log('🚀 ~ handleOpen ~ data:', data);
     router.push(
       {
         pathname: '/admin/request/[id]',
-        query: { id: data?.row?.id }
+        query: { id: data?.row?.id },
       },
       `/admin/request/${data?.row?.id}`
     );
@@ -67,8 +67,8 @@ const Dropdown = (row: Props) => {
         </ul>
       )}
     </>
-  )
-}
+  );
+};
 
 const Requests = () => {
   const dispatch = useDispatch();
@@ -83,7 +83,7 @@ const Requests = () => {
   const { IsRequestingRequests, allRequestsList } = useSelector(
     (s: RootState) => s.request
   );
-  
+
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
     if (userDetails?.roleId === 3) {

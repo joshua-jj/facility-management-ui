@@ -17,7 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children, className }) => {
 
   return (
     <>
-      {(authRoutes || pathname.startsWith('/request')) ? (
+      {authRoutes || pathname.startsWith('/request') ? (
         <div className="h-screen overflow-y-scroll overflow-x-hidden scrollbar scrollbar-thin scrollbar-thumb-[#707070] bg-gray-50 scrollbar-track-transparent">
           <Header />
           <main>{children}</main>

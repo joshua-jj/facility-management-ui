@@ -3,6 +3,10 @@ export interface ItemConstants {
   GET_DEPARTMENT_ITEMS_SUCCESS: string;
   GET_DEPARTMENT_ITEMS_ERROR: string;
 
+  REQUEST_GET_ALL_DEPARTMENT_ITEMS: string;
+  GET_ALL_DEPARTMENT_ITEMS_SUCCESS: string;
+  GET_ALL_DEPARTMENT_ITEMS_ERROR: string;
+
   REQUEST_GET_ALL_ITEMS: string;
   GET_ALL_ITEMS_SUCCESS: string;
   GET_ALL_ITEMS_ERROR: string;
@@ -12,6 +16,7 @@ export interface ItemConstants {
   SEARCH_ITEM_ERROR: string;
 
   GET_DEPARTMENT_ITEMS: string;
+  GET_ALL_DEPARTMENT_ITEMS: string;
   GET_ALL_ITEMS: string;
   SEARCH_ITEM: string;
 

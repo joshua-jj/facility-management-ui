@@ -1,9 +1,16 @@
 import { itemConstants } from '@/constants';
 
-interface GetDepartmentItemsAction {
+export interface GetDepartmentItemsAction {
   type: typeof itemConstants.GET_DEPARTMENT_ITEMS;
+  // data: number;
+  data: { departmentId: number; page?: number };
+}
+
+export interface GetAllDepartmentItemsAction {
+  type: typeof itemConstants.GET_ALL_DEPARTMENT_ITEMS;
   data: number;
 }
+
 export interface GetAllItemsAction {
   type: typeof itemConstants.GET_ALL_ITEMS;
   data?: { page: number };
@@ -14,8 +21,16 @@ export interface SearchItemAction {
   data: { text: string };
 }
 
-const getDepartmentItems = (id: number): GetDepartmentItemsAction => ({
+const getDepartmentItems = (data: {
+  departmentId: number;
+  page?: number;
+}): GetDepartmentItemsAction => ({
   type: itemConstants.GET_DEPARTMENT_ITEMS,
+  data: data,
+});
+
+const getAllDepartmentItems = (id: number): GetAllDepartmentItemsAction => ({
+  type: itemConstants.GET_ALL_DEPARTMENT_ITEMS,
   data: id,
 });
 
@@ -31,6 +46,7 @@ const searchItem = (data: { text: string }): SearchItemAction => ({
 
 export const itemActions = {
   getDepartmentItems,
+  getAllDepartmentItems,
   getAllItems,
   searchItem,
 };

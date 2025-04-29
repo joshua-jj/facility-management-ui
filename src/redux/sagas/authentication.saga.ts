@@ -16,6 +16,7 @@ import {
   LoginAction,
   ResendEmailAction,
 } from '@/actions/authentication.action';
+import Cookies from 'js-cookie';
 
 interface ParsedResponse {
   message: string;
@@ -56,6 +57,14 @@ function* login({ data }: LoginAction) {
         user: jsonResponse?.data.user,
         token: jsonResponse?.data.accessToken,
         refreshToken: jsonResponse?.data.refreshToken,
+      });
+
+      Cookies.set('authToken', jsonResponse?.data.accessToken, {
+        domain: '.localhost',
+        path: '/',
+        secure: true,
+        sameSite: 'lax',
+        expires: 30,
       });
 
       yield put({

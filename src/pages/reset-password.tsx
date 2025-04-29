@@ -60,7 +60,9 @@ const ResetPassword: FC = () => {
           onInvalid={() => setCanSubmit(false)}
           className="w-md p-8 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
         >
-          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">Reset password</h1>
+          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">
+            Reset password
+          </h1>
           <TextInput
             inputClass="text-[#0F2552]"
             type="password"

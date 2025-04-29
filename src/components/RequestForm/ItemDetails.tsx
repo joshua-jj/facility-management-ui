@@ -36,7 +36,9 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
     dispatch(
-      itemActions.getDepartmentItems(department.id) as unknown as UnknownAction
+      itemActions.getAllDepartmentItems(
+        department.id
+      ) as unknown as UnknownAction
     );
     setDepartmentIsOpen(false);
   };
