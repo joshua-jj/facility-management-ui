@@ -19,6 +19,21 @@ const IsCreatingRequest = (
   }
 };
 
+const IsUpdatingRequestStatus = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case requestConstants.REQUEST_UPDATE_REQUEST_STATUS:
+      return true;
+    case requestConstants.UPDATE_REQUEST_STATUS_SUCCESS:
+    case requestConstants.UPDATE_REQUEST_STATUS_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const IsRequestingRequests = (
   state: LoadingState = false,
   action: Action
@@ -69,6 +84,10 @@ export interface RootState {
     state: LoadingState | undefined,
     action: Action
   ) => LoadingState;
+  IsUpdatingRequestStatus: (
+    state: LoadingState | undefined,
+    action: Action
+  ) => LoadingState;
   IsRequestingRequests: (
     state: LoadingState | undefined,
     action: Action
@@ -82,6 +101,7 @@ export interface RootState {
 
 const rootReducer = combineReducers<RootState>({
   IsCreatingRequest,
+  IsUpdatingRequestStatus,
   IsRequestingRequests,
   allRequestsList,
   //   pagination,

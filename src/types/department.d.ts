@@ -3,14 +3,19 @@ export interface DepartmentConstants {
   GET_ALL_DEPARTMENTS_SUCCESS: string;
   GET_ALL_DEPARTMENTS_ERROR: string;
 
+  REQUEST_CREATE_DEPARTMENT: string;
+  CREATE_DEPARTMENT_SUCCESS: string;
+  CREATE_DEPARTMENT_ERROR: string;
+
   GET_ALL_DEPARTMENTS: string;
+  CREATE_DEPARTMENT: string;
 
   DEPARTMENT_URI: string;
 }
 export interface DepartmentForm {
-  hodEmail: string;
-  hodName: string;
-  hodPhone: string;
+  // hodEmail: string;
+  // hodName: string;
+  // hodPhone: string;
   name: string;
 }
 

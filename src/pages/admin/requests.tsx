@@ -108,7 +108,7 @@ const Requests = () => {
   const columns: Column<Request>[] = [
     { key: 'createdBy', header: 'CHURCH/MINISTRY/NAME' },
     { key: 'requesterHodEmail', header: 'EMAIL ADDRESS' },
-    { key: 'requesterHodEmail', header: 'PHONE NUMBER' },
+    // { key: 'requesterPhone', header: 'PHONE NUMBER' },
     {
       key: 'dateOfReturn',
       header: 'RETURN DATE',

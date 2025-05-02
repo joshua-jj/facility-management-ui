@@ -1,4 +1,4 @@
-import { RequestForm } from '@/types';
+import { RequestForm, UpdateStatusForm } from '@/types';
 import { requestConstants } from '@/constants';
 
 export interface CreateRequestAction {
@@ -13,6 +13,11 @@ interface GetAllRequestsAction {
 export interface GetDepartmentRequestsAction {
   type: typeof requestConstants.GET_DEPARTMENT_REQUESTS;
   data: { departmentId: number };
+}
+
+export interface UpdateRequestStatusAction {
+  type: typeof requestConstants.UPDATE_REQUEST_STATUS;
+  data: UpdateStatusForm;
 }
 
 const createRequest = (data: RequestForm): CreateRequestAction => ({
@@ -31,8 +36,16 @@ const getDepartmentRequests = (data: {
   data,
 });
 
+const updateRequestStatus = (
+  data: UpdateStatusForm
+): UpdateRequestStatusAction => ({
+  type: requestConstants.UPDATE_REQUEST_STATUS,
+  data,
+});
+
 export const requestActions = {
   createRequest,
   getAllRequests,
   getDepartmentRequests,
+  updateRequestStatus,
 };

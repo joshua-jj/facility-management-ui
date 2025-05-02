@@ -8,6 +8,11 @@
       "start": "next start",
       "lint": "next lint",
       "docker:dev": "docker-compose up --build",
+      "docker:prod": "docker-compose -f docker-compose.prod.yml up --build",
+      "docker:stop": "docker-compose down --volumes",
+      "docker:logs": "docker-compose logs -f",
+      "docker:exec": "docker-compose exec -it facility-management-ui sh",
+      "docker:exec-prod": "docker-compose -f docker-compose.prod.yml exec -it facility-management-ui sh",
       "prettier": "prettier --write ."
    },
    "dependencies": {

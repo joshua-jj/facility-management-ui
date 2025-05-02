@@ -3,7 +3,12 @@ export interface GeneratorConstants {
   GET_GENERATOR_LOGS_SUCCESS: string;
   GET_GENERATOR_LOGS_ERROR: string;
 
+  REQUEST_CREATE_GENERATOR_LOG: string;
+  CREATE_GENERATOR_LOG_SUCCESS: string;
+  CREATE_GENERATOR_LOG_ERROR: string;
+
   GET_GENERATOR_LOGS: string;
+  CREATE_GENERATOR_LOG: string;
 
   GENERATOR_URI: string;
 }

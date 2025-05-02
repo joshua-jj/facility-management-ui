@@ -315,3 +315,20 @@ export function generateUUID() {
     return v.toString(16);
   });
 }
+
+/**
+ * Formats an ISO timestamp into a readable date string.
+ * @param isoString - e.g. "2025-05-02T00:00:00.000Z"
+ * @returns e.g. "Friday, May 2, 2025"
+ */
+export function formatReadableDate(isoString: string): string {
+  const date = new Date(isoString);
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Africa/Lagos',
+  });
+}

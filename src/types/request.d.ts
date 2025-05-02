@@ -11,9 +11,14 @@ export interface RequestConstants {
   GET_DEPARTMENT_REQUESTS_SUCCESS: string;
   GET_DEPARTMENT_REQUESTS_ERROR: string;
 
+  REQUEST_UPDATE_REQUEST_STATUS: string;
+  UPDATE_REQUEST_STATUS_SUCCESS: string;
+  UPDATE_REQUEST_STATUS_ERROR: string;
+
   CREATE_REQUEST: string;
   GET_ALL_REQUESTS: string;
   GET_DEPARTMENT_REQUESTS: string;
+  UPDATE_REQUEST_STATUS: string;
 
   REQUEST_URI: string;
 }
@@ -41,6 +46,12 @@ export interface RequestForm {
   //     },
   //   ];
 }
+
+export interface UpdateStatusForm {
+  requestId: string;
+  status: string;
+}
+
 export interface Request {
   id: number;
   requesterName: string;

@@ -4,15 +4,21 @@ import Layout from '@/components/Layout';
 import { requestConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
-// import { useRouter } from 'next/router';
+import { useRouter } from 'next/router';
 import React, { useState } from 'react';
+import { formatReadableDate } from '@/utilities/helpers';
+import { requestActions } from '@/actions';
+import { UnknownAction } from 'redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/redux/reducers';
 
 const optionsFilter = [
-  { value: '1', label: 'approve' },
-  { value: '2', label: 'decline' },
+  { value: 'approve', label: 'approve' },
+  { value: 'decline', label: 'decline' },
 ];
 
 interface RequestDetails {
+  requesterName: string;
   ministryName?: string;
   requesterEmail: string;
   requesterPhone: string;
@@ -63,7 +69,7 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
         },
       }
     );
-    // console.log('response data:', resp?.data);
+    console.log('response data:', resp?.data?.data?.items);
 
     return {
       props: {
@@ -71,19 +77,35 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
       },
     };
   } catch (err: unknown) {
+    console.log('error:', err);
+
     return {
       props: {
-        requestDetails: err || null,
+        requestDetails: null,
       },
     };
   }
 };
 
 const RequestViewPage: NextPage<VerifyUserProps> = ({ requestDetails }) => {
-  // const router = useRouter();
-  // const { id } = router.query;
+  const router = useRouter();
+  const { id } = router.query;
+  const dispatch = useDispatch();
+  const { IsUpdatingRequestStatus } = useSelector((s: RootState) => s.request);
+
   const [requestStatus, setRequestStatus] = useState('');
   console.log('requestDetails:', requestDetails);
+
+  const handleUpdateStatus = () => {
+    const payload = {
+      status: requestStatus,
+      requestId: id as string,
+    };
+    console.log('payload:', payload);
+    dispatch(
+      requestActions.updateRequestStatus(payload) as unknown as UnknownAction
+    );
+  };
 
   return (
     <Layout className="grid grid-cols-12 mb-12">
@@ -98,6 +120,12 @@ const RequestViewPage: NextPage<VerifyUserProps> = ({ requestDetails }) => {
               church/ministry/name
             </h3>
             <p className="">{requestDetails?.ministryName}</p>
+          </div>
+          <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <h3 className="font-semibold text-xs uppercase">
+              requester&apos;s name
+            </h3>
+            <p className="">{requestDetails?.requesterName}</p>
           </div>
           <div className="grid grid-cols-subgrid col-span-2 gap-2">
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
@@ -114,7 +142,9 @@ const RequestViewPage: NextPage<VerifyUserProps> = ({ requestDetails }) => {
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">return date</h3>
-              <p className="">{requestDetails?.dateOfReturn}</p>
+              <p className="">
+                {formatReadableDate(requestDetails?.dateOfReturn)}
+              </p>
             </div>
           </div>
           <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
@@ -187,8 +217,17 @@ const RequestViewPage: NextPage<VerifyUserProps> = ({ requestDetails }) => {
         </div>
 
         <div className="flex justify-end mt-8 mb-4">
-          <button className="text-xs text-[#fff] px-5 py-3 hover:bg-[#B2830998] cursor-pointer transition bg-[#B28309] rounded-[2px]">
-            Submit
+          <button
+            onClick={handleUpdateStatus}
+            className="text-xs text-[#fff] px-5 py-3 hover:bg-[#B2830998] cursor-pointer transition bg-[#B28309] rounded-[2px]"
+          >
+            {IsUpdatingRequestStatus ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              'Submit'
+            )}
           </button>
         </div>
       </div>

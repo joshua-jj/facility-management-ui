@@ -23,6 +23,21 @@ const IsRequestingDepartments = (
   }
 };
 
+const IsCreatingDepartment = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case departmentConstants.REQUEST_CREATE_DEPARTMENT:
+      return true;
+    case departmentConstants.CREATE_DEPARTMENT_SUCCESS:
+    case departmentConstants.CREATE_DEPARTMENT_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allDepartmentsList = (
   state: DepartmentsListState = [],
   action: DepartmentsAction
@@ -35,24 +50,15 @@ const allDepartmentsList = (
   }
 };
 
-// const pagination = (
-//   state: PaginationState = null,
-//   action: Action
-// ): PaginationState => {
-//   switch (action.type) {
-//     case eventConstants.GET_ALL_EVENTS_SUCCESS:
-//       return action.pagination ?? state;
-//     default:
-//       return state;
-//   }
-// };
-
 export interface RootState {
   IsRequestingDepartments: (
     state: LoadingState | undefined,
     action: Action
   ) => LoadingState;
-  //   pagination: PaginationState;
+  IsCreatingDepartment: (
+    state: LoadingState | undefined,
+    action: Action
+  ) => LoadingState;
   allDepartmentsList: (
     state: DepartmentsListState | undefined,
     action: DepartmentsAction
@@ -61,7 +67,7 @@ export interface RootState {
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingDepartments,
-  //   pagination,
+  IsCreatingDepartment,
   allDepartmentsList,
 });
 

@@ -249,6 +249,8 @@ function* logout() {
   try {
     yield call(clearObjectFromStorage, authConstants.USER_KEY);
 
+    Cookies.remove('authToken', { domain: '.localhost', path: '/' });
+
     yield put({ type: authConstants.LOGOUT_SUCCESS });
   } catch {
     yield put({ type: authConstants.LOGOUT_FAILURE });
