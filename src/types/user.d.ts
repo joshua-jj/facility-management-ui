@@ -7,12 +7,18 @@ export interface UserConstants {
   SEARCH_USER_SUCCESS: string;
   SEARCH_USER_ERROR: string;
 
+  REQUEST_GET_USERS_BY_ROLE: string;
+  GET_USERS_BY_ROLE_SUCCESS: string;
+  GET_USERS_BY_ROLE_ERROR: string;
+
   REQUEST_CREATE_USER: string;
   CREATE_USER_SUCCESS: string;
   CREATE_USER_ERROR: string;
 
   GET_USERS: string;
   SEARCH_USER: string;
+  GET_USERS_BY_ROLE: string;
+
   CREATE_USER: string;
 
   USER_URI: string;
@@ -35,6 +41,7 @@ export interface Users {
   lastName: string;
   phoneNumber: string;
   gender: string;
+  isVerified: boolean;
   role: {
     id: number;
     status: string;

@@ -15,9 +15,14 @@ interface RequestDetailsProps {
     email: string;
     contactNumber: string;
   }) => void;
+  isWorkerRoute: boolean;
 }
 
-const RequestDetails: React.FC<RequestDetailsProps> = ({ data, setData }) => {
+const RequestDetails: React.FC<RequestDetailsProps> = ({
+  data,
+  setData,
+  isWorkerRoute,
+}) => {
   const handleChange = (currentValues: {
     ministry_name?: string;
     requester_name?: string;
@@ -25,7 +30,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({ data, setData }) => {
     contact_number?: string;
   }) => {
     setData({
-      ministryName: currentValues.ministry_name || '',
+      ministryName: isWorkerRoute ? 'EGFM' : currentValues.ministry_name || '',
       requesterName: currentValues.requester_name || '',
       email: currentValues.email || '',
       contactNumber: currentValues.contact_number || '',
@@ -34,15 +39,17 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({ data, setData }) => {
 
   return (
     <Formsy onChange={handleChange} className="">
-      <TextInput
-        type="text"
-        className="text-[#0F2552] rounded font-medium text-sm"
-        name="ministry_name"
-        label="Church/Ministry name"
-        placeholder="e.g City gate church"
-        inputClass="font-normal border border-gray-300 rounded"
-        value={data.ministryName}
-      />
+      {!isWorkerRoute && (
+        <TextInput
+          type="text"
+          className="text-[#0F2552] rounded font-medium text-sm"
+          name="ministry_name"
+          label="Church/Ministry name"
+          placeholder="e.g City gate church"
+          inputClass="font-normal border border-gray-300 rounded"
+          value={data.ministryName}
+        />
+      )}
       <TextInput
         type="text"
         className="text-[#0F2552] rounded font-medium text-sm"

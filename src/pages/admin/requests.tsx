@@ -84,12 +84,34 @@ const Requests = () => {
     (s: RootState) => s.request
   );
 
+  // useEffect(() => {
+  //   dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+  //   if (userDetails?.roleId === 3) {
+  //     dispatch(
+  //       requestActions.getDepartmentRequests({
+  //         departmentId: userDetails?.departmentId ?? 0,
+  //       }) as unknown as UnknownAction
+  //     );
+  //   } else {
+  //     dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
+  //   }
+  // }, [dispatch, userDetails]);
+
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+
     if (userDetails?.roleId === 3) {
+      // Role ID 3: Dispatch department-specific requests
       dispatch(
         requestActions.getDepartmentRequests({
           departmentId: userDetails?.departmentId ?? 0,
+        }) as unknown as UnknownAction
+      );
+    } else if (userDetails?.roleId === 4) {
+      // Role ID 4: Dispatch user-specific requests
+      dispatch(
+        requestActions.getAssignedRequests({
+          userId: userDetails?.id ?? 0,
         }) as unknown as UnknownAction
       );
     } else {

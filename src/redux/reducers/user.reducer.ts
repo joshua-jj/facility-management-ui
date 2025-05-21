@@ -106,6 +106,18 @@ const allUsersList = (
   }
 };
 
+const roleUsersList = (
+  state: UsersListState = [],
+  action: AllUsersAction
+): UsersListState => {
+  switch (action.type) {
+    case userConstants.GET_USERS_BY_ROLE_SUCCESS:
+      return action.user ?? state;
+    default:
+      return state;
+  }
+};
+
 export interface RootState {
   userDetails: (state: UserDetailsState, action: Action) => UserDetailsState;
   IsRequestingUsers: (
@@ -124,6 +136,10 @@ export interface RootState {
     state: UsersListState | undefined,
     action: AllUsersAction
   ) => UsersListState;
+  roleUsersList: (
+    state: UsersListState | undefined,
+    action: AllUsersAction
+  ) => UsersListState;
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -132,6 +148,7 @@ const rootReducer = combineReducers<RootState>({
   IsSearchingUser,
   IsCreatingUser,
   allUsersList,
+  roleUsersList,
 });
 
 export default rootReducer;

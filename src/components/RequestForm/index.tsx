@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import ItemDetails from './ItemDetails';
 import { CaretIcon } from '../Icons';
 import RequestDetails from './RequestDetails';
@@ -14,7 +14,7 @@ import { requestConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { Department, Item } from '@/types';
 
-const steps = ['Item(s) Details', 'Request Details', 'More Information'];
+const steps = ['Item(s) Details', 'Requester Details', 'More Information'];
 
 interface FormData {
   items: Item[];
@@ -31,7 +31,16 @@ interface FormData {
   };
 }
 
-const RequestForm: React.FC = () => {
+interface RequestFormProps {
+  route: string; // Add a prop for the route
+}
+
+const RequestForm: FC<RequestFormProps> = ({ route }) => {
+  const isWorkerRoute = route.includes('egfm-worker'); // Check if the current route includes 'egfm-worker'
+  const isChurchRoute = route.includes('church-ministry');
+  console.log('🚀 ~ RequestForm ~ isWorkerRoute:', isWorkerRoute);
+  console.log('🚀 ~ RequestForm ~ isChurchRoute:', isChurchRoute);
+
   const dispatch = useDispatch();
   const { IsCreatingRequest } = useSelector((s: RootState) => s.request);
   const [currentStep, setCurrentStep] = useState(0);
@@ -120,7 +129,7 @@ const RequestForm: React.FC = () => {
       requesterName: formData.requestDetails.requesterName,
       requesterEmail: formData.requestDetails.email,
       requesterPhone: formData.requestDetails.contactNumber,
-      isMinistry: true,
+      isMinistry: isWorkerRoute ? true : false,
       ministryName: formData.requestDetails.ministryName,
       requesterDepartmentId: department?.id,
       locationOfUse: formData.moreInformation.location,
@@ -135,58 +144,12 @@ const RequestForm: React.FC = () => {
         conditionBeforeLease: item.condition,
       })),
     };
+    console.log('requestData:', requestData);
+    console.log('formData.items:', formData.items);
+
     dispatch(
       requestActions.createRequest(requestData) as unknown as UnknownAction
     );
-
-    // try {
-    //   const response = await fetch('/api/submit-request', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(formData),
-    //   });
-
-    //   if (!response.ok) {
-    //     throw new Error('Failed to submit request');
-    //   }
-
-    //   const result = await response.json();
-    //   console.log('Submission successful:', result);
-    //   // Optionally reset the form or redirect
-    //   setFormData({
-    //     items: [
-    //       {
-    //         id: 1,
-    //         name: '',
-    //         availableQuantity: 10,
-    //         condition: '',
-    //         fragile: false,
-    //         storeId: 0,
-    //         storeName: '',
-    //         requestedQuantity: 0,
-    //       },
-    //     ],
-    //     requestDetails: {
-    //       ministryName: '',
-    //       requesterName: '',
-    //       email: '',
-    //       contactNumber: '',
-    //     },
-    //     moreInformation: {
-    //       location: '',
-    //       returnDate: '',
-    //       description: '',
-    //     },
-    //   });
-    //   setCurrentStep(0); // Go back to the first step
-    // } catch (error) {
-    //   console.error('Error submitting request:', error);
-    //   alert('Failed to submit request. Please try again.');
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
   };
 
   const canSubmit = () => {
@@ -244,6 +207,7 @@ const RequestForm: React.FC = () => {
             setData={(requestDetails) =>
               setFormData((prev) => ({ ...prev, requestDetails }))
             }
+            isWorkerRoute={isWorkerRoute}
           />
         )}
         {currentStep === 2 && (

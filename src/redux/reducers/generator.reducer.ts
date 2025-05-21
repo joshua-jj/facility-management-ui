@@ -25,6 +25,21 @@ const IsRequestingGeneratorLogs = (
   }
 };
 
+const IsCreatingGeneratorLog = (
+  state: LoadingState = false,
+  action: GeneratorAction
+): LoadingState => {
+  switch (action.type) {
+    case generatorConstants.REQUEST_CREATE_GENERATOR_LOG:
+      return true;
+    case generatorConstants.CREATE_GENERATOR_LOG_SUCCESS:
+    case generatorConstants.CREATE_GENERATOR_LOG_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allGeneratorLogsList = (
   state: GeneratorLogState = [],
   action: AllGeneratorLogsAction
@@ -42,6 +57,10 @@ export interface RootState {
     state: LoadingState | undefined,
     action: GeneratorAction
   ) => LoadingState;
+  IsCreatingGeneratorLog: (
+    state: LoadingState | undefined,
+    action: GeneratorAction
+  ) => LoadingState;
   allGeneratorLogsList: (
     state: GeneratorLogState | undefined,
     action: AllGeneratorLogsAction
@@ -50,6 +69,7 @@ export interface RootState {
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingGeneratorLogs,
+  IsCreatingGeneratorLog,
   allGeneratorLogsList,
 });
 

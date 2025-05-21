@@ -34,6 +34,51 @@ const IsUpdatingRequestStatus = (
   }
 };
 
+const IsAssigningRequest = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case requestConstants.REQUEST_ASSIGN_REQUEST:
+      return true;
+    case requestConstants.ASSIGN_REQUEST_SUCCESS:
+    case requestConstants.ASSIGN_REQUEST_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
+const IsReleasingRequestItems = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case requestConstants.REQUEST_RELEASE_REQUEST_ITEMS:
+      return true;
+    case requestConstants.RELEASE_REQUEST_ITEMS_SUCCESS:
+    case requestConstants.RELEASE_REQUEST_ITEMS_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
+const IsReturningRequestItems = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case requestConstants.REQUEST_RETURN_REQUEST_ITEMS:
+      return true;
+    case requestConstants.RETURN_REQUEST_ITEMS_SUCCESS:
+    case requestConstants.RETURN_REQUEST_ITEMS_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const IsRequestingRequests = (
   state: LoadingState = false,
   action: Action
@@ -62,6 +107,8 @@ const allRequestsList = (
       return action.requests?.items ?? state;
     case requestConstants.GET_DEPARTMENT_REQUESTS_SUCCESS:
       return action.requests?.items ?? state;
+    case requestConstants.GET_ASSIGNED_REQUESTS_SUCCESS:
+      return action.requests?.items ?? state;
     default:
       return state;
   }
@@ -88,6 +135,18 @@ export interface RootState {
     state: LoadingState | undefined,
     action: Action
   ) => LoadingState;
+  IsAssigningRequest: (
+    state: LoadingState | undefined,
+    action: Action
+  ) => LoadingState;
+  IsReleasingRequestItems: (
+    state: LoadingState | undefined,
+    action: Action
+  ) => LoadingState;
+  IsReturningRequestItems: (
+    state: LoadingState | undefined,
+    action: Action
+  ) => LoadingState;
   IsRequestingRequests: (
     state: LoadingState | undefined,
     action: Action
@@ -102,6 +161,9 @@ export interface RootState {
 const rootReducer = combineReducers<RootState>({
   IsCreatingRequest,
   IsUpdatingRequestStatus,
+  IsAssigningRequest,
+  IsReleasingRequestItems,
+  IsReturningRequestItems,
   IsRequestingRequests,
   allRequestsList,
   //   pagination,

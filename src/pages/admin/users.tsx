@@ -72,6 +72,7 @@ const Users = () => {
     { key: 'email', header: 'EMAIL' },
     { key: 'phoneNumber', header: 'PHONE NUMBER' },
     { key: 'role', header: 'ROLE' },
+    { key: 'isVerified', header: 'VERIFIED' },
     // {
     //   key: 'role',
     //   header: 'ROLE',

@@ -31,6 +31,21 @@ const IsRequestingMaintenanceLogs = (
   }
 };
 
+const IsCreatingMaintenanceLog = (
+  state: LoadingState = false,
+  action: MaintenanceAction
+): LoadingState => {
+  switch (action.type) {
+    case maintenanceConstants.REQUEST_CREATE_MAINTENANCE_LOG:
+      return true;
+    case maintenanceConstants.CREATE_MAINTENANCE_LOG_SUCCESS:
+    case maintenanceConstants.CREATE_MAINTENANCE_LOG_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const IsSearchingMaintenanceLog = (
   state: LoadingState = false,
   action: MaintenanceAction
@@ -65,6 +80,10 @@ export interface RootState {
     state: LoadingState | undefined,
     action: MaintenanceAction
   ) => LoadingState;
+  IsCreatingMaintenanceLog: (
+    state: LoadingState | undefined,
+    action: MaintenanceAction
+  ) => LoadingState;
   IsSearchingMaintenanceLog: (
     state: LoadingState | undefined,
     action: MaintenanceAction
@@ -77,6 +96,7 @@ export interface RootState {
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingMaintenanceLogs,
+  IsCreatingMaintenanceLog,
   IsSearchingMaintenanceLog,
   allMaintenanceLogsList,
 });

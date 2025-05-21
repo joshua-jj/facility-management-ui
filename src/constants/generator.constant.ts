@@ -14,6 +14,7 @@ export const generatorConstants: GeneratorConstants = {
 
   GET_GENERATOR_LOGS: 'GET_GENERATOR_LOGS',
   CREATE_GENERATOR_LOG: 'CREATE_GENERATOR_LOG',
+  SEARCH_GENERATOR_LOG: 'SEARCH_GENERATOR_LOG',
 
   GENERATOR_URI: `${appConstants.BASE_URI}${generator}`,
 };
