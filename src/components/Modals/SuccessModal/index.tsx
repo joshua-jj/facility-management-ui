@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import FullscreenModal from '..';
 import { GreenCheckIcon } from '@/components/Icons';
 
@@ -6,6 +6,7 @@ interface SuccessModalProps {
   message?: string;
   subMessage?: string;
   showSuccessModal: boolean;
+  autoCloseDelay?: number;
   setShowSuccessModal: (bool: boolean) => void;
 }
 
@@ -13,8 +14,19 @@ const SuccessModal: FC<SuccessModalProps> = ({
   message,
   subMessage,
   showSuccessModal,
+  autoCloseDelay = 3000,
   setShowSuccessModal,
 }) => {
+  useEffect(() => {
+    if (showSuccessModal) {
+      const timer = setTimeout(() => {
+        setShowSuccessModal(false);
+      }, autoCloseDelay);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessModal, autoCloseDelay, setShowSuccessModal]);
+
   return (
     <FullscreenModal
       className=""
