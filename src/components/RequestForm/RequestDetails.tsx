@@ -16,12 +16,14 @@ interface RequestDetailsProps {
     contactNumber: string;
   }) => void;
   isWorkerRoute: boolean;
+  setIsFormValid: (isValid: boolean) => void;
 }
 
 const RequestDetails: React.FC<RequestDetailsProps> = ({
   data,
   setData,
   isWorkerRoute,
+  setIsFormValid,
 }) => {
   const handleChange = (currentValues: {
     ministry_name?: string;
@@ -38,7 +40,12 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
   };
 
   return (
-    <Formsy onChange={handleChange} className="">
+    <Formsy
+      onChange={handleChange}
+      className=""
+      onValid={() => setIsFormValid(true)}
+      onInvalid={() => setIsFormValid(false)}
+    >
       {!isWorkerRoute && (
         <TextInput
           type="text"
@@ -48,6 +55,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
           placeholder="e.g City gate church"
           inputClass="font-normal border border-gray-300 rounded"
           value={data.ministryName}
+          required
         />
       )}
       <TextInput
@@ -58,6 +66,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
         placeholder="e.g John Doe"
         inputClass="font-normal border border-gray-300 rounded"
         value={data.requesterName}
+        required
       />
       <TextInput
         type="text"
@@ -67,6 +76,9 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
         placeholder="e.g citygate@gmail.com"
         inputClass="font-normal border border-gray-300 rounded"
         value={data.email}
+        validations="isEmail"
+        validationError="This is not a valid email"
+        required
       />
       <TextInput
         type="text"
@@ -76,6 +88,9 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
         placeholder="xxxxxxxxxx"
         inputClass="font-normal border border-gray-300 rounded"
         value={data.contactNumber}
+        validations="isValidPhone"
+        validationError="Please enter a valid phone number."
+        required
       />
     </Formsy>
   );

@@ -13,8 +13,10 @@ interface TextInputProps {
   onValueChange?: (value: string) => void;
   clearError?: () => void;
   valError?: string;
+  errorMessage?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon?: SVGProps<SVGSVGElement> | any;
+  isPristine?: boolean;
 }
 
 const TextInput: React.FC<TextInputProps> = (props) => {
@@ -28,6 +30,28 @@ const TextInput: React.FC<TextInputProps> = (props) => {
       props.onValueChange(e.currentTarget.value);
     }
   };
+
+  const errorMessage = props.errorMessage || props.valError;
+
+  if (errorMessage && !props.isPristine) {
+    return (
+      <div className={`my-3 w-full ${props.className}`}>
+        {props.icon && props.icon}
+        <label className="block text-sm text-gray-700">
+          {props.required ? `${props.label}*` : props.label}
+        </label>
+        <input
+          type={props.type}
+          onChange={changeValue}
+          value={props.value || ''}
+          required={props.required}
+          placeholder={props.placeholder}
+          className={`mt-1 block w-full border border-red-500 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${props.inputClass}`}
+        />
+        <span className="text-red-500 text-sm">{errorMessage}</span>
+      </div>
+    );
+  }
 
   return (
     <div className={`my-3 w-full ${props.className}`}>
@@ -46,4 +70,5 @@ const TextInput: React.FC<TextInputProps> = (props) => {
     </div>
   );
 };
+
 export default withFormsy(TextInput);
