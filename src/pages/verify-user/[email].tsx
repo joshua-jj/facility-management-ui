@@ -38,7 +38,7 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
         },
       }
     );
-    console.log('response:', resp.data);
+    // console.log('response:', resp.data);
 
     return {
       props: {
@@ -85,7 +85,7 @@ const VerifyUserPage: NextPage<VerifyUserProps> = ({
       dispatch(authActions.resendEmail(data) as unknown as UnknownAction);
     }
   };
-  console.log('token', accessToken);
+  // console.log('token', accessToken);
 
   return (
     <Layout>

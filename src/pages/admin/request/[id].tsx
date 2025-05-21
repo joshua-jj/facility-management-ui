@@ -77,7 +77,7 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
         },
       }
     );
-    // console.log('response data:', resp);
+
     if (resp?.status !== 200) {
       return {
         notFound: true,
