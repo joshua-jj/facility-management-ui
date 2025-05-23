@@ -1,4 +1,4 @@
-import { authActions } from '@/actions';
+import { appActions, authActions } from '@/actions';
 import { CaretIcon } from '@/components/Icons';
 import LetteredAvatar from '@/components/LetteredAvatar';
 import AddDepartment from '@/components/Modals/AddDepartment';
@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Report from '@/components/Modals/Report';
 import { useIsAuthRoute } from '@/hooks';
 import { getPageNames } from './pageRoutes';
+import Snack from '@/components/Snack';
 
 const Header = () => {
   const router = useRouter();
@@ -22,11 +23,22 @@ const Header = () => {
   const dispatch = useDispatch();
   const authRoutes = useIsAuthRoute();
   const { userDetails } = useSelector((s: RootState) => s.user);
+  const { message } = useSelector((s: RootState) => s.snackbar);
 
   const handleLogout = () => {
     router.push('/login');
     dispatch(authActions.logout() as unknown as UnknownAction);
   };
+
+  const clearSnackBar = () => {
+    dispatch(appActions.clearSnackBar() as unknown as UnknownAction);
+
+    // const clearSnackBarAction: clearAction = {
+    //   type: appConstants.CLEAR_SNACKBAR,
+    // };
+    // dispatch(clearSnackBarAction as unknown as UnknownAction);
+  };
+  console.log('message', message);
 
   return (
     <>
@@ -38,6 +50,13 @@ const Header = () => {
               Logistics
             </span>
           </Link>
+          {message.message !== '' && (
+            <Snack
+              onClose={clearSnackBar}
+              variant={message.variant as 'success' | 'error'}
+              message={<span id="message-id">{message.message}</span>}
+            />
+          )}
           {(router.pathname === '/' ||
             router.pathname === '/landing' ||
             pathname.startsWith('/request')) && (
@@ -52,6 +71,13 @@ const Header = () => {
             {getPageNames(router.pathname)}
           </h1>
           <div className="flex items-center gap-x-6">
+            {message.message !== '' && (
+              <Snack
+                onClose={clearSnackBar}
+                variant={message.variant as 'success' | 'error'}
+                message={<span id="message-id">{message.message}</span>}
+              />
+            )}
             <div className="group relative inline-block">
               <button className="flex items-center text-xs gap-x-2 px-3 py-3 text-white bg-[#B28309] hover:bg-[#B2830998] transition rounded cursor-pointer capitalize">
                 add item
@@ -84,7 +110,6 @@ const Header = () => {
                 </li>
               </ul>
             </div>
-
             <div className="relative group">
               <LetteredAvatar
                 name={userDetails?.firstName}

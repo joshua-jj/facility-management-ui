@@ -201,7 +201,7 @@ const RequestViewPage: NextPage<VerifyUserProps> = ({ requestDetails }) => {
       quantityReturned: Number(item.quantityReturned),
       quantityReleased: Number(item.quantityReleased),
       conditionBeforeLease: item.conditionBeforeLease,
-      leasedDate: new Date().toISOString(),
+      returnedDate: new Date().toISOString(),
     }));
     const payload = {
       items: updatedItems,

@@ -3,8 +3,7 @@ import FullscreenModal from '../';
 import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
-// import SuccessModal from '../Report/SuccessModal';
-import { CreateUserForm, Department, Role } from '@/types';
+import { CreateUserForm, Department, Role, Users } from '@/types';
 import { userActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,17 +13,19 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 import { userConstants } from '@/constants';
 
 interface AddItemModalProps {
-  // onClose: () => void;
-  children: ReactNode;
+  onClose?: () => void;
+  children?: ReactNode;
   className: string;
-  // open: boolean;
+  user?: Users | null;
+  open?: boolean;
 }
 
 const AddUser: React.FC<AddItemModalProps> = ({
   className,
   children,
-  // onClose,
-  // open,
+  user,
+  onClose,
+  open,
 }) => {
   const dispatch = useDispatch();
   const { IsCreatingUser } = useSelector((s: RootState) => s.user);
@@ -39,9 +40,14 @@ const AddUser: React.FC<AddItemModalProps> = ({
   const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
   const [department, setDepartment] = useState<Department | null>(null);
   const [search, setSearch] = useState('');
+  const [roleError, setRoleError] = useState('');
+  const [departmentError, setDepartmentError] = useState('');
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    if (onClose) onClose();
+  };
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
@@ -59,20 +65,36 @@ const AddUser: React.FC<AddItemModalProps> = ({
   const handleRoleSelect = (role: Role) => {
     setRole(role);
     setRoleIsOpen(false);
+    setRoleError('');
   };
 
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
     setDepartmentIsOpen(false);
+    setDepartmentError('');
   };
 
-  console.log('allDepartmentsList', allDepartmentsList);
+  const filteredDepartments = allDepartmentsArray.filter((department) =>
+    department.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleSubmit = (data: CreateUserForm) => {
+    if (!role) {
+      setRoleError('Please select a role.');
+      return;
+    }
+    if (role.id === 3 && !department) {
+      setDepartmentError('Please select a department for this role.');
+      return;
+    }
     data.role = role?.id as number;
     data.departmentId = Number(department?.id);
 
-    dispatch(userActions.createUser(data) as unknown as UnknownAction);
+    dispatch(
+      user
+        ? (userActions.createUser(data) as unknown as UnknownAction)
+        : (userActions.createUser(data) as unknown as UnknownAction)
+    );
   };
 
   useEffect(() => {
@@ -96,7 +118,7 @@ const AddUser: React.FC<AddItemModalProps> = ({
         {children}
       </button>
 
-      <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
+      <FullscreenModal open={open || isModalOpen} onClickAway={closeModal}>
         <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] ">
           <button
             onClick={closeModal}
@@ -105,7 +127,7 @@ const AddUser: React.FC<AddItemModalProps> = ({
             <CrossIcon />
           </button>
           <h2 className="text-2xl font-semibold text-textColor mb-4">
-            Create User
+            {user ? 'Update' : 'Create'} User
           </h2>
           <Formsy
             onValidSubmit={handleSubmit}
@@ -117,7 +139,8 @@ const AddUser: React.FC<AddItemModalProps> = ({
               type="text"
               name="firstName"
               label="First Name"
-              placeholder="Enter name"
+              value={user?.firstName}
+              placeholder="Enter first name"
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
@@ -126,7 +149,8 @@ const AddUser: React.FC<AddItemModalProps> = ({
               type="text"
               name="lastName"
               label="Last Name"
-              placeholder="Enter name"
+              value={user?.lastName}
+              placeholder="Enter last name"
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
@@ -135,7 +159,10 @@ const AddUser: React.FC<AddItemModalProps> = ({
               type="text"
               name="email"
               label="Email"
-              placeholder="Enter name"
+              value={user?.email}
+              placeholder="Enter email address"
+              validations="isEmail"
+              validationError="This is not a valid email"
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
@@ -144,7 +171,10 @@ const AddUser: React.FC<AddItemModalProps> = ({
               type="text"
               name="phoneNumber"
               label="Phone number"
-              placeholder="Enter name"
+              value={user?.phoneNumber}
+              placeholder="Enter phone number"
+              validations="isValidPhone"
+              validationError="Please enter a valid phone number."
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
@@ -161,14 +191,14 @@ const AddUser: React.FC<AddItemModalProps> = ({
                   onClick={() => setRoleIsOpen(!roleIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
-                  {role?.name || 'Select role'}
+                  {role?.name || String(user?.role) || 'Select role'}
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
                     <CaretIcon className="rotate-90" />
                   </span>
                 </button>
                 {roleIsOpen && (
                   <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
-                    <div className="p-2">
+                    {/* <div className="p-2">
                       <div className="relative">
                         <input
                           type="text"
@@ -181,7 +211,7 @@ const AddUser: React.FC<AddItemModalProps> = ({
                           <SearchIcon />
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                     <ul className="max-h-40 overflow-y-auto">
                       {allRolesArray.map((role) => (
                         <li
@@ -196,6 +226,7 @@ const AddUser: React.FC<AddItemModalProps> = ({
                   </div>
                 )}
               </div>
+              <p className="text-red-500 text-sm">{roleError}</p>
             </div>
             {role?.id === 3 && (
               <div className="mb-3 group">
@@ -232,7 +263,7 @@ const AddUser: React.FC<AddItemModalProps> = ({
                         </div>
                       </div>
                       <ul className="max-h-40 overflow-y-auto">
-                        {allDepartmentsArray.map((department) => (
+                        {filteredDepartments.map((department) => (
                           <li
                             key={department.id}
                             onClick={() => handleDepartmentSelect(department)}
@@ -245,13 +276,12 @@ const AddUser: React.FC<AddItemModalProps> = ({
                     </div>
                   )}
                 </div>
+                <p className="text-red-500 text-sm">{departmentError}</p>
               </div>
             )}
             <button
-              //   onClick={handleSubmit}
               // disabled={!canSubmit() || IsCreatingRequest}
               disabled={!canSubmit}
-              //   className="w-full px-4 py-2 mt-8 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer flex items-center justify-center disabled:opacity-50"
               className={`w-full px-4 py-2 mt-8 bg-yellow-500 text-white rounded hover:bg-yellow-600 flex items-center justify-center disabled:opacity-50 ${
                 canSubmit ? 'cursor-pointer' : 'cursor-not-allowed'
               }`}
@@ -260,6 +290,8 @@ const AddUser: React.FC<AddItemModalProps> = ({
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
+              ) : user ? (
+                'Update User'
               ) : (
                 'Add New User'
               )}
@@ -267,11 +299,6 @@ const AddUser: React.FC<AddItemModalProps> = ({
           </Formsy>
         </div>
       </FullscreenModal>
-      {/* <SuccessModal
-        open={isSuccessOpen}
-        onClose={() => setIsSuccessOpen(false)}
-        autoCloseDelay={5000}
-      /> */}
     </>
   );
 };

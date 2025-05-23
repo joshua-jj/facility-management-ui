@@ -1,6 +1,7 @@
 import { all } from 'typed-redux-saga';
 import authRootSaga from './authentication.saga';
 import departmentRootSaga from './department.saga';
+import forgotPasswordRootSaga from './forgotPassword.saga';
 import generatorRootSaga from './generator.saga';
 import itemRootSaga from './item.saga';
 import maintenanceRootSaga from './maintenance.saga';
@@ -14,6 +15,7 @@ export default function* rootSaga() {
   yield all([
     authRootSaga(),
     departmentRootSaga(),
+    forgotPasswordRootSaga(),
     generatorRootSaga(),
     itemRootSaga(),
     maintenanceRootSaga(),

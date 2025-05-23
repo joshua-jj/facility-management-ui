@@ -76,37 +76,54 @@ function* login({ data }: LoginAction) {
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
+      console.log('got hereeeee');
+
       const res: ParsedResponse = yield call(
         parseResponse,
         (error as ApiError).response as unknown as Response
       );
+      console.log('got res', res?.message);
       yield put({
         type: authConstants.LOGIN_FAILURE,
-        error: res?.error,
+        // error: res?.message ?? res?.message?.[0],
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
       });
       const payload: SetSnackBarPayload = {
         type: 'error',
-        message: res?.error ?? res?.message ?? 'Something went wrong',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        // message: res?.message ?? res?.message?.[0] ?? 'Something went wrong',
         variant: 'error',
       };
+      console.log('payload', payload);
+
       yield put(appActions.setSnackBar(payload));
 
       return;
     }
-    yield put({
-      type: authConstants.LOGIN_FAILURE,
-      error:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-    });
-    const payload: SetSnackBarPayload = {
-      type: 'error',
-      message:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-      variant: 'error',
-    };
-    yield put(appActions.setSnackBar(payload));
+    // yield put({
+    //   type: authConstants.LOGIN_FAILURE,
+    //   error:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    // });
+    // const payload: SetSnackBarPayload = {
+    //   type: 'error',
+    //   message:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    //   variant: 'error',
+    // };
+    // yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -131,10 +148,19 @@ function* resendEmail({ data }: ResendEmailAction) {
 
       yield put({
         type: authConstants.RESEND_EMAIL_LINK_SUCCESS,
-        user: jsonResponse?.data.user,
+        user: jsonResponse?.data,
       });
 
       AppEmitter.emit(authConstants.RESEND_EMAIL_LINK_SUCCESS, jsonResponse);
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message:
+          jsonResponse?.message ?? 'Reset password link sent successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -144,31 +170,31 @@ function* resendEmail({ data }: ResendEmailAction) {
       );
       yield put({
         type: authConstants.RESEND_EMAIL_LINK_ERROR,
-        error: res?.error,
+        error: res?.message,
       });
       const payload: SetSnackBarPayload = {
         type: 'error',
-        message: res?.error ?? res?.message ?? 'Something went wrong',
+        message: res?.message ?? 'Something went wrong',
         variant: 'error',
       };
       yield put(appActions.setSnackBar(payload));
 
       return;
     }
-    yield put({
-      type: authConstants.RESEND_EMAIL_LINK_ERROR,
-      error:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-    });
-    const payload: SetSnackBarPayload = {
-      type: 'error',
-      message:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-      variant: 'error',
-    };
-    yield put(appActions.setSnackBar(payload));
+    // yield put({
+    //   type: authConstants.RESEND_EMAIL_LINK_ERROR,
+    //   error:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    // });
+    // const payload: SetSnackBarPayload = {
+    //   type: 'error',
+    //   message:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    //   variant: 'error',
+    // };
+    // yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -207,6 +233,14 @@ function* changePassword({ data }: ChangePasswordAction) {
       });
 
       AppEmitter.emit(authConstants.CHANGE_PASSWORD_SUCCESS, jsonResponse);
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Password changed successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
