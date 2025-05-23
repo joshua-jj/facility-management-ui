@@ -8,6 +8,8 @@ import { UnknownAction } from 'redux';
 import { authActions } from '@/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
+import Tick from '../../../public/assets/icons/check.svg';
+import ErrorIcon from '../../../public/assets/icons/Error.svg';
 
 interface VerifyUserProps {
   success: boolean;
@@ -38,7 +40,7 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (
         },
       }
     );
-    console.log('response:', resp.data);
+    // console.log('response:', resp.data);
 
     return {
       props: {
@@ -85,40 +87,58 @@ const VerifyUserPage: NextPage<VerifyUserProps> = ({
       dispatch(authActions.resendEmail(data) as unknown as UnknownAction);
     }
   };
-  console.log('token', accessToken);
+
+  const handleLogin = () => {
+    router.push('/login');
+  };
+  // console.log('token', accessToken);
 
   return (
     <Layout>
-      <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <h1 className="text-2xl font-bold mb-4">Email Verification</h1>
-        <p className={success ? 'text-green-600' : 'text-red-600'}>{message}</p>
-
-        {success && accessToken ? (
-          <button
-            onClick={() =>
-              router.push({
-                pathname: '/change-password',
-                query: { email, accessToken },
-              })
-            }
-            className="mt-6 px-4 py-2 cursor-pointer bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Proceed to Change password
-          </button>
-        ) : (
-          <button
-            onClick={handleResend}
-            className="mt-6 px-4 py-2 cursor-pointer bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            {IsResendingEmail ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
+      <div className="min-h-screen flex items-start justify-center pt-20 bg-gray-100">
+        <div className="bg-white shadow-md rounded-2xl p-8 w-full max-w-md border-[0.5px] border-[#0F255226]">
+          <div className="flex flex-col items-center text-center space-y-2">
+            {success ? <Tick /> : <ErrorIcon />}
+            <h1 className="text-2xl font-semibold text-textColor">
+              Email verification {success ? 'successful' : 'failed'}
+            </h1>
+            <p className={success ? 'text-textColor' : 'text-red-600'}>
+              {message}
+            </p>
+            {success && accessToken ? (
+              <button
+                onClick={() =>
+                  router.push({
+                    pathname: '/change-password',
+                    query: { email, accessToken },
+                  })
+                }
+                className="mt-4 bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-6 rounded-lg transition cursor-pointer"
+              >
+                Proceed to change password
+              </button>
             ) : (
-              'resend verification link'
+              <button
+                onClick={
+                  message === 'User is already verified'
+                    ? handleLogin
+                    : handleResend
+                }
+                className="mt-4 bg-[#B28309] hover:bg-yellow-700 text-white font-medium py-2 px-6 rounded-lg transition cursor-pointer"
+              >
+                {IsResendingEmail ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : message === 'User is already verified' ? (
+                  'Proceed to login'
+                ) : (
+                  'resend verification link'
+                )}
+              </button>
             )}
-          </button>
-        )}
+          </div>
+        </div>
       </div>
     </Layout>
   );

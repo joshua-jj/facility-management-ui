@@ -11,6 +11,7 @@ import { SetSnackBarPayload, Users } from '@/types';
 import {
   appActions,
   CreateUserAction,
+  GetUsersAction,
   GetUsersByRoleAction,
   SearchUserAction,
 } from '@/actions';
@@ -40,7 +41,7 @@ interface ApiError {
   error?: string;
 }
 
-function* getUsers() {
+function* getUsers({ data }: GetUsersAction) {
   yield put({ type: userConstants.REQUEST_GET_USERS });
 
   try {
@@ -48,7 +49,11 @@ function* getUsers() {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const userUri = `${userConstants.USER_URI}`;
+    let userUri = `${userConstants.USER_URI}`;
+
+    if (data?.page) {
+      userUri = `${userUri}?page=${data.page}`;
+    }
 
     const requestFn = () =>
       createRequestWithToken(userUri, { method: 'GET' })(user?.token as string);
@@ -231,6 +236,13 @@ function* createUser({ data }: CreateUserAction) {
       });
 
       AppEmitter.emit(userConstants.CREATE_USER_SUCCESS, jsonResponse);
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'User created successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -238,33 +250,48 @@ function* createUser({ data }: CreateUserAction) {
         parseResponse,
         (error as ApiError).response as unknown as Response
       );
+      console.log('res', res);
+
       yield put({
         type: userConstants.CREATE_USER_ERROR,
-        error: res?.error,
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
       });
       const payload: SetSnackBarPayload = {
         type: 'error',
-        message: res?.error ?? res?.message ?? 'Something went wrong',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        // message: res?.message ?? res?.message?.[0] ?? 'Something went wrong',
         variant: 'error',
       };
+      console.log('payload', payload);
+
       yield put(appActions.setSnackBar(payload));
 
       return;
     }
-    yield put({
-      type: userConstants.CREATE_USER_ERROR,
-      error:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-    });
-    const payload: SetSnackBarPayload = {
-      type: 'error',
-      message:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-      variant: 'error',
-    };
-    yield put(appActions.setSnackBar(payload));
+    // yield put({
+    //   type: userConstants.CREATE_USER_ERROR,
+    //   error:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    // });
+    // const payload: SetSnackBarPayload = {
+    //   type: 'error',
+    //   message:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    //   variant: 'error',
+    // };
+    // yield put(appActions.setSnackBar(payload));
   }
 }
 

@@ -43,23 +43,34 @@ export function Table<T extends Record<string, any>>({
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data?.map((row, rowIndex) => (
-              <tr
-                key={rowIndex}
-                className="hover:bg-gray-50 border-b-[0.5px] border-[#E4E5E7]"
-              >
-                {columns.map((col) => (
-                  <td
-                    key={String(col.key)}
-                    className="px-3 py-4 first:pl-6 last:relative text-[0.8rem] text-gray-800 text-nowrap"
-                  >
-                    {col.render
-                      ? col.render(row[col.key], row)
-                      : String(row[col.key])}
-                  </td>
-                ))}
+            {data?.length > 0 ? (
+              data?.map((row, rowIndex) => (
+                <tr
+                  key={rowIndex}
+                  className="hover:bg-gray-50 border-b-[0.5px] border-[#E4E5E7]"
+                >
+                  {columns.map((col) => (
+                    <td
+                      key={String(col.key)}
+                      className="px-3 py-4 first:pl-6 last:relative text-[0.8rem] text-gray-800 text-nowrap"
+                    >
+                      {col.render
+                        ? col.render(row[col.key], row)
+                        : String(row[col.key])}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="text-center py-4 font-semibold"
+                >
+                  No data available
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       )}

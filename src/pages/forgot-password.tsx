@@ -1,11 +1,10 @@
 import React, { FC, useEffect, useState } from 'react';
-// import Layout from '@/components/Layout';
 import TextInput from '@/components/Inputs/TextInput';
 import Formsy from 'formsy-react';
-import { LoginForm } from '@/types';
+import { ForgotPasswordForm } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { authActions } from '@/actions';
+import { forgotPasswordActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { authConstants } from '@/constants';
@@ -19,12 +18,16 @@ const ForgotPassword: FC = () => {
     Array.isArray(query?.from) ? query.from[0] : (query?.from ?? '')
   );
   const dispatch = useDispatch();
-  const { IsLoggingIn } = useSelector((s: RootState) => s.auth);
+  const { IsSendingResetPasswordLink } = useSelector(
+    (s: RootState) => s.forgotPassword
+  );
 
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
 
-  const handleSubmit = (data: LoginForm) => {
-    dispatch(authActions.login(data) as unknown as UnknownAction);
+  const handleSubmit = (data: ForgotPasswordForm) => {
+    dispatch(
+      forgotPasswordActions.forgotPassword(data) as unknown as UnknownAction
+    );
   };
 
   useEffect(() => {
@@ -72,20 +75,23 @@ const ForgotPassword: FC = () => {
             inputClass="text-[#0F2552]"
             type="text"
             name="email"
-            // label="Enter email address"
+            label="Email address"
             placeholder="Enter email address"
+            validations="isEmail"
+            validationError="This is not a valid email"
+            required
           />
           <button
             disabled={!canSubmit}
             className="bg-[#B28309] rounded text-center w-full py-3 mt-8 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
             type="submit"
           >
-            {IsLoggingIn ? (
+            {IsSendingResetPasswordLink ? (
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : (
-              'Reset'
+              'Send'
             )}
           </button>
         </Formsy>

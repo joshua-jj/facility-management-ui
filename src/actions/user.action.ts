@@ -1,8 +1,9 @@
 import { userConstants } from '@/constants';
 import { CreateUserForm } from '@/types';
 
-interface GetUsersAction {
+export interface GetUsersAction {
   type: typeof userConstants.GET_USERS;
+  data?: { page: number };
 }
 
 export interface SearchUserAction {
@@ -19,8 +20,9 @@ export interface CreateUserAction {
   data: CreateUserForm;
 }
 
-const getUsers = (): GetUsersAction => ({
+const getUsers = (data?: { page: number }): GetUsersAction => ({
   type: userConstants.GET_USERS,
+  data,
 });
 
 const searchUser = (data: { text: string }): SearchUserAction => ({
