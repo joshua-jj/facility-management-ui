@@ -4,6 +4,7 @@ import {
   appActions,
   AssignRequestAction,
   CreateRequestAction,
+  GetAllRequestsAction,
   GetAssignedRequestsAction,
   GetDepartmentRequestsAction,
   ReleaseItemsAction,
@@ -111,7 +112,7 @@ function* createNewRequest({ data }: CreateRequestAction) {
   }
 }
 
-function* getAllRequests() {
+function* getAllRequests({ data }: GetAllRequestsAction) {
   yield put({ type: requestConstants.REQUEST_GET_ALL_REQUESTS });
 
   try {
@@ -119,15 +120,16 @@ function* getAllRequests() {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const storeUri = `${requestConstants.REQUEST_URI}`;
+    let reqUri = `${requestConstants.REQUEST_URI}`;
+    if (data?.page) {
+      reqUri = `${reqUri}?page=${data.page}`;
+    }
 
     const requestFn = () =>
-      createRequestWithToken(storeUri, { method: 'GET' })(
-        user?.token as string
-      );
-    const storeReq: Request = yield call(requestFn);
+      createRequestWithToken(reqUri, { method: 'GET' })(user?.token as string);
+    const reqReq: Request = yield call(requestFn);
 
-    const response: CustomRequest = yield call(fetch, storeReq);
+    const response: CustomRequest = yield call(fetch, reqReq);
     if (response.status === 401) {
       yield call(clearObjectFromStorage, authConstants.USER_KEY);
 
@@ -175,12 +177,12 @@ function* getDepartmentRequests({ data }: GetDepartmentRequestsAction) {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const storeUri = `${requestConstants.REQUEST_URI}?id=${data?.departmentId}`;
-
+    let reqUri = `${requestConstants.REQUEST_URI}?id=${data?.departmentId}`;
+    if (data?.page) {
+      reqUri = `${reqUri}?page=${data.page}`;
+    }
     const requestFn = () =>
-      createRequestWithToken(storeUri, { method: 'GET' })(
-        user?.token as string
-      );
+      createRequestWithToken(reqUri, { method: 'GET' })(user?.token as string);
     const storeReq: Request = yield call(requestFn);
 
     const response: CustomRequest = yield call(fetch, storeReq);
@@ -231,12 +233,12 @@ function* getAssignedRequests({ data }: GetAssignedRequestsAction) {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const storeUri = `${requestConstants.REQUEST_URI}/assignee/${data?.userId}`;
-
+    let reqUri = `${requestConstants.REQUEST_URI}/assignee/${data?.userId}`;
+    if (data?.page) {
+      reqUri = `${reqUri}?page=${data.page}`;
+    }
     const requestFn = () =>
-      createRequestWithToken(storeUri, { method: 'GET' })(
-        user?.token as string
-      );
+      createRequestWithToken(reqUri, { method: 'GET' })(user?.token as string);
     const storeReq: Request = yield call(requestFn);
 
     const response: CustomRequest = yield call(fetch, storeReq);
@@ -313,6 +315,14 @@ function* updateRequestStatus({ data }: UpdateRequestStatusAction) {
         requestConstants.UPDATE_REQUEST_STATUS_SUCCESS,
         jsonResponse
       );
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Request approved successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -381,6 +391,14 @@ function* assignRequest({ data }: AssignRequestAction) {
       });
 
       AppEmitter.emit(requestConstants.ASSIGN_REQUEST_SUCCESS, jsonResponse);
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Request assigned successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -452,6 +470,14 @@ function* releaseRequestItems({ data }: ReleaseItemsAction) {
         requestConstants.RELEASE_REQUEST_ITEMS_SUCCESS,
         jsonResponse
       );
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Request items released successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -523,6 +549,14 @@ function* returnRequestItems({ data }: ReturnItemsAction) {
         requestConstants.RETURN_REQUEST_ITEMS_SUCCESS,
         jsonResponse
       );
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Request items returned successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {

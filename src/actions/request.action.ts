@@ -11,18 +11,19 @@ export interface CreateRequestAction {
   data: RequestForm;
 }
 
-interface GetAllRequestsAction {
+export interface GetAllRequestsAction {
   type: typeof requestConstants.GET_ALL_REQUESTS;
+  data?: { page: number };
 }
 
 export interface GetDepartmentRequestsAction {
   type: typeof requestConstants.GET_DEPARTMENT_REQUESTS;
-  data: { departmentId: number };
+  data: { departmentId: number; page?: number };
 }
 
 export interface GetAssignedRequestsAction {
   type: typeof requestConstants.GET_ASSIGNED_REQUESTS;
-  data: { userId: number };
+  data: { userId: number; page?: number };
 }
 
 export interface UpdateRequestStatusAction {
@@ -50,12 +51,14 @@ const createRequest = (data: RequestForm): CreateRequestAction => ({
   data,
 });
 
-const getAllRequests = (): GetAllRequestsAction => ({
+const getAllRequests = (data?: { page: number }): GetAllRequestsAction => ({
   type: requestConstants.GET_ALL_REQUESTS,
+  data,
 });
 
 const getDepartmentRequests = (data: {
   departmentId: number;
+  page?: number;
 }): GetDepartmentRequestsAction => ({
   type: requestConstants.GET_DEPARTMENT_REQUESTS,
   data,
@@ -63,6 +66,7 @@ const getDepartmentRequests = (data: {
 
 const getAssignedRequests = (data: {
   userId: number;
+  page?: number;
 }): GetAssignedRequestsAction => ({
   type: requestConstants.GET_ASSIGNED_REQUESTS,
   data,

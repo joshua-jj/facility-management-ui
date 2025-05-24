@@ -169,7 +169,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
       <SuccessModal
         open={isSuccessOpen}
         onClose={() => setIsSuccessOpen(false)}
-        autoCloseDelay={5000}
+        autoCloseDelay={3000}
       />
     </>
   );

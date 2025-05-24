@@ -1,8 +1,24 @@
 import { combineReducers } from 'redux';
 import { requestConstants } from '@/constants';
-import { Action, LoadingState, Request, RequestAction } from '@/types';
+import { Action, LoadingState, PaginationState, Request } from '@/types';
+import { updateObject } from '@/utilities/reducerUtility';
 
 type RequestsListState = Request[];
+
+interface AllRequestsAction extends Action {
+  requests: {
+    items: Request[];
+    links: { [key: string]: string | number | null };
+    meta: {
+      currentPage: number;
+      itemCount: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+    };
+  };
+  request: Request[];
+}
 
 const IsCreatingRequest = (
   state: LoadingState = false,
@@ -100,7 +116,7 @@ const IsRequestingRequests = (
 
 const allRequestsList = (
   state: RequestsListState = [],
-  action: RequestAction
+  action: AllRequestsAction
 ): RequestsListState => {
   switch (action.type) {
     case requestConstants.GET_ALL_REQUESTS_SUCCESS:
@@ -114,17 +130,56 @@ const allRequestsList = (
   }
 };
 
-// const pagination = (
-//   state: PaginationState = null,
-//   action: Action
-// ): PaginationState => {
-//   switch (action.type) {
-//     case eventConstants.GET_ALL_EVENTS_SUCCESS:
-//       return action.pagination ?? state;
-//     default:
-//       return state;
-//   }
-// };
+const pagination = (
+  state: PaginationState = {
+    links: {
+      first: null,
+      last: null,
+      next: null,
+      previous: null,
+    },
+    meta: {
+      currentPage: 0,
+      itemCount: 0,
+      itemsPerPage: 0,
+      totalItems: 0,
+      totalPages: 0,
+    },
+  },
+  action: AllRequestsAction
+): PaginationState => {
+  switch (action.type) {
+    case requestConstants.GET_ALL_REQUESTS_SUCCESS: {
+      const { links, meta } = action.requests;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
+    case requestConstants.GET_DEPARTMENT_REQUESTS_SUCCESS: {
+      const { links, meta } = action.requests;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
+    case requestConstants.GET_ASSIGNED_REQUESTS_SUCCESS: {
+      const { links, meta } = action.requests;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
+    default:
+      return state;
+  }
+};
 
 export interface RootState {
   IsCreatingRequest: (
@@ -153,9 +208,12 @@ export interface RootState {
   ) => LoadingState;
   allRequestsList: (
     state: RequestsListState | undefined,
-    action: RequestAction
+    action: AllRequestsAction
   ) => RequestsListState;
-  //   pagination: PaginationState;
+  pagination: (
+    state: PaginationState | undefined,
+    action: AllRequestsAction
+  ) => PaginationState;
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -166,7 +224,7 @@ const rootReducer = combineReducers<RootState>({
   IsReturningRequestItems,
   IsRequestingRequests,
   allRequestsList,
-  //   pagination,
+  pagination,
 });
 
 export default rootReducer;

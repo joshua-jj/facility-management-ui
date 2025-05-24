@@ -1,3 +1,4 @@
+import { RequestStatus } from '@/constants/enum.constant';
 import localForage from 'localforage';
 // import queryParser from 'query-string';
 
@@ -331,4 +332,22 @@ export function formatReadableDate(isoString: string): string {
     day: 'numeric',
     timeZone: 'Africa/Lagos',
   });
+}
+
+const statusMap: Record<string, RequestStatus> = {
+  assign: RequestStatus.ASSIGNED,
+  not_assigned: RequestStatus.NOT_ASSIGNED,
+  return: RequestStatus.COMPLETED,
+  release: RequestStatus.COLLECTED,
+  accepted: RequestStatus.ACCEPTED,
+  approve: RequestStatus.APPROVED,
+  decline: RequestStatus.DECLINED,
+  cancelled: RequestStatus.CANCELLED,
+  expired: RequestStatus.EXPIRED,
+  submitted: RequestStatus.SUBMITTED,
+  pending: RequestStatus.PENDING,
+};
+
+export function getDisplayStatus(status: string) {
+  return statusMap[status.toLowerCase()] || RequestStatus.DEFAULT;
 }

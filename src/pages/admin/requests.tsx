@@ -76,14 +76,15 @@ const Requests = () => {
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
   const { userDetails } = useSelector((s: RootState) => s.user);
-  const { IsRequestingRequests, allRequestsList } = useSelector(
+  const { IsRequestingRequests, allRequestsList, pagination } = useSelector(
     (s: RootState) => s.request
   );
-
+  const { meta } = pagination;
+  const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
   // useEffect(() => {
   //   dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
   //   if (userDetails?.roleId === 3) {
@@ -119,6 +120,40 @@ const Requests = () => {
     }
   }, [dispatch, userDetails]);
 
+  const handleChangePage = (page: number) => {
+    if (userDetails?.roleId === 3) {
+      // Role ID 3: Dispatch department-specific requests
+      dispatch(
+        requestActions.getDepartmentRequests({
+          departmentId: userDetails?.departmentId ?? 0,
+          page,
+        }) as unknown as UnknownAction
+      );
+    } else if (userDetails?.roleId === 4) {
+      // Role ID 4: Dispatch user-specific requests
+      dispatch(
+        requestActions.getAssignedRequests({
+          userId: userDetails?.id ?? 0,
+          page,
+        }) as unknown as UnknownAction
+      );
+    } else {
+      dispatch(
+        requestActions.getAllRequests({ page }) as unknown as UnknownAction
+      );
+    }
+    // if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
+    //   dispatch(
+    //     requestActions.getDepartmentItems({
+    //       departmentId: userDetails.departmentId,
+    //       page,
+    //     }) as unknown as UnknownAction
+    //   );
+    // } else {
+    //   dispatch(requestActions.getAllItems({ page }) as unknown as UnknownAction);
+    // }
+  };
+
   const pageSize = 10;
 
   const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
@@ -128,9 +163,18 @@ const Requests = () => {
   }));
 
   const columns: Column<Request>[] = [
-    { key: 'createdBy', header: 'CHURCH/MINISTRY/NAME' },
-    { key: 'requesterHodEmail', header: 'EMAIL ADDRESS' },
-    // { key: 'requesterPhone', header: 'PHONE NUMBER' },
+    ...(userDetails?.roleId !== 3
+      ? [
+          {
+            key: 'requesterDepartment' as keyof Request,
+            header: 'DEPARTMENT NAME',
+          },
+        ]
+      : []),
+    // { key: 'requesterDepartment', header: 'DEPARTMENT NAME' },
+    { key: 'requesterName', header: 'REQUESTER NAME' },
+    { key: 'requesterEmail', header: 'REQUESTER EMAIL ADDRESS' },
+    { key: 'ministryName', header: 'CHURCH/MINISTRY NAME' },
     {
       key: 'dateOfReturn',
       header: 'RETURN DATE',
@@ -166,7 +210,7 @@ const Requests = () => {
                   placeholder="Search"
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    setCurrentPage(1); // reset on new search
+                    // setCurrentPage(1); // reset on new search
                   }}
                   className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
@@ -242,17 +286,14 @@ const Requests = () => {
             columns={columns}
             data={allRequestsList}
           />
-
-          <Pagination
-            currentPage={currentPage}
-            totalItems={allRequestsList?.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            // onPageSizeChange={(size) => {
-            //   setPageSize(size);
-            //   setCurrentPage(1); // reset page
-            // }}
-          />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              pageSize={itemsPerPage}
+              onPageChange={handleChangePage}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>
