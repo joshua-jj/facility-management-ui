@@ -92,7 +92,44 @@ const Header = () => {
                 {/* <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs px-3 py-[0.4rem] capitalize cursor-pointer">
                   add generator
                 </li> */}
-                <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                {/* {
+                  userDetails?.roleId === 5 && (
+                    <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                      <AddStore className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                    create store
+                  </AddStore>
+                    </li>
+                  )
+                } */}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddStore className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      create store
+                    </AddStore>
+                  </li>
+                )}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddDepartment className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      create department
+                    </AddDepartment>
+                  </li>
+                )}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddDepartment className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      maintenance log
+                    </AddDepartment>
+                  </li>
+                )}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddDepartment className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      generator log
+                    </AddDepartment>
+                  </li>
+                )}
+                {/* <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
                   <AddStore className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
                     create store
                   </AddStore>
@@ -107,7 +144,7 @@ const Header = () => {
                 </li>
                 <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs px-3 py-[0.4rem] capitalize cursor-pointer">
                   generator log
-                </li>
+                </li> */}
               </ul>
             </div>
             <div className="relative group">

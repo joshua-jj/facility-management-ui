@@ -103,6 +103,7 @@ export interface Request {
   isChurch?: boolean;
   churchName?: string;
   requesterDepartmentId: number | undefined;
+  requesterDepartment: string;
   locationOfUse: string;
   durationOfUse: string;
   dateOfReturn: string;
