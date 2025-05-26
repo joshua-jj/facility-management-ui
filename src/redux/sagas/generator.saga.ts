@@ -7,7 +7,9 @@ import {
   getObjectFromStorage,
   clearObjectFromStorage,
 } from '@/utilities/helpers';
-import { GeneratorLog } from '@/types';
+import { GeneratorLog, SetSnackBarPayload } from '@/types';
+import { appActions, CreateGeneratorLogAction } from '@/actions';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 interface User {
   user: { [key: string]: unknown };
@@ -86,10 +88,89 @@ function* getGeneratorLogs() {
   }
 }
 
+function* createGeneratorLog({ data }: CreateGeneratorLogAction) {
+  yield put({ type: generatorConstants.REQUEST_CREATE_GENERATOR_LOG });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+
+    if (data) {
+      const userUri = `${generatorConstants.GENERATOR_URI}/new`;
+      const userReq = createRequestWithToken(userUri, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      const req: Request = yield call(userReq, user?.token as string);
+      const response: GeneratorLog = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
+
+      yield put({
+        type: generatorConstants.CREATE_GENERATOR_LOG_SUCCESS,
+        user: jsonResponse?.data,
+      });
+
+      yield put({
+        type: generatorConstants.GET_GENERATOR_LOGS,
+      });
+
+      AppEmitter.emit(
+        generatorConstants.CREATE_GENERATOR_LOG_SUCCESS,
+        jsonResponse
+      );
+    }
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: generatorConstants.CREATE_GENERATOR_LOG_ERROR,
+        error: res?.error,
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message: res?.error ?? res?.message ?? 'Something went wrong',
+        variant: 'error',
+      };
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    yield put({
+      type: generatorConstants.CREATE_GENERATOR_LOG_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+    const payload: SetSnackBarPayload = {
+      type: 'error',
+      message:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+      variant: 'error',
+    };
+    yield put(appActions.setSnackBar(payload));
+  }
+}
+
 function* getGeneratorLogsWatcher() {
   yield takeLatest(generatorConstants.GET_GENERATOR_LOGS, getGeneratorLogs);
 }
 
+function* createGeneratorLogWatcher() {
+  yield takeLatest(generatorConstants.CREATE_GENERATOR_LOG, createGeneratorLog);
+}
+
 export default function* rootSaga() {
-  yield all([getGeneratorLogsWatcher()]);
+  yield all([getGeneratorLogsWatcher(), createGeneratorLogWatcher()]);
 }

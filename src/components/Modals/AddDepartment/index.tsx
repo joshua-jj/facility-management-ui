@@ -1,10 +1,16 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 import SuccessModal from '../Report/SuccessModal';
 import { DepartmentForm } from '@/types';
+import { departmentActions } from '@/actions';
+import { UnknownAction } from 'redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/redux/reducers';
+import { departmentConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 interface AddItemModalProps {
   children: ReactNode;
@@ -15,6 +21,10 @@ const AddDepartment: React.FC<AddItemModalProps> = ({
   className,
   children,
 }) => {
+  const dispatch = useDispatch();
+  const { IsCreatingDepartment } = useSelector(
+    (state: RootState) => state.department
+  );
   const [canSubmit, setCanSubmit] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
@@ -26,7 +36,25 @@ const AddDepartment: React.FC<AddItemModalProps> = ({
 
   const handleSubmit = (data: DepartmentForm) => {
     console.log('data', data);
+    dispatch(
+      departmentActions.createDepartment(data) as unknown as UnknownAction
+    );
   };
+
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      departmentConstants.CREATE_DEPARTMENT_SUCCESS,
+      (evt: Event) => {
+        const newDepartment = evt as CustomEvent;
+
+        if (newDepartment) {
+          setIsModalOpen(false);
+        }
+      }
+    );
+
+    return () => listener.remove();
+  }, []);
 
   return (
     <>
@@ -60,7 +88,7 @@ const AddDepartment: React.FC<AddItemModalProps> = ({
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
             />
-            <TextInput
+            {/* <TextInput
               type="text"
               name="hodName"
               label="HOD name"
@@ -91,22 +119,20 @@ const AddDepartment: React.FC<AddItemModalProps> = ({
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
-            />
+            /> */}
             <button
               disabled={!canSubmit}
               className={`w-full px-4 py-2 mt-8 bg-yellow-500 text-white rounded hover:bg-yellow-600 flex items-center justify-center disabled:opacity-50 ${
                 canSubmit ? 'cursor-pointer' : 'cursor-not-allowed'
               }`}
             >
-              Create Department
-              {/* {IsCreatingRequest ? (
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    <span>Loading...</span>
-                                </div>
-                            ) : (
-                                'Create Department'
-                            )} */}
+              {IsCreatingDepartment ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                'Create Department'
+              )}
             </button>
           </Formsy>
         </div>

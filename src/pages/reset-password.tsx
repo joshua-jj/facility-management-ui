@@ -1,29 +1,48 @@
 import React, { FC, useEffect, useState } from 'react';
 import TextInput from '@/components/Inputs/TextInput';
 import Formsy from 'formsy-react';
-import { LoginForm } from '@/types';
+import { ResetPasswordForm } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { authActions } from '@/actions';
+import { forgotPasswordActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { authConstants } from '@/constants';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
+import EyeIcon from '../../public/assets/icons/Eye.svg';
+import HideIcon from '../../public/assets/icons/Hide.svg';
 
 const ResetPassword: FC = () => {
   const router = useRouter();
-  const query = router?.query;
-  const decodedFrom = decodeURIComponent(
-    Array.isArray(query?.from) ? query.from[0] : (query?.from ?? '')
-  );
+  const { token } = router?.query;
+
   const dispatch = useDispatch();
   const { IsLoggingIn } = useSelector((s: RootState) => s.auth);
 
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
+  const [passwordShow, setPasswordShow] = useState<boolean>(false);
+  const [confirmPasswordShow, setConfirmPasswordShow] =
+    useState<boolean>(false);
 
-  const handleSubmit = (data: LoginForm) => {
-    dispatch(authActions.login(data) as unknown as UnknownAction);
+  const togglePasswordVisibility = () => {
+    setPasswordShow(passwordShow ? false : true);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setConfirmPasswordShow(confirmPasswordShow ? false : true);
+  };
+
+  const handleSubmit = (data: ResetPasswordForm) => {
+    data.token = token;
+    if (!data.token) {
+      alert('Token is required');
+      return;
+    }
+
+    dispatch(
+      forgotPasswordActions.resetPassword(data) as unknown as UnknownAction
+    );
   };
 
   useEffect(() => {
@@ -32,13 +51,6 @@ const ResetPassword: FC = () => {
       (evt: Event) => {
         const customEvent = evt as CustomEvent;
         const data = customEvent.detail?.data;
-
-        if (data && decodedFrom?.length) {
-          router.push({
-            pathname: decodedFrom,
-          });
-          return;
-        }
 
         if (data) {
           router.push('/admin/dashboard');
@@ -60,20 +72,42 @@ const ResetPassword: FC = () => {
           onInvalid={() => setCanSubmit(false)}
           className="w-md p-8 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
         >
-          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">Reset password</h1>
+          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">
+            Reset password
+          </h1>
           <TextInput
             inputClass="text-[#0F2552]"
-            type="password"
+            type={passwordShow ? 'text' : 'password'}
             name="password"
-            // label="Password"
             label="New password"
+            endIcon={
+              <div
+                className="absolute top-1 right-1 cursor-pointer"
+                onClick={togglePasswordVisibility}
+              >
+                {passwordShow ? <EyeIcon /> : <HideIcon />}
+              </div>
+            }
+            validations="minLength:8"
+            validationError="Password must be at least 8 characters"
+            required
           />
           <TextInput
             inputClass="text-[#0F2552]"
-            type="password"
-            name="password"
-            // label="Password"
-            label="Confirm password"
+            type={confirmPasswordShow ? 'text' : 'password'}
+            name="confirm-password"
+            label="Confirm new password"
+            endIcon={
+              <div
+                className="absolute top-1 right-1 cursor-pointer"
+                onClick={toggleConfirmPasswordVisibility}
+              >
+                {confirmPasswordShow ? <EyeIcon /> : <HideIcon />}
+              </div>
+            }
+            validations="equalsField:password"
+            validationError="Passwords do not match"
+            required
           />
           <button
             disabled={!canSubmit}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import ItemDetails from './ItemDetails';
 import { CaretIcon } from '../Icons';
 import RequestDetails from './RequestDetails';
@@ -13,8 +13,9 @@ import SuccessModal from '../Modals/SuccessModal';
 import { requestConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { Department, Item } from '@/types';
+// import Formsy from 'formsy-react';
 
-const steps = ['Item(s) Details', 'Request Details', 'More Information'];
+const steps = ['Item(s) Details', 'Requester Details', 'More Information'];
 
 interface FormData {
   items: Item[];
@@ -31,12 +32,22 @@ interface FormData {
   };
 }
 
-const RequestForm: React.FC = () => {
+interface RequestFormProps {
+  route: string; // Add a prop for the route
+}
+
+const RequestForm: FC<RequestFormProps> = ({ route }) => {
+  const isWorkerRoute = route.includes('egfm-worker'); // Check if the current route includes 'egfm-worker'
+  // const isChurchRoute = route.includes('church-ministry');
+  // console.log('🚀 ~ RequestForm ~ isWorkerRoute:', isWorkerRoute);
+  // console.log('🚀 ~ RequestForm ~ isChurchRoute:', isChurchRoute);
+
   const dispatch = useDispatch();
   const { IsCreatingRequest } = useSelector((s: RootState) => s.request);
   const [currentStep, setCurrentStep] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [department, setDepartment] = useState<Department | null>(null);
+  const [isFormValid, setIsFormValid] = useState(true);
   const [formData, setFormData] = useState<FormData>({
     items: [
       {
@@ -82,7 +93,85 @@ const RequestForm: React.FC = () => {
     return () => listener.remove();
   }, []);
 
+  //   useEffect(() => {
+  //   if (showSuccessModal) {
+  //     const timer = setTimeout(() => {
+  //        setCurrentStep(0);
+  //     }, 3000);
+
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [showSuccessModal]);
+
+  useEffect(() => {
+    if (showSuccessModal) {
+      const timer = setTimeout(() => {
+        setCurrentStep(0);
+        setDepartment(null);
+        setFormData({
+          items: [
+            {
+              id: 1,
+              name: '',
+              availableQuantity: 10,
+              condition: '',
+              fragile: false,
+              storeId: 0,
+              storeName: '',
+              requestedQuantity: 0,
+            },
+          ],
+          requestDetails: {
+            ministryName: '',
+            requesterName: '',
+            email: '',
+            contactNumber: '',
+          },
+          moreInformation: {
+            location: '',
+            returnDate: '',
+            description: '',
+          },
+        });
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessModal]);
+
+  const canProceedStep = () => {
+    if (currentStep === 0) {
+      // Validate items step
+      return formData.items.every(
+        (item) =>
+          item.name && item.requestedQuantity && item.requestedQuantity > 0
+      );
+    }
+    if (currentStep === 1) {
+      // Validate requester details step
+      const { ministryName, requesterName, email, contactNumber } =
+        formData.requestDetails;
+      // If isWorkerRoute, ministryName may not be required
+      return (
+        (isWorkerRoute || ministryName) &&
+        requesterName &&
+        email &&
+        contactNumber
+      );
+    }
+    if (currentStep === 2) {
+      // Validate more information step
+      const { location, returnDate } = formData.moreInformation;
+      return location && returnDate;
+    }
+    return true;
+  };
+
   const handleNext = () => {
+    if (!canProceedStep()) {
+      alert('Please fill all required fields before continuing.');
+      return;
+    }
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -120,7 +209,7 @@ const RequestForm: React.FC = () => {
       requesterName: formData.requestDetails.requesterName,
       requesterEmail: formData.requestDetails.email,
       requesterPhone: formData.requestDetails.contactNumber,
-      isMinistry: true,
+      isMinistry: isWorkerRoute ? true : false,
       ministryName: formData.requestDetails.ministryName,
       requesterDepartmentId: department?.id,
       locationOfUse: formData.moreInformation.location,
@@ -135,58 +224,12 @@ const RequestForm: React.FC = () => {
         conditionBeforeLease: item.condition,
       })),
     };
+    console.log('requestData:', requestData);
+    console.log('formData.items:', formData.items);
+
     dispatch(
       requestActions.createRequest(requestData) as unknown as UnknownAction
     );
-
-    // try {
-    //   const response = await fetch('/api/submit-request', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(formData),
-    //   });
-
-    //   if (!response.ok) {
-    //     throw new Error('Failed to submit request');
-    //   }
-
-    //   const result = await response.json();
-    //   console.log('Submission successful:', result);
-    //   // Optionally reset the form or redirect
-    //   setFormData({
-    //     items: [
-    //       {
-    //         id: 1,
-    //         name: '',
-    //         availableQuantity: 10,
-    //         condition: '',
-    //         fragile: false,
-    //         storeId: 0,
-    //         storeName: '',
-    //         requestedQuantity: 0,
-    //       },
-    //     ],
-    //     requestDetails: {
-    //       ministryName: '',
-    //       requesterName: '',
-    //       email: '',
-    //       contactNumber: '',
-    //     },
-    //     moreInformation: {
-    //       location: '',
-    //       returnDate: '',
-    //       description: '',
-    //     },
-    //   });
-    //   setCurrentStep(0); // Go back to the first step
-    // } catch (error) {
-    //   console.error('Error submitting request:', error);
-    //   alert('Failed to submit request. Please try again.');
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
   };
 
   const canSubmit = () => {
@@ -239,12 +282,26 @@ const RequestForm: React.FC = () => {
           />
         )}
         {currentStep === 1 && (
+          //         <Formsy
+          //   onValid={() => setIsFormValid(true)}
+          //   onInvalid={() => setIsFormValid(false)}
+          // >
           <RequestDetails
             data={formData.requestDetails}
             setData={(requestDetails) =>
               setFormData((prev) => ({ ...prev, requestDetails }))
             }
+            isWorkerRoute={isWorkerRoute}
+            setIsFormValid={setIsFormValid}
           />
+          // </Formsy>
+          // <RequestDetails
+          //   data={formData.requestDetails}
+          //   setData={(requestDetails) =>
+          //     setFormData((prev) => ({ ...prev, requestDetails }))
+          //   }
+          //   isWorkerRoute={isWorkerRoute}
+          // />
         )}
         {currentStep === 2 && (
           <MoreInformation
@@ -269,7 +326,12 @@ const RequestForm: React.FC = () => {
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
-              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer"
+              // disabled={!canProceedStep()}
+              disabled={!canProceedStep() || !isFormValid}
+              className={`px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer ${
+                !canProceedStep() ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              // className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer"
             >
               Continue
             </button>

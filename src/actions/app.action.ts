@@ -7,6 +7,10 @@ interface SetSnackBarAction {
   data: SetSnackBarPayload;
 }
 
+interface ClearSnackBarAction {
+  type: typeof appConstants.CLEAR_SNACKBAR;
+}
+
 const clearMessages = (): Action => ({
   type: appConstants.CLEAR_MESSAGES,
 });
@@ -16,7 +20,12 @@ const setSnackBar = (data: SetSnackBarPayload): SetSnackBarAction => ({
   data,
 });
 
+const clearSnackBar = (): ClearSnackBarAction => ({
+  type: appConstants.CLEAR_SNACKBAR,
+});
+
 export const appActions = {
   clearMessages,
   setSnackBar,
+  clearSnackBar,
 };

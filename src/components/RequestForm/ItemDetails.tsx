@@ -26,7 +26,8 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
 }) => {
   const dispatch = useDispatch();
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-  const { allDepartmentItemsList } = useSelector((s: RootState) => s.item);
+  const { IsRequestingAllDepartmentItems, allDepartmentItemsList } =
+    useSelector((s: RootState) => s.item);
 
   const [search, setSearch] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -36,7 +37,9 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
     dispatch(
-      itemActions.getDepartmentItems(department.id) as unknown as UnknownAction
+      itemActions.getAllDepartmentItems(
+        department.id
+      ) as unknown as UnknownAction
     );
     setDepartmentIsOpen(false);
   };
@@ -145,7 +148,13 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
           )}
         </div>
       </div>
-      {allDepartmentItemsList?.length > 0 &&
+      {IsRequestingAllDepartmentItems && (
+        <div className="flex justify-center items-center my-4">
+          <div className="w-8 h-8 border-4 border-[#B28309] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+      {department &&
+        allDepartmentItemsList?.length > 0 &&
         items?.map((item) => (
           <div key={item.id} className="mb-6 group">
             <div className="flex justify-between items-center">
@@ -253,7 +262,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
             </div>
           </div>
         ))}
-      {allDepartmentItemsList?.length > 0 && (
+      {department && allDepartmentItemsList?.length > 1 && (
         <button
           onClick={addItem}
           className="w-full h-12 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"

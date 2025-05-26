@@ -1,6 +1,7 @@
 export * from './app.action';
 export * from './authentication.action';
 export * from './department.action';
+export * from './forgotPassword.action';
 export * from './generator.action';
 export * from './item.action';
 export * from './maintenance.action';

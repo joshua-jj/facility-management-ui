@@ -1,4 +1,4 @@
-import { authActions } from '@/actions';
+import { appActions, authActions } from '@/actions';
 import { CaretIcon } from '@/components/Icons';
 import LetteredAvatar from '@/components/LetteredAvatar';
 import AddDepartment from '@/components/Modals/AddDepartment';
@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Report from '@/components/Modals/Report';
 import { useIsAuthRoute } from '@/hooks';
 import { getPageNames } from './pageRoutes';
+import Snack from '@/components/Snack';
 
 const Header = () => {
   const router = useRouter();
@@ -22,15 +23,26 @@ const Header = () => {
   const dispatch = useDispatch();
   const authRoutes = useIsAuthRoute();
   const { userDetails } = useSelector((s: RootState) => s.user);
+  const { message } = useSelector((s: RootState) => s.snackbar);
 
   const handleLogout = () => {
     router.push('/login');
     dispatch(authActions.logout() as unknown as UnknownAction);
   };
 
+  const clearSnackBar = () => {
+    dispatch(appActions.clearSnackBar() as unknown as UnknownAction);
+
+    // const clearSnackBarAction: clearAction = {
+    //   type: appConstants.CLEAR_SNACKBAR,
+    // };
+    // dispatch(clearSnackBarAction as unknown as UnknownAction);
+  };
+  console.log('message', message);
+
   return (
     <>
-      {(authRoutes || pathname.startsWith('/request')) ? (
+      {authRoutes || pathname.startsWith('/request') ? (
         <header className="flex items-center justify-between px-[35px] h-[4.5rem] border border-[#e1e3e7] bg-white shadow-[0_16px_32px_0_rgba(189,189,189,0.25)] cursor-pointer relative">
           <Link href="/" passHref className="flex items-center">
             <EgfmLogo />
@@ -38,7 +50,16 @@ const Header = () => {
               Logistics
             </span>
           </Link>
-          {(router.pathname === '/' || router.pathname === '/landing' || pathname.startsWith('/request')) && (
+          {message.message !== '' && (
+            <Snack
+              onClose={clearSnackBar}
+              variant={message.variant as 'success' | 'error'}
+              message={<span id="message-id">{message.message}</span>}
+            />
+          )}
+          {(router.pathname === '/' ||
+            router.pathname === '/landing' ||
+            pathname.startsWith('/request')) && (
             <Report className="bg-[#b28309] text-white cursor-pointer rounded-[3px] py-3 px-4 text-[13px] font-semibold mx-2 transition duration-300">
               Report an Issue
             </Report>
@@ -50,6 +71,13 @@ const Header = () => {
             {getPageNames(router.pathname)}
           </h1>
           <div className="flex items-center gap-x-6">
+            {message.message !== '' && (
+              <Snack
+                onClose={clearSnackBar}
+                variant={message.variant as 'success' | 'error'}
+                message={<span id="message-id">{message.message}</span>}
+              />
+            )}
             <div className="group relative inline-block">
               <button className="flex items-center text-xs gap-x-2 px-3 py-3 text-white bg-[#B28309] hover:bg-[#B2830998] transition rounded cursor-pointer capitalize">
                 add item
@@ -64,7 +92,44 @@ const Header = () => {
                 {/* <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs px-3 py-[0.4rem] capitalize cursor-pointer">
                   add generator
                 </li> */}
-                <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                {/* {
+                  userDetails?.roleId === 5 && (
+                    <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                      <AddStore className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                    create store
+                  </AddStore>
+                    </li>
+                  )
+                } */}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddStore className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      create store
+                    </AddStore>
+                  </li>
+                )}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddDepartment className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      create department
+                    </AddDepartment>
+                  </li>
+                )}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddDepartment className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      maintenance log
+                    </AddDepartment>
+                  </li>
+                )}
+                {[1, 4, 5].includes(userDetails?.roleId) && (
+                  <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
+                    <AddDepartment className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
+                      generator log
+                    </AddDepartment>
+                  </li>
+                )}
+                {/* <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs">
                   <AddStore className="text-start w-full px-3 py-[0.4rem] capitalize cursor-pointer">
                     create store
                   </AddStore>
@@ -79,10 +144,9 @@ const Header = () => {
                 </li>
                 <li className="bg-transparent hover:bg-[#E5E8EC] transition rounded text-xs px-3 py-[0.4rem] capitalize cursor-pointer">
                   generator log
-                </li>
+                </li> */}
               </ul>
             </div>
-
             <div className="relative group">
               <LetteredAvatar
                 name={userDetails?.firstName}

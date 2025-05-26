@@ -44,7 +44,9 @@ const Sidebar = () => {
           >
             <Link href={pageRoute?.link} className="flex items-center gap-x-4">
               <div className="scale-[90%]">{pageRoute?.icon}</div>
-              <span className="font-medium text-`nowrap33`">{pageRoute?.label}</span>
+              <span className="font-medium text-nowrap">
+                {pageRoute?.label}
+              </span>
             </Link>
           </li>
         ))}

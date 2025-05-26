@@ -23,7 +23,7 @@ const optionsFilter = [
 const Stores = () => {
   const dispatch = useDispatch();
   const [statusFilter, setStatusFilter] = useState('');
-  const [deptFilter, setDeptFilter] = useState('');
+  // const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
@@ -47,11 +47,11 @@ const Stores = () => {
     );
   };
 
-  const allDepartmentsArray = allStoresList?.map((obj) => ({
-    ...obj,
-    label: obj.name,
-    value: obj.id.toString(),
-  }));
+  // const allDepartmentsArray = allStoresList?.map((obj) => ({
+  //   ...obj,
+  //   label: obj.name,
+  //   value: obj.id.toString(),
+  // }));
 
   const handleUpdate = (data: object) => {
     console.log('🚀 ~ handleUpdate ~ data:', data);
@@ -119,13 +119,13 @@ const Stores = () => {
                       </div>
 
                       <div className="mb-4">
-                        <CustomDropdownSelect
+                        {/* <CustomDropdownSelect
                           options={allDepartmentsArray}
                           value={deptFilter}
                           onChange={setDeptFilter}
                           placeholder="Department"
                           // showSelectedLabel
-                        />
+                        /> */}
                       </div>
                       <div className="mb-4">
                         {/* <label className="block text-sm font-medium text-gray-700">From</label> */}

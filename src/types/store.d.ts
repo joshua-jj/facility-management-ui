@@ -7,18 +7,28 @@ export interface StoreConstants {
   SEARCH_STORE_SUCCESS: string;
   SEARCH_STORE_ERROR: string;
 
+  REQUEST_CREATE_STORE: string;
+  CREATE_STORE_SUCCESS: string;
+  CREATE_STORE_ERROR: string;
+
   GET_STORES: string;
   SEARCH_STORE: string;
+  CREATE_STORE: string;
 
   STORE_URI: string;
 }
 
 export interface StoreForm {
-  storeName: string;
-  storeLocation: string;
-  storeDescription: string;
-  storeType: string;
+  name: string;
+  location: {
+    houseAddress: string;
+    country: string;
+    state: string;
+  };
+  // storeDescription: string;
+  // storeType: string;
 }
+
 export interface Store {
   id: number;
   name: string;

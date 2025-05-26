@@ -11,33 +11,52 @@ import { Users as User } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddUser from '@/components/Modals/AddUser';
 import ActionDropDown from '@/components/ActionDropDown';
+import { Pagination } from '@/components/Pagination';
 // import ActionDropDown from '@/components/ActionDropDown';
 
-const optionsFilter = [
-  { value: '1', label: 'approved' },
-  { value: '2', label: 'assigned' },
-  { value: '3', label: 'collected' },
-  { value: '4', label: 'declined' },
-  { value: '5', label: 'pending' },
-];
+// const optionsFilter = [
+//   { value: '1', label: 'approved' },
+//   { value: '2', label: 'assigned' },
+//   { value: '3', label: 'collected' },
+//   { value: '4', label: 'declined' },
+//   { value: '5', label: 'pending' },
+// ];
 
 const Users = () => {
   const dispatch = useDispatch();
   const [statusFilter, setStatusFilter] = useState('');
   //   const [deptFilter, setDeptFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
+  // const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { IsRequestingUsers, IsSearchingUser, allUsersList } = useSelector(
-    (s: RootState) => s.user
-  );
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editUserData, setEditUserData] = useState<User | null>(null);
+
+  const { allRolesList } = useSelector((s: RootState) => s.role);
+  const { IsRequestingUsers, IsSearchingUser, allUsersList, pagination } =
+    useSelector((s: RootState) => s.user);
+  const { meta } = pagination;
+  const { currentPage, itemsPerPage, totalItems } = meta;
 
   useEffect(() => {
     dispatch(userActions.getUsers() as unknown as UnknownAction);
     dispatch(roleActions.getRoles() as unknown as UnknownAction);
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
   }, [dispatch]);
+
+  useEffect(() => {
+    if (statusFilter !== '') {
+      console.log('statusFilter', statusFilter);
+      setShowFilterOptions((prev) => !prev);
+    }
+  }, [statusFilter]);
+
+  const allRolesArray = allRolesList?.map((obj) => ({
+    ...obj,
+    label: obj.name,
+    value: obj.id.toString(),
+  }));
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -50,16 +69,17 @@ const Users = () => {
     );
   };
 
-  console.log('🚀 ~ allUsersList:', allUsersList);
+  // console.log('🚀 ~ statusFilter:', statusFilter);
 
-  //   const allDepartmentsArray = allUsersList?.map((obj) => ({
-  //     ...obj,
-  //     label: obj.name,
-  //     value: obj.id.toString(),
-  //   }));
+  const handleChangePage = (page: number) => {
+    dispatch(userActions.getUsers({ page }) as unknown as UnknownAction);
+  };
 
-  const handleUpdate = (data: object) => {
+  const handleUpdate = (data: User) => {
+    // const handleUpdate = (data: object) => {
     console.log('🚀 ~ handleUpdate ~ data:', data);
+    setEditUserData(data);
+    setShowEditUserModal(true);
   };
 
   const handleDelete = (data: object) => {
@@ -72,6 +92,7 @@ const Users = () => {
     { key: 'email', header: 'EMAIL' },
     { key: 'phoneNumber', header: 'PHONE NUMBER' },
     { key: 'role', header: 'ROLE' },
+    { key: 'isVerified', header: 'VERIFIED' },
     // {
     //   key: 'role',
     //   header: 'ROLE',
@@ -80,7 +101,7 @@ const Users = () => {
     {
       key: 'id',
       header: '.',
-      render: (value: string | number, row: object) => (
+      render: (value: string | number, row: User) => (
         <ActionDropDown
           handleUpdate={() => handleUpdate(row)}
           handleDelete={() => handleDelete(row)}
@@ -102,10 +123,6 @@ const Users = () => {
                   value={searchQuery}
                   placeholder="Search"
                   onChange={handleSearch}
-                  // onChange={(e) => {
-                  //   setSearchQuery(e.target.value);
-                  //   // setCurrentPage(1); // reset on new search
-                  // }}
                   className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
@@ -124,25 +141,27 @@ const Users = () => {
                     <div className="p-4">
                       <div className="mb-4">
                         <CustomDropdownSelect
-                          options={optionsFilter}
+                          options={allRolesArray}
                           value={statusFilter}
+                          // onChange={handleFilter}
                           onChange={setStatusFilter}
-                          placeholder="Status"
+                          placeholder="Role"
                           // showSelectedLabel
                         />
                       </div>
 
                       <div className="mb-4">
                         {/* <CustomDropdownSelect
-                          options={allDepartmentsArray}
-                          value={deptFilter}
-                          onChange={setDeptFilter}
-                          placeholder="Department"
+                          options={allRolesArray}
+                          value={statusFilter}
+                          // onChange={handleFilter}
+                          onChange={setStatusFilter}
+                          placeholder="Verified"
                           // showSelectedLabel
                         /> */}
                       </div>
-                      <div className="mb-4">
-                        {/* <label className="block text-sm font-medium text-gray-700">From</label> */}
+                      {/* <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700">From</label>
                         <input
                           type="date"
                           value={dateFrom}
@@ -158,7 +177,7 @@ const Users = () => {
                         <button className="rounded bg-[#B28309] border border-[#B28309] text-white text-xs px-3 py-2 hover:bg-[#B2830998] hover:border-[#B2830998] transition cursor-pointer">
                           Apply
                         </button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 )}
@@ -181,6 +200,20 @@ const Users = () => {
             columns={columns}
             data={allUsersList}
           />
+          <Pagination
+            currentPage={currentPage}
+            totalItems={totalItems}
+            pageSize={itemsPerPage}
+            onPageChange={handleChangePage}
+          />
+          {showEditUserModal && (
+            <AddUser
+              className="text-start w-full cursor-pointer"
+              user={editUserData} // Pass the user data as a prop
+              open={showEditUserModal}
+              onClose={() => setShowEditUserModal(false)}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>

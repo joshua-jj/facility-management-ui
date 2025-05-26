@@ -10,14 +10,14 @@ import {
   clearObjectFromStorage,
 } from '@/utilities/helpers';
 import { Item } from '@/types';
-import { GetAllItemsAction, SearchItemAction } from '@/actions';
+import {
+  GetAllDepartmentItemsAction,
+  GetAllItemsAction,
+  GetDepartmentItemsAction,
+  SearchItemAction,
+} from '@/actions';
 // import { SetSnackBarPayload } from '@/types';
 // import { AppEmitter } from '@/controllers/EventEmitter';
-
-interface GetDepartmentItemsAction {
-  type: typeof itemConstants.GET_DEPARTMENT_ITEMS;
-  data: string;
-}
 
 interface User {
   user: { [key: string]: unknown };
@@ -43,8 +43,8 @@ interface ApiError {
   error?: string;
 }
 
-function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
-  yield put({ type: itemConstants.REQUEST_GET_DEPARTMENT_ITEMS });
+function* getAllDepartmentItems({ data }: GetAllDepartmentItemsAction) {
+  yield put({ type: itemConstants.REQUEST_GET_ALL_DEPARTMENT_ITEMS });
 
   try {
     const itemUri = `${itemConstants.ITEM_URI}/all/${data}`;
@@ -53,6 +53,68 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
     });
 
     const response: Item = yield call(fetch, itemReq);
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
+
+    yield put({
+      type: itemConstants.GET_ALL_DEPARTMENT_ITEMS_SUCCESS,
+      items: jsonResponse?.data,
+    });
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: itemConstants.GET_ALL_DEPARTMENT_ITEMS_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: itemConstants.GET_ALL_DEPARTMENT_ITEMS_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+  }
+}
+
+function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
+  yield put({ type: itemConstants.REQUEST_GET_DEPARTMENT_ITEMS });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    let itemUri = `${itemConstants.ITEM_URI}/department/${data?.departmentId}`;
+    if (data?.page) {
+      itemUri = `${itemUri}?page=${data.page}`;
+    }
+
+    const requestFn = () =>
+      createRequestWithToken(itemUri, { method: 'GET' })(user?.token as string);
+    const itemReq: Request = yield call(requestFn);
+    const response: Item = yield call(fetch, itemReq);
+
+    if (response.status === 401) {
+      yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+      yield put({ type: authConstants.TOKEN_HAS_EXPIRED });
+      return;
+    }
+    // const itemReq = createRequest(itemUri, {
+    //   method: 'GET',
+    // });
+
+    // const response: Item = yield call(fetch, itemReq);
     yield call(checkStatus, response as unknown as Response);
 
     const jsonResponse: ParsedResponse = yield call(
@@ -200,6 +262,13 @@ function* searchItem({ data }: SearchItemAction) {
   }
 }
 
+function* getAllDepartmentItemsWatcher() {
+  yield takeLatest(
+    itemConstants.GET_ALL_DEPARTMENT_ITEMS,
+    getAllDepartmentItems
+  );
+}
+
 function* getDepartmentItemsWatcher() {
   yield takeLatest(itemConstants.GET_DEPARTMENT_ITEMS, getDepartmentItems);
 }
@@ -214,6 +283,7 @@ function* searchItemWatcher() {
 
 export default function* rootSaga() {
   yield all([
+    getAllDepartmentItemsWatcher(),
     getDepartmentItemsWatcher(),
     getAllItemsWatcher(),
     searchItemWatcher(),

@@ -10,17 +10,33 @@ import { UnknownAction } from 'redux';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { authConstants } from '@/constants';
 import { useRouter } from 'next/router';
+import EyeIcon from '../../public/assets/icons/Eye.svg';
+import HideIcon from '../../public/assets/icons/Hide.svg';
 
 const ChangePassword: FC = () => {
   const router = useRouter();
   const query = router?.query;
 
-  console.log('query', query);
-
   const dispatch = useDispatch();
   const { IsChangingPassword } = useSelector((s: RootState) => s.auth);
 
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
+  const [oldPasswordShow, setOldPasswordShow] = useState<boolean>(false);
+  const [passwordShow, setPasswordShow] = useState<boolean>(false);
+  const [confirmPasswordShow, setConfirmPasswordShow] =
+    useState<boolean>(false);
+
+  const toggleOldPasswordVisibility = () => {
+    setOldPasswordShow(oldPasswordShow ? false : true);
+  };
+
+  const togglePasswordVisibility = () => {
+    setPasswordShow(passwordShow ? false : true);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setConfirmPasswordShow(confirmPasswordShow ? false : true);
+  };
 
   const handleSubmit = (data: ChangePasswordForm) => {
     data.email = query?.email as string;
@@ -35,7 +51,6 @@ const ChangePassword: FC = () => {
       (evt: Event) => {
         const customEvent = evt as CustomEvent;
         const data = customEvent.detail;
-        console.log('🚀 ~ data:', data);
 
         if (data?.message) {
           router.push('/login');
@@ -62,21 +77,49 @@ const ChangePassword: FC = () => {
           </h1>
           <TextInput
             inputClass="text-[#0F2552]"
-            type="password"
+            type={oldPasswordShow ? 'text' : 'password'}
             name="oldPassword"
             label="Old Password"
+            endIcon={
+              <div
+                className="absolute top-1 right-1 cursor-pointer"
+                onClick={toggleOldPasswordVisibility}
+              >
+                {oldPasswordShow ? <EyeIcon /> : <HideIcon />}
+              </div>
+            }
           />
           <TextInput
             inputClass="text-[#0F2552]"
-            type="password"
+            type={passwordShow ? 'text' : 'password'}
             name="newPassword"
             label="New Password"
+            endIcon={
+              <div
+                className="absolute top-1 right-1 cursor-pointer"
+                onClick={togglePasswordVisibility}
+              >
+                {passwordShow ? <EyeIcon /> : <HideIcon />}
+              </div>
+            }
+            validations="minLength:8"
+            validationError="Password must be at least 8 characters"
           />
           <TextInput
             inputClass="text-[#0F2552]"
-            type="password"
+            type={confirmPasswordShow ? 'text' : 'password'}
             name="confirmNewPassword"
             label="Confirm New Password"
+            endIcon={
+              <div
+                className="absolute top-1 right-1 cursor-pointer"
+                onClick={toggleConfirmPasswordVisibility}
+              >
+                {confirmPasswordShow ? <EyeIcon /> : <HideIcon />}
+              </div>
+            }
+            validations="equalsField:newPassword"
+            validationError="Passwords do not match"
           />
           <button
             disabled={!canSubmit}

@@ -1,6 +1,14 @@
 import { combineReducers } from 'redux';
 import { authConstants, userConstants } from '@/constants';
-import { Action, LoadingState, Users, UserAction, UserDetail } from '@/types';
+import {
+  Action,
+  LoadingState,
+  Users,
+  UserAction,
+  UserDetail,
+  PaginationState,
+} from '@/types';
+import { updateObject } from '@/utilities/reducerUtility';
 
 type UserDetailsState = UserDetail;
 type UsersListState = Users[];
@@ -106,6 +114,51 @@ const allUsersList = (
   }
 };
 
+const roleUsersList = (
+  state: UsersListState = [],
+  action: AllUsersAction
+): UsersListState => {
+  switch (action.type) {
+    case userConstants.GET_USERS_BY_ROLE_SUCCESS:
+      return action.user ?? state;
+    default:
+      return state;
+  }
+};
+
+const pagination = (
+  state: PaginationState = {
+    links: {
+      first: null,
+      last: null,
+      next: null,
+      previous: null,
+    },
+    meta: {
+      currentPage: 0,
+      itemCount: 0,
+      itemsPerPage: 0,
+      totalItems: 0,
+      totalPages: 0,
+    },
+  },
+  action: AllUsersAction
+): PaginationState => {
+  switch (action.type) {
+    case userConstants.GET_USERS_SUCCESS: {
+      const { links, meta } = action.users;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
+    default:
+      return state;
+  }
+};
+
 export interface RootState {
   userDetails: (state: UserDetailsState, action: Action) => UserDetailsState;
   IsRequestingUsers: (
@@ -124,6 +177,14 @@ export interface RootState {
     state: UsersListState | undefined,
     action: AllUsersAction
   ) => UsersListState;
+  roleUsersList: (
+    state: UsersListState | undefined,
+    action: AllUsersAction
+  ) => UsersListState;
+  pagination: (
+    state: PaginationState | undefined,
+    action: AllUsersAction
+  ) => PaginationState;
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -132,6 +193,8 @@ const rootReducer = combineReducers<RootState>({
   IsSearchingUser,
   IsCreatingUser,
   allUsersList,
+  roleUsersList,
+  pagination,
 });
 
 export default rootReducer;

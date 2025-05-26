@@ -3,16 +3,27 @@ export interface ItemConstants {
   GET_DEPARTMENT_ITEMS_SUCCESS: string;
   GET_DEPARTMENT_ITEMS_ERROR: string;
 
+  REQUEST_GET_ALL_DEPARTMENT_ITEMS: string;
+  GET_ALL_DEPARTMENT_ITEMS_SUCCESS: string;
+  GET_ALL_DEPARTMENT_ITEMS_ERROR: string;
+
   REQUEST_GET_ALL_ITEMS: string;
   GET_ALL_ITEMS_SUCCESS: string;
   GET_ALL_ITEMS_ERROR: string;
+
+  REQUEST_CREATE_ITEM: string;
+  CREATE_ITEM_SUCCESS: string;
+  CREATE_ITEM_ERROR: string;
 
   REQUEST_SEARCH_ITEM: string;
   SEARCH_ITEM_SUCCESS: string;
   SEARCH_ITEM_ERROR: string;
 
   GET_DEPARTMENT_ITEMS: string;
+  GET_ALL_DEPARTMENT_ITEMS: string;
   GET_ALL_ITEMS: string;
+
+  CREATE_ITEM: string;
   SEARCH_ITEM: string;
 
   ITEM_URI: string;

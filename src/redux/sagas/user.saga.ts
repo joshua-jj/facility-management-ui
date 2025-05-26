@@ -8,7 +8,13 @@ import {
   clearObjectFromStorage,
 } from '@/utilities/helpers';
 import { SetSnackBarPayload, Users } from '@/types';
-import { appActions, CreateUserAction, SearchUserAction } from '@/actions';
+import {
+  appActions,
+  CreateUserAction,
+  GetUsersAction,
+  GetUsersByRoleAction,
+  SearchUserAction,
+} from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
 interface User {
@@ -35,7 +41,7 @@ interface ApiError {
   error?: string;
 }
 
-function* getUsers() {
+function* getUsers({ data }: GetUsersAction) {
   yield put({ type: userConstants.REQUEST_GET_USERS });
 
   try {
@@ -43,7 +49,11 @@ function* getUsers() {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const userUri = `${userConstants.USER_URI}`;
+    let userUri = `${userConstants.USER_URI}`;
+
+    if (data?.page) {
+      userUri = `${userUri}?page=${data.page}`;
+    }
 
     const requestFn = () =>
       createRequestWithToken(userUri, { method: 'GET' })(user?.token as string);
@@ -137,6 +147,60 @@ function* searchUser({ data }: SearchUserAction) {
   }
 }
 
+function* getUsersByRole({ data }: GetUsersByRoleAction) {
+  yield put({ type: userConstants.REQUEST_GET_USERS_BY_ROLE });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    const userUri = `${userConstants.USER_URI}/role/${data.roleId}`;
+
+    const requestFn = () =>
+      createRequestWithToken(userUri, { method: 'GET' })(user?.token as string);
+    const userReq: Request = yield call(requestFn);
+
+    const response: Users = yield call(fetch, userReq);
+    if (response.status === 401) {
+      yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+      yield put({ type: authConstants.TOKEN_HAS_EXPIRED });
+      return;
+    }
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
+
+    yield put({
+      type: userConstants.GET_USERS_BY_ROLE_SUCCESS,
+      user: jsonResponse?.data,
+    });
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: userConstants.GET_USERS_BY_ROLE_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: userConstants.GET_USERS_BY_ROLE_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+  }
+}
+
 function* createUser({ data }: CreateUserAction) {
   yield put({ type: userConstants.REQUEST_CREATE_USER });
 
@@ -172,6 +236,13 @@ function* createUser({ data }: CreateUserAction) {
       });
 
       AppEmitter.emit(userConstants.CREATE_USER_SUCCESS, jsonResponse);
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'User created successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {
@@ -179,33 +250,48 @@ function* createUser({ data }: CreateUserAction) {
         parseResponse,
         (error as ApiError).response as unknown as Response
       );
+      console.log('res', res);
+
       yield put({
         type: userConstants.CREATE_USER_ERROR,
-        error: res?.error,
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
       });
       const payload: SetSnackBarPayload = {
         type: 'error',
-        message: res?.error ?? res?.message ?? 'Something went wrong',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        // message: res?.message ?? res?.message?.[0] ?? 'Something went wrong',
         variant: 'error',
       };
+      console.log('payload', payload);
+
       yield put(appActions.setSnackBar(payload));
 
       return;
     }
-    yield put({
-      type: userConstants.CREATE_USER_ERROR,
-      error:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-    });
-    const payload: SetSnackBarPayload = {
-      type: 'error',
-      message:
-        ((error as ApiError)?.error || (error as ApiError)?.message) ??
-        'Something went wrong',
-      variant: 'error',
-    };
-    yield put(appActions.setSnackBar(payload));
+    // yield put({
+    //   type: userConstants.CREATE_USER_ERROR,
+    //   error:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    // });
+    // const payload: SetSnackBarPayload = {
+    //   type: 'error',
+    //   message:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    //   variant: 'error',
+    // };
+    // yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -216,11 +302,19 @@ function* getUsersWatcher() {
 function* searchUserWatcher() {
   yield takeLatest(userConstants.SEARCH_USER, searchUser);
 }
+function* getUsersByRoleWatcher() {
+  yield takeLatest(userConstants.GET_USERS_BY_ROLE, getUsersByRole);
+}
 
 function* createUserWatcher() {
   yield takeLatest(userConstants.CREATE_USER, createUser);
 }
 
 export default function* rootSaga() {
-  yield all([getUsersWatcher(), searchUserWatcher(), createUserWatcher()]);
+  yield all([
+    getUsersWatcher(),
+    searchUserWatcher(),
+    getUsersByRoleWatcher(),
+    createUserWatcher(),
+  ]);
 }

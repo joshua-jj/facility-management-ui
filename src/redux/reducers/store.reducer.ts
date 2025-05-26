@@ -34,6 +34,21 @@ const IsRequestingStores = (
   }
 };
 
+const IsCreatingStore = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case storeConstants.REQUEST_CREATE_STORE:
+      return true;
+    case storeConstants.CREATE_STORE_SUCCESS:
+    case storeConstants.CREATE_STORE_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const IsSearchingStore = (
   state: LoadingState = false,
   action: StoreAction
@@ -68,6 +83,10 @@ export interface RootState {
     state: LoadingState | undefined,
     action: StoreAction
   ) => LoadingState;
+  IsCreatingStore: (
+    state: LoadingState | undefined,
+    action: StoreAction
+  ) => LoadingState;
   IsSearchingStore: (
     state: LoadingState | undefined,
     action: StoreAction
@@ -80,6 +99,7 @@ export interface RootState {
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingStores,
+  IsCreatingStore,
   IsSearchingStore,
   allStoresList,
 });

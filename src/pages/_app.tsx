@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { wrapper } from '../redux/store';
 import { Persistor } from 'redux-persist';
+import '../utilities/formsyValidationRules';
 
 const montserrat = Montserrat({
   subsets: ['latin'],

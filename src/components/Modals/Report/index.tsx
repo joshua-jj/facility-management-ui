@@ -98,6 +98,8 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
+              validations="isValidPhone"
+              validationError="Please enter a valid phone number."
             />
             {/* Contact Number */}
             {/* <div>
@@ -167,7 +169,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
       <SuccessModal
         open={isSuccessOpen}
         onClose={() => setIsSuccessOpen(false)}
-        autoCloseDelay={5000}
+        autoCloseDelay={3000}
       />
     </>
   );

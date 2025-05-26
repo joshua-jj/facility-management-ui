@@ -3,20 +3,27 @@ export interface GeneratorConstants {
   GET_GENERATOR_LOGS_SUCCESS: string;
   GET_GENERATOR_LOGS_ERROR: string;
 
+  REQUEST_CREATE_GENERATOR_LOG: string;
+  CREATE_GENERATOR_LOG_SUCCESS: string;
+  CREATE_GENERATOR_LOG_ERROR: string;
+
   GET_GENERATOR_LOGS: string;
+  CREATE_GENERATOR_LOG: string;
+  SEARCH_GENERATOR_LOG: string;
 
   GENERATOR_URI: string;
 }
 export interface GeneratorForm {
-  generatorName: string;
-  generatorStatus: string;
-  generatorPower: number;
-  generatorFuel: number;
-  generatorTemperature: number;
-  generatorVoltage: number;
+  nameOfMeeting: string;
+  generatorType: string;
+  meetingLocation: number;
+  dieselLevelOn: number;
+  dieselLevelOff: number;
+  dueForService: boolean;
   generatorCurrent: number;
-  generatorFrequency: number;
+  Remark: string;
 }
+
 export interface GeneratorLog {
   id: number;
   nameOfMeeting: string;

@@ -1,3 +1,4 @@
+import { RequestStatus } from '@/constants/enum.constant';
 import localForage from 'localforage';
 // import queryParser from 'query-string';
 
@@ -314,4 +315,39 @@ export function generateUUID() {
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+}
+
+/**
+ * Formats an ISO timestamp into a readable date string.
+ * @param isoString - e.g. "2025-05-02T00:00:00.000Z"
+ * @returns e.g. "Friday, May 2, 2025"
+ */
+export function formatReadableDate(isoString: string): string {
+  const date = new Date(isoString);
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Africa/Lagos',
+  });
+}
+
+const statusMap: Record<string, RequestStatus> = {
+  assign: RequestStatus.ASSIGNED,
+  not_assigned: RequestStatus.NOT_ASSIGNED,
+  return: RequestStatus.COMPLETED,
+  release: RequestStatus.COLLECTED,
+  accepted: RequestStatus.ACCEPTED,
+  approve: RequestStatus.APPROVED,
+  decline: RequestStatus.DECLINED,
+  cancelled: RequestStatus.CANCELLED,
+  expired: RequestStatus.EXPIRED,
+  submitted: RequestStatus.SUBMITTED,
+  pending: RequestStatus.PENDING,
+};
+
+export function getDisplayStatus(status: string) {
+  return statusMap[status.toLowerCase()] || RequestStatus.DEFAULT;
 }

@@ -18,6 +18,18 @@ export interface SetSnackBarPayload {
   variant: 'success' | 'error' | 'warning' | 'info';
 }
 
+export interface messageState {
+  message: string;
+  variant: string;
+}
+
+export interface SnackAction {
+  [x: string]: unknown;
+  message?: string;
+  type: string;
+  variant?: 'success' | 'error' | 'warning' | 'info';
+}
+
 export interface Action {
   id?: number;
   data?: unknown;

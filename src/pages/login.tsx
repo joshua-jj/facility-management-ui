@@ -12,6 +12,8 @@ import { authConstants } from '@/constants';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import EyeIcon from '../../public/assets/icons/Eye.svg';
+import HideIcon from '../../public/assets/icons/Hide.svg';
 
 const Login: FC = () => {
   const router = useRouter();
@@ -23,6 +25,11 @@ const Login: FC = () => {
   const { IsLoggingIn } = useSelector((s: RootState) => s.auth);
 
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
+  const [passwordShow, setPasswordShow] = useState<boolean>(false);
+
+  const togglePasswordVisibility = () => {
+    setPasswordShow(passwordShow ? false : true);
+  };
 
   const handleSubmit = (data: LoginForm) => {
     dispatch(authActions.login(data) as unknown as UnknownAction);
@@ -67,15 +74,33 @@ const Login: FC = () => {
             inputClass="text-[#0F2552]"
             type="text"
             name="email"
-            label="Username/Email address"
+            label="Email address"
+            validations="isEmail"
+            validationError="This is not a valid email"
+            required
           />
           <TextInput
             inputClass="text-[#0F2552]"
-            type="password"
+            type={passwordShow ? 'text' : 'password'}
             name="password"
             label="Password"
+            required
+            endIcon={
+              <div
+                className="absolute top-1 right-1 cursor-pointer"
+                onClick={togglePasswordVisibility}
+              >
+                {passwordShow ? <EyeIcon /> : <HideIcon />}
+                {/* <EyeIcon className="w-5 h-5 text-[#B28309] cursor-pointer" /> */}
+              </div>
+            }
           />
-          <Link href="/forgot-password" className="text-[#0F2552] text-sm font-semibold hover:underline">Forgot password?</Link>
+          <Link
+            href="/forgot-password"
+            className="text-[#0F2552] text-sm font-semibold hover:underline"
+          >
+            Forgot password?
+          </Link>
           <button
             disabled={!canSubmit}
             className="bg-[#B28309] rounded text-center w-full py-3 mt-8 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"

@@ -8,9 +8,9 @@ import { RootState } from '@/redux/reducers';
 import { generatorActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { GeneratorLog } from '@/types';
-import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
+import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -148,9 +148,9 @@ const GeneratorLogs = () => {
                 Download CSV
               </button>
               <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-                <AddDepartment className="text-start w-full cursor-pointer">
+                <AddGeneratorLog className="text-start w-full cursor-pointer">
                   Create Generator Log
-                </AddDepartment>
+                </AddGeneratorLog>
               </button>
             </div>
           </Formsy>
