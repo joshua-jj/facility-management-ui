@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useEffect, useState } from 'react';
 import { CaretIcon, DeleteIcon, SearchIcon } from '../Icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 // import { Department } from '@/redux/reducers/department.reducer';
-import { itemActions } from '@/actions';
+import { departmentActions, itemActions } from '@/actions';
 // import { Items } from '@/redux/reducers/item.reducer';
 import { Department, Item } from '@/types';
 
@@ -33,6 +34,10 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
   //   const [department, setDepartment] = useState<Department | null>(null);
+
+  // useEffect(() => {
+  //   dispatch(departmentActions.getAllDepartments()) as unknown as Unknown
+  // }, [])
 
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
@@ -110,7 +115,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
           <button
             type="button"
             onClick={() => setDepartmentIsOpen(!departmentIsOpen)}
-            className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
+            className="w-full px-4 py-2 md:text-[1rem] text-[14px] border border-gray-300 rounded text-left text-gray-500"
           >
             {department?.name || 'Select department'}
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
