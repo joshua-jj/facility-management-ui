@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
@@ -6,8 +6,13 @@ import TextInput from '@/components/Inputs/TextInput';
 import SuccessModal from '../Report/SuccessModal';
 import { CaretIcon, SearchIcon } from '@/components/Icons';
 import { RootState } from '@/redux/reducers';
-import { useSelector } from 'react-redux';
-import { Department } from '@/types';
+import { useDispatch, useSelector } from 'react-redux';
+import { Department, ItemForm } from '@/types';
+import { departmentActions, itemActions, storeActions } from '@/actions';
+import { UnknownAction } from 'redux';
+import { AppEmitter } from '@/controllers/EventEmitter';
+import { itemConstants } from '@/constants';
+import Router from 'next/router';
 
 interface AddItemModalProps {
   // onClose: () => void;
@@ -22,32 +27,83 @@ const AddItem: React.FC<AddItemModalProps> = ({
   // onClose,
   // open,
 }) => {
-  // const [search, setSearch] = useState('');
+  const dispatch = useDispatch();
+  const { IsCreatingItem } = useSelector((s: RootState) => s.item);
+  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  const { allStoresList } = useSelector((s: RootState) => s.store);
+
   const [canSubmit, setCanSubmit] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   // const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
   const [department, setDepartment] = useState<Department | null>(null);
-  // const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  // const [store, setStore] = useState<Store | null>(null);
+  const [fragile, setFragile] = useState(false);
+  const [search, setSearch] = useState('');
+  const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
+  // const [storeIsOpen, setStoreIsOpen] = useState(false);
+  const [fragileIsOpen, setFragileIsOpen] = useState(false);
+  // const [conditionIsOpen, setConditionIsOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
-  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-  const [search, setSearch] = useState('');
-  const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
+  useEffect(() => {
+    if (allDepartmentsList?.length === 0) {
+      dispatch(
+        departmentActions.getAllDepartments() as unknown as UnknownAction
+      );
+    }
+    if (allStoresList?.length === 0) {
+      dispatch(storeActions.getStores() as unknown as UnknownAction);
+    }
+  }, [dispatch, allDepartmentsList, allStoresList]);
 
-  const handleSubmit = () => {};
+  const handleSubmit = (data: ItemForm) => {
+    if (!department) {
+      alert('Please select a department');
+      return;
+    }
+    data.fragile = fragile;
+    // data.storeId = store?.id;
+    data.departmentId = department?.id;
+    // data.condition = 'Not specified';
+    data.actualQuantity = Number(data.actualQuantity);
+
+    dispatch(itemActions.createItem(data) as unknown as UnknownAction);
+
+    setDepartment(null);
+  };
+
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      itemConstants.CREATE_ITEM_SUCCESS,
+      (evt: Event) => {
+        const newItem = evt as CustomEvent;
+        console.log('New item created:', newItem);
+        console.log('New item details created:', newItem.detail);
+        if (newItem) {
+          closeModal();
+          Router.push(`/admin/item/${newItem.detail.id}`);
+          // setIsSuccessOpen(true);
+        }
+      }
+    );
+
+    return () => listener.remove();
+  }, []);
 
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
-    // dispatch(
-    //     itemActions.getDepartmentItems(department.id) as unknown as UnknownAction
-    // );
     setDepartmentIsOpen(false);
   };
+
+  // const handleStoreSelect = (store: Store) => {
+  //   setStore(store);
+  //   setStoreIsOpen(false);
+  // };
 
   const filteredDepartments = allDepartmentsList.filter((department) =>
     department.name.toLowerCase().includes(search.toLowerCase())
@@ -78,8 +134,8 @@ const AddItem: React.FC<AddItemModalProps> = ({
           >
             <TextInput
               type="text"
-              name="item_title"
-              label="Item title"
+              name="name"
+              label="Item name"
               placeholder="Enter name"
               required
               className="text-[#0F2552] rounded font-medium text-sm"
@@ -134,7 +190,7 @@ const AddItem: React.FC<AddItemModalProps> = ({
               </div>
             </div>
 
-            <div className="mb-3 group">
+            {/* <div className="mb-3 group">
               <div className="flex justify-between items-center">
                 <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
                   Store
@@ -143,34 +199,83 @@ const AddItem: React.FC<AddItemModalProps> = ({
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setDepartmentIsOpen(!departmentIsOpen)}
+                  onClick={() => setStoreIsOpen(!storeIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
-                  {department?.name || 'Select department'}
+                  {store?.name || 'Select store'}
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
                     <CaretIcon className="rotate-90" />
                   </span>
                 </button>
-                {departmentIsOpen && (
+                {storeIsOpen && (
+                  <ul className="absolute w-full max-h-40 overflow-y-auto mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
+                    {allStoresList.map((store) => (
+                      <li
+                        key={store.id}
+                        onClick={() => handleStoreSelect(store)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      >
+                        <span className="mr-4">{store.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div> */}
+
+            <TextInput
+              type="number"
+              name="actualQuantity"
+              label="Item quantity"
+              placeholder="Enter quantity"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            />
+            <div className="mb-3 group">
+              <div className="flex justify-between items-center">
+                <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
+                  Fragile
+                </label>
+              </div>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setFragileIsOpen(!fragileIsOpen)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
+                >
+                  {fragile ? 'yes' : 'no'}
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
+                    <CaretIcon className="rotate-90" />
+                  </span>
+                </button>
+                {fragileIsOpen && (
                   <ul className="absolute w-full max-h-40 overflow-y-auto mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
                     <li
-                      // onClick={() => handleDepartmentSelect(department)}
+                      // onClick={() => setFragile(true)}
+                      onClick={() => {
+                        setFragile(true);
+                        setFragileIsOpen(false);
+                      }}
                       className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                     >
-                      <span className="mr-4">good</span>
+                      <span className="mr-4">yes</span>
                     </li>
                     <li
-                      // onClick={() => handleDepartmentSelect(department)}
+                      // onClick={() => setFragile(false)}
+                      onClick={() => {
+                        setFragile(false);
+                        setFragileIsOpen(false);
+                      }}
                       className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                     >
-                      <span className="mr-4">bad</span>
+                      <span className="mr-4">no</span>
                     </li>
                   </ul>
                 )}
               </div>
             </div>
-
-            <div className="mb-3 group">
+            {/* <div className="mb-3 group">
               <div className="flex justify-between items-center">
                 <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
                   Item Condition
@@ -179,15 +284,15 @@ const AddItem: React.FC<AddItemModalProps> = ({
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setDepartmentIsOpen(!departmentIsOpen)}
+                  onClick={() => setConditionIsOpen(!conditionIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
-                  {department?.name || 'Select department'}
+                  {department?.name || 'Select condition'}
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
                     <CaretIcon className="rotate-90" />
                   </span>
                 </button>
-                {departmentIsOpen && (
+                {conditionIsOpen && (
                   <ul className="absolute w-full max-h-40 overflow-y-auto mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
                     <li
                       // onClick={() => handleDepartmentSelect(department)}
@@ -241,23 +346,21 @@ const AddItem: React.FC<AddItemModalProps> = ({
               className="w-full h-12 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
             >
               Add more item
-            </button>
+            </button> */}
 
             <button
-              onClick={handleSubmit}
+              // onClick={handleSubmit}
               // disabled={!canSubmit() || IsCreatingRequest}
               disabled={!canSubmit}
               className="w-full px-4 py-2 mt-8 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer flex items-center justify-center disabled:opacity-50"
             >
-              Add item
-              {/* {IsCreatingRequest ? (
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    <span>Loading...</span>
-                                </div>
-                            ) : (
-                                'Submit'
-                            )} */}
+              {IsCreatingItem ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                'Add item'
+              )}
             </button>
           </Formsy>
         </div>

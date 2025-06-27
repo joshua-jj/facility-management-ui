@@ -82,6 +82,36 @@ const IsSearchingItem = (
   }
 };
 
+const IsCreatingItem = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case itemConstants.REQUEST_CREATE_ITEM:
+      return true;
+    case itemConstants.CREATE_ITEM_SUCCESS:
+    case itemConstants.CREATE_ITEM_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
+const IsUpdatingItem = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case itemConstants.REQUEST_UPDATE_ITEM:
+      return true;
+    case itemConstants.UPDATE_ITEM_SUCCESS:
+    case itemConstants.UPDATE_ITEM_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allDepartmentItemsList = (
   state: DepartmentItemsListState = [],
   action: DepartmentItemsAction
@@ -158,6 +188,8 @@ export interface RootState {
   ) => LoadingState;
   IsRequestingAllItems: (state: LoadingState, action: Action) => LoadingState;
   IsSearchingItem: (state: LoadingState, action: Action) => LoadingState;
+  IsCreatingItem: (state: LoadingState, action: Action) => LoadingState;
+  IsUpdatingItem: (state: LoadingState, action: Action) => LoadingState;
   allDepartmentItemsList: (
     state: DepartmentItemsListState | undefined,
     action: DepartmentItemsAction
@@ -177,6 +209,8 @@ const rootReducer = combineReducers<RootState>({
   IsRequestingAllDepartmentItems,
   IsRequestingAllItems,
   IsSearchingItem,
+  IsCreatingItem,
+  IsUpdatingItem,
   allDepartmentItemsList,
   allItemsList,
   pagination,

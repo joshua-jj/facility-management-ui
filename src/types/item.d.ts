@@ -15,6 +15,10 @@ export interface ItemConstants {
   CREATE_ITEM_SUCCESS: string;
   CREATE_ITEM_ERROR: string;
 
+  REQUEST_UPDATE_ITEM: string;
+  UPDATE_ITEM_SUCCESS: string;
+  UPDATE_ITEM_ERROR: string;
+
   REQUEST_SEARCH_ITEM: string;
   SEARCH_ITEM_SUCCESS: string;
   SEARCH_ITEM_ERROR: string;
@@ -24,18 +28,28 @@ export interface ItemConstants {
   GET_ALL_ITEMS: string;
 
   CREATE_ITEM: string;
+  UPDATE_ITEM: string;
   SEARCH_ITEM: string;
 
   ITEM_URI: string;
 }
 
 export interface ItemForm {
-  itemName: string;
-  itemDescription: string;
-  itemCategory: string;
-  itemStatus: string;
-  itemQuantity: number;
-  itemLocation: string;
+  name: string;
+  actualQuantity: number;
+  // storeId: number;
+  departmentId: number;
+  fragile: boolean;
+  // condition: string;
+}
+
+export interface ItemUnitsForm {
+  itemId: string;
+  itemUnits: Array<{
+    id: number;
+    condition: string;
+    storeId: number;
+  }>;
 }
 export interface Item {
   fragile?: boolean;
