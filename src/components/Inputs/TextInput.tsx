@@ -69,7 +69,7 @@ const TextInput: React.FC<TextInputProps> = (props) => {
   return (
     <div className={`my-3 w-full relative ${props.className}`}>
       {props.icon && props.icon}
-      <label className="block text-sm text-gray-700">
+      <label className="block md:text-sm text-xs text-gray-700">
         {props.required ? `${props.label}*` : props.label}
       </label>
       <input
@@ -78,7 +78,7 @@ const TextInput: React.FC<TextInputProps> = (props) => {
         value={props.value || ''}
         required={props.required}
         placeholder={props.placeholder}
-        className={`mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${props.inputClass}`}
+        className={`mt-1 block md:text-sm text-xs w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${props.inputClass}`}
       />
       {props.endIcon && (
         <span

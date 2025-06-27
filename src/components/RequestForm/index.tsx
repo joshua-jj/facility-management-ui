@@ -250,13 +250,13 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
 
   return (
     <>
-      <div className="w-md mx-auto p-6 bg-white rounded-md shadow hover:shadow-md">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Request Form</h1>
-        <div className="flex items-center mb-6">
+      <div className="w-md max-w-[90vw] mx-auto md:p-6 p-4 bg-white rounded-md shadow hover:shadow-md">
+        <h1 className="md:text-2xl text-lg font-bold text-gray-800 mb-4">Request Form</h1>
+        <div className="flex items-center md:mb-6 mb-4">
           {steps.map((step, index) => (
             <div key={index} className="flex items-center">
               <span
-                className={`text-[.75rem] leading-6 tracking-wide font-[600] ${
+                className={`text-[.75rem] md:leading-6 leading-4 tracking-wide font-[600] ${
                   index === currentStep ? 'text-yellow-500' : 'text-[#848A95]'
                 }`}
               >

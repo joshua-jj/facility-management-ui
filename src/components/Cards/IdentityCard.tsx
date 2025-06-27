@@ -24,7 +24,7 @@ const IdentityCard: React.FC<IdentityCardProps> = ({
         <p className="text-sm font-normal text-[#0f2552] uppercase">
           Identify as
         </p>
-        <h3 className="mt-2 text-[15px] font-semibold text-[#0f2552]">
+        <h3 className="mt-2 text-[15px] min-w-[123.58px] text-center font-semibold text-[#0f2552]">
           {title}
         </h3>
       </div>
