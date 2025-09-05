@@ -6,14 +6,11 @@ import MoreInformation from './MoreInformation';
 import { useDispatch, useSelector } from 'react-redux';
 import { departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
-// import { Items } from '@/redux/reducers/item.reducer';
-// import { Department } from '@/redux/reducers/department.reducer';
 import { RootState } from '@/redux/reducers';
 import SuccessModal from '../Modals/SuccessModal';
 import { requestConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { Department, Item } from '@/types';
-// import Formsy from 'formsy-react';
 
 const steps = ['Item(s) Details', 'Requester Details', 'More Information'];
 
@@ -28,19 +25,17 @@ interface FormData {
   moreInformation: {
     location: string;
     returnDate: string;
+    dateOfCollection: string;
     description: string;
   };
 }
 
 interface RequestFormProps {
-  route: string; // Add a prop for the route
+  route: string;
 }
 
 const RequestForm: FC<RequestFormProps> = ({ route }) => {
-  const isWorkerRoute = route.includes('egfm-worker'); // Check if the current route includes 'egfm-worker'
-  // const isChurchRoute = route.includes('church-ministry');
-  // console.log('🚀 ~ RequestForm ~ isWorkerRoute:', isWorkerRoute);
-  // console.log('🚀 ~ RequestForm ~ isChurchRoute:', isChurchRoute);
+  const isWorkerRoute = route.includes('egfm-worker');
 
   const dispatch = useDispatch();
   const { IsCreatingRequest } = useSelector((s: RootState) => s.request);
@@ -70,6 +65,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
     moreInformation: {
       location: '',
       returnDate: '',
+      dateOfCollection: '',
       description: '',
     },
   });
@@ -92,16 +88,6 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
 
     return () => listener.remove();
   }, []);
-
-  //   useEffect(() => {
-  //   if (showSuccessModal) {
-  //     const timer = setTimeout(() => {
-  //        setCurrentStep(0);
-  //     }, 3000);
-
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [showSuccessModal]);
 
   useEffect(() => {
     if (showSuccessModal) {
@@ -130,6 +116,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
           moreInformation: {
             location: '',
             returnDate: '',
+            dateOfCollection: '',
             description: '',
           },
         });
@@ -203,8 +190,6 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
   };
 
   const handleSubmit = async () => {
-    // setIsSubmitting(true);
-    // console.log('formData:', formData);
     const requestData = {
       requesterName: formData.requestDetails.requesterName,
       requesterEmail: formData.requestDetails.email,
@@ -216,6 +201,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       // durationOfUse: '1 week',
       // durationOfUse: formData.moreInformation.returnDate,
       dateOfReturn: formData.moreInformation.returnDate,
+      dateOfCollection: formData.moreInformation.dateOfCollection,
       descriptionOfRequest: formData.moreInformation.description,
       items: formData.items.map((item) => ({
         storeId: item.storeId,
@@ -224,8 +210,8 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
         conditionBeforeLease: item.condition,
       })),
     };
-    console.log('requestData:', requestData);
-    console.log('formData.items:', formData.items);
+    // console.log('requestData:', requestData);
+    // console.log('formData.items:', formData.items);
 
     dispatch(
       requestActions.createRequest(requestData) as unknown as UnknownAction
@@ -244,6 +230,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       requestDetails.email &&
       requestDetails.contactNumber &&
       moreInformation.location &&
+      moreInformation.dateOfCollection &&
       moreInformation.returnDate
     );
   };
@@ -251,7 +238,9 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
   return (
     <>
       <div className="w-md max-w-[90vw] mx-auto md:p-6 p-4 bg-white rounded-md shadow hover:shadow-md">
-        <h1 className="md:text-2xl text-lg font-bold text-gray-800 mb-4">Request Form</h1>
+        <h1 className="md:text-2xl text-lg font-bold text-gray-800 mb-4">
+          Request Form
+        </h1>
         <div className="flex items-center md:mb-6 mb-4">
           {steps.map((step, index) => (
             <div key={index} className="flex items-center">
@@ -282,10 +271,6 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
           />
         )}
         {currentStep === 1 && (
-          //         <Formsy
-          //   onValid={() => setIsFormValid(true)}
-          //   onInvalid={() => setIsFormValid(false)}
-          // >
           <RequestDetails
             data={formData.requestDetails}
             setData={(requestDetails) =>
@@ -294,14 +279,6 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
             isWorkerRoute={isWorkerRoute}
             setIsFormValid={setIsFormValid}
           />
-          // </Formsy>
-          // <RequestDetails
-          //   data={formData.requestDetails}
-          //   setData={(requestDetails) =>
-          //     setFormData((prev) => ({ ...prev, requestDetails }))
-          //   }
-          //   isWorkerRoute={isWorkerRoute}
-          // />
         )}
         {currentStep === 2 && (
           <MoreInformation
@@ -326,12 +303,10 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
-              // disabled={!canProceedStep()}
               disabled={!canProceedStep() || !isFormValid}
               className={`px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer ${
                 !canProceedStep() ? 'opacity-50 cursor-not-allowed' : ''
               }`}
-              // className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer"
             >
               Continue
             </button>
@@ -353,7 +328,6 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
           )}
         </div>
       </div>
-
       <SuccessModal
         setShowSuccessModal={setShowSuccessModal}
         showSuccessModal={showSuccessModal}

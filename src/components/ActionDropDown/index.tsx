@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { DotsIcon } from '../Icons';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/reducers';
 
 type Props = {
   // row: object;
+  items?: boolean;
+  handleOpen?: () => void;
   handleUpdate: () => void;
   handleDelete: () => void;
 };
 
 const ActionDropDown = (props: Props) => {
   // console.log('🚀 ~ ActionDropDown ~ props:', props);
+  const { userDetails } = useSelector((s: RootState) => s.user);
+
   const [showDropdown, setShowDropdown] = useState(false);
 
   const ref = useOnClickOutside<HTMLUListElement>(() => setShowDropdown(false));
@@ -27,6 +33,14 @@ const ActionDropDown = (props: Props) => {
           ref={ref}
           className="absolute right-[2rem] bg-white z-50 py-1 shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)]"
         >
+          {props.items && userDetails?.roleId !== 3 && (
+            <li
+              onClick={props.handleOpen}
+              className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"
+            >
+              open
+            </li>
+          )}
           <li
             onClick={props.handleUpdate}
             className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"

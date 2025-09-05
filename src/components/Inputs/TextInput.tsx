@@ -5,6 +5,7 @@ interface TextInputProps {
   label?: string;
   type: string;
   value?: string;
+  disabled?: boolean;
   className?: string;
   inputClass?: string;
   placeholder?: string;
@@ -76,6 +77,7 @@ const TextInput: React.FC<TextInputProps> = (props) => {
         type={props.type}
         onChange={changeValue}
         value={props.value || ''}
+        disabled={props.disabled}
         required={props.required}
         placeholder={props.placeholder}
         className={`mt-1 block md:text-sm text-xs w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${props.inputClass}`}

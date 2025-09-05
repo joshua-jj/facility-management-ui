@@ -182,11 +182,12 @@ const Requests = () => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
-    {
-      key: 'summary',
-      header: 'STATUS',
-      render: (_, row: Request) => row.summary?.requestStatus || 'N/A', // Access department.name
-    },
+    // {
+    //   key: 'summary',
+    //   header: 'STATUS',
+    //   render: (_, row: Request) => row.summary?.requestStatus || 'N/A', // Access department.name
+    // },
+    { key: 'requestStatus', header: 'REQUEST STATUS' },
     {
       key: 'id',
       header: '.',

@@ -21,6 +21,7 @@ const LandingPage: FC = () => {
           link="/request/church-ministry"
           icon={<HomeIcon />}
           filledIcon={<HomeBoldIcon />}
+          disabled
         />
       </div>
     </Layout>

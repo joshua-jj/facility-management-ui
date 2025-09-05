@@ -40,7 +40,7 @@ function* getStores() {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const storeUri = `${storeConstants.STORE_URI}`;
+    const storeUri = `${storeConstants.STORE_URI}?page=1&limit=10`;
 
     const requestFn = () =>
       createRequestWithToken(storeUri, { method: 'GET' })(

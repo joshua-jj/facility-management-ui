@@ -1,16 +1,16 @@
 import { GetServerSideProps, NextPage } from 'next';
 import Layout from '@/components/Layout';
-import { itemConstants, requestConstants } from '@/constants';
+import { itemConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { capitalizeFirstLetter, formatReadableDate } from '@/utilities/helpers';
 import { itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { AppEmitter } from '@/controllers/EventEmitter';
+// import { AppEmitter } from '@/controllers/EventEmitter';
 import SmallSelect from '@/components/CustomDropdownSelect/SmallSelect';
 
 const conditionOptions = [
@@ -33,7 +33,17 @@ interface ItemDetails {
     id: number;
     condition: string;
     serialNumber: string;
-    store: string;
+    // store: string;
+    store: {
+      id: number; // 2
+      name: string; // "Kosofe"
+      status: string; // "A"
+      location: string | null; // null
+      createdAt: string; // "2025-07-20T19:39:20.011Z" (ISO date string)
+      createdBy: string; // "SYSTEM"
+      updatedAt: string | null; // null
+      updatedBy: string | null;
+    };
   }>;
   createdBy: string;
   createdAt: string;
@@ -101,12 +111,14 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
 
   const dispatch = useDispatch();
   const { IsUpdatingItem } = useSelector((s: RootState) => s.item);
-  const { userDetails } = useSelector((s: RootState) => s.user);
+  // const { userDetails } = useSelector((s: RootState) => s.user);
   const { allStoresList } = useSelector((s: RootState) => s.store);
 
-  const [requestStatus, setRequestStatus] = useState('');
+  //   const [requestStatus, setRequestStatus] = useState('');
+  console.log('itemDetail?.itemUnits', itemDetail?.itemUnits[0]);
+
   const [selectedStores, setSelectedStores] = useState(
-    itemDetail?.itemUnits?.map((item) => item.store || '') || []
+    itemDetail?.itemUnits?.map((item) => String(item.store?.id) || '') || []
   );
   const [selectedConditions, setSelectedConditions] = useState(
     itemDetail?.itemUnits?.map((item) => item.condition || '') || []
@@ -115,7 +127,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
     itemDetail?.itemUnits?.map((item) => item.condition || '') || []
   );
   const [initialStores] = useState(
-    itemDetail?.itemUnits?.map((item) => item.store || '') || []
+    itemDetail?.itemUnits?.map((item) => String(item.store?.id) || '') || []
   );
   // const displayStatus = getDisplayStatus(status); // apiStatus is from backend
 
@@ -199,10 +211,10 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
   //     setItems(updatedItems);
   //   };
 
-  console.log('itemDetail:', itemDetail);
-  console.log('selectedConditions:', selectedConditions);
-  console.log('selectedStores:', selectedStores);
-  console.log('isUpdateDisabled:', isUpdateDisabled);
+  //   console.log('itemDetail:', itemDetail);
+  //   console.log('selectedConditions:', selectedConditions);
+  //   console.log('selectedStores:', selectedStores);
+  //   console.log('isUpdateDisabled:', isUpdateDisabled);
 
   const handleUpdateItem = () => {
     const updatedItemUnits = itemDetail.itemUnits.map((unit, index) => {
@@ -223,6 +235,10 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
     console.log('payload:', payload);
     dispatch(itemActions.updateItem(payload) as unknown as UnknownAction);
   };
+
+  //   const filteredDepartments = allStoresList.filter((store) =>
+  //   store.name.toLowerCase().includes(search.toLowerCase())
+  // );
 
   //   const handleAssignRequest = () => {
   //     const payload = {
@@ -272,20 +288,20 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
   //     );
   //   };
 
-  useEffect(() => {
-    const listener = AppEmitter.addListener(
-      requestConstants.UPDATE_REQUEST_STATUS_SUCCESS,
-      (evt: Event) => {
-        const customEvent = evt as CustomEvent;
+  //   useEffect(() => {
+  //     const listener = AppEmitter.addListener(
+  //       requestConstants.UPDATE_REQUEST_STATUS_SUCCESS,
+  //       (evt: Event) => {
+  //         const customEvent = evt as CustomEvent;
 
-        if (customEvent) {
-          //   setStatus(displayStatus);
-        }
-      }
-    );
+  //         if (customEvent) {
+  //           //   setStatus(displayStatus);
+  //         }
+  //       }
+  //     );
 
-    return () => listener.remove();
-  }, [requestStatus]);
+  //     return () => listener.remove();
+  //   }, [requestStatus]);
 
   return (
     <Layout className="grid grid-cols-12 mb-12">
@@ -376,27 +392,28 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                     </div>
                   ))}
               </div>
-              {userDetails?.roleId === 5 && (
-                <div className="">
-                  <h4 className="text-xs uppercase font-semibold mb-2">
-                    STORE
-                  </h4>
-                  {itemDetail?.itemUnits &&
-                    itemDetail.itemUnits.map((item, index) => (
-                      <div key={index} className="mb-2">
-                        <SmallSelect
-                          value={selectedStores[index]}
-                          options={allStoresList.map((store) => ({
-                            value: store.id,
-                            label: store.name,
-                          }))}
-                          placeholder="Select store"
-                          onChange={(value) => handleStoreChange(index, value)}
-                        />
-                      </div>
-                    ))}
-                </div>
-              )}
+              {/* {userDetails?.roleId === 5 && ( */}
+              <div className="">
+                <h4 className="text-xs uppercase font-semibold mb-2">STORE</h4>
+                {itemDetail?.itemUnits &&
+                  itemDetail.itemUnits.map((item, index) => (
+                    <div key={index} className="mb-2">
+                      <SmallSelect
+                        value={selectedStores[index]}
+                        // options={allStoresList}
+                        options={allStoresList.map((store) => ({
+                          value: String(store.id),
+                          label: store.name,
+                        }))}
+                        placeholder="Select store"
+                        onChange={(value) =>
+                          handleStoreChange(index, String(value))
+                        }
+                      />
+                    </div>
+                  ))}
+              </div>
+              {/* // )} */}
 
               {/* <div className="">
                 <h4 className="text-xs uppercase font-semibold mb-2">

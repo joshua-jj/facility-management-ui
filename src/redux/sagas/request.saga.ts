@@ -369,10 +369,11 @@ function* assignRequest({ data }: AssignRequestAction) {
       authConstants.USER_KEY
     );
     if (data) {
-      const requestUri = `${requestConstants.REQUEST_URI}/assign/${data?.requestId}`;
+      const { requestId, ...restData } = data;
+      const requestUri = `${requestConstants.REQUEST_URI}/assign/${requestId}`;
       const requestReq = createRequestWithToken(requestUri, {
         method: 'PATCH',
-        body: JSON.stringify(data),
+        body: JSON.stringify(restData),
       });
       const req: Request = yield call(requestReq, user?.token as string);
       const response: CustomRequest = yield call(fetch, req);
@@ -446,9 +447,10 @@ function* releaseRequestItems({ data }: ReleaseItemsAction) {
     );
     if (data) {
       const requestUri = `${requestConstants.REQUEST_URI}/release/${data?.requestId}`;
+      const { requestId, ...restData } = data;
       const requestReq = createRequestWithToken(requestUri, {
         method: 'PATCH',
-        body: JSON.stringify(data),
+        body: JSON.stringify(restData),
       });
       const req: Request = yield call(requestReq, user?.token as string);
       const response: CustomRequest = yield call(fetch, req);

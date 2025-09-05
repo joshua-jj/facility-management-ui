@@ -69,7 +69,9 @@ const Login: FC = () => {
           onInvalid={() => setCanSubmit(false)}
           className="w-md max-w-[90vw] md:p-8 p-4 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
         >
-          <h1 className="text-[#0F2552] font-bold md:text-[1.5rem] text-[1rem]">Login</h1>
+          <h1 className="text-[#0F2552] font-bold md:text-[1.5rem] text-[1rem]">
+            Login
+          </h1>
           <TextInput
             inputClass="text-[#0F2552]"
             type="text"

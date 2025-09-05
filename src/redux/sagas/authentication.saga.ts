@@ -212,11 +212,13 @@ function* changePassword({ data }: ChangePasswordAction) {
       //   method: 'PATCH',
       //   body: JSON.stringify(data),
       // });
+      const token = data.token;
+      delete data.token;
       const changePasswordReq = createRequestWithToken(changePasswordUri, {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
-      const req: Request = yield call(changePasswordReq, data?.token as string);
+      const req: Request = yield call(changePasswordReq, token as string);
       const response: ResendEmailAction = yield call(fetch, req);
 
       // const response: ResendEmailAction = yield call(fetch, resendReq);

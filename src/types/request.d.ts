@@ -83,11 +83,12 @@ export interface ReleaseItemsForm {
   userId: number;
   items: Array<{
     itemId: number;
-    storeId: string;
+    // storeId: string;
     quantityLeased?: number;
     quantityReleased: number;
     quantityReturned?: number;
     conditionBeforeLease: string;
+    unitIds: (number | string)[];
   }>;
 }
 
@@ -98,6 +99,7 @@ export interface Request {
   requesterEmail: string;
   requesterHodEmail: string;
   requesterPhone: string;
+  requestStatus: string;
   isMinistry: boolean;
   ministryName: string;
   isChurch?: boolean;

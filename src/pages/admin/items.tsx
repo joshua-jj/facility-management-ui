@@ -16,6 +16,7 @@ import AddItem from '@/components/Modals/AddItem';
 import PrivateRoute from '@/components/PrivateRoute';
 import { FilterIcon } from '@/components/Icons';
 import ActionDropDown from '@/components/ActionDropDown';
+import { useRouter } from 'next/router';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -26,6 +27,7 @@ const optionsFilter = [
 ];
 
 const Items = () => {
+  const router = useRouter();
   const dispatch = useDispatch();
   const [statusFilter, setStatusFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
@@ -34,6 +36,9 @@ const Items = () => {
   const [dateTo, setDateTo] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
+  const [showEditItemModal, setShowEditItemModal] = useState(false);
+  const [editItemData, setEditItemData] = useState<Item | null>(null);
+
   const { userDetails } = useSelector((s: RootState) => s.user);
   const { IsRequestingAllItems, IsSearchingItem, allItemsList, pagination } =
     useSelector((s: RootState) => s.item);
@@ -94,83 +99,101 @@ const Items = () => {
   const start = (currentPage - 1) * pageSize;
   const paginated = filtered.slice(start, start + pageSize);
 
-  const handleUpdate = (data: object) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
+  const handleOpen = (data: Item) => {
+    console.log('🚀 ~ handleOpen ~ data:', data);
+    router.push(
+      {
+        pathname: '/admin/item/[id]',
+        query: { id: data?.id },
+      },
+      `/admin/item/${data?.id}`
+    );
   };
 
-  const handleDelete = (data: object) => {
+  const handleUpdate = (data: Item) => {
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+    setEditItemData(data);
+    setShowEditItemModal(true);
+  };
+
+  const handleDelete = (data: Item) => {
     console.log('🚀 ~ handleDelete ~ data:', data);
   };
 
   const columns: Column<Item>[] = [
     { key: 'name', header: 'ITEM TITLE' },
-    {
-      key: 'department',
-      header: 'DEPARTMENT',
-      render: (_, row: Item) => row.department?.name || 'N/A', // Access department.name
-    },
-    // { key: 'department', header: 'DEPARTMENT' },
+    ...(userDetails?.roleId !== 3
+      ? [
+          {
+            key: 'department' as keyof Item,
+            header: 'DEPARTMENT',
+            render: (_: unknown, row: Item) => row.department?.name || 'N/A',
+          },
+        ]
+      : []),
     { key: 'actualQuantity', header: 'TOTAL ITEMS' },
     { key: 'availableQuantity', header: 'AVAILABLE ITEMS' },
-    {
-      key: 'condition',
-      header: 'CONDITION',
-      render: (value: string | number, row: Item) => {
-        return (
-          <span
-            className={classNames(
-              'border rounded-[2px] uppercase text-[0.6rem] p-1',
-              {
-                // 'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-                //   value === 'collected',
-                // 'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-                //   value === 'assigned',
-                'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-                  value === 'Good',
-                // 'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-                //   value === 'pending',
-                'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-                  value === 'Bad',
-              }
-            )}
-          >
-            {value}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'status',
-      header: 'STATUS',
-      render: (value: string | number, row: Item) => {
-        return (
-          <span
-            className={classNames(
-              'border rounded-[2px] uppercase text-[0.6rem] p-1',
-              {
-                'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-                  value === 'B',
-                'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-                  value === 'C',
-                'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-                  value === 'A',
-                'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-                  value === 'D',
-                'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-                  value === 'E',
-              }
-            )}
-          >
-            {value}
-          </span>
-        );
-      },
-    },
+    // {
+    //   key: 'condition',
+    //   header: 'CONDITION',
+    //   render: (value: string | number, row: Item) => {
+    //     return (
+    //       <span
+    //         className={classNames(
+    //           'border rounded-[2px] uppercase text-[0.6rem] p-1',
+    //           {
+    //             // 'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+    //             //   value === 'collected',
+    //             // 'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+    //             //   value === 'assigned',
+    //             'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+    //               value === 'Good',
+    //             // 'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+    //             //   value === 'pending',
+    //             'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+    //               value === 'Bad',
+    //           }
+    //         )}
+    //       >
+    //         {value}
+    //       </span>
+    //     );
+    //   },
+    // },
+    // {
+    //   key: 'status',
+    //   header: 'STATUS',
+    //   render: (value: string | number, row: Item) => {
+    //     return (
+    //       <span
+    //         className={classNames(
+    //           'border rounded-[2px] uppercase text-[0.6rem] p-1',
+    //           {
+    //             'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
+    //               value === 'B',
+    //             'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
+    //               value === 'C',
+    //             'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
+    //               value === 'A',
+    //             'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
+    //               value === 'D',
+    //             'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
+    //               value === 'E',
+    //           }
+    //         )}
+    //       >
+    //         {value}
+    //       </span>
+    //     );
+    //   },
+    // },
     {
       key: 'id',
       header: '.',
       render: (value: string | number, row: Item) => (
         <ActionDropDown
+          items={true}
+          handleOpen={() => handleOpen(row)}
           handleUpdate={() => handleUpdate(row)}
           handleDelete={() => handleDelete(row)}
         />
@@ -290,6 +313,14 @@ const Items = () => {
             pageSize={itemsPerPage}
             onPageChange={handleChangePage}
           />
+          {showEditItemModal && (
+            <AddItem
+              className="text-start w-full cursor-pointer"
+              item={editItemData} // Pass the Item data as a prop
+              open={showEditItemModal}
+              onClose={() => setShowEditItemModal(false)}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>

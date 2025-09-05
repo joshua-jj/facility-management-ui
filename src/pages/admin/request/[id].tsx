@@ -1,7 +1,7 @@
 import { GetServerSideProps, NextPage } from 'next';
 import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import Layout from '@/components/Layout';
-import { authConstants, requestConstants } from '@/constants';
+import { authConstants, itemConstants, requestConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
@@ -17,6 +17,9 @@ import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
+// import ItemUnits from '@/components/Modals/ItemUnits';
+import SmallSelect from '@/components/CustomDropdownSelect/small';
+// import SmallSelect from '@/components/CustomDropdownSelect/SmallSelect';
 // import { User } from '@/types';
 
 const optionsFilter = [
@@ -38,28 +41,35 @@ interface RequestDetails {
   locationOfUse: string;
   dateOfReturn: string;
   descriptionOfRequest: string;
-  items: Array<{
-    id: number;
-    itemId: number;
-    storeId: string;
-    itemName: string;
-    quantityLeased: string;
-    quantityReleased: string;
-    quantityReturned: number;
-    storeName: string;
-    conditionBeforeLease: string;
-  }>;
-  summary: {
-    audit: {
-      assigneeName: string;
-    };
-    requestStatus: string;
+  // summary: {
+  audit: {
+    items: Array<{
+      id: number;
+      itemId: number;
+      // storeId: string;
+      itemName: string;
+      quantityLeased: string;
+      quantityReleased: string;
+      quantityReturned: number;
+      storeName: string;
+      conditionBeforeLease: string;
+      unitIds: (number | string)[];
+    }>;
+    assigneeName: string;
   };
+  requestStatus: string;
+  // };
 }
 
 interface RequestDetailsProps {
   requestDetail: RequestDetails;
 }
+
+type SelectedUnit = {
+  storeId: number | string;
+  serialNumber: string;
+  condition: string;
+};
 
 export const getServerSideProps: GetServerSideProps<
   RequestDetailsProps
@@ -133,10 +143,68 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
   const [requestDetails, setRequestDetails] =
     useState<RequestDetails>(requestDetail);
   const [assignedUserId, setAssignedUserId] = useState('');
-  const [status, setStatus] = useState(requestDetails?.summary?.requestStatus);
+  const [status, setStatus] = useState(requestDetails?.requestStatus);
   // const requestItems = requestDetails?.items || [];
-  const [items, setItems] = useState(requestDetails?.items || []);
-  // const displayStatus = getDisplayStatus(status); // apiStatus is from backend
+  const [items, setItems] = useState(requestDetails?.audit.items || []);
+  // const [openItemUnitId, setOpenItemUnitId] = useState<number | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [selectedItemIDs, setSelectedItemIDs] = useState(
+  //   requestDetails?.audit.items?.map((item) => item.itemName || '') || []
+  // );
+  const [itemUnitsOptions, setItemUnitsOptions] = useState<
+    Record<number, { value: number; label: string }[]>
+  >({});
+  // const [selectedUnits, setSelectedUnits] = useState<
+  //   Record<number, (string | number)[]>
+  // >({});
+
+  const [selectedUnits, setSelectedUnits] = useState<
+    Record<number, SelectedUnit[]>
+  >({});
+
+  const fetchItemUnits = async (itemId: number) => {
+    if (itemUnitsOptions[itemId]) return; // ✅ already fetched
+
+    try {
+      const user = await getObjectFromStorage(authConstants.USER_KEY);
+      const resp = await axios.get(
+        `${itemConstants.ITEM_URI}/detail/${itemId}`,
+
+        {
+          headers: {
+            Accept: 'application/json',
+            Authorization: user?.token ? `Bearer ${user.token}` : '',
+          },
+        }
+      );
+
+      console.log('response data:', resp.data?.data?.itemUnits);
+
+      // const units =
+      //   resp.data?.data?.itemUnits?.map((unit: { id: number; serialNumber: string; condition: string }) => ({
+      //     value: unit.id,
+      //     label: unit.serialNumber + ' - ' + unit.condition,
+      //   })) || [];
+
+      const units =
+        resp.data?.data?.itemUnits?.map(
+          (unit: {
+            id: number;
+            serialNumber: string;
+            condition: string;
+            store: { id: number };
+          }) => ({
+            value: unit.id,
+            label: `${unit.serialNumber} - ${unit.condition}`,
+            data: unit, // 🔑 keep full object
+          })
+        ) || [];
+
+      setItemUnitsOptions((prev) => ({ ...prev, [itemId]: units }));
+    } catch (err) {
+      console.error('Failed to fetch item units:', err);
+    }
+  };
 
   const fetchRequestDetails = useCallback(async () => {
     const user = await getObjectFromStorage(authConstants.USER_KEY);
@@ -150,23 +218,25 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       }
     );
     setRequestDetails(resp.data.data);
-    setStatus(resp.data.data.summary.requestStatus);
+    setStatus(resp.data.data.requestStatus);
   }, [id]);
 
   // Call this after your event is successful
   useEffect(() => {
-    if (requestDetails?.items) {
-      const updatedItems = requestDetails.items.map((item) => ({
+    if (requestDetails?.audit?.items) {
+      const updatedItems = requestDetails.audit.items.map((item) => ({
         ...item,
         quantityReleased: item.quantityLeased,
       }));
       setItems(updatedItems);
     }
-  }, [requestDetails?.items]);
+  }, [requestDetails?.audit?.items]);
 
   const handleQuantityChange = (index: number, value: string) => {
     const updatedItems = [...items];
-    const maxQuantity = Number(requestDetails?.items[index].quantityLeased);
+    const maxQuantity = Number(
+      requestDetails?.audit?.items[index].quantityLeased
+    );
 
     if (Number(value) > maxQuantity) {
       alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
@@ -179,7 +249,9 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
   const handleReturnQuantityChange = (index: number, value: string) => {
     const updatedItems = [...items];
-    const maxQuantity = Number(requestDetails?.items[index].quantityLeased);
+    const maxQuantity = Number(
+      requestDetails?.audit?.items[index].quantityLeased
+    );
 
     if (Number(value) > maxQuantity) {
       alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
@@ -190,7 +262,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
     setItems(updatedItems);
   };
 
-  console.log('requestDetail:', requestDetail);
+  console.log('itemUnitsOptions:', itemUnitsOptions);
   console.log('requestDetails:', requestDetails);
   console.log('requestStatus:', requestStatus);
 
@@ -214,17 +286,26 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
     dispatch(requestActions.assignRequest(payload) as unknown as UnknownAction);
   };
   const handleReleaseRequestItems = () => {
+    // const updatedItems = items.map((item) => ({
+    //   // storeId: item.storeId,
+    //   itemId: item.itemId,
+    //   quantityLeased: Number(item.quantityLeased),
+    //   quantityReleased: Number(item.quantityReleased),
+    //   // conditionBeforeLease: item.conditionBeforeLease,
+    //   leasedDate: new Date().toISOString(),
+    //   units: selectedUnits[item.itemId] || [],
+    //   // unitIds: selectedUnits[item.itemId] || [],
+    // }));
     const updatedItems = items.map((item) => ({
-      storeId: item.storeId,
       itemId: item.itemId,
       quantityLeased: Number(item.quantityLeased),
       quantityReleased: Number(item.quantityReleased),
-      conditionBeforeLease: item.conditionBeforeLease,
       leasedDate: new Date().toISOString(),
+      units: selectedUnits[item.itemId] || [], // ✅ already full objects
     }));
     const payload = {
       items: updatedItems,
-      userId: Number(userDetails?.id),
+      // userId: Number(userDetails?.id),
       requestId: Number(id),
     };
     console.log('payload:', payload);
@@ -235,12 +316,13 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
   const handleReturnRequestItems = () => {
     const updatedItems = items.map((item) => ({
-      storeId: item.storeId,
+      // storeId: item.storeId,
       itemId: item.itemId,
       quantityReturned: Number(item.quantityReturned),
       quantityReleased: Number(item.quantityReleased),
       conditionBeforeLease: item.conditionBeforeLease,
       returnedDate: new Date().toISOString(),
+      unitIds: selectedUnits[item.itemId] || [],
     }));
     const payload = {
       items: updatedItems,
@@ -404,7 +486,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
               <h3 className="font-semibold text-xs uppercase">
                 assigned member
               </h3>
-              <p className="">{requestDetails?.summary?.audit.assigneeName}</p>
+              <p className="">{requestDetails?.audit.assigneeName}</p>
             </div>
           </div>
           <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
@@ -414,13 +496,13 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             </p>
           </div>
           <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-start gap-8">
               <div className="">
                 <h4 className="text-xs uppercase font-semibold mb-2">
                   ITEM(s)
                 </h4>
-                {requestDetails?.items &&
-                  requestDetails?.items.map(
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
                     (item: { itemName: string }, index: number) => (
                       <p key={index} className="text-sm leading-7">
                         {item.itemName}
@@ -428,10 +510,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                     )
                   )}
               </div>
+              {/* {
+                userDetails?.roleId !== 3 && requestDetails?.requestStatus === 'Assigned' && (
               <div className="">
                 <h4 className="text-xs uppercase font-semibold mb-2">STORE</h4>
-                {requestDetails?.items &&
-                  requestDetails?.items.map(
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
                     (item: { storeName: string }, index: number) => (
                       <p key={index} className="text-sm leading-7">
                         {item.storeName}
@@ -439,12 +523,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                     )
                   )}
               </div>
+                )
+              }
+              {
+                userDetails?.roleId !== 3 && requestDetails?.requestStatus === 'Assigned' && (
               <div className="">
                 <h4 className="text-xs uppercase font-semibold mb-2">
                   CONDITION
                 </h4>
-                {requestDetails?.items &&
-                  requestDetails?.items.map(
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
                     (item: { conditionBeforeLease: string }, index: number) => (
                       <p key={index} className="text-sm leading-7">
                         {item.conditionBeforeLease}
@@ -452,12 +540,14 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                     )
                   )}
               </div>
+                )
+              } */}
               <div className="">
                 <h4 className="text-xs uppercase font-semibold mb-2">
                   QTY REQUESTED
                 </h4>
-                {requestDetails?.items &&
-                  requestDetails?.items.map(
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
                     (item: { quantityLeased: string }, index: number) => (
                       <p key={index} className="text-sm leading-7">
                         {item.quantityLeased}
@@ -465,13 +555,13 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                     )
                   )}
               </div>
-              {requestDetails?.summary?.requestStatus === 'Collected' && (
+              {requestDetails?.requestStatus === 'Collected' && (
                 <div className="">
                   <h4 className="text-xs uppercase font-semibold mb-2">
                     QTY RELEASED
                   </h4>
-                  {requestDetails?.items &&
-                    requestDetails?.items.map(
+                  {requestDetails?.audit?.items &&
+                    requestDetails?.audit?.items.map(
                       (item: { quantityReleased: string }, index: number) => (
                         <p key={index} className="text-sm leading-7">
                           {item.quantityReleased}
@@ -480,13 +570,13 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                     )}
                 </div>
               )}
-              {requestDetails?.summary?.requestStatus === 'Completed' && (
+              {requestDetails?.requestStatus === 'Completed' && (
                 <div className="">
                   <h4 className="text-xs uppercase font-semibold mb-2">
                     QTY RETURNED
                   </h4>
-                  {requestDetails?.items &&
-                    requestDetails?.items.map(
+                  {requestDetails?.audit?.items &&
+                    requestDetails?.audit?.items.map(
                       (item: { quantityReturned: number }, index: number) => (
                         <p key={index} className="text-sm leading-7">
                           {item.quantityReturned}
@@ -496,36 +586,135 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 </div>
               )}
               {userDetails?.roleId === 4 &&
-                requestDetails?.summary?.requestStatus === 'Assigned' && (
-                  <div className="">
-                    <h4 className="text-xs uppercase font-semibold mb-2">
-                      QTY RELEASED
-                    </h4>
-                    <div className="flex flex-col gap-2">
-                      {items &&
-                        items.map(
-                          (
-                            item: { quantityReleased?: string },
-                            index: number
-                          ) => (
-                            <input
-                              key={index}
-                              type="number"
-                              name="quantityReleased"
-                              value={item.quantityReleased}
-                              placeholder="0"
-                              onChange={(e) =>
-                                handleQuantityChange(index, e.target.value)
-                              }
-                              className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
-                            />
-                          )
-                        )}
+                requestDetails?.requestStatus === 'Assigned' && (
+                  <>
+                    <div className="">
+                      <h4 className="text-xs uppercase font-semibold mb-2">
+                        QTY RELEASED
+                      </h4>
+                      <div className="flex flex-col gap-2">
+                        {items &&
+                          items.map(
+                            (
+                              item: { quantityReleased?: string },
+                              index: number
+                            ) => (
+                              <input
+                                key={index}
+                                type="number"
+                                name="quantityReleased"
+                                value={item.quantityReleased}
+                                placeholder="0"
+                                onChange={(e) =>
+                                  handleQuantityChange(index, e.target.value)
+                                }
+                                className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
+                              />
+                            )
+                          )}
+                      </div>
                     </div>
-                  </div>
+                    <div className="">
+                      <h4 className="text-xs uppercase font-semibold mb-2">
+                        SELECT ITEM UNITS RELEASED
+                      </h4>
+
+                      <div className="flex flex-col gap-2">
+                        {requestDetails?.audit?.items &&
+                          requestDetails?.audit?.items.map(
+                            (
+                              item: {
+                                itemId: number;
+                                itemName: string;
+                                quantityLeased?: string;
+                              },
+                              index: number
+                            ) => (
+                              <div key={index} className="mb-2">
+                                <SmallSelect
+                                  multiple
+                                  quantity={Number(item.quantityLeased) || 1}
+                                  value={(selectedUnits[item.itemId] || []).map(
+                                    (u) => u.serialNumber
+                                  )} // ✅ pass serialNumbers (or IDs)
+                                  options={(
+                                    itemUnitsOptions[item.itemId] || []
+                                  ).map((opt) => ({
+                                    value: opt.data.serialNumber, // ✅ use serialNumber or id as stable key
+                                    label: `${opt.data.serialNumber} - ${opt.data.condition}`,
+                                    data: opt.data,
+                                  }))}
+                                  placeholder="Select item units"
+                                  onOpen={() => fetchItemUnits(item.itemId)}
+                                  onChange={(selectedIds) => {
+                                    const fullUnits = (
+                                      itemUnitsOptions[item.itemId] || []
+                                    )
+                                      .filter((opt) =>
+                                        selectedIds.includes(
+                                          opt.data.serialNumber
+                                        )
+                                      )
+                                      .map((opt) => ({
+                                        storeId: opt.data.store.id,
+                                        serialNumber: opt.data.serialNumber,
+                                        condition: opt.data.condition,
+                                      }));
+
+                                    setSelectedUnits((prev) => ({
+                                      ...prev,
+                                      [item.itemId]: fullUnits,
+                                    }));
+                                  }}
+                                />
+
+                                {/* <SmallSelect
+  multiple
+  quantity={Number(item.quantityLeased) || 1}
+  value={selectedUnits[item.itemId] || []}
+  options={itemUnitsOptions[item.itemId] || []}
+  placeholder="Select item units"
+  onOpen={() => fetchItemUnits(item.itemId)}
+  onChange={(selectedValues) => {
+    // map selected IDs back to full unit objects
+    const fullUnits = (itemUnitsOptions[item.itemId] || [])
+      .filter(opt => selectedValues.includes(opt.value))
+      .map(opt => ({
+        storeId: opt.data.store.id,
+        serialNumber: opt.data.serialNumber,
+        condition: opt.data.condition,
+      }));
+
+    setSelectedUnits((prev) => ({
+      ...prev,
+      [item.itemId]: fullUnits, // 🔑 save actual objects
+    }));
+  }}
+/> */}
+
+                                {/* <SmallSelect
+                                  multiple
+                                  quantity={Number(item.quantityLeased) || 1}
+                                  value={selectedUnits[item.itemId] || []}
+                                  options={itemUnitsOptions[item.itemId] || []}
+                                  placeholder="Select item units"
+                                  onOpen={() => fetchItemUnits(item.itemId)} // ✅ fetch only when opened
+                                  onChange={(selected) =>
+                                    setSelectedUnits((prev) => ({
+                                      ...prev,
+                                      [item.itemId]: selected,
+                                    }))
+                                  }
+                                /> */}
+                              </div>
+                            )
+                          )}
+                      </div>
+                    </div>
+                  </>
                 )}
               {userDetails?.roleId === 4 &&
-                requestDetails?.summary?.requestStatus === 'Collected' && (
+                requestDetails?.requestStatus === 'Collected' && (
                   <div className="">
                     <h4 className="text-xs uppercase font-semibold mb-2">
                       QTY RETURNED
@@ -560,7 +749,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
           </div>
         </div>
         {userDetails?.roleId === 3 &&
-          requestDetails?.summary?.requestStatus === 'Pending' && (
+          requestDetails?.requestStatus === 'Pending' && (
             <div className="my-4">
               <CustomDropdownSelect
                 options={optionsFilter}
@@ -573,7 +762,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             </div>
           )}
         {userDetails?.roleId === 5 &&
-          requestDetails?.summary?.requestStatus === 'Approved' && (
+          requestDetails?.requestStatus === 'Approved' && (
             <div className="my-4">
               <CustomDropdownSelect
                 options={roleUsersArray}
@@ -588,7 +777,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
         <div className="flex justify-end mt-8 mb-4">
           {userDetails?.roleId === 4 &&
-          requestDetails?.summary?.requestStatus === 'Assigned' ? (
+          requestDetails?.requestStatus === 'Assigned' ? (
             <button
               onClick={handleReleaseRequestItems}
               className="text-xs text-[#fff] px-5 py-3 hover:bg-[#B2830998] cursor-pointer transition bg-[#B28309] rounded-[2px]"
@@ -601,7 +790,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 'Release'
               )}
             </button>
-          ) : requestDetails?.summary?.requestStatus === 'Collected' &&
+          ) : requestDetails?.requestStatus === 'Collected' &&
             userDetails?.roleId === 4 ? (
             <button
               onClick={handleReturnRequestItems} // Replace with your actual handler for return
