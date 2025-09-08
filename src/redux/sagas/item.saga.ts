@@ -14,6 +14,7 @@ import {
   appActions,
   CreateItemAction,
   CreateItemsAction,
+  DeleteItemAction,
   GetAllDepartmentItemsAction,
   GetAllItemsAction,
   GetAnItemAction,
@@ -339,9 +340,11 @@ function* createItem({ data }: CreateItemAction) {
       const itemUri = data?.id
         ? `${itemConstants.ITEM_URI}/update/${data.id}`
         : `${itemConstants.ITEM_URI}/new`;
+      const { id, ...restData } = data;
+
       const itemReq = createRequestWithToken(itemUri, {
         method: data?.id ? 'PATCH' : 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(id ? restData : data),
       });
       const req: Request = yield call(itemReq, user?.token as string);
       const response: Item = yield call(fetch, req);
@@ -569,6 +572,84 @@ function* updateItem({ data }: UpdateItemAction) {
   }
 }
 
+function* deleteItem({ data }: DeleteItemAction) {
+  yield put({ type: itemConstants.REQUEST_DELETE_ITEM });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+
+    if (data) {
+      const itemUri = `${itemConstants.ITEM_URI}/delete/${data.id}`;
+
+      const itemReq = createRequestWithToken(itemUri, {
+        method: 'DELETE',
+      });
+      const req: Request = yield call(itemReq, user?.token as string);
+      const response: Item = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
+
+      console.log('data.id', data.id);
+
+      yield put({
+        type: itemConstants.DELETE_ITEM_SUCCESS,
+        id: data.id,
+      });
+
+      // AppEmitter.emit(itemConstants.DELETE_ITEM_SUCCESS, jsonResponse?.data);
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Item deleted successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: itemConstants.DELETE_ITEM_ERROR,
+        error: res?.error,
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message: res?.error ?? res?.message ?? 'Something went wrong',
+        variant: 'error',
+      };
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    yield put({
+      type: itemConstants.DELETE_ITEM_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+    const payload: SetSnackBarPayload = {
+      type: 'error',
+      message:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+      variant: 'error',
+    };
+    yield put(appActions.setSnackBar(payload));
+  }
+}
+
 function* getAllDepartmentItemsWatcher() {
   yield takeLatest(
     itemConstants.GET_ALL_DEPARTMENT_ITEMS,
@@ -602,6 +683,10 @@ function* updateItemWatcher() {
   yield takeLatest(itemConstants.UPDATE_ITEM, updateItem);
 }
 
+function* deleteItemWatcher() {
+  yield takeLatest(itemConstants.DELETE_ITEM, deleteItem);
+}
+
 export default function* rootSaga() {
   yield all([
     getAllDepartmentItemsWatcher(),
@@ -612,5 +697,6 @@ export default function* rootSaga() {
     createItemWatcher(),
     createItemsWatcher(),
     updateItemWatcher(),
+    deleteItemWatcher(),
   ]);
 }

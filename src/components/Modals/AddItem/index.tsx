@@ -87,7 +87,9 @@ const AddItem: React.FC<AddItemModalProps> = ({
   console.log('item', item);
 
   const handleSubmit = (data: ItemForm) => {
-    data.departmentId = Number(department?.id || userDetails?.departmentId);
+    data.departmentId = Number(
+      department?.id || userDetails?.departmentId || item?.department?.id
+    );
     data.fragile = fragile;
     data.actualQuantity = Number(data.actualQuantity);
 
@@ -160,7 +162,7 @@ const AddItem: React.FC<AddItemModalProps> = ({
         console.log('New item details created:', newItem.detail);
         if (newItem) {
           closeModal();
-          if (userDetails?.roleId !== 3) {
+          if (userDetails?.roleId !== 3 && newItem) {
             Router.push(`/admin/item/${newItem.detail.id}`);
           } else {
             dispatch(
@@ -352,7 +354,7 @@ const AddItem: React.FC<AddItemModalProps> = ({
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
             />
-            {item && (
+            {/* {item && (
               <TextInput
                 type="number"
                 name="availableQuantity"
@@ -363,7 +365,7 @@ const AddItem: React.FC<AddItemModalProps> = ({
                 className="text-[#0F2552] rounded font-medium text-sm"
                 inputClass="font-normal border border-gray-300 rounded"
               />
-            )}
+            )} */}
 
             {/* Fragile */}
             <div className="mb-3 group">

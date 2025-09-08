@@ -39,6 +39,11 @@ export interface UpdateItemAction {
   data: ItemUnitsForm;
 }
 
+export interface DeleteItemAction {
+  type: typeof itemConstants.DELETE_ITEM;
+  data: { id: number };
+}
+
 const getDepartmentItems = (data: {
   departmentId: number;
   page?: number;
@@ -82,6 +87,11 @@ const updateItem = (data: ItemUnitsForm): UpdateItemAction => ({
   data,
 });
 
+const deleteItem = (data: { id: number }): DeleteItemAction => ({
+  type: itemConstants.DELETE_ITEM,
+  data,
+});
+
 export const itemActions = {
   getDepartmentItems,
   getAllDepartmentItems,
@@ -91,4 +101,5 @@ export const itemActions = {
   createItem,
   createItems,
   updateItem,
+  deleteItem,
 };

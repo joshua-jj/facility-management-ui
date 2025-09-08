@@ -28,6 +28,7 @@ interface AllItemsAction extends Action {
       totalPages: number;
     };
   };
+  id: number;
   item: Item[];
   itemDetails: {
     itemUnits: ItemUnit[];
@@ -138,6 +139,8 @@ const allItemsList = (
       return action.items?.items ?? state;
     case itemConstants.SEARCH_ITEM_SUCCESS:
       return action.item ?? state;
+    case itemConstants.DELETE_ITEM_SUCCESS:
+      return state.filter((item: Item) => item?.id !== action?.id);
     default:
       return state;
   }

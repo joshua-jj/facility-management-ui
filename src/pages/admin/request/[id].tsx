@@ -226,7 +226,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
     if (requestDetails?.audit?.items) {
       const updatedItems = requestDetails.audit.items.map((item) => ({
         ...item,
-        quantityReleased: item.quantityLeased,
+        // quantityReleased: item.quantityLeased,
       }));
       setItems(updatedItems);
     }
@@ -286,20 +286,11 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
     dispatch(requestActions.assignRequest(payload) as unknown as UnknownAction);
   };
   const handleReleaseRequestItems = () => {
-    // const updatedItems = items.map((item) => ({
-    //   // storeId: item.storeId,
-    //   itemId: item.itemId,
-    //   quantityLeased: Number(item.quantityLeased),
-    //   quantityReleased: Number(item.quantityReleased),
-    //   // conditionBeforeLease: item.conditionBeforeLease,
-    //   leasedDate: new Date().toISOString(),
-    //   units: selectedUnits[item.itemId] || [],
-    //   // unitIds: selectedUnits[item.itemId] || [],
-    // }));
     const updatedItems = items.map((item) => ({
       itemId: item.itemId,
       quantityLeased: Number(item.quantityLeased),
-      quantityReleased: Number(item.quantityReleased),
+      quantityReleased: selectedUnits[item.itemId]?.length || 0, // ✅ use length of selected units
+      // quantityReleased: Number(item.quantityReleased),
       leasedDate: new Date().toISOString(),
       units: selectedUnits[item.itemId] || [], // ✅ already full objects
     }));
@@ -318,15 +309,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
     const updatedItems = items.map((item) => ({
       // storeId: item.storeId,
       itemId: item.itemId,
-      quantityReturned: Number(item.quantityReturned),
+      quantityReturned: selectedUnits[item.itemId]?.length || 0,
+      // quantityReturned: Number(item.quantityReturned),
       quantityReleased: Number(item.quantityReleased),
-      conditionBeforeLease: item.conditionBeforeLease,
+      // conditionBeforeLease: item.conditionBeforeLease,
       returnedDate: new Date().toISOString(),
-      unitIds: selectedUnits[item.itemId] || [],
+      units: selectedUnits[item.itemId] || [],
     }));
     const payload = {
       items: updatedItems,
-      userId: Number(userDetails?.id),
+      // userId: Number(userDetails?.id),
       requestId: Number(id),
     };
     console.log('payload:', payload);
@@ -476,12 +468,26 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 {capitalizeFirstLetter(requestDetails?.locationOfUse)}
               </p>
             </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-              <h3 className="font-semibold text-xs uppercase">return date</h3>
-              <p className="">
-                {formatReadableDate(requestDetails?.dateOfReturn)}
-              </p>
-            </div>
+
+            {status === 'Collected' ? (
+              <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+                <h3 className="font-semibold text-xs uppercase">return date</h3>
+                <p className="">
+                  {formatReadableDate(requestDetails?.audit.collectedDate)}
+                </p>
+              </div>
+            ) : (
+              <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+                <h3 className="font-semibold text-xs uppercase">return date</h3>
+                <p className="">
+                  {formatReadableDate(
+                    status === 'Completed'
+                      ? requestDetails?.audit.completedDate
+                      : requestDetails?.dateOfReturn
+                  )}
+                </p>
+              </div>
+            )}
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">
                 assigned member
@@ -667,45 +673,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                     }));
                                   }}
                                 />
-
-                                {/* <SmallSelect
-  multiple
-  quantity={Number(item.quantityLeased) || 1}
-  value={selectedUnits[item.itemId] || []}
-  options={itemUnitsOptions[item.itemId] || []}
-  placeholder="Select item units"
-  onOpen={() => fetchItemUnits(item.itemId)}
-  onChange={(selectedValues) => {
-    // map selected IDs back to full unit objects
-    const fullUnits = (itemUnitsOptions[item.itemId] || [])
-      .filter(opt => selectedValues.includes(opt.value))
-      .map(opt => ({
-        storeId: opt.data.store.id,
-        serialNumber: opt.data.serialNumber,
-        condition: opt.data.condition,
-      }));
-
-    setSelectedUnits((prev) => ({
-      ...prev,
-      [item.itemId]: fullUnits, // 🔑 save actual objects
-    }));
-  }}
-/> */}
-
-                                {/* <SmallSelect
-                                  multiple
-                                  quantity={Number(item.quantityLeased) || 1}
-                                  value={selectedUnits[item.itemId] || []}
-                                  options={itemUnitsOptions[item.itemId] || []}
-                                  placeholder="Select item units"
-                                  onOpen={() => fetchItemUnits(item.itemId)} // ✅ fetch only when opened
-                                  onChange={(selected) =>
-                                    setSelectedUnits((prev) => ({
-                                      ...prev,
-                                      [item.itemId]: selected,
-                                    }))
-                                  }
-                                /> */}
                               </div>
                             )
                           )}
@@ -714,6 +681,70 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   </>
                 )}
               {userDetails?.roleId === 4 &&
+                requestDetails?.requestStatus === 'Collected' && (
+                  <div className="">
+                    <h4 className="text-xs uppercase font-semibold mb-2">
+                      QTY RETURNED
+                    </h4>
+                    <div className="flex flex-col gap-2">
+                      {items &&
+                        items.map((item, index) => (
+                          <div key={index} className="mb-4">
+                            {/* Quantity input */}
+                            {/* <input
+                type="number"
+                name="quantityReturned"
+                value={item.quantityReturned}
+                placeholder="0"
+                onChange={(e) =>
+                  handleReturnQuantityChange(index, e.target.value)
+                }
+                className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20 mb-2"
+              /> */}
+
+                            {/* Select units being returned */}
+                            <SmallSelect
+                              multiple
+                              // quantity={Number(item.quantityReturned) || 1} // 🔑 user must return this many units
+                              quantity={Number(item.quantityReleased) || 1} // 🔑 user must return this many units
+                              value={(selectedUnits[item.itemId] || []).map(
+                                (u) => u.serialNumber
+                              )}
+                              options={(
+                                itemUnitsOptions[item.itemId] || []
+                              ).map((opt) => ({
+                                value: opt.data.serialNumber,
+                                label: `${opt.data.serialNumber} - ${opt.data.condition}`,
+                                data: opt.data,
+                              }))}
+                              placeholder="Select item units to return"
+                              onOpen={() => fetchItemUnits(item.itemId)}
+                              onChange={(selectedIds) => {
+                                const fullUnits = (
+                                  itemUnitsOptions[item.itemId] || []
+                                )
+                                  .filter((opt) =>
+                                    selectedIds.includes(opt.data.serialNumber)
+                                  )
+                                  .map((opt) => ({
+                                    storeId: opt.data.store.id,
+                                    serialNumber: opt.data.serialNumber,
+                                    condition: opt.data.condition,
+                                  }));
+
+                                setSelectedUnits((prev) => ({
+                                  ...prev,
+                                  [item.itemId]: fullUnits,
+                                }));
+                              }}
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* {userDetails?.roleId === 4 &&
                 requestDetails?.requestStatus === 'Collected' && (
                   <div className="">
                     <h4 className="text-xs uppercase font-semibold mb-2">
@@ -744,7 +775,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                         )}
                     </div>
                   </div>
-                )}
+                )} */}
             </div>
           </div>
         </div>

@@ -527,9 +527,11 @@ function* returnRequestItems({ data }: ReturnItemsAction) {
     );
     if (data) {
       const requestUri = `${requestConstants.REQUEST_URI}/return-item/${data?.requestId}`;
+      const { requestId, ...restData } = data;
+
       const requestReq = createRequestWithToken(requestUri, {
         method: 'PATCH',
-        body: JSON.stringify(data),
+        body: JSON.stringify(restData),
       });
       const req: Request = yield call(requestReq, user?.token as string);
       const response: CustomRequest = yield call(fetch, req);

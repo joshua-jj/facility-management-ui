@@ -17,6 +17,7 @@ import PrivateRoute from '@/components/PrivateRoute';
 import { FilterIcon } from '@/components/Icons';
 import ActionDropDown from '@/components/ActionDropDown';
 import { useRouter } from 'next/router';
+import DeleteModal from '@/components/Modals/Delete';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -37,7 +38,9 @@ const Items = () => {
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [showEditItemModal, setShowEditItemModal] = useState(false);
+  const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [editItemData, setEditItemData] = useState<Item | null>(null);
+  const [deleteItemData, setDeleteItemData] = useState<Item | null>(null);
 
   const { userDetails } = useSelector((s: RootState) => s.user);
   const { IsRequestingAllItems, IsSearchingItem, allItemsList, pagination } =
@@ -118,6 +121,8 @@ const Items = () => {
 
   const handleDelete = (data: Item) => {
     console.log('🚀 ~ handleDelete ~ data:', data);
+    setDeleteItemData(data);
+    setShowDeleteItemModal(true);
   };
 
   const columns: Column<Item>[] = [
@@ -321,6 +326,17 @@ const Items = () => {
               onClose={() => setShowEditItemModal(false)}
             />
           )}
+          {showDeleteItemModal && (
+            <DeleteModal
+              className="text-start w-full cursor-pointer"
+              itemId={deleteItemData?.id} // Pass the Item data as a prop
+              open={showDeleteItemModal}
+              onClose={() => setShowDeleteItemModal(false)}
+            />
+          )}
+          {/* {allItemsList.length === 0 && !IsRequestingAllItems && (
+            <div className="text-center py-4">No items found</div>
+          )} */}
         </div>
       </Layout>
     </PrivateRoute>

@@ -26,6 +26,10 @@ export interface ItemConstants {
   UPDATE_ITEM_SUCCESS: string;
   UPDATE_ITEM_ERROR: string;
 
+  REQUEST_DELETE_ITEM: string;
+  DELETE_ITEM_SUCCESS: string;
+  DELETE_ITEM_ERROR: string;
+
   REQUEST_SEARCH_ITEM: string;
   SEARCH_ITEM_SUCCESS: string;
   SEARCH_ITEM_ERROR: string;
@@ -40,6 +44,7 @@ export interface ItemConstants {
 
   UPDATE_ITEM: string;
   SEARCH_ITEM: string;
+  DELETE_ITEM: string;
 
   ITEM_URI: string;
 }
