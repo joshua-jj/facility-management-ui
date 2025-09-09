@@ -536,7 +536,6 @@ function* returnRequestItems({ data }: ReturnItemsAction) {
       const req: Request = yield call(requestReq, user?.token as string);
       const response: CustomRequest = yield call(fetch, req);
 
-      // const response: ResetPasswordData = yield call(fetch, requestReq);
       yield call(checkStatus, response as unknown as Response);
 
       const jsonResponse: ParsedResponse = yield call(
