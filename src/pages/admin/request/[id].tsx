@@ -413,12 +413,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
   }));
 
   return (
-    <Layout className="grid grid-cols-12 mb-12">
-      <div className="col-span-10 col-start-2 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+    <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
+      <div className="md:col-span-10 md:col-start-2 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
         <h2 className="text-xl font-semibold text-textColor mb-4">
           Request Details
         </h2>
-        <div className="grid grid-cols-2 gap-2 text-[#0F2552]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[#0F2552]">
           {/* <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
             <h3 className="font-semibold text-xs uppercase">
               church/ministry/name
@@ -433,20 +433,20 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             </h3>
             <p className="">{requestDetails?.assigneeName}</p>
           </div> */}
-          <div className="grid grid-cols-subgrid col-span-2 gap-2">
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+          <div className="grid grid-cols-1 sm:grid-cols-subgrid col-span-2 gap-2">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">
-                church/ministry/name
+                church/ministry name
               </h3>
               <p className="">
                 {capitalizeFirstLetter(requestDetails?.ministryName as string)}
               </p>
             </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">status</h3>
               <p className="">{status}</p>
             </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">
                 requester&apos;s name
               </h3>
@@ -454,15 +454,15 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 {capitalizeFirstLetter(requestDetails?.requesterName)}
               </p>
             </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">email address</h3>
               <p className="">{requestDetails?.requesterEmail}</p>
             </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">phone number</h3>
               <p className="">{requestDetails?.requesterPhone}</p>
             </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">location</h3>
               <p className="">
                 {capitalizeFirstLetter(requestDetails?.locationOfUse)}
@@ -470,14 +470,14 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             </div>
 
             {status === 'Collected' ? (
-              <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+              <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
                 <h3 className="font-semibold text-xs uppercase">return date</h3>
                 <p className="">
                   {formatReadableDate(requestDetails?.audit.collectedDate)}
                 </p>
               </div>
             ) : (
-              <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+              <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
                 <h3 className="font-semibold text-xs uppercase">return date</h3>
                 <p className="">
                   {formatReadableDate(
@@ -488,21 +488,21 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 </p>
               </div>
             )}
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">
                 assigned member
               </h3>
               <p className="">{requestDetails?.audit.assigneeName}</p>
             </div>
           </div>
-          <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+          <div className="col-span-2 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
             <h3 className="font-semibold text-xs uppercase">description</h3>
             <p className="">
               {capitalizeFirstLetter(requestDetails?.descriptionOfRequest)}
             </p>
           </div>
-          <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-            <div className="flex items-center justify-start gap-8">
+          <div className="col-span-2 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-8">
               <div className="">
                 <h4 className="text-xs uppercase font-semibold mb-2">
                   ITEM(s)
@@ -549,7 +549,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 )
               } */}
               <div className="">
-                <h4 className="text-xs uppercase font-semibold mb-2">
+                <h4 className="text-xs uppercase font-semibold md:mb-2">
                   QTY REQUESTED
                 </h4>
                 {requestDetails?.audit?.items &&
@@ -563,7 +563,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
               </div>
               {requestDetails?.requestStatus === 'Collected' && (
                 <div className="">
-                  <h4 className="text-xs uppercase font-semibold mb-2">
+                  <h4 className="text-xs uppercase font-semibold md:mb-2">
                     QTY RELEASED
                   </h4>
                   {requestDetails?.audit?.items &&
@@ -578,7 +578,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
               )}
               {requestDetails?.requestStatus === 'Completed' && (
                 <div className="">
-                  <h4 className="text-xs uppercase font-semibold mb-2">
+                  <h4 className="text-xs uppercase font-semibold md:mb-2">
                     QTY RETURNED
                   </h4>
                   {requestDetails?.audit?.items &&
@@ -595,7 +595,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 requestDetails?.requestStatus === 'Assigned' && (
                   <>
                     <div className="">
-                      <h4 className="text-xs uppercase font-semibold mb-2">
+                      <h4 className="text-xs uppercase font-semibold md:mb-2">
                         QTY RELEASED
                       </h4>
                       <div className="flex flex-col gap-2">
@@ -621,7 +621,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                       </div>
                     </div>
                     <div className="">
-                      <h4 className="text-xs uppercase font-semibold mb-2">
+                      <h4 className="text-xs uppercase font-semibold md:mb-2">
                         SELECT ITEM UNITS RELEASED
                       </h4>
 
@@ -636,7 +636,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                               },
                               index: number
                             ) => (
-                              <div key={index} className="mb-2">
+                              <div key={index} className="md:mb-2">
                                 <SmallSelect
                                   multiple
                                   quantity={Number(item.quantityLeased) || 1}
