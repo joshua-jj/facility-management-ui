@@ -423,7 +423,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             <h3 className="font-semibold text-xs uppercase">
               church/ministry/name
             </h3>
-            <p className="">
+            <p className="text-xs md:text-sm">
               {capitalizeFirstLetter(requestDetails?.ministryName as string)}
             </p>
           </div> */}
@@ -438,33 +438,37 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
               <h3 className="font-semibold text-xs uppercase">
                 church/ministry name
               </h3>
-              <p className="">
+              <p className="text-xs md:text-sm">
                 {capitalizeFirstLetter(requestDetails?.ministryName as string)}
               </p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">status</h3>
-              <p className="">{status}</p>
+              <p className="text-xs md:text-sm">{status}</p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">
                 requester&apos;s name
               </h3>
-              <p className="">
+              <p className="text-xs md:text-sm">
                 {capitalizeFirstLetter(requestDetails?.requesterName)}
               </p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">email address</h3>
-              <p className="">{requestDetails?.requesterEmail}</p>
+              <p className="text-xs md:text-sm">
+                {requestDetails?.requesterEmail}
+              </p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">phone number</h3>
-              <p className="">{requestDetails?.requesterPhone}</p>
+              <p className="text-xs md:text-sm">
+                {requestDetails?.requesterPhone}
+              </p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">location</h3>
-              <p className="">
+              <p className="text-xs md:text-sm">
                 {capitalizeFirstLetter(requestDetails?.locationOfUse)}
               </p>
             </div>
@@ -472,14 +476,14 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             {status === 'Collected' ? (
               <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
                 <h3 className="font-semibold text-xs uppercase">return date</h3>
-                <p className="">
+                <p className="text-xs md:text-sm">
                   {formatReadableDate(requestDetails?.audit.collectedDate)}
                 </p>
               </div>
             ) : (
               <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
                 <h3 className="font-semibold text-xs uppercase">return date</h3>
-                <p className="">
+                <p className="text-xs md:text-sm">
                   {formatReadableDate(
                     status === 'Completed'
                       ? requestDetails?.audit.completedDate
@@ -492,12 +496,14 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
               <h3 className="font-semibold text-xs uppercase">
                 assigned member
               </h3>
-              <p className="">{requestDetails?.audit.assigneeName}</p>
+              <p className="text-xs md:text-sm">
+                {requestDetails?.audit.assigneeName}
+              </p>
             </div>
           </div>
           <div className="col-span-2 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
             <h3 className="font-semibold text-xs uppercase">description</h3>
-            <p className="">
+            <p className="text-xs md:text-sm">
               {capitalizeFirstLetter(requestDetails?.descriptionOfRequest)}
             </p>
           </div>
@@ -510,7 +516,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 {requestDetails?.audit?.items &&
                   requestDetails?.audit?.items.map(
                     (item: { itemName: string }, index: number) => (
-                      <p key={index} className="text-sm leading-7">
+                      <p key={index} className="text-xs md:text-sm leading-7">
                         {item.itemName}
                       </p>
                     )
@@ -523,7 +529,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 {requestDetails?.audit?.items &&
                   requestDetails?.audit?.items.map(
                     (item: { storeName: string }, index: number) => (
-                      <p key={index} className="text-sm leading-7">
+                      <p key={index} className="text-xs md:text-sm leading-7">
                         {item.storeName}
                       </p>
                     )
@@ -540,7 +546,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 {requestDetails?.audit?.items &&
                   requestDetails?.audit?.items.map(
                     (item: { conditionBeforeLease: string }, index: number) => (
-                      <p key={index} className="text-sm leading-7">
+                      <p key={index} className="text-xs md:text-sm leading-7">
                         {item.conditionBeforeLease}
                       </p>
                     )
@@ -555,7 +561,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 {requestDetails?.audit?.items &&
                   requestDetails?.audit?.items.map(
                     (item: { quantityLeased: string }, index: number) => (
-                      <p key={index} className="text-sm leading-7">
+                      <p key={index} className="text-xs md:text-sm leading-7">
                         {item.quantityLeased}
                       </p>
                     )
@@ -569,7 +575,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   {requestDetails?.audit?.items &&
                     requestDetails?.audit?.items.map(
                       (item: { quantityReleased: string }, index: number) => (
-                        <p key={index} className="text-sm leading-7">
+                        <p key={index} className="text-xs md:text-sm leading-7">
                           {item.quantityReleased}
                         </p>
                       )
@@ -584,7 +590,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   {requestDetails?.audit?.items &&
                     requestDetails?.audit?.items.map(
                       (item: { quantityReturned: number }, index: number) => (
-                        <p key={index} className="text-sm leading-7">
+                        <p key={index} className="text-xs md:text-sm leading-7">
                           {item.quantityReturned}
                         </p>
                       )
@@ -614,7 +620,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                 onChange={(e) =>
                                   handleQuantityChange(index, e.target.value)
                                 }
-                                className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
+                                className="text-xs md:text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
                               />
                             )
                           )}
