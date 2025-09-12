@@ -53,7 +53,7 @@ const GeneratorLogs = () => {
 
   const columns: Column<GeneratorLog>[] = [
     { key: 'nameOfMeeting', header: 'MEETING TITLE' },
-    // { key: 'hodName', header: 'GENERATOR USED' },
+    { key: 'generatorType', header: 'GENERATOR USED' },
     { key: 'meetingLocation', header: 'LOCATION' },
     {
       key: 'onTime',

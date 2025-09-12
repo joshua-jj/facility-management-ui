@@ -95,7 +95,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
 
   const handleSubmit = (data: GeneratorForm) => {
     // data.role = role?.id as number;
-    data.generatorType = String(item?.id);
+    data.generatorTypeId = String(item?.id);
     data.personnelName = userDetails?.firstName + ' ' + userDetails?.lastName;
 
     dispatch(

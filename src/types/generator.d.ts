@@ -15,7 +15,7 @@ export interface GeneratorConstants {
 }
 export interface GeneratorForm {
   nameOfMeeting: string;
-  generatorType: string;
+  generatorTypeId: string;
   meetingLocation: number;
   dieselLevelOn: number;
   dieselLevelOff: number;
