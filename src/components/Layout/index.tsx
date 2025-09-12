@@ -23,11 +23,13 @@ const Layout: React.FC<LayoutProps> = ({ children, className }) => {
           <main>{children}</main>
         </div>
       ) : (
-        <div className="h-screen overflow-hidden w-full bg-gray-50 grid grid-cols-1 sm:grid-cols-[1fr_5.4fr]">
+        <div className="h-screen overflow-hidden bg-gray-50 grid grid-cols-[0.5fr_7fr] xl:grid-cols-[1fr_5.4fr]">
           <Sidebar />
           <div className="overflow-y-auto">
             <Header />
-            <main className={`text-[#0F2552] p-8 pb-20 ${className}`}>
+            <main
+              className={`text-[#0F2552] p-2 md:p-4 lg:p-8 pb-20 ${className}`}
+            >
               {children}
             </main>
           </div>

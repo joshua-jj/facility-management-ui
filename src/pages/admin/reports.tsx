@@ -103,7 +103,7 @@ const Reports = () => {
               <FilterIcon className="mr-1" /> Filter
             </button>
             {showFilterOptions && (
-              <div className="filter-options absolute bg-white rounded mt-[0.2rem] right-0 min-w-full w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))] z-50">
+              <div className="z-[999] filter-options absolute bg-white rounded mt-[0.2rem] right-0 md:left-auto md:right-0 min-w-full w-[15rem] md:w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
                 <h4 className="px-4 py-3 font-semibold">Filter by</h4>
                 <hr className="m-0 p-0 border border-[rgba(228,229,231,1)]" />
 
@@ -155,8 +155,8 @@ const Reports = () => {
             <div className="w-8 h-8 border-4 border-[#B28309] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {allReportsList.map((item, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {allReportsList?.map((item, index) => (
               <div
                 key={index}
                 className="p-6 relative rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)]"

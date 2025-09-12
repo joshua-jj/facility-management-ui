@@ -115,7 +115,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
   const { allStoresList } = useSelector((s: RootState) => s.store);
 
   //   const [requestStatus, setRequestStatus] = useState('');
-  console.log('itemDetail?.itemUnits', itemDetail?.itemUnits[0]);
+  // console.log('itemDetail?.itemUnits', itemDetail?.itemUnits[0]);
 
   const [selectedStores, setSelectedStores] = useState(
     itemDetail?.itemUnits?.map((item) => String(item.store?.id) || '') || []
@@ -303,17 +303,28 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
   //     return () => listener.remove();
   //   }, [requestStatus]);
 
+  // const itemDetails = [
+  //   {
+  //     serialNumber: itemDetail?.itemUnits?.[0]?.serialNumber,
+  //     name: itemDetail?.name,
+  //     id: itemDetail?.itemUnits?.[0]?.id,
+  //     value: '',
+  //   },
+  // ];
+
+  // console.log({ itemDetail });
+
   return (
-    <Layout className="grid grid-cols-12 mb-12">
-      <div className="col-span-10 col-start-2 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-        <h2 className="text-xl font-semibold text-textColor mb-4">
+    <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
+      <div className="md:col-span-10 md:col-start-2 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+        <h2 className="text-md md:text-xl font-semibold text-textColor mb-4">
           Item Details
         </h2>
-        <div className="grid grid-cols-2 gap-2 text-[#0F2552]">
-          <div className="grid grid-cols-subgrid col-span-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[#0F2552]">
+          <div className="grid grid-cols-1 sm:grid-cols-subgrid col-span-2 gap-2">
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">name</h3>
-              <p className="">
+              <p className="text-xs md:text-sm">
                 {capitalizeFirstLetter(itemDetail?.name as string)}
               </p>
             </div>
@@ -321,35 +332,41 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
               <h3 className="font-semibold text-xs uppercase">
                 actual Quantity
               </h3>
-              <p className="">{itemDetail?.actualQuantity}</p>
+              <p className="text-xs md:text-sm">{itemDetail?.actualQuantity}</p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">
                 available Quantity
               </h3>
-              <p className="">{itemDetail?.availableQuantity}</p>
+              <p className="text-xs md:text-sm">
+                {itemDetail?.availableQuantity}
+              </p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">department</h3>
-              <p className="">{itemDetail?.department?.name}</p>
+              <p className="text-xs md:text-sm">
+                {itemDetail?.department?.name}
+              </p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">created by</h3>
-              <p className="">{itemDetail?.createdBy}</p>
+              <p className="text-xs md:text-sm">{itemDetail?.createdBy}</p>
             </div>
             <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
               <h3 className="font-semibold text-xs uppercase">created date</h3>
-              <p className="">{formatReadableDate(itemDetail?.createdAt)}</p>
+              <p className="text-xs md:text-sm">
+                {formatReadableDate(itemDetail?.createdAt)}
+              </p>
             </div>
           </div>
           <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
             <h3 className="font-semibold text-xs uppercase">fragile</h3>
-            <p className="">
+            <p className="text-xs md:text-sm">
               {itemDetail?.fragile === true ? 'Fragile' : 'Not Fragile'}
             </p>
           </div>
           <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div className="">
                 <h4 className="text-xs uppercase font-semibold mb-2">
                   SERIAL NUMBER(s)
@@ -357,7 +374,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                 {itemDetail?.itemUnits &&
                   itemDetail?.itemUnits.map(
                     (item: { serialNumber: string }, index: number) => (
-                      <p key={index} className="text-sm leading-7">
+                      <p key={index} className="text-xs md:text-sm leading-7">
                         {item.serialNumber}
                       </p>
                     )
@@ -368,7 +385,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                 {itemDetail?.itemUnits &&
                   itemDetail?.itemUnits.map(
                     (item: { id: number }, index: number) => (
-                      <p key={index} className="text-sm leading-7">
+                      <p key={index} className="text-xs md:text-sm leading-7">
                         {item.id}
                       </p>
                     )
@@ -422,7 +439,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                 {requestDetails?.itemUnits &&
                   requestDetails?.itemUnits.map(
                     (item: { quantityLeased: string }, index: number) => (
-                      <p key={index} className="text-sm leading-7">
+                      <p key={index} className="text-xs md:text-sm leading-7">
                         {item.quantityLeased}
                       </p>
                     )
@@ -436,7 +453,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                   {requestDetails?.items &&
                     requestDetails?.items.map(
                       (item: { quantityReleased: string }, index: number) => (
-                        <p key={index} className="text-sm leading-7">
+                        <p key={index} className="text-xs md:text-sm leading-7">
                           {item.quantityReleased}
                         </p>
                       )
@@ -451,7 +468,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                   {requestDetails?.items &&
                     requestDetails?.items.map(
                       (item: { quantityReturned: number }, index: number) => (
-                        <p key={index} className="text-sm leading-7">
+                        <p key={index} className="text-xs md:text-sm leading-7">
                           {item.quantityReturned}
                         </p>
                       )
@@ -480,7 +497,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                               onChange={(e) =>
                                 handleQuantityChange(index, e.target.value)
                               }
-                              className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
+                              className="text-xs md:text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
                             />
                           )
                         )}
@@ -512,7 +529,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                                   e.target.value
                                 )
                               }
-                              className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
+                              className="text-xs md:text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
                             />
                           )
                         )}
