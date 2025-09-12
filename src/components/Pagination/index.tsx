@@ -72,7 +72,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         </select>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
         <button
           onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
           disabled={currentPage === 1}

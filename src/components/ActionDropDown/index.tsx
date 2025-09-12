@@ -31,7 +31,7 @@ const ActionDropDown = (props: Props) => {
       {showDropdown && (
         <ul
           ref={ref}
-          className="absolute right-[2rem] bg-white z-50 py-1 shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)]"
+          className="z-[9999] absolute right-[2rem] bg-white py-1 shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)]"
         >
           {props.items && userDetails?.roleId !== 3 && (
             <li

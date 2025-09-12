@@ -415,7 +415,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
   return (
     <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
       <div className="md:col-span-10 md:col-start-2 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-        <h2 className="text-xl font-semibold text-textColor mb-4">
+        <h2 className="text-md md:text-xl font-semibold text-textColor mb-4">
           Request Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[#0F2552]">

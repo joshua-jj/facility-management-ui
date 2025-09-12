@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
+import Image from 'next/image';
 
 const Sidebar = () => {
   const router = useRouter();
@@ -26,7 +27,15 @@ const Sidebar = () => {
     <div className="bg-white px-4 md:px-[1.8rem] py-[0.93rem] text-[#0F2552] border-[0.5px] border-r-[#E1E3E7] shadow-[0px_16px_32px_0px_rgba(189,189,189,0.25)]">
       <Link href="/" passHref className="">
         <div className="inline-flex items-center">
-          {/* <EGFMLogoIcon className="" /> */}
+          <div className="img h w">
+            <Image
+              src="/assets/images/egfm-logo.png"
+              alt="egfm-logo"
+              height={100}
+              width={100}
+              unoptimized
+            />
+          </div>
           <span className="hidden xl:block ml-2 text-[#32323d] text-[16px] font-bold leading-[21px] text-left">
             Logistics
           </span>

@@ -86,6 +86,8 @@ export const getPageNames = (link: string) => {
       return 'requests';
     case '/admin/items':
       return 'items';
+    case '/admin/item/[id]':
+      return 'items';
     case '/admin/store':
       return 'store';
     case '/admin/departments':

@@ -213,7 +213,7 @@ const Requests = () => {
                     setSearchQuery(e.target.value);
                     // setCurrentPage(1); // reset on new search
                   }}
-                  className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
+                  className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
 

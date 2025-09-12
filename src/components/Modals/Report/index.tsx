@@ -57,7 +57,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
       </button>
 
       <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
-        <div className="bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] lg:w-[600px]">
+        <div className="bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[25rem]">
           <h2 className="text-2xl font-semibold text-textColor mb-4">
             Report an issue
           </h2>

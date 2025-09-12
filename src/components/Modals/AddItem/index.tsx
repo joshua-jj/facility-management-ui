@@ -227,7 +227,7 @@ const AddItem: React.FC<AddItemModalProps> = ({
       </button>
 
       <FullscreenModal open={open || isModalOpen} onClickAway={closeModal}>
-        <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] ">
+        <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[25rem] ">
           <button
             onClick={closeModal}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
