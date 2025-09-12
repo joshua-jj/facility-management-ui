@@ -11,6 +11,7 @@ import { GeneratorLog } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
 import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
+import { format, parseISO } from 'date-fns';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -54,9 +55,31 @@ const GeneratorLogs = () => {
     { key: 'nameOfMeeting', header: 'MEETING TITLE' },
     // { key: 'hodName', header: 'GENERATOR USED' },
     { key: 'meetingLocation', header: 'LOCATION' },
-    { key: 'onTime', header: 'ON TIME' },
-    { key: 'offTime', header: 'OFF TIME' },
-    { key: 'offTime', header: 'DATE' },
+    {
+      key: 'onTime',
+      header: 'DATE',
+      render: (value: string | number, row: GeneratorLog) => {
+        return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
+      },
+    },
+    {
+      key: 'onTime',
+      header: 'ON TIME',
+      render: (value: string | number, row: GeneratorLog) => {
+        return <span>{format(parseISO(String(value)), 'HH:mm')}</span>;
+      },
+    },
+    {
+      key: 'offTime',
+      header: 'OFF TIME',
+      render: (value: string | number, row: GeneratorLog) => {
+        return <span>{format(parseISO(String(value)), 'HH:mm')}</span>;
+      },
+    },
+    { key: 'engineStartHours', header: 'ENGINE START HOURS' },
+    { key: 'engineOffHours', header: 'ENGINE OFF HOURS' },
+    { key: 'dieselLevelOn', header: 'DIESEL LEVEL ON' },
+    { key: 'dieselLevelOff', header: 'DIESEL LEVEL OFF' },
     {
       key: 'id',
       header: '.',

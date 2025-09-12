@@ -128,6 +128,19 @@ const allDepartmentItemsList = (
       return state;
   }
 };
+
+const departmentItemsList = (
+  state: AllItemsListState = [],
+  action: AllItemsAction
+): AllItemsListState => {
+  switch (action.type) {
+    case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
+      return action.items?.items ?? state;
+    default:
+      return state;
+  }
+};
+
 const allItemsList = (
   state: AllItemsListState = [],
   action: AllItemsAction
@@ -213,6 +226,10 @@ export interface RootState {
     state: DepartmentItemsListState | undefined,
     action: DepartmentItemsAction
   ) => DepartmentItemsListState;
+  departmentItemsList: (
+    state: AllItemsListState | undefined,
+    action: AllItemsAction
+  ) => AllItemsListState;
   allItemsList: (
     state: AllItemsListState | undefined,
     action: AllItemsAction
@@ -235,6 +252,7 @@ const rootReducer = combineReducers<RootState>({
   IsCreatingItem,
   IsUpdatingItem,
   allDepartmentItemsList,
+  departmentItemsList,
   allItemsList,
   allItemUnitsList,
   pagination,

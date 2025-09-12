@@ -162,7 +162,7 @@ const AddItem: React.FC<AddItemModalProps> = ({
         console.log('New item details created:', newItem.detail);
         if (newItem) {
           closeModal();
-          if (userDetails?.roleId !== 3 && newItem) {
+          if (userDetails?.roleId !== 3 && newItem.detail) {
             Router.push(`/admin/item/${newItem.detail.id}`);
           } else {
             dispatch(

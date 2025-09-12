@@ -28,21 +28,24 @@ export interface PaginationState {
   };
 }
 export interface MaintenanceForm {
-  maintenanceName: string;
-  maintenanceStatus: string;
-  maintenanceType: string;
-  maintenanceDescription: string;
+  artisanName: string;
+  artisanPhone: string;
+  servicedItem: string;
+  description: string;
   maintenanceDate: string;
-  maintenanceDuration: number;
+  signature: string;
+  costOfMaintenance: number;
 }
 export interface MaintenanceLog {
   id: number;
   servicedItem: string;
+  serviceItemName: string;
   artisanName: string;
   artisanPhone: string;
   description: string;
   maintenanceDate: string;
   costOfMaintenance: number;
+  signature: string;
   createdAt: string;
   updatedAt: string;
   status: number;

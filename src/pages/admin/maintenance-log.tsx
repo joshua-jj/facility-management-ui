@@ -8,7 +8,9 @@ import { RootState } from '@/redux/reducers';
 import { maintenanceActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { MaintenanceLog } from '@/types';
-import AddDepartment from '@/components/Modals/AddDepartment';
+import { format, parseISO } from 'date-fns';
+// import AddDepartment from '@/components/Modals/AddDepartment';
+import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
 
@@ -70,11 +72,19 @@ const MaintenanceLogs = () => {
   };
 
   const columns: Column<MaintenanceLog>[] = [
-    { key: 'servicedItem', header: 'SERVICED ITEM' },
+    { key: 'serviceItemName', header: 'SERVICED ITEM' },
     { key: 'costOfMaintenance', header: 'COST ' },
     { key: 'artisanName', header: 'ARTISAN NAME' },
     { key: 'artisanPhone', header: 'ARTISAN NUMBER' },
-    { key: 'maintenanceDate', header: 'DATE' },
+    { key: 'signature', header: 'SIGNATURE' },
+    // { key: 'maintenanceDate', header: 'DATE' },
+    {
+      key: 'maintenanceDate',
+      header: 'DATE',
+      render: (value: string | number, row: MaintenanceLog) => {
+        return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
+      },
+    },
     {
       key: 'id',
       header: '.',
@@ -167,9 +177,9 @@ const MaintenanceLogs = () => {
                 Download CSV
               </button>
               <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-                <AddDepartment className="text-start w-full cursor-pointer">
+                <AddMaintenanceLog className="text-start w-full cursor-pointer">
                   Create Maintenance Log
-                </AddDepartment>
+                </AddMaintenanceLog>
               </button>
             </div>
           </Formsy>

@@ -4,8 +4,8 @@ import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 // import SuccessModal from '../Report/SuccessModal';
-import { Department, GeneratorForm, Role } from '@/types';
-import { generatorActions } from '@/actions';
+import { GeneratorForm, Item } from '@/types';
+import { generatorActions, itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -29,16 +29,20 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
 }) => {
   const dispatch = useDispatch();
   const { IsCreatingGeneratorLog } = useSelector((s: RootState) => s.generator);
-  const { allRolesList } = useSelector((s: RootState) => s.role);
+  // const { allRolesList } = useSelector((s: RootState) => s.role);
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  const { departmentItemsList } = useSelector((s: RootState) => s.item);
+  const { userDetails } = useSelector((s: RootState) => s.user);
 
   const [canSubmit, setCanSubmit] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [roleIsOpen, setRoleIsOpen] = useState(false);
-  const [role, setRole] = useState<Role | null>(null);
-  const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
-  const [department, setDepartment] = useState<Department | null>(null);
+  // const [roleIsOpen, setRoleIsOpen] = useState(false);
+  // const [role, setRole] = useState<Role | null>(null);
+  // const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
+  // const [department, setDepartment] = useState<Department | null>(null);
+  const [itemIsOpen, setItemIsOpen] = useState(false);
+  const [item, setItem] = useState<Item | null>(null);
   const [search, setSearch] = useState('');
 
   const openModal = () => setIsModalOpen(true);
@@ -46,32 +50,53 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
-  const allRolesArray = allRolesList?.map((obj) => ({
-    ...obj,
-    label: obj.name,
-    value: obj.id.toString(),
-  }));
-  const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
+  useEffect(() => {
+    dispatch(
+      itemActions.getDepartmentItems({
+        departmentId: 1,
+      }) as unknown as UnknownAction
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const departmentItemsArray = departmentItemsList?.map((obj) => ({
     ...obj,
     label: obj.name,
     value: obj.id.toString(),
   }));
 
-  const handleRoleSelect = (role: Role) => {
-    setRole(role);
-    setRoleIsOpen(false);
+  const handleItemSelect = (item: Item) => {
+    setItem(item);
+    setItemIsOpen(false);
   };
 
-  const handleDepartmentSelect = (department: Department) => {
-    setDepartment(department);
-    setDepartmentIsOpen(false);
-  };
+  // const allRolesArray = allRolesList?.map((obj) => ({
+  //   ...obj,
+  //   label: obj.name,
+  //   value: obj.id.toString(),
+  // }));
+  // const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
+  //   ...obj,
+  //   label: obj.name,
+  //   value: obj.id.toString(),
+  // }));
+
+  // const handleRoleSelect = (role: Role) => {
+  //   setRole(role);
+  //   setRoleIsOpen(false);
+  // };
+
+  // const handleDepartmentSelect = (department: Department) => {
+  //   setDepartment(department);
+  //   setDepartmentIsOpen(false);
+  // };
 
   console.log('allDepartmentsList', allDepartmentsList);
 
   const handleSubmit = (data: GeneratorForm) => {
     // data.role = role?.id as number;
-    // data.departmentId = Number(department?.id);
+    data.generatorType = String(item?.id);
+    data.personnelName = userDetails?.firstName + ' ' + userDetails?.lastName;
 
     dispatch(
       generatorActions.createGeneratorLog(data) as unknown as UnknownAction
@@ -119,7 +144,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
             <TextInput
               type="text"
               name="nameOfMeeting"
-              label="Meeting Title"
+              label="Meeting Name"
               placeholder="Enter name"
               required
               className="text-[#0F2552] rounded font-medium text-sm"
@@ -129,6 +154,90 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
               type="text"
               name="meetingLocation"
               label="Meeting Location"
+              placeholder="Enter name"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            />
+            <div className="mb-3 group">
+              <div className="flex justify-between items-center">
+                <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
+                  Generator used
+                </label>
+              </div>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setItemIsOpen(!itemIsOpen)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
+                >
+                  {item?.name || 'Select item'}
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
+                    <CaretIcon className="rotate-90" />
+                  </span>
+                </button>
+                {itemIsOpen && (
+                  <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
+                    <div className="p-2">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search"
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                          <SearchIcon />
+                        </span>
+                      </div>
+                    </div>
+                    <ul className="max-h-40 overflow-y-auto">
+                      {departmentItemsArray.map((item) => (
+                        <li
+                          key={item.id}
+                          onClick={() => handleItemSelect(item)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                        >
+                          <span className="mr-4">{item.name}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+            <TextInput
+              type="datetime-local"
+              className="text-[#0F2552] rounded font-medium text-sm"
+              name="onTime"
+              label="On Time"
+              placeholder="select option"
+              inputClass="font-normal border border-gray-300 rounded"
+              // value={data.returnDate}
+            />
+            <TextInput
+              type="datetime-local"
+              className="text-[#0F2552] rounded font-medium text-sm"
+              name="offTime"
+              label="Off Time"
+              placeholder="select option"
+              inputClass="font-normal border border-gray-300 rounded"
+              // value={data.returnDate}
+            />
+            <TextInput
+              type="text"
+              name="engineStartHours"
+              label="Engine Start Hours"
+              placeholder="Enter name"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            />
+            <TextInput
+              type="text"
+              name="engineOffHours"
+              label="Engine Off Hours"
               placeholder="Enter name"
               required
               className="text-[#0F2552] rounded font-medium text-sm"
@@ -152,7 +261,34 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
             />
-            <div className="mb-3 group">
+            {/* <TextInput
+              type="text"
+              name="hoursUsed"
+              label="Hours Used"
+              placeholder="Enter hours"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            /> */}
+            <TextInput
+              type="datetime-local"
+              className="text-[#0F2552] rounded font-medium text-sm"
+              name="lastServiceHour"
+              label="Last Service Hour"
+              placeholder="Enter hours"
+              inputClass="font-normal border border-gray-300 rounded"
+              // value={data.returnDate}
+            />
+            <TextInput
+              type="datetime-local"
+              className="text-[#0F2552] rounded font-medium text-sm"
+              name="nextServiceHour"
+              label="Next Service Hour"
+              placeholder="Enter hours"
+              inputClass="font-normal border border-gray-300 rounded"
+              // value={data.returnDate}
+            />
+            {/* <div className="mb-3 group">
               <div className="flex justify-between items-center">
                 <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
                   Generator used
@@ -199,8 +335,9 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                   </div>
                 )}
               </div>
-            </div>
-            <div className="mb-3 group">
+            </div> */}
+
+            {/* <div className="mb-3 group">
               <div className="flex justify-between items-center">
                 <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
                   Did you notice any fault?
@@ -295,7 +432,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
             <TextArea
               type="text"
               name="Remark"

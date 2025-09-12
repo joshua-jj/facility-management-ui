@@ -4,8 +4,8 @@ import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 // import SuccessModal from '../Report/SuccessModal';
-import { Department, MaintenanceForm, Role } from '@/types';
-import { maintenanceActions } from '@/actions';
+import { Item, MaintenanceForm } from '@/types';
+import { itemActions, maintenanceActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -13,6 +13,7 @@ import { CaretIcon, SearchIcon } from '@/components/Icons';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { maintenanceConstants } from '@/constants';
 import TextArea from '@/components/Inputs/TextArea';
+// import { setItem } from 'localforage';
 
 interface AddItemModalProps {
   // onClose: () => void;
@@ -31,16 +32,14 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
   const { IsCreatingMaintenanceLog } = useSelector(
     (s: RootState) => s.maintenance
   );
-  const { allRolesList } = useSelector((s: RootState) => s.role);
-  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  // const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+  const { departmentItemsList } = useSelector((s: RootState) => s.item);
+  const { userDetails } = useSelector((s: RootState) => s.user);
 
   const [canSubmit, setCanSubmit] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [roleIsOpen, setRoleIsOpen] = useState(false);
-  const [role, setRole] = useState<Role | null>(null);
-  const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
-  const [department, setDepartment] = useState<Department | null>(null);
+  const [itemIsOpen, setItemIsOpen] = useState(false);
+  const [item, setItem] = useState<Item | null>(null);
   const [search, setSearch] = useState('');
 
   const openModal = () => setIsModalOpen(true);
@@ -48,32 +47,30 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
-  const allRolesArray = allRolesList?.map((obj) => ({
+  useEffect(() => {
+    dispatch(
+      itemActions.getDepartmentItems({
+        departmentId: 1,
+      }) as unknown as UnknownAction
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const departmentItemsArray = departmentItemsList?.map((obj) => ({
     ...obj,
     label: obj.name,
     value: obj.id.toString(),
   }));
-  const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
-    ...obj,
-    label: obj.name,
-    value: obj.id.toString(),
-  }));
 
-  const handleRoleSelect = (role: Role) => {
-    setRole(role);
-    setRoleIsOpen(false);
+  const handleItemSelect = (item: Item) => {
+    setItem(item);
+    setItemIsOpen(false);
   };
-
-  const handleDepartmentSelect = (department: Department) => {
-    setDepartment(department);
-    setDepartmentIsOpen(false);
-  };
-
-  console.log('allDepartmentsList', allDepartmentsList);
 
   const handleSubmit = (data: MaintenanceForm) => {
-    // data.role = role?.id as number;
-    // data.departmentId = Number(department?.id);
+    data.servicedItem = String(item?.id);
+    data.costOfMaintenance = Number(data.costOfMaintenance);
+    data.signature = userDetails?.firstName + ' ' + userDetails?.lastName;
 
     dispatch(
       maintenanceActions.createMaintenanceLog(data) as unknown as UnknownAction
@@ -118,60 +115,24 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
             onInvalid={disableButton}
             className="space-y-4"
           >
-            <TextInput
-              type="text"
-              name="nameOfMeeting"
-              label="Meeting Title"
-              placeholder="Enter name"
-              required
-              className="text-[#0F2552] rounded font-medium text-sm"
-              inputClass="font-normal border border-gray-300 rounded"
-            />
-            <TextInput
-              type="text"
-              name="meetingLocation"
-              label="Meeting Location"
-              placeholder="Enter name"
-              required
-              className="text-[#0F2552] rounded font-medium text-sm"
-              inputClass="font-normal border border-gray-300 rounded"
-            />
-            <TextInput
-              type="text"
-              name="dieselLevelOn"
-              label="Diesel level on"
-              placeholder="Enter name"
-              required
-              className="text-[#0F2552] rounded font-medium text-sm"
-              inputClass="font-normal border border-gray-300 rounded"
-            />
-            <TextInput
-              type="text"
-              name="dieselLevelOff"
-              label="Diesel level off"
-              placeholder="Enter name"
-              required
-              className="text-[#0F2552] rounded font-medium text-sm"
-              inputClass="font-normal border border-gray-300 rounded"
-            />
             <div className="mb-3 group">
               <div className="flex justify-between items-center">
                 <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
-                  Generator used
+                  Item to be serviced
                 </label>
               </div>
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setRoleIsOpen(!roleIsOpen)}
+                  onClick={() => setItemIsOpen(!itemIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
-                  {role?.name || 'Select role'}
+                  {item?.name || 'Select item'}
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
                     <CaretIcon className="rotate-90" />
                   </span>
                 </button>
-                {roleIsOpen && (
+                {itemIsOpen && (
                   <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
                     <div className="p-2">
                       <div className="relative">
@@ -188,13 +149,13 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                       </div>
                     </div>
                     <ul className="max-h-40 overflow-y-auto">
-                      {allRolesArray.map((role) => (
+                      {departmentItemsArray.map((item) => (
                         <li
-                          key={role.id}
-                          onClick={() => handleRoleSelect(role)}
+                          key={item.id}
+                          onClick={() => handleItemSelect(item)}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                         >
-                          <span className="mr-4">{role.name}</span>
+                          <span className="mr-4">{item.name}</span>
                         </li>
                       ))}
                     </ul>
@@ -202,7 +163,53 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                 )}
               </div>
             </div>
-            <div className="mb-3 group">
+            <TextInput
+              type="date"
+              className="text-[#0F2552] rounded font-medium text-sm"
+              name="maintenanceDate"
+              label="Maintenance Date"
+              placeholder="select option"
+              inputClass="font-normal border border-gray-300 rounded"
+              // value={data.returnDate}
+            />
+            <TextInput
+              type="number"
+              name="costOfMaintenance"
+              label="Cost of Maintenance"
+              placeholder="#20,000"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            />
+            <TextInput
+              type="text"
+              name="artisanName"
+              label="Artisan Name"
+              placeholder="Enter name"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            />
+            <TextInput
+              type="text"
+              name="artisanPhone"
+              label="Artisan Phone"
+              placeholder="Enter phone number"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            />
+            {/* <TextInput
+              type="text"
+              name="dieselLevelOff"
+              label="Diesel level off"
+              placeholder="Enter name"
+              required
+              className="text-[#0F2552] rounded font-medium text-sm"
+              inputClass="font-normal border border-gray-300 rounded"
+            /> */}
+
+            {/* <div className="mb-3 group">
               <div className="flex justify-between items-center">
                 <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
                   Did you notice any fault?
@@ -211,10 +218,10 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setDepartmentIsOpen(!departmentIsOpen)}
+                  onClick={() => setItemIsOpen(!departmentIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
-                  {department?.name || 'Select department'}
+                  {item?.name || 'Select Item'}
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
                     <CaretIcon className="rotate-90" />
                   </span>
@@ -236,21 +243,21 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                       </div>
                     </div>
                     <ul className="max-h-40 overflow-y-auto">
-                      {allDepartmentsArray.map((department) => (
+                      {allDepartmentItemsArray.map((item) => (
                         <li
-                          key={department.id}
-                          onClick={() => handleDepartmentSelect(department)}
+                          key={item.id}
+                          onClick={() => handleItemSelect(item)}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                         >
-                          <span className="mr-4">{department.name}</span>
+                          <span className="mr-4">{item.name}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
               </div>
-            </div>
-            <div className="mb-3 group">
+            </div> */}
+            {/* <div className="mb-3 group">
               <div className="flex justify-between items-center">
                 <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
                   Due for service?
@@ -259,7 +266,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setDepartmentIsOpen(!departmentIsOpen)}
+                  onClick={() => setItemIsOpen(!departmentIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
                   {department?.name || 'Select department'}
@@ -297,11 +304,11 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
             <TextArea
               type="text"
-              name="Remark"
-              label="Remark"
+              name="description"
+              label="Description"
               placeholder="Add details"
               required
             />

@@ -21,6 +21,7 @@ export interface GeneratorForm {
   dieselLevelOff: number;
   dueForService: boolean;
   generatorCurrent: number;
+  personnelName: string;
   Remark: string;
 }
 
@@ -33,6 +34,9 @@ export interface GeneratorLog {
   offTime: string;
   hoursUsed: string;
   engineStartHours: string;
+  engineOffHours: string;
+  dieselLevelOn: string;
+  dieselLevelOff: string;
   status?: number;
   // generatorName: string;
   // generatorStatus: string;
