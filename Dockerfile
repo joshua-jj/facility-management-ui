@@ -1,20 +1,37 @@
-# Builder Stage
+# ----------------------
+# Build Stage
+# ----------------------
 FROM node:20-alpine AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and yarn.lock
+# Copy dependency files
 COPY package.json yarn.lock ./
 
-# Install dependencies using Yarn
-RUN yarn install
+# Install deps
+RUN yarn install --frozen-lockfile
 
-# Copy the rest of the application code
+# Copy rest of the code
 COPY . .
 
-# Expose the port
+# Build Next.js app
+RUN yarn build
+
+# ----------------------
+# Runtime Stage
+# ----------------------
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Only copy necessary files from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+
 EXPOSE 3000
 
-# Start the Next.js application with PM2
-CMD ["yarn", "dev"]
+CMD ["yarn", "start"]
