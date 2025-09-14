@@ -10,7 +10,7 @@ import { UnknownAction } from 'redux';
 import { Store } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddStore from '@/components/Modals/AddStore';
-import ActionDropDown from '@/components/ActionDropDown';
+// import ActionDropDown from '@/components/ActionDropDown';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -53,26 +53,26 @@ const Stores = () => {
   //   value: obj.id.toString(),
   // }));
 
-  const handleUpdate = (data: object) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
-  };
+  // const handleUpdate = (data: object) => {
+  //   console.log('🚀 ~ handleUpdate ~ data:', data);
+  // };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
 
   const columns: Column<Store>[] = [
     { key: 'name', header: 'STORE TITLE' },
-    {
-      key: 'id',
-      header: '.',
-      render: (value: string | number, row: object) => (
-        <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
-        />
-      ),
-    },
+    // {
+    //   key: 'id',
+    //   header: '.',
+    //   render: (value: string | number, row: object) => (
+    //     <ActionDropDown
+    //       handleUpdate={() => handleUpdate(row)}
+    //       handleDelete={() => handleDelete(row)}
+    //     />
+    //   ),
+    // },
   ];
 
   return (

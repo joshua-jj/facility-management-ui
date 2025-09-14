@@ -13,6 +13,7 @@ import { format, parseISO } from 'date-fns';
 import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
+import { numberWithCommas } from '@/utilities/helpers';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -30,6 +31,9 @@ const MaintenanceLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
+  const [showEditMaintenanceModal, setShowEditMaintenanceModal] = useState(false);
+  const [editMaintenanceData, setEditMaintenanceData] = useState<MaintenanceLog | null>(null);
+
   const {
     IsRequestingMaintenanceLogs,
     IsSearchingMaintenanceLog,
@@ -63,17 +67,29 @@ const MaintenanceLogs = () => {
     value: obj.id.toString(),
   }));
 
-  const handleUpdate = (data: object) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
-  };
+  // const handleUpdate = (data: object) => {
+  //   console.log('🚀 ~ handleUpdate ~ data:', data);
+  // };
+    const handleUpdate = (data: MaintenanceLog) => {
+      console.log('🚀 ~ handleUpdate ~ data:', data);
+      setEditMaintenanceData(data);
+      setShowEditMaintenanceModal(true);
+    };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
 
   const columns: Column<MaintenanceLog>[] = [
     { key: 'serviceItemName', header: 'SERVICED ITEM' },
-    { key: 'costOfMaintenance', header: 'COST ' },
+    // { key: 'costOfMaintenance', header: 'COST ' },
+    {
+      key: 'costOfMaintenance',
+      header: 'COST',
+      render: (value: string | number, row: MaintenanceLog) => {
+        return <span>{numberWithCommas(Number(value))}</span>;
+      },
+    },
     { key: 'artisanName', header: 'ARTISAN NAME' },
     { key: 'artisanPhone', header: 'ARTISAN NUMBER' },
     { key: 'signature', header: 'SIGNATURE' },
@@ -91,7 +107,7 @@ const MaintenanceLogs = () => {
       render: (value: string | number, row: object) => (
         <ActionDropDown
           handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
+          log={true}
         />
       ),
     },
@@ -189,6 +205,14 @@ const MaintenanceLogs = () => {
             columns={columns}
             data={allMaintenanceLogsList}
           />
+           {showEditMaintenanceModal && (
+            <AddMaintenanceLog
+              className="text-start w-full cursor-pointer"
+              maintenanceData={editMaintenanceData} // Pass the Item data as a prop
+              open={showEditMaintenanceModal}
+              onClose={() => setShowEditMaintenanceModal(false)}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>

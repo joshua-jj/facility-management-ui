@@ -1,10 +1,10 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 // import SuccessModal from '../Report/SuccessModal';
-import { Item, MaintenanceForm } from '@/types';
+import { Item, MaintenanceForm, MaintenanceLog } from '@/types';
 import { itemActions, maintenanceActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,17 +16,19 @@ import TextArea from '@/components/Inputs/TextArea';
 // import { setItem } from 'localforage';
 
 interface AddItemModalProps {
-  // onClose: () => void;
   children: ReactNode;
   className: string;
-  // open: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  maintenanceData?: MaintenanceLog | null;
 }
 
 const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
   className,
   children,
-  // onClose,
-  // open,
+  open,
+  onClose,
+  maintenanceData,
 }) => {
   const dispatch = useDispatch();
   const { IsCreatingMaintenanceLog } = useSelector(
@@ -43,9 +45,14 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
   const [search, setSearch] = useState('');
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  // const closeModal = () => setIsModalOpen(false);
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
+
+  const closeModal = useCallback(() => {
+      setIsModalOpen(false);
+      if (onClose) onClose();
+    }, [onClose]);
 
   useEffect(() => {
     dispatch(
@@ -98,7 +105,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
         {children}
       </button>
 
-      <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
+      <FullscreenModal open={open || isModalOpen} onClickAway={closeModal}>
         <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[25rem] ">
           <button
             onClick={closeModal}
@@ -127,7 +134,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                   onClick={() => setItemIsOpen(!itemIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
-                  {item?.name || 'Select item'}
+                  {item?.name || String(maintenanceData?.serviceItemName) || 'Select item'}
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
                     <CaretIcon className="rotate-90" />
                   </span>
@@ -170,13 +177,14 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
               label="Maintenance Date"
               placeholder="select option"
               inputClass="font-normal border border-gray-300 rounded"
-              // value={data.returnDate}
+              value={maintenanceData?.maintenanceDate || ''}
             />
             <TextInput
               type="number"
               name="costOfMaintenance"
               label="Cost of Maintenance"
               placeholder="#20,000"
+              value={maintenanceData?.costOfMaintenance || ''}
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
@@ -186,6 +194,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
               name="artisanName"
               label="Artisan Name"
               placeholder="Enter name"
+              value={maintenanceData?.artisanName || ''}
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
@@ -195,19 +204,11 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
               name="artisanPhone"
               label="Artisan Phone"
               placeholder="Enter phone number"
+              value={maintenanceData?.artisanPhone || ''}
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
             />
-            {/* <TextInput
-              type="text"
-              name="dieselLevelOff"
-              label="Diesel level off"
-              placeholder="Enter name"
-              required
-              className="text-[#0F2552] rounded font-medium text-sm"
-              inputClass="font-normal border border-gray-300 rounded"
-            /> */}
 
             {/* <div className="mb-3 group">
               <div className="flex justify-between items-center">
@@ -310,6 +311,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
               name="description"
               label="Description"
               placeholder="Add details"
+              value={maintenanceData?.description || ''}
               required
             />
             <button
@@ -326,7 +328,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : (
-                'Submit'
+                maintenanceData ? 'Update' : 'Submit'
               )}
             </button>
           </Formsy>

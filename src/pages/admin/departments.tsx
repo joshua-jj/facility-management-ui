@@ -10,7 +10,7 @@ import { UnknownAction } from 'redux';
 import { Department } from '@/types';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
-import ActionDropDown from '@/components/ActionDropDown';
+// import ActionDropDown from '@/components/ActionDropDown';
 
 // const optionsFilter = [
 //   { value: '1', label: 'approved' },
@@ -43,13 +43,13 @@ const Departments = () => {
       department.hodPhone?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleUpdate = (data: object) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
-  };
+  // const handleUpdate = (data: object) => {
+  //   console.log('🚀 ~ handleUpdate ~ data:', data);
+  // };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
 
   const columns: Column<Department>[] = [
     { key: 'name', header: 'DEPARTMENT TITLE' },
@@ -57,16 +57,16 @@ const Departments = () => {
     { key: 'hodEmail', header: 'EMAIL ADDRESS' },
     { key: 'hodPhone', header: 'PHONE NUMBER' },
     { key: 'itemCount', header: 'NO. ITEM' },
-    {
-      key: 'id',
-      header: '.',
-      render: (value: string | number, row: object) => (
-        <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
-        />
-      ),
-    },
+    // {
+    //   key: 'id',
+    //   header: '.',
+    //   render: (value: string | number, row: object) => (
+    //     <ActionDropDown
+    //       handleUpdate={() => handleUpdate(row)}
+    //       handleDelete={() => handleDelete(row)}
+    //     />
+    //   ),
+    // },
   ];
 
   return (

@@ -351,3 +351,10 @@ const statusMap: Record<string, RequestStatus> = {
 export function getDisplayStatus(status: string) {
   return statusMap[status.toLowerCase()] || RequestStatus.DEFAULT;
 }
+
+export function numberWithCommas(x: { toString: () => string }) {
+  if (x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  return 0;
+}

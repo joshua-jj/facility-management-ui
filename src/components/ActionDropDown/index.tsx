@@ -7,9 +7,10 @@ import { RootState } from '@/redux/reducers';
 type Props = {
   // row: object;
   items?: boolean;
+  log?: boolean;
   handleOpen?: () => void;
   handleUpdate: () => void;
-  handleDelete: () => void;
+  handleDelete?: () => void;
 };
 
 const ActionDropDown = (props: Props) => {
@@ -47,12 +48,16 @@ const ActionDropDown = (props: Props) => {
           >
             update
           </li>
+          {
+            !props.log && (
           <li
             onClick={props.handleDelete}
             className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"
           >
             delete
           </li>
+            )
+          }
         </ul>
       )}
     </>

@@ -29,13 +29,28 @@ const GeneratorLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { IsRequestingGeneratorLogs, allGeneratorLogsList } = useSelector(
+  const { IsRequestingGeneratorLogs, IsSearchingGeneratorLog, allGeneratorLogsList } = useSelector(
     (s: RootState) => s.generator
   );
 
   useEffect(() => {
     dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
   }, [dispatch]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const query = e.target.value;
+      if (!query) {
+        dispatch(
+          generatorActions.getGeneratorLogs() as unknown as UnknownAction
+        );
+      }
+      setSearchQuery(query);
+      dispatch(
+        generatorActions.searchGeneratorLog({
+          text: query,
+        }) as unknown as UnknownAction
+      );
+    };
 
   const allDepartmentsArray = allGeneratorLogsList?.map((obj) => ({
     ...obj,
@@ -86,7 +101,7 @@ const GeneratorLogs = () => {
       render: (value: string | number, row: object) => (
         <ActionDropDown
           handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
+          log={true}
         />
       ),
     },
@@ -104,10 +119,11 @@ const GeneratorLogs = () => {
                   name="searchQuery"
                   value={searchQuery}
                   placeholder="Search"
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // setCurrentPage(1); // reset on new search
-                  }}
+                  onChange={handleSearch}
+                  // onChange={(e) => {
+                  //   setSearchQuery(e.target.value);
+                  //   // setCurrentPage(1); // reset on new search
+                  // }}
                   className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
@@ -179,6 +195,7 @@ const GeneratorLogs = () => {
           </Formsy>
           <Table
             loading={IsRequestingGeneratorLogs}
+            searching={IsSearchingGeneratorLog}
             columns={columns}
             data={allGeneratorLogsList}
           />
