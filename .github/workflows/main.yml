@@ -74,7 +74,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/facility-management-ui:${{ steps.next-version.outputs.new_version }}
+          tags: ${{ secrets.CI_REGISTRY_NAME }}:${{ steps.next-version.outputs.new_version }}
 
       - name: Install Kustomize
         run: |
@@ -86,7 +86,7 @@ jobs:
           git clone https://${{ secrets.CD_USERNAME }}:${{ secrets.CD_PUSH_TOKEN }}@github.com/EGFM-Facility-Management/facility-management-ui.git
           cd kubernetes/fountain-stream/overlays/dev
 
-          kustomize edit set image docker.io/${{ secrets.DOCKER_USERNAME }}/facility-management-ui:${{ steps.next-version.outputs.new_version }}
+          kustomize edit set image ${{ secrets.CI_REGISTRY_NAME }}:${{ steps.next-version.outputs.new_version }}
 
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
