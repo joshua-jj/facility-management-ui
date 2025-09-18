@@ -85,9 +85,7 @@ jobs:
         run: |
           git clone https://${{ secrets.CD_USERNAME }}:${{ secrets.CD_PUSH_TOKEN }}@gitlab.com/egfm-devops/kubernetes.git
           cd kubernetes/fountain-stream/overlays/dev
-
           kustomize edit set image ${{ secrets.CI_REGISTRY_NAME }}:${{ steps.next-version.outputs.new_version }}
-
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add kustomization.yaml
