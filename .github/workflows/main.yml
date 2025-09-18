@@ -1,4 +1,4 @@
-name: Build and Push Go App with SemVer Tags
+name: Build and Push App with SemVer Tags
 
 on:
   push:
