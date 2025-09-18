@@ -81,7 +81,7 @@ jobs:
 
       - name: Clone deployment repo and update kustomization.yaml
         run: |
-          git clone https://${{ secrets.CD_USERNAME }}:${{ secrets.CD_PUSH_TOKEN }}@github.com/Johnel1/facility-management-ui.git
+          git clone https://${{ secrets.CD_USERNAME }}:${{ secrets.CD_PUSH_TOKEN }}@github.com/EGFM-Facility-Management/facility-management-ui.git
           cd kubernetes/fountain-stream/overlays/dev
 
           kustomize edit set image docker.io/${{ secrets.DOCKER_USERNAME }}/facility-management-ui:${{ steps.next-version.outputs.new_version }}
