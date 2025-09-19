@@ -20,6 +20,48 @@ export const CaretIcon: React.FC<Props> = (props) => (
   </svg>
 );
 
+export const BurgerMenuIcon: React.FC<Props> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    fill="none"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <path
+      fill="currentColor"
+      fillRule="evenodd"
+      d="M13.6 8.17a.75.75 0 0 1-.75-.75V5a.75.75 0 0 1 1.5 0v2.42a.75.75 0 0 1-.75.75M13.6 21.284a.75.75 0 0 1-.75-.75v-2.023a.75.75 0 1 1 1.5 0v2.023a.75.75 0 0 1-.75.75M13.6 15.825a.75.75 0 0 1-.75-.75v-4.82a.75.75 0 0 1 1.5 0v4.82a.75.75 0 0 1-.75.75"
+      clipRule="evenodd"
+    ></path>
+    <mask
+      id="mask0_30_2977"
+      width="22"
+      height="18"
+      x="1"
+      y="4"
+      maskUnits="userSpaceOnUse"
+      style={{ maskType: 'luminance' }}
+    >
+      <path
+        fill="#fff"
+        fillRule="evenodd"
+        d="M1 4h21.5v17.5H1z"
+        clipRule="evenodd"
+      ></path>
+    </mask>
+    <g mask="url(#mask0_30_2977)">
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M2.5 15.554v1.939C2.5 18.875 3.643 20 5.048 20h13.404C19.857 20 21 18.875 21 17.493v-1.94a2.91 2.91 0 0 1-2.177-2.802c0-1.343.925-2.474 2.177-2.803l-.001-1.941c0-1.382-1.143-2.507-2.548-2.507H5.049c-1.405 0-2.548 1.125-2.548 2.507L2.5 10.025c1.267.31 2.177 1.397 2.177 2.726A2.91 2.91 0 0 1 2.5 15.554M18.452 21.5H5.048C2.816 21.5 1 19.702 1 17.493V14.9a.75.75 0 0 1 .75-.75c.787 0 1.427-.628 1.427-1.4 0-.75-.614-1.316-1.427-1.316a.749.749 0 0 1-.75-.75l.001-2.678C1.001 5.797 2.817 4 5.049 4h13.402c2.232 0 4.048 1.798 4.048 4.007L22.5 10.6a.75.75 0 0 1-.75.75c-.787 0-1.427.628-1.427 1.4s.64 1.4 1.427 1.4a.75.75 0 0 1 .75.75v2.592c0 2.209-1.816 4.007-4.048 4.007"
+        clipRule="evenodd"
+      ></path>
+    </g>
+  </svg>
+);
+
 export const SearchIcon: React.FC<Props> = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

@@ -67,9 +67,11 @@ const Login: FC = () => {
           onValidSubmit={handleSubmit}
           onValid={() => setCanSubmit(true)}
           onInvalid={() => setCanSubmit(false)}
-          className="w-md p-8 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
+          className="w-md max-w-[90vw] md:p-8 p-4 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
         >
-          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">Login</h1>
+          <h1 className="text-[#0F2552] font-bold md:text-[1.5rem] text-[1rem]">
+            Login
+          </h1>
           <TextInput
             inputClass="text-[#0F2552]"
             type="text"
@@ -97,7 +99,7 @@ const Login: FC = () => {
           />
           <Link
             href="/forgot-password"
-            className="text-[#0F2552] text-sm font-semibold hover:underline"
+            className="text-[#0F2552] md:text-sm text-xs font-semibold hover:underline"
           >
             Forgot password?
           </Link>

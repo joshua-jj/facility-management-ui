@@ -26,7 +26,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
 
   return (
     <FullscreenModal open={open} onClickAway={onClose}>
-      <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 max-w-md text-center border border-gray-200">
+      <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[28rem] text-center border border-gray-200">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"

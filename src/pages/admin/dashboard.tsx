@@ -39,7 +39,7 @@ const Dashboard = () => {
   }, [dispatch]);
 
   const columns: Column<Request>[] = [
-    { key: 'createdBy', header: 'CHURCH/MINISTRY/NAME' },
+    { key: 'createdBy', header: 'CHURCH/MINISTRY NAME' },
     { key: 'requesterHodEmail', header: 'EMAIL ADDRESS' },
     { key: 'requesterHodEmail', header: 'PHONE NUMBER' },
     {
@@ -63,24 +63,28 @@ const Dashboard = () => {
 
   return (
     <PrivateRoute>
-      <Layout>
-        <div className="grid grid-cols-4 gap-4 mb-6">
+      <Layout title="Dashboard">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-6">
           {stats?.map((stat, index) => (
             <div
               key={index}
-              className="p-5 rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.11)]"
+              className="p-3 md:p-5 rounded bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.11)]"
             >
-              <div className="flex items-center mb-4">
+              <div className="flex items-center mb-2 md:mb-4">
                 {stat.icon}
-                <span className="uppercase text-xs ml-3">{stat.label}</span>
+                <span className="uppercase text-[0.56rem] md:text-xs ml-3">
+                  {stat.label}
+                </span>
               </div>
-              <h2 className="text-2xl font-semibold">{stat.value}</h2>
+              <h2 className="text-md md:text-2xl font-semibold">
+                {stat.value}
+              </h2>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-10 gap-4">
-          <div className="col-span-7 p-0">
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+          <div className="lg:col-span-7 p-0">
             <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
               <div className="px-4 py-5 flex items-center justify-between">
                 <h1 className="text-sm font-semibold">Requests</h1>
@@ -110,14 +114,14 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="col-span-3 flex flex-col justify-between">
+          <div className="lg:col-span-3 flex flex-col md:flex-row lg:flex-col justify-between">
             <div className="p-4 bg-white mb-6 h-[45%] min-h-[22rem] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-sm font-semibold">Maintenance Schedule</h2>
               </div>
               <Calendar />
             </div>
-            <div className="p-6 bg-white mb-6 h-[55%] min-h-[22rem] rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+            <div className="p-6 bg-white mb-6 h-[55%] min-h-[25rem] lg:min-h-[22rem] md:min-w-[22rem] lg:min-w-auto rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-sm font-semibold">Item Condition</h1>
                 <hr className="" />
@@ -127,8 +131,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-10 gap-4">
-          <div className="col-span-5 p-0">
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+          <div className="lg:col-span-5 p-0">
             <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
               <div className="px-4 py-5 flex items-center justify-between">
                 <h1 className="text-sm font-semibold">Reports</h1>
@@ -148,7 +152,7 @@ const Dashboard = () => {
               />
             </div>
           </div>
-          <div className="col-span-5 p-0">
+          <div className="lg:col-span-5 p-0">
             <div className="bg-white mb-6 rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
               <div className="px-4 py-5 flex items-center justify-between">
                 <h1 className="text-sm font-semibold">Due Returns</h1>

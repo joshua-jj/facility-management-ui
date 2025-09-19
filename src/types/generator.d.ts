@@ -7,6 +7,10 @@ export interface GeneratorConstants {
   CREATE_GENERATOR_LOG_SUCCESS: string;
   CREATE_GENERATOR_LOG_ERROR: string;
 
+  REQUEST_SEARCH_GENERATOR_LOG: string;
+  SEARCH_GENERATOR_LOG_SUCCESS: string;
+  SEARCH_GENERATOR_LOG_ERROR: string;
+
   GET_GENERATOR_LOGS: string;
   CREATE_GENERATOR_LOG: string;
   SEARCH_GENERATOR_LOG: string;
@@ -15,12 +19,13 @@ export interface GeneratorConstants {
 }
 export interface GeneratorForm {
   nameOfMeeting: string;
-  generatorType: string;
+  generatorTypeId: string;
   meetingLocation: number;
   dieselLevelOn: number;
   dieselLevelOff: number;
   dueForService: boolean;
   generatorCurrent: number;
+  personnelName: string;
   Remark: string;
 }
 
@@ -33,6 +38,9 @@ export interface GeneratorLog {
   offTime: string;
   hoursUsed: string;
   engineStartHours: string;
+  engineOffHours: string;
+  dieselLevelOn: string;
+  dieselLevelOff: string;
   status?: number;
   // generatorName: string;
   // generatorStatus: string;

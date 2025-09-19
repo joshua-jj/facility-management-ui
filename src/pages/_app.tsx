@@ -17,6 +17,12 @@ export default function App({ Component, pageProps, ...rest }: AppProps) {
 
   const persistor: Persistor = store.__PERSISTOR || ({} as Persistor);
 
+  if (process.env.NODE_ENV === 'production') {
+    console.log = () => {};
+    console.info = () => {};
+    console.debug = () => {};
+  }
+
   return (
     <div className={montserrat.className}>
       <Provider store={store}>

@@ -39,8 +39,9 @@ const ChangePassword: FC = () => {
   };
 
   const handleSubmit = (data: ChangePasswordForm) => {
-    data.email = query?.email as string;
+    // data.email = query?.email as string;
     data.token = query?.accessToken as string;
+    delete data.confirmNewPassword;
 
     dispatch(authActions.changePassword(data) as unknown as UnknownAction);
   };

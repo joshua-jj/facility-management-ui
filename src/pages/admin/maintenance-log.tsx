@@ -8,9 +8,12 @@ import { RootState } from '@/redux/reducers';
 import { maintenanceActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { MaintenanceLog } from '@/types';
-import AddDepartment from '@/components/Modals/AddDepartment';
+import { format, parseISO } from 'date-fns';
+// import AddDepartment from '@/components/Modals/AddDepartment';
+import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
+import { numberWithCommas } from '@/utilities/helpers';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -28,6 +31,11 @@ const MaintenanceLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
+  const [showEditMaintenanceModal, setShowEditMaintenanceModal] =
+    useState(false);
+  const [editMaintenanceData, setEditMaintenanceData] =
+    useState<MaintenanceLog | null>(null);
+
   const {
     IsRequestingMaintenanceLogs,
     IsSearchingMaintenanceLog,
@@ -61,27 +69,47 @@ const MaintenanceLogs = () => {
     value: obj.id.toString(),
   }));
 
-  const handleUpdate = (data: object) => {
+  // const handleUpdate = (data: object) => {
+  //   console.log('🚀 ~ handleUpdate ~ data:', data);
+  // };
+  const handleUpdate = (data: MaintenanceLog) => {
     console.log('🚀 ~ handleUpdate ~ data:', data);
+    setEditMaintenanceData(data);
+    setShowEditMaintenanceModal(true);
   };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
 
   const columns: Column<MaintenanceLog>[] = [
-    { key: 'servicedItem', header: 'SERVICED ITEM' },
-    { key: 'costOfMaintenance', header: 'COST ' },
+    { key: 'serviceItemName', header: 'SERVICED ITEM' },
+    // { key: 'costOfMaintenance', header: 'COST ' },
+    {
+      key: 'costOfMaintenance',
+      header: 'COST',
+      render: (value: string | number) => {
+        return <span>{numberWithCommas(Number(value))}</span>;
+      },
+    },
     { key: 'artisanName', header: 'ARTISAN NAME' },
     { key: 'artisanPhone', header: 'ARTISAN NUMBER' },
-    { key: 'maintenanceDate', header: 'DATE' },
+    { key: 'signature', header: 'SIGNATURE' },
+    // { key: 'maintenanceDate', header: 'DATE' },
+    {
+      key: 'maintenanceDate',
+      header: 'DATE',
+      render: (value: string | number) => {
+        return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
+      },
+    },
     {
       key: 'id',
       header: '.',
       render: (value: string | number, row: object) => (
         <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
+          handleUpdate={() => handleUpdate(row as MaintenanceLog)}
+          log={true}
         />
       ),
     },
@@ -89,11 +117,11 @@ const MaintenanceLogs = () => {
 
   return (
     <PrivateRoute allowedRoles={[1, 4, 5]}>
-      <Layout>
+      <Layout title="Maintenance Logs">
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          <Formsy className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              <div className="w-[17rem]">
+          <Formsy className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="w-full md:w-[17rem]">
                 <input
                   type="text"
                   name="searchQuery"
@@ -104,7 +132,7 @@ const MaintenanceLogs = () => {
                   //   setSearchQuery(e.target.value);
                   //   // setCurrentPage(1); // reset on new search
                   // }}
-                  className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
+                  className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
               <div className="filter relative">
@@ -115,7 +143,7 @@ const MaintenanceLogs = () => {
                   Filter
                 </button>
                 {showFilterOptions && (
-                  <div className="filter-options absolute bg-white rounded mt-[0.2rem] right-0 min-w-full w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
+                  <div className="z-[999] filter-options absolute bg-white rounded mt-[0.2rem] left-0 md:left-auto md:right-0 min-w-full w-[15rem] md:w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
                     <h4 className="px-4 py-3 font-semibold">Filter by</h4>
                     <hr className="m-0 p-0 border border-[rgba(228,229,231,1)]" />
 
@@ -162,14 +190,14 @@ const MaintenanceLogs = () => {
                 )}
               </div>
             </div>
-            <div>
-              <button className="csv text-xs cursor-pointer text-[#B28309] px-3 py-3">
+            <div className="">
+              <button className="csv my-4 md:my-0 text-xs cursor-pointer text-[#B28309] px-3 py-3">
                 Download CSV
               </button>
               <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-                <AddDepartment className="text-start w-full cursor-pointer">
+                <AddMaintenanceLog className="text-start w-full cursor-pointer">
                   Create Maintenance Log
-                </AddDepartment>
+                </AddMaintenanceLog>
               </button>
             </div>
           </Formsy>
@@ -179,6 +207,14 @@ const MaintenanceLogs = () => {
             columns={columns}
             data={allMaintenanceLogsList}
           />
+          {showEditMaintenanceModal && (
+            <AddMaintenanceLog
+              className="text-start w-full cursor-pointer"
+              maintenanceData={editMaintenanceData} // Pass the Item data as a prop
+              open={showEditMaintenanceModal}
+              onClose={() => setShowEditMaintenanceModal(false)}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>
