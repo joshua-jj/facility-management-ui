@@ -83,7 +83,7 @@ const Reports = () => {
 
   return (
     <PrivateRoute allowedRoles={[1, 2, 4, 5]}>
-      <Layout>
+      <Layout title="Reports">
         <div className="flex items-center justify-between gap-4 mb-6 z-50">
           <div className="w-[17rem]">
             <input

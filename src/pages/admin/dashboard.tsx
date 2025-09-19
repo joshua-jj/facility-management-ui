@@ -63,7 +63,7 @@ const Dashboard = () => {
 
   return (
     <PrivateRoute>
-      <Layout>
+      <Layout title="Dashboard">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-6">
           {stats?.map((stat, index) => (
             <div

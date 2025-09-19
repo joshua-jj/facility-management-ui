@@ -235,7 +235,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
             <div className="flex items-center text-[#0F2552] gap-4">
               <button
                 onClick={() => handleQuantityChange(item, -1)}
-                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-l"
+                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-l cursor-pointer"
                 disabled={(item.requestedQuantity || 0) <= 1}
               >
                 -
@@ -250,7 +250,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
               </div>
               <button
                 onClick={() => handleQuantityChange(item, 1)}
-                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-r"
+                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-r cursor-pointer"
                 disabled={
                   (item.requestedQuantity || 0) >= (item.availableQuantity || 0)
                 }
@@ -263,7 +263,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
       {department && allDepartmentItemsList?.length > 1 && (
         <button
           onClick={addItem}
-          className="w-full h-12 py-2 bg-[#E5E8EC] text-[#0F2552] rounded hover:bg-gray-200 border border-[#ACB1BA4D]"
+          className="w-full h-12 py-2 bg-[#E5E8EC] text-[#0F2552] rounded hover:bg-gray-200 border border-[#ACB1BA4D] cursor-pointer"
         >
           Add more item
         </button>

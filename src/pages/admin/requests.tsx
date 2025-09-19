@@ -197,7 +197,7 @@ const Requests = () => {
 
   return (
     <PrivateRoute>
-      <Layout>
+      <Layout title="Requests">
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
           {/* =========== Filters ================= */}
           <Formsy className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4">
