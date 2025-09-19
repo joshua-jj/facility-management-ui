@@ -446,8 +446,8 @@ function* releaseRequestItems({ data }: ReleaseItemsAction) {
       authConstants.USER_KEY
     );
     if (data) {
-      const requestUri = `${requestConstants.REQUEST_URI}/release/${data?.requestId}`;
       const { requestId, ...restData } = data;
+      const requestUri = `${requestConstants.REQUEST_URI}/release/${requestId}`;
       const requestReq = createRequestWithToken(requestUri, {
         method: 'PATCH',
         body: JSON.stringify(restData),
@@ -526,8 +526,8 @@ function* returnRequestItems({ data }: ReturnItemsAction) {
       authConstants.USER_KEY
     );
     if (data) {
-      const requestUri = `${requestConstants.REQUEST_URI}/return-item/${data?.requestId}`;
       const { requestId, ...restData } = data;
+      const requestUri = `${requestConstants.REQUEST_URI}/return-item/${requestId}`;
 
       const requestReq = createRequestWithToken(requestUri, {
         method: 'PATCH',

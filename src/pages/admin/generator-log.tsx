@@ -29,28 +29,28 @@ const GeneratorLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { IsRequestingGeneratorLogs, IsSearchingGeneratorLog, allGeneratorLogsList } = useSelector(
-    (s: RootState) => s.generator
-  );
+  const {
+    IsRequestingGeneratorLogs,
+    IsSearchingGeneratorLog,
+    allGeneratorLogsList,
+  } = useSelector((s: RootState) => s.generator);
 
   useEffect(() => {
     dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
   }, [dispatch]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const query = e.target.value;
-      if (!query) {
-        dispatch(
-          generatorActions.getGeneratorLogs() as unknown as UnknownAction
-        );
-      }
-      setSearchQuery(query);
-      dispatch(
-        generatorActions.searchGeneratorLog({
-          text: query,
-        }) as unknown as UnknownAction
-      );
-    };
+    const query = e.target.value;
+    if (!query) {
+      dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
+    }
+    setSearchQuery(query);
+    dispatch(
+      generatorActions.searchGeneratorLog({
+        text: query,
+      }) as unknown as UnknownAction
+    );
+  };
 
   const allDepartmentsArray = allGeneratorLogsList?.map((obj) => ({
     ...obj,
@@ -62,9 +62,9 @@ const GeneratorLogs = () => {
     console.log('🚀 ~ handleUpdate ~ data:', data);
   };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
 
   const columns: Column<GeneratorLog>[] = [
     { key: 'nameOfMeeting', header: 'MEETING TITLE' },
@@ -73,21 +73,21 @@ const GeneratorLogs = () => {
     {
       key: 'onTime',
       header: 'DATE',
-      render: (value: string | number, row: GeneratorLog) => {
+      render: (value: string | number) => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
     {
       key: 'onTime',
       header: 'ON TIME',
-      render: (value: string | number, row: GeneratorLog) => {
+      render: (value: string | number) => {
         return <span>{format(parseISO(String(value)), 'HH:mm')}</span>;
       },
     },
     {
       key: 'offTime',
       header: 'OFF TIME',
-      render: (value: string | number, row: GeneratorLog) => {
+      render: (value: string | number) => {
         return <span>{format(parseISO(String(value)), 'HH:mm')}</span>;
       },
     },
@@ -99,10 +99,7 @@ const GeneratorLogs = () => {
       key: 'id',
       header: '.',
       render: (value: string | number, row: object) => (
-        <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
-          log={true}
-        />
+        <ActionDropDown handleUpdate={() => handleUpdate(row)} log={true} />
       ),
     },
   ];

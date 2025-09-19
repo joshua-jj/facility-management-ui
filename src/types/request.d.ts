@@ -78,17 +78,24 @@ export interface AssignRequestForm {
   userId: number;
 }
 
+type SelectedUnit = {
+  storeId: number | string;
+  serialNumber: string;
+  condition: string;
+};
+
 export interface ReleaseItemsForm {
   requestId: number;
-  userId: number;
+  // userId: number;
   items: Array<{
     itemId: number;
     // storeId: string;
     quantityLeased?: number;
     quantityReleased: number;
     quantityReturned?: number;
-    conditionBeforeLease: string;
-    unitIds: (number | string)[];
+    leasedDate?: string;
+    returnedDate?: string;
+    units: SelectedUnit[];
   }>;
 }
 

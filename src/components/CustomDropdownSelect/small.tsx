@@ -1,36 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Arrow from '../../../public/assets/icons/arrow-right.svg';
 
-// type Option = { value: string; label: string };
-
-// // ✅ Props for multi-select
-// interface MultiSelectProps {
-//   multiple: true;
-//   value: string[];
-//   onChange: (value: string[]) => void;
-//   options: Option[];
-//   className?: string;
-//   placeholder?: string;
-//   quantity?: number;
-//   onOpen?: () => void;
-// }
-
-// // ✅ Props for single-select
-// interface SingleSelectProps {
-//   multiple?: false;
-//   value: string;
-//   onChange: (value: string) => void;
-//   options: Option[];
-//   className?: string;
-//   placeholder?: string;
-//   quantity?: number;
-//   onOpen?: () => void;
-// }
-
 // type SmallSelectProps = MultiSelectProps | SingleSelectProps;
-type Option<T = any> = { value: T; label: string; data?: any };
+type Option<T = string> = { value: T; label: string; data?: unknown };
 
-// ✅ Props for multi-select
 interface MultiSelectProps<T> {
   multiple: true;
   value: T[];
@@ -42,7 +15,6 @@ interface MultiSelectProps<T> {
   onOpen?: () => void;
 }
 
-// ✅ Props for single-select
 interface SingleSelectProps<T> {
   multiple?: false;
   value: T;
@@ -81,7 +53,6 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  console.log('quantity', quantity);
 
   const toggleOpen = () => {
     const newOpen = !isOpen;
@@ -91,73 +62,23 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
     }
   };
 
-  // const handleOptionClick = (optValue: string) => {
-  //   if (multiple) {
-  //     if (value.includes(optValue)) {
-  //       // Deselect
-  //       const newValue = value.filter((v) => v !== optValue);
-  //       onChange(newValue);
-  //     } else {
-  //       // Select, but check limit
-  //       if (quantity !== undefined && value.length >= quantity) {
-  //         return; // Do not add if at limit
-  //       }
-  //       const newValue = [...value, optValue];
-  //       onChange(newValue);
-  //     }
-  //     // Do not close dropdown for multi-select
-  //   } else {
-  //     onChange(optValue);
-  //     setIsOpen(false);
-  //   }
-  // };
-
-  //   const handleOptionClick = (optValue: any) => {
-  //   if (multiple) {
-  //     if (value.includes(optValue)) {
-  //       // Deselect
-  //       const newValue = value.filter((v) => v !== optValue);
-  //       onChange(newValue as any);
-  //     } else {
-  //       if (quantity !== undefined && value.length >= quantity) {
-  //         return; // limit reached
-  //       }
-  //       const newValue = [...value, optValue];
-  //       onChange(newValue as any);
-  //     }
-  //   } else {
-  //     onChange(optValue as any);
-  //     setIsOpen(false);
-  //   }
-  // };
-
-  // const isSelected = (optValue: any) => {
-  //   return multiple ? value.includes(optValue) : value === optValue;
-  // };
-  // const isSelected = (optValue: any) => {
-  //   if (multiple) {
-  //     // return value.some((v: any) => v.serialNumber === optValue.serialNumber);
-  //   }
-  //   return value && (value as any).serialNumber === optValue.serialNumber;
-  // };
-
-  const handleOptionClick = (optValue: any) => {
+  const handleOptionClick = (optValue: string) => {
     if (multiple) {
       if (value.includes(optValue)) {
         const newValue = value.filter((v) => v !== optValue);
-        onChange(newValue as any);
+        onChange(newValue);
       } else {
         if (quantity !== undefined && value.length >= quantity) return;
-        onChange([...(value as any), optValue]);
+        onChange([...value, optValue]);
       }
     } else {
-      onChange(optValue as any);
+      onChange(optValue);
       setIsOpen(false);
     }
   };
 
-  const isSelected = (optValue: any) => {
-    return multiple ? (value as any).includes(optValue) : value === optValue;
+  const isSelected = (optValue: string) => {
+    return multiple ? value.includes(optValue) : value === optValue;
   };
 
   const getDisplayValue = () => {
@@ -173,10 +94,6 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
       return options.find((o) => o.value === value)?.label || placeholder;
     }
   };
-
-  // const isSelected = (optValue: string) => {
-  //   return multiple ? value.includes(optValue) : value === optValue;
-  // };
 
   return (
     <div ref={wrapperRef} className={`relative ${className}`}>
@@ -208,17 +125,6 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
                 !multiple && isSelected(opt.value) ? 'bg-blue-50' : ''
               }`}
             >
-              {/* {multiple && (
-                <div
-                  className={`w-4 h-4 mr-1 flex items-center justify-center rounded text-base flex-shrink-0 ${
-                    isSelected(opt.value)
-                      ? 'bg-[#0F2552] text-white'
-                      : 'bg-white border border-gray-300 text-transparent'
-                  }`}
-                >
-                  ✔
-                </div>
-              )} */}
               {multiple && (
                 <div
                   className={`w-4 h-4 mr-1 flex items-center justify-center rounded text-base flex-shrink-0 ${

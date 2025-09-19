@@ -48,16 +48,14 @@ const ActionDropDown = (props: Props) => {
           >
             update
           </li>
-          {
-            !props.log && (
-          <li
-            onClick={props.handleDelete}
-            className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"
-          >
-            delete
-          </li>
-            )
-          }
+          {!props.log && (
+            <li
+              onClick={props.handleDelete}
+              className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"
+            >
+              delete
+            </li>
+          )}
         </ul>
       )}
     </>

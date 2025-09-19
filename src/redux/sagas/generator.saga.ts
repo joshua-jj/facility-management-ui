@@ -8,7 +8,11 @@ import {
   clearObjectFromStorage,
 } from '@/utilities/helpers';
 import { GeneratorLog, SetSnackBarPayload } from '@/types';
-import { appActions, CreateGeneratorLogAction, SearchGeneratorLogAction } from '@/actions';
+import {
+  appActions,
+  CreateGeneratorLogAction,
+  SearchGeneratorLogAction,
+} from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
 interface User {
@@ -226,12 +230,13 @@ function* createGeneratorLogWatcher() {
 }
 
 function* searchGeneratorLogWatcher() {
-  yield takeLatest(
-    generatorConstants.SEARCH_GENERATOR_LOG,
-    searchGeneratorLog
-  );
+  yield takeLatest(generatorConstants.SEARCH_GENERATOR_LOG, searchGeneratorLog);
 }
 
 export default function* rootSaga() {
-  yield all([getGeneratorLogsWatcher(), createGeneratorLogWatcher(), searchGeneratorLogWatcher()]);
+  yield all([
+    getGeneratorLogsWatcher(),
+    createGeneratorLogWatcher(),
+    searchGeneratorLogWatcher(),
+  ]);
 }

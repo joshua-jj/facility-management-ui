@@ -16,7 +16,7 @@ import TextArea from '@/components/Inputs/TextArea';
 // import { setItem } from 'localforage';
 
 interface AddItemModalProps {
-  children: ReactNode;
+  children?: ReactNode;
   className: string;
   open?: boolean;
   onClose?: () => void;
@@ -50,9 +50,9 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
   const disableButton = () => setCanSubmit(false);
 
   const closeModal = useCallback(() => {
-      setIsModalOpen(false);
-      if (onClose) onClose();
-    }, [onClose]);
+    setIsModalOpen(false);
+    if (onClose) onClose();
+  }, [onClose]);
 
   useEffect(() => {
     dispatch(
@@ -134,7 +134,9 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                   onClick={() => setItemIsOpen(!itemIsOpen)}
                   className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
                 >
-                  {item?.name || String(maintenanceData?.serviceItemName) || 'Select item'}
+                  {item?.name ||
+                    String(maintenanceData?.serviceItemName) ||
+                    'Select item'}
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
                     <CaretIcon className="rotate-90" />
                   </span>
@@ -184,7 +186,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
               name="costOfMaintenance"
               label="Cost of Maintenance"
               placeholder="#20,000"
-              value={maintenanceData?.costOfMaintenance || ''}
+              value={String(maintenanceData?.costOfMaintenance) || ''}
               required
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
@@ -327,8 +329,10 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
+              ) : maintenanceData ? (
+                'Update'
               ) : (
-                maintenanceData ? 'Update' : 'Submit'
+                'Submit'
               )}
             </button>
           </Formsy>

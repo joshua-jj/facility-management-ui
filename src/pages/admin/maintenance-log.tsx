@@ -31,8 +31,10 @@ const MaintenanceLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const [showEditMaintenanceModal, setShowEditMaintenanceModal] = useState(false);
-  const [editMaintenanceData, setEditMaintenanceData] = useState<MaintenanceLog | null>(null);
+  const [showEditMaintenanceModal, setShowEditMaintenanceModal] =
+    useState(false);
+  const [editMaintenanceData, setEditMaintenanceData] =
+    useState<MaintenanceLog | null>(null);
 
   const {
     IsRequestingMaintenanceLogs,
@@ -70,11 +72,11 @@ const MaintenanceLogs = () => {
   // const handleUpdate = (data: object) => {
   //   console.log('🚀 ~ handleUpdate ~ data:', data);
   // };
-    const handleUpdate = (data: MaintenanceLog) => {
-      console.log('🚀 ~ handleUpdate ~ data:', data);
-      setEditMaintenanceData(data);
-      setShowEditMaintenanceModal(true);
-    };
+  const handleUpdate = (data: MaintenanceLog) => {
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+    setEditMaintenanceData(data);
+    setShowEditMaintenanceModal(true);
+  };
 
   // const handleDelete = (data: object) => {
   //   console.log('🚀 ~ handleDelete ~ data:', data);
@@ -86,7 +88,7 @@ const MaintenanceLogs = () => {
     {
       key: 'costOfMaintenance',
       header: 'COST',
-      render: (value: string | number, row: MaintenanceLog) => {
+      render: (value: string | number) => {
         return <span>{numberWithCommas(Number(value))}</span>;
       },
     },
@@ -97,7 +99,7 @@ const MaintenanceLogs = () => {
     {
       key: 'maintenanceDate',
       header: 'DATE',
-      render: (value: string | number, row: MaintenanceLog) => {
+      render: (value: string | number) => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
@@ -106,7 +108,7 @@ const MaintenanceLogs = () => {
       header: '.',
       render: (value: string | number, row: object) => (
         <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
+          handleUpdate={() => handleUpdate(row as MaintenanceLog)}
           log={true}
         />
       ),
@@ -205,7 +207,7 @@ const MaintenanceLogs = () => {
             columns={columns}
             data={allMaintenanceLogsList}
           />
-           {showEditMaintenanceModal && (
+          {showEditMaintenanceModal && (
             <AddMaintenanceLog
               className="text-start w-full cursor-pointer"
               maintenanceData={editMaintenanceData} // Pass the Item data as a prop

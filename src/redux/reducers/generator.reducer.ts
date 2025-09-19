@@ -87,7 +87,7 @@ export interface RootState {
     state: GeneratorLogState | undefined,
     action: AllGeneratorLogsAction
   ) => GeneratorLogState;
-};
+}
 
 const rootReducer = combineReducers<RootState>({
   IsRequestingGeneratorLogs,

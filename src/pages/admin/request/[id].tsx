@@ -56,6 +56,8 @@ interface RequestDetails {
       unitIds: (number | string)[];
     }>;
     assigneeName: string;
+    collectedDate: string;
+    completedDate: string;
   };
   requestStatus: string;
   // };
@@ -151,8 +153,22 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
   // const [selectedItemIDs, setSelectedItemIDs] = useState(
   //   requestDetails?.audit.items?.map((item) => item.itemName || '') || []
   // );
+  // const [itemUnitsOptions, setItemUnitsOptions] = useState<
+  //   Record<number, { value: number; label: string }[]>
+  // >({});
+  type UnitOption = {
+    value: number | string;
+    label: string;
+    data: {
+      id: number;
+      serialNumber: string;
+      condition: string;
+      store: { id: number };
+    };
+  };
+
   const [itemUnitsOptions, setItemUnitsOptions] = useState<
-    Record<number, { value: number; label: string }[]>
+    Record<number, UnitOption[]>
   >({});
   // const [selectedUnits, setSelectedUnits] = useState<
   //   Record<number, (string | number)[]>
@@ -247,24 +263,24 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
     setItems(updatedItems);
   };
 
-  const handleReturnQuantityChange = (index: number, value: string) => {
-    const updatedItems = [...items];
-    const maxQuantity = Number(
-      requestDetails?.audit?.items[index].quantityLeased
-    );
+  // const handleReturnQuantityChange = (index: number, value: string) => {
+  //   const updatedItems = [...items];
+  //   const maxQuantity = Number(
+  //     requestDetails?.audit?.items[index].quantityLeased
+  //   );
 
-    if (Number(value) > maxQuantity) {
-      alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
-      return;
-    }
+  //   if (Number(value) > maxQuantity) {
+  //     alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
+  //     return;
+  //   }
 
-    updatedItems[index].quantityReturned = Number(value);
-    setItems(updatedItems);
-  };
+  //   updatedItems[index].quantityReturned = Number(value);
+  //   setItems(updatedItems);
+  // };
 
-  console.log('itemUnitsOptions:', itemUnitsOptions);
-  console.log('requestDetails:', requestDetails);
-  console.log('requestStatus:', requestStatus);
+  // console.log('itemUnitsOptions:', itemUnitsOptions);
+  // console.log('requestDetails:', requestDetails);
+  // console.log('requestStatus:', requestStatus);
 
   const handleUpdateStatus = () => {
     const payload = {
@@ -290,13 +306,11 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       itemId: item.itemId,
       quantityLeased: Number(item.quantityLeased),
       quantityReleased: selectedUnits[item.itemId]?.length || 0, // ✅ use length of selected units
-      // quantityReleased: Number(item.quantityReleased),
       leasedDate: new Date().toISOString(),
       units: selectedUnits[item.itemId] || [], // ✅ already full objects
     }));
     const payload = {
       items: updatedItems,
-      // userId: Number(userDetails?.id),
       requestId: Number(id),
     };
     console.log('payload:', payload);
@@ -310,9 +324,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       // storeId: item.storeId,
       itemId: item.itemId,
       quantityReturned: selectedUnits[item.itemId]?.length || 0,
-      // quantityReturned: Number(item.quantityReturned),
       quantityReleased: Number(item.quantityReleased),
-      // conditionBeforeLease: item.conditionBeforeLease,
       returnedDate: new Date().toISOString(),
       units: selectedUnits[item.itemId] || [],
     }));

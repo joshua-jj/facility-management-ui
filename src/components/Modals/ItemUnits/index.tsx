@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import FullscreenModal from '..';
 import Formsy from 'formsy-react';
-import { ItemUnit, ReportForm } from '@/types';
+import { ReportForm } from '@/types';
 import { itemActions, reportActions } from '@/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
@@ -30,7 +30,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
   const [canSubmit, setCanSubmit] = useState(false);
   const [unitIsOpen, setUnitIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [units, setUnits] = useState<ItemUnit | null>(null);
+  // const [units, setUnits] = useState<ItemUnit | null>(null);
 
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
@@ -49,10 +49,10 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
     unit.serialNumber.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleUnitSelect = (unit: ItemUnit) => {
-    setUnits(unit);
-    //   setUnitIsOpen(false);
-  };
+  // const handleUnitSelect = () => {
+  //   // setUnits(unit);
+  //   //   setUnitIsOpen(false);
+  // };
 
   return (
     <>
@@ -105,7 +105,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
                       {filteredUnits.map((unit) => (
                         <li
                           key={unit.id}
-                          onClick={() => handleUnitSelect(unit)}
+                          // onClick={() => handleUnitSelect(unit)}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                         >
                           <span className="mr-4">{unit.serialNumber}</span>
