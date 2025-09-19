@@ -7,11 +7,13 @@ interface MoreInformationProps {
   data: {
     location: string;
     returnDate: string;
+    dateOfCollection: string;
     description: string;
   };
   setData: (data: {
     location: string;
     returnDate: string;
+    dateOfCollection: string;
     description: string;
   }) => void;
 }
@@ -20,11 +22,13 @@ const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
   const handleChange = (currentValues: {
     location?: string;
     return_date?: string;
+    dateOfCollection?: string;
     description?: string;
   }) => {
     setData({
       location: currentValues.location || '',
       returnDate: currentValues.return_date || '',
+      dateOfCollection: currentValues.dateOfCollection || '',
       description: currentValues.description || '',
     });
   };
@@ -39,6 +43,15 @@ const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
         placeholder="e.g City gate church"
         inputClass="font-normal border border-gray-300 rounded"
         value={data.location}
+      />
+      <TextInput
+        type="date"
+        className="text-[#0F2552] rounded font-medium text-sm"
+        name="dateOfCollection"
+        label="Collection date"
+        placeholder="select option"
+        inputClass="font-normal border border-gray-300 rounded"
+        value={data.dateOfCollection}
       />
       <TextInput
         type="date"

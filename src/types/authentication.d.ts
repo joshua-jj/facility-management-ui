@@ -9,8 +9,9 @@ export interface ResendLinkForm {
 export interface ChangePasswordForm {
   oldPassword: string;
   newPassword: string;
+  confirmNewPassword?: string;
   email: string;
-  token: string;
+  token?: string;
 }
 
 export interface AuthConstants {

@@ -34,7 +34,7 @@ export const pageRoutes = [
   },
   {
     id: 4,
-    label: 'store',
+    label: 'stores',
     link: '/admin/store',
     icon: <StoreIcon />,
     allowedRoles: [5, 1],
@@ -48,14 +48,14 @@ export const pageRoutes = [
   },
   {
     id: 6,
-    label: 'maintenance log',
+    label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
     allowedRoles: [5, 1, 4],
   },
   {
     id: 7,
-    label: 'generator log',
+    label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
     allowedRoles: [5, 1, 4],
@@ -85,6 +85,8 @@ export const getPageNames = (link: string) => {
     case '/admin/request/[id]':
       return 'requests';
     case '/admin/items':
+      return 'items';
+    case '/admin/item/[id]':
       return 'items';
     case '/admin/store':
       return 'store';

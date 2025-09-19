@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux';
 import { itemConstants } from '@/constants';
-import { Action, Item, LoadingState, PaginationState } from '@/types';
+import { Action, Item, ItemUnit, LoadingState, PaginationState } from '@/types';
 import { updateObject } from '@/utilities/reducerUtility';
 
 export interface Items {
@@ -28,11 +28,16 @@ interface AllItemsAction extends Action {
       totalPages: number;
     };
   };
+  id: number;
   item: Item[];
+  itemDetails: {
+    itemUnits: ItemUnit[];
+  };
 }
 
 type DepartmentItemsListState = Items[];
 type AllItemsListState = Item[];
+type allItemUnitsListState = ItemUnit[];
 
 const IsRequestingAllDepartmentItems = (
   state: LoadingState = false,
@@ -82,6 +87,36 @@ const IsSearchingItem = (
   }
 };
 
+const IsCreatingItem = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case itemConstants.REQUEST_CREATE_ITEM:
+      return true;
+    case itemConstants.CREATE_ITEM_SUCCESS:
+    case itemConstants.CREATE_ITEM_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
+const IsUpdatingItem = (
+  state: LoadingState = false,
+  action: Action
+): LoadingState => {
+  switch (action.type) {
+    case itemConstants.REQUEST_UPDATE_ITEM:
+      return true;
+    case itemConstants.UPDATE_ITEM_SUCCESS:
+    case itemConstants.UPDATE_ITEM_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allDepartmentItemsList = (
   state: DepartmentItemsListState = [],
   action: DepartmentItemsAction
@@ -93,6 +128,19 @@ const allDepartmentItemsList = (
       return state;
   }
 };
+
+const departmentItemsList = (
+  state: AllItemsListState = [],
+  action: AllItemsAction
+): AllItemsListState => {
+  switch (action.type) {
+    case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
+      return action.items?.items ?? state;
+    default:
+      return state;
+  }
+};
+
 const allItemsList = (
   state: AllItemsListState = [],
   action: AllItemsAction
@@ -104,6 +152,20 @@ const allItemsList = (
       return action.items?.items ?? state;
     case itemConstants.SEARCH_ITEM_SUCCESS:
       return action.item ?? state;
+    case itemConstants.DELETE_ITEM_SUCCESS:
+      return state.filter((item: Item) => item?.id !== action?.id);
+    default:
+      return state;
+  }
+};
+
+const allItemUnitsList = (
+  state: allItemUnitsListState = [],
+  action: AllItemsAction
+): allItemUnitsListState => {
+  switch (action.type) {
+    case itemConstants.GET_AN_ITEM_SUCCESS:
+      return action.itemDetails?.itemUnits ?? state;
     default:
       return state;
   }
@@ -158,14 +220,24 @@ export interface RootState {
   ) => LoadingState;
   IsRequestingAllItems: (state: LoadingState, action: Action) => LoadingState;
   IsSearchingItem: (state: LoadingState, action: Action) => LoadingState;
+  IsCreatingItem: (state: LoadingState, action: Action) => LoadingState;
+  IsUpdatingItem: (state: LoadingState, action: Action) => LoadingState;
   allDepartmentItemsList: (
     state: DepartmentItemsListState | undefined,
     action: DepartmentItemsAction
   ) => DepartmentItemsListState;
+  departmentItemsList: (
+    state: AllItemsListState | undefined,
+    action: AllItemsAction
+  ) => AllItemsListState;
   allItemsList: (
     state: AllItemsListState | undefined,
     action: AllItemsAction
   ) => AllItemsListState;
+  allItemUnitsList: (
+    state: allItemUnitsListState | undefined,
+    action: AllItemsAction
+  ) => allItemUnitsListState;
   pagination: (
     state: PaginationState | undefined,
     action: AllItemsAction
@@ -177,8 +249,12 @@ const rootReducer = combineReducers<RootState>({
   IsRequestingAllDepartmentItems,
   IsRequestingAllItems,
   IsSearchingItem,
+  IsCreatingItem,
+  IsUpdatingItem,
   allDepartmentItemsList,
+  departmentItemsList,
   allItemsList,
+  allItemUnitsList,
   pagination,
 });
 

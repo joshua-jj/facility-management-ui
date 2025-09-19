@@ -10,7 +10,7 @@ import { UnknownAction } from 'redux';
 import { Department } from '@/types';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
-import ActionDropDown from '@/components/ActionDropDown';
+// import ActionDropDown from '@/components/ActionDropDown';
 
 // const optionsFilter = [
 //   { value: '1', label: 'approved' },
@@ -43,13 +43,13 @@ const Departments = () => {
       department.hodPhone?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleUpdate = (data: object) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
-  };
+  // const handleUpdate = (data: object) => {
+  //   console.log('🚀 ~ handleUpdate ~ data:', data);
+  // };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-  };
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
 
   const columns: Column<Department>[] = [
     { key: 'name', header: 'DEPARTMENT TITLE' },
@@ -57,25 +57,25 @@ const Departments = () => {
     { key: 'hodEmail', header: 'EMAIL ADDRESS' },
     { key: 'hodPhone', header: 'PHONE NUMBER' },
     { key: 'itemCount', header: 'NO. ITEM' },
-    {
-      key: 'id',
-      header: '.',
-      render: (value: string | number, row: object) => (
-        <ActionDropDown
-          handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
-        />
-      ),
-    },
+    // {
+    //   key: 'id',
+    //   header: '.',
+    //   render: (value: string | number, row: object) => (
+    //     <ActionDropDown
+    //       handleUpdate={() => handleUpdate(row)}
+    //       handleDelete={() => handleDelete(row)}
+    //     />
+    //   ),
+    // },
   ];
 
   return (
     <PrivateRoute allowedRoles={[1, 4, 5]}>
-      <Layout>
+      <Layout title="Departments">
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          <Formsy className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              <div className="w-[17rem]">
+          <Formsy className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="w-full md:w-[17rem]">
                 <input
                   type="text"
                   name="searchQuery"
@@ -84,7 +84,7 @@ const Departments = () => {
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                   }}
-                  className="mt-1 px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
+                  className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
               {/* <div className="filter relative">
@@ -139,7 +139,7 @@ const Departments = () => {
               </div> */}
             </div>
             <div>
-              <button className="csv text-xs cursor-pointer text-[#B28309] px-3 py-3">
+              <button className="csv my-4 md:my-0 text-xs cursor-pointer text-[#B28309] px-3 py-3">
                 Download CSV
               </button>
               <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">

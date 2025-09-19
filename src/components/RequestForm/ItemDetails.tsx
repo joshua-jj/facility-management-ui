@@ -3,16 +3,13 @@ import { CaretIcon, DeleteIcon, SearchIcon } from '../Icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
-// import { Department } from '@/redux/reducers/department.reducer';
 import { itemActions } from '@/actions';
-// import { Items } from '@/redux/reducers/item.reducer';
 import { Department, Item } from '@/types';
 
 interface ItemDetailsProps {
   items: Item[];
   department: Department | null;
   setItems: (items: Item[]) => void;
-  //   setDepartment: React.Dispatch<React.SetStateAction<Department | null>>;
   setDepartment: (department: Department | null) => void;
   addItem: () => void;
 }
@@ -32,7 +29,6 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
   const [search, setSearch] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
-  //   const [department, setDepartment] = useState<Department | null>(null);
 
   const handleDepartmentSelect = (department: Department) => {
     setDepartment(department);
@@ -41,6 +37,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
         department.id
       ) as unknown as UnknownAction
     );
+    setSearch('');
     setDepartmentIsOpen(false);
   };
 
@@ -62,6 +59,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
     );
     setItems(updatedItems);
     setOpenDropdownId(null);
+    setSearch('');
   };
 
   const handleQuantityChange = (item: Item, delta: number) => {
@@ -110,7 +108,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
           <button
             type="button"
             onClick={() => setDepartmentIsOpen(!departmentIsOpen)}
-            className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
+            className="w-full px-4 py-2 md:text-[1rem] text-[14px] border border-gray-300 rounded text-left text-gray-500"
           >
             {department?.name || 'Select department'}
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
@@ -155,11 +153,11 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
       )}
       {department &&
         allDepartmentItemsList?.length > 0 &&
-        items?.map((item) => (
+        items?.map((item, index) => (
           <div key={item.id} className="mb-6 group">
             <div className="flex justify-between items-center">
               <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
-                Item {item.id} name
+                Item {index + 1} name
               </label>
               <button
                 onClick={() => handleDelete(item)}
@@ -237,7 +235,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
             <div className="flex items-center text-[#0F2552] gap-4">
               <button
                 onClick={() => handleQuantityChange(item, -1)}
-                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-l"
+                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-l cursor-pointer"
                 disabled={(item.requestedQuantity || 0) <= 1}
               >
                 -
@@ -252,7 +250,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
               </div>
               <button
                 onClick={() => handleQuantityChange(item, 1)}
-                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-r"
+                className="w-2/10 h-10 px-3 py-1 border border-gray-300 rounded-r cursor-pointer"
                 disabled={
                   (item.requestedQuantity || 0) >= (item.availableQuantity || 0)
                 }
@@ -265,7 +263,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({
       {department && allDepartmentItemsList?.length > 1 && (
         <button
           onClick={addItem}
-          className="w-full h-12 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+          className="w-full h-12 py-2 bg-[#E5E8EC] text-[#0F2552] rounded hover:bg-gray-200 border border-[#ACB1BA4D] cursor-pointer"
         >
           Add more item
         </button>

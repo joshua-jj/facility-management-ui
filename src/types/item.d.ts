@@ -1,3 +1,5 @@
+import { Store } from './store';
+
 export interface ItemConstants {
   REQUEST_GET_DEPARTMENT_ITEMS: string;
   GET_DEPARTMENT_ITEMS_SUCCESS: string;
@@ -11,9 +13,22 @@ export interface ItemConstants {
   GET_ALL_ITEMS_SUCCESS: string;
   GET_ALL_ITEMS_ERROR: string;
 
+  REQUEST_GET_AN_ITEM: string;
+  GET_AN_ITEM_SUCCESS: string;
+  GET_AN_ITEM_ERROR: string;
+
   REQUEST_CREATE_ITEM: string;
   CREATE_ITEM_SUCCESS: string;
+  CREATE_ITEMS_SUCCESS: string;
   CREATE_ITEM_ERROR: string;
+
+  REQUEST_UPDATE_ITEM: string;
+  UPDATE_ITEM_SUCCESS: string;
+  UPDATE_ITEM_ERROR: string;
+
+  REQUEST_DELETE_ITEM: string;
+  DELETE_ITEM_SUCCESS: string;
+  DELETE_ITEM_ERROR: string;
 
   REQUEST_SEARCH_ITEM: string;
   SEARCH_ITEM_SUCCESS: string;
@@ -23,19 +38,34 @@ export interface ItemConstants {
   GET_ALL_DEPARTMENT_ITEMS: string;
   GET_ALL_ITEMS: string;
 
+  GET_AN_ITEM: string;
   CREATE_ITEM: string;
+  CREATE_ITEMS: string;
+
+  UPDATE_ITEM: string;
   SEARCH_ITEM: string;
+  DELETE_ITEM: string;
 
   ITEM_URI: string;
 }
 
 export interface ItemForm {
-  itemName: string;
-  itemDescription: string;
-  itemCategory: string;
-  itemStatus: string;
-  itemQuantity: number;
-  itemLocation: string;
+  id?: number;
+  name: string;
+  actualQuantity: number;
+  // storeId: number;
+  departmentId: number;
+  fragile: boolean;
+  // condition: string;
+}
+
+export interface ItemUnitsForm {
+  itemId: string;
+  itemUnits: Array<{
+    id: number;
+    condition: string;
+    storeId: number;
+  }>;
 }
 export interface Item {
   fragile?: boolean;
@@ -61,7 +91,16 @@ export interface Item {
   };
   createdAt?: string;
   updatedAt?: string;
+  itemUnits?: ItemUnit[];
 }
+
+export interface ItemUnit {
+  id: number;
+  serialNumber: string;
+  condition: string;
+  store: Store;
+}
+
 export interface ItemState {
   items: Item[];
   loading: boolean;

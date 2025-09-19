@@ -9,7 +9,7 @@ import Layout from '@/components/Layout';
 const LandingPage: FC = () => {
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row justify-start md:justify-center items-center gap-8 md:gap-20 w-full h-full mt-8">
+      <div className="flex flex-col sm:flex-row justify-start sm:justify-center items-center gap-8 sm:gap-20 w-full h-full mt-8">
         <IdentityCard
           title="Egfm Worker"
           link="/request/egfm-worker"
@@ -21,6 +21,7 @@ const LandingPage: FC = () => {
           link="/request/church-ministry"
           icon={<HomeIcon />}
           filledIcon={<HomeBoldIcon />}
+          disabled
         />
       </div>
     </Layout>
