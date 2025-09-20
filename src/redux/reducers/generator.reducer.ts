@@ -1,12 +1,27 @@
 import { combineReducers } from 'redux';
 import { generatorConstants } from '@/constants';
-import { LoadingState, GeneratorLog, Action, GeneratorAction } from '@/types';
+import {
+  LoadingState,
+  GeneratorLog,
+  Action,
+  GeneratorAction,
+  PaginationState,
+} from '@/types';
+import { updateObject } from '@/utilities/reducerUtility';
 
 type GeneratorLogState = GeneratorLog[];
 
 interface AllGeneratorLogsAction extends Action {
   logs: {
     items: GeneratorLog[];
+    links: { [key: string]: string | number | null };
+    meta: {
+      currentPage: number;
+      itemCount: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+    };
   };
   log: GeneratorLog[];
 }
@@ -70,6 +85,39 @@ const allGeneratorLogsList = (
   }
 };
 
+const pagination = (
+  state: PaginationState = {
+    links: {
+      first: null,
+      last: null,
+      next: null,
+      previous: null,
+    },
+    meta: {
+      currentPage: 0,
+      itemCount: 0,
+      itemsPerPage: 0,
+      totalItems: 0,
+      totalPages: 0,
+    },
+  },
+  action: AllGeneratorLogsAction
+): PaginationState => {
+  switch (action.type) {
+    case generatorConstants.GET_GENERATOR_LOGS_SUCCESS: {
+      const { links, meta } = action.logs;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
+    default:
+      return state;
+  }
+};
+
 export interface RootState {
   IsRequestingGeneratorLogs: (
     state: LoadingState | undefined,
@@ -87,6 +135,10 @@ export interface RootState {
     state: GeneratorLogState | undefined,
     action: AllGeneratorLogsAction
   ) => GeneratorLogState;
+  pagination: (
+    state: PaginationState | undefined,
+    action: AllGeneratorLogsAction
+  ) => PaginationState;
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -94,6 +146,7 @@ const rootReducer = combineReducers<RootState>({
   IsCreatingGeneratorLog,
   IsSearchingGeneratorLog,
   allGeneratorLogsList,
+  pagination,
 });
 
 export default rootReducer;

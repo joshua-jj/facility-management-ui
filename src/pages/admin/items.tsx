@@ -312,12 +312,14 @@ const Items = () => {
             data={allItemsList}
             currentPage={currentPage}
           />
-          <Pagination
-            currentPage={currentPage}
-            totalItems={totalItems}
-            pageSize={itemsPerPage}
-            onPageChange={handleChangePage}
-          />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              pageSize={itemsPerPage}
+              onPageChange={handleChangePage}
+            />
+          )}
           {showEditItemModal && (
             <AddItem
               className="text-start w-full cursor-pointer"

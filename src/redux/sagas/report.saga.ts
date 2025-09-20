@@ -193,7 +193,7 @@ function* searchReport({ data }: SearchReportAction) {
 
     yield put({
       type: reportConstants.SEARCH_REPORT_SUCCESS,
-      report: jsonResponse,
+      report: jsonResponse?.data,
     });
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {

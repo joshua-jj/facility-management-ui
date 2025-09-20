@@ -2,7 +2,6 @@ import Layout from '@/components/Layout';
 import React, { useEffect, useState } from 'react';
 import { Column, Table } from '@/components/Table';
 import Formsy from 'formsy-react';
-import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { storeActions } from '@/actions';
@@ -10,24 +9,15 @@ import { UnknownAction } from 'redux';
 import { Store } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddStore from '@/components/Modals/AddStore';
-// import ActionDropDown from '@/components/ActionDropDown';
-
-const optionsFilter = [
-  { value: '1', label: 'approved' },
-  { value: '2', label: 'assigned' },
-  { value: '3', label: 'collected' },
-  { value: '4', label: 'declined' },
-  { value: '5', label: 'pending' },
-];
 
 const Stores = () => {
   const dispatch = useDispatch();
-  const [statusFilter, setStatusFilter] = useState('');
+  // const [statusFilter, setStatusFilter] = useState('');
   // const [deptFilter, setDeptFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
+  // const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
-  const [showFilterOptions, setShowFilterOptions] = useState(false);
+  // const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { IsRequestingStores, IsSearchingStore, allStoresList } = useSelector(
     (s: RootState) => s.store
   );
@@ -95,7 +85,7 @@ const Stores = () => {
                   className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
-              <div className="filter relative">
+              {/* <div className="filter relative">
                 <button
                   onClick={() => setShowFilterOptions((prev) => !prev)}
                   className="px-3 py-2 rounded border border-[rgba(15,37,82,0.2)]"
@@ -119,16 +109,15 @@ const Stores = () => {
                       </div>
 
                       <div className="mb-4">
-                        {/* <CustomDropdownSelect
+                        <CustomDropdownSelect
                           options={allDepartmentsArray}
                           value={deptFilter}
                           onChange={setDeptFilter}
                           placeholder="Department"
                           // showSelectedLabel
-                        /> */}
+                        />
                       </div>
                       <div className="mb-4">
-                        {/* <label className="block text-sm font-medium text-gray-700">From</label> */}
                         <input
                           type="date"
                           value={dateFrom}
@@ -148,7 +137,7 @@ const Stores = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
             <div className="mt-4 md:mt-0">
               <button className="csv mr-4 md:mr-0 text-xs cursor-pointer text-[#B28309] px-3 py-3">

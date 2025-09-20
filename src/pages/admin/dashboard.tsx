@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { requestActions } from '@/actions';
 import BarChart from '@/components/BarChart';
 import {
@@ -29,14 +28,29 @@ const stats = [
 
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const { userDetails } = useSelector((s: RootState) => s.user);
   const { IsRequestingRequests, allRequestsList } = useSelector(
     (s: RootState) => s.request
   );
-  console.log('🚀 ~ Dashboard ~ allRequestsList:', allRequestsList);
+  // console.log('🚀 ~ Dashboard ~ allRequestsList:', allRequestsList);
 
   useEffect(() => {
-    dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
-  }, [dispatch]);
+    if (userDetails?.roleId === 3) {
+      dispatch(
+        requestActions.getDepartmentRequests({
+          departmentId: userDetails?.departmentId ?? 0,
+        }) as unknown as UnknownAction
+      );
+    } else if (userDetails?.roleId === 4) {
+      dispatch(
+        requestActions.getAssignedRequests({
+          userId: userDetails?.id ?? 0,
+        }) as unknown as UnknownAction
+      );
+    } else {
+      dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
+    }
+  }, [dispatch, userDetails]);
 
   const columns: Column<Request>[] = [
     { key: 'createdBy', header: 'CHURCH/MINISTRY NAME' },
@@ -45,7 +59,7 @@ const Dashboard = () => {
     {
       key: 'dateOfReturn',
       header: 'RETURN DATE',
-      render: (value: string | number, row: Request) => {
+      render: (value: string | number) => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },

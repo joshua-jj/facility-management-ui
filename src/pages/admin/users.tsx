@@ -37,7 +37,9 @@ const Users = () => {
   const { IsRequestingUsers, IsSearchingUser, allUsersList, pagination } =
     useSelector((s: RootState) => s.user);
   const { meta } = pagination;
-  const { currentPage, itemsPerPage, totalItems } = meta;
+  console.log('meta', meta);
+
+  const { currentPage, itemsPerPage, totalPages, totalItems } = meta;
 
   useEffect(() => {
     dispatch(userActions.getUsers() as unknown as UnknownAction);
@@ -200,12 +202,14 @@ const Users = () => {
             columns={columns}
             data={allUsersList}
           />
-          <Pagination
-            currentPage={currentPage}
-            totalItems={totalItems}
-            pageSize={itemsPerPage}
-            onPageChange={handleChangePage}
-          />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              pageSize={itemsPerPage}
+              onPageChange={handleChangePage}
+            />
+          )}
           {showEditUserModal && (
             <AddUser
               className="text-start w-full cursor-pointer"

@@ -5,13 +5,23 @@ import {
   MaintenanceLog,
   Action,
   MaintenanceAction,
+  PaginationState,
 } from '@/types';
+import { updateObject } from '@/utilities/reducerUtility';
 
 type MaintenanceLogsState = MaintenanceLog[];
 
 interface AllMaintenanceLogsAction extends Action {
   logs: {
     items: MaintenanceLog[];
+    links: { [key: string]: string | number | null };
+    meta: {
+      currentPage: number;
+      itemCount: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+    };
   };
   log: MaintenanceLog[];
 }
@@ -75,6 +85,39 @@ const allMaintenanceLogsList = (
   }
 };
 
+const pagination = (
+  state: PaginationState = {
+    links: {
+      first: null,
+      last: null,
+      next: null,
+      previous: null,
+    },
+    meta: {
+      currentPage: 0,
+      itemCount: 0,
+      itemsPerPage: 0,
+      totalItems: 0,
+      totalPages: 0,
+    },
+  },
+  action: AllMaintenanceLogsAction
+): PaginationState => {
+  switch (action.type) {
+    case maintenanceConstants.GET_MAINTENANCE_LOGS_SUCCESS: {
+      const { links, meta } = action.logs;
+      const result = {
+        links,
+        meta,
+      };
+
+      return updateObject(state, result);
+    }
+    default:
+      return state;
+  }
+};
+
 export interface RootState {
   IsRequestingMaintenanceLogs: (
     state: LoadingState | undefined,
@@ -92,6 +135,10 @@ export interface RootState {
     state: MaintenanceLogsState | undefined,
     action: AllMaintenanceLogsAction
   ) => MaintenanceLogsState;
+  pagination: (
+    state: PaginationState | undefined,
+    action: AllMaintenanceLogsAction
+  ) => PaginationState;
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -99,6 +146,7 @@ const rootReducer = combineReducers<RootState>({
   IsCreatingMaintenanceLog,
   IsSearchingMaintenanceLog,
   allMaintenanceLogsList,
+  pagination,
 });
 
 export default rootReducer;
