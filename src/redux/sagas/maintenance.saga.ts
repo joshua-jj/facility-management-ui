@@ -11,6 +11,7 @@ import { MaintenanceLog, SetSnackBarPayload } from '@/types';
 import {
   appActions,
   CreateMaintenanceLogAction,
+  GetMaintenanceLogsAction,
   SearchMaintenanceLogAction,
 } from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -37,7 +38,7 @@ interface ApiError {
   error?: string;
 }
 
-function* getMaintenanceLogs() {
+function* getMaintenanceLogs({ data }: GetMaintenanceLogsAction) {
   yield put({ type: maintenanceConstants.REQUEST_GET_MAINTENANCE_LOGS });
 
   try {
@@ -45,7 +46,11 @@ function* getMaintenanceLogs() {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const logsUri = `${maintenanceConstants.MAINTENANCE_URI}`;
+    let logsUri = `${maintenanceConstants.MAINTENANCE_URI}`;
+
+    if (data?.page) {
+      logsUri = `${logsUri}?page=${data.page}`;
+    }
 
     const requestFn = () =>
       createRequestWithToken(logsUri, { method: 'GET' })(user?.token as string);
@@ -129,6 +134,14 @@ function* createMaintenanceLog({ data }: CreateMaintenanceLogAction) {
         maintenanceConstants.CREATE_MAINTENANCE_LOG_SUCCESS,
         jsonResponse
       );
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message:
+          jsonResponse?.message ?? 'Maintenance log created successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {

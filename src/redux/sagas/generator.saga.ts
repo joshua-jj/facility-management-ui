@@ -11,6 +11,7 @@ import { GeneratorLog, SetSnackBarPayload } from '@/types';
 import {
   appActions,
   CreateGeneratorLogAction,
+  GetGeneratorLogsAction,
   SearchGeneratorLogAction,
 } from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -37,7 +38,7 @@ interface ApiError {
   error?: string;
 }
 
-function* getGeneratorLogs() {
+function* getGeneratorLogs({ data }: GetGeneratorLogsAction) {
   yield put({ type: generatorConstants.REQUEST_GET_GENERATOR_LOGS });
 
   try {
@@ -45,7 +46,11 @@ function* getGeneratorLogs() {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const logsUri = `${generatorConstants.GENERATOR_URI}`;
+    let logsUri = `${generatorConstants.GENERATOR_URI}`;
+
+    if (data?.page) {
+      logsUri = `${logsUri}?page=${data.page}`;
+    }
 
     const requestFn = () =>
       createRequestWithToken(logsUri, { method: 'GET' })(user?.token as string);
@@ -130,6 +135,13 @@ function* createGeneratorLog({ data }: CreateGeneratorLogAction) {
         generatorConstants.CREATE_GENERATOR_LOG_SUCCESS,
         jsonResponse
       );
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Generator log created successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     if ((error as ApiError)?.response) {

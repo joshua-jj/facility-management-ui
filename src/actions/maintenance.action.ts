@@ -1,8 +1,9 @@
 import { maintenanceConstants } from '@/constants';
 import { MaintenanceForm } from '@/types';
 
-interface GetMaintenanceLogsAction {
+export interface GetMaintenanceLogsAction {
   type: typeof maintenanceConstants.GET_MAINTENANCE_LOGS;
+  data?: { page: number };
 }
 export interface CreateMaintenanceLogAction {
   type: typeof maintenanceConstants.CREATE_MAINTENANCE_LOG;
@@ -14,8 +15,11 @@ export interface SearchMaintenanceLogAction {
   data: { text: string };
 }
 
-const getMaintenanceLogs = (): GetMaintenanceLogsAction => ({
+const getMaintenanceLogs = (data?: {
+  page: number;
+}): GetMaintenanceLogsAction => ({
   type: maintenanceConstants.GET_MAINTENANCE_LOGS,
+  data,
 });
 
 const createMaintenanceLog = (

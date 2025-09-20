@@ -14,6 +14,7 @@ import Link from 'next/link';
 import Layout from '@/components/Layout';
 import EyeIcon from '../../public/assets/icons/Eye.svg';
 import HideIcon from '../../public/assets/icons/Hide.svg';
+import Head from 'next/head';
 
 const Login: FC = () => {
   const router = useRouter();
@@ -62,6 +63,13 @@ const Login: FC = () => {
 
   return (
     <Layout>
+      <Head>
+        <title>Login | EGFM - Facility Management System</title>
+        <meta charSet="UTF-8" />
+        <meta name="description" content="EGFM - Facility Management System" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
       <div className="flex flex-col md:flex-row justify-start md:justify-center items-center gap-8 md:gap-20 w-full h-full mt-12">
         <Formsy
           onValidSubmit={handleSubmit}

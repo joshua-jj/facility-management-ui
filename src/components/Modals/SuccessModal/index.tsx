@@ -33,7 +33,7 @@ const SuccessModal: FC<SuccessModalProps> = ({
       open={showSuccessModal}
       onClickAway={() => setShowSuccessModal(false)}
     >
-      <div className="flex flex-col items-center justify-center py-12 px-8 shadow-md w-[90vw] sm:w-[28rem]">
+      <div className="flex flex-col items-center justify-center relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[28rem] text-center border border-gray-200">
         <GreenCheckIcon className="my-3 text-[#fff]" />
         {message && (
           <h2 className="font-bold text-xl pt-2 pb-1 text-[#0F2552]">
