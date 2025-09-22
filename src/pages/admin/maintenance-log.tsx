@@ -9,7 +9,6 @@ import { maintenanceActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { MaintenanceLog } from '@/types';
 import { format, parseISO } from 'date-fns';
-// import AddDepartment from '@/components/Modals/AddDepartment';
 import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
@@ -37,7 +36,6 @@ const MaintenanceLogs = () => {
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [showEditMaintenanceModal, setShowEditMaintenanceModal] =
     useState(false);
@@ -74,9 +72,6 @@ const MaintenanceLogs = () => {
     value: obj.id.toString(),
   }));
 
-  // const handleUpdate = (data: object) => {
-  //   console.log('🚀 ~ handleUpdate ~ data:', data);
-  // };
   const handleUpdate = (data: MaintenanceLog) => {
     console.log('🚀 ~ handleUpdate ~ data:', data);
     setEditMaintenanceData(data);
@@ -97,7 +92,6 @@ const MaintenanceLogs = () => {
 
   const columns: Column<MaintenanceLog>[] = [
     { key: 'serviceItemName', header: 'SERVICED ITEM' },
-    // { key: 'costOfMaintenance', header: 'COST ' },
     {
       key: 'costOfMaintenance',
       header: 'COST',
@@ -108,7 +102,6 @@ const MaintenanceLogs = () => {
     { key: 'artisanName', header: 'ARTISAN NAME' },
     { key: 'artisanPhone', header: 'ARTISAN NUMBER' },
     { key: 'signature', header: 'SIGNATURE' },
-    // { key: 'maintenanceDate', header: 'DATE' },
     {
       key: 'maintenanceDate',
       header: 'DATE',
@@ -141,10 +134,6 @@ const MaintenanceLogs = () => {
                   value={searchQuery}
                   placeholder="Search"
                   onChange={handleSearch}
-                  // onChange={(e) => {
-                  //   setSearchQuery(e.target.value);
-                  //   // setCurrentPage(1); // reset on new search
-                  // }}
                   className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
@@ -231,7 +220,7 @@ const MaintenanceLogs = () => {
           {showEditMaintenanceModal && (
             <AddMaintenanceLog
               className="text-start w-full cursor-pointer"
-              maintenanceData={editMaintenanceData} // Pass the Item data as a prop
+              maintenanceData={editMaintenanceData}
               open={showEditMaintenanceModal}
               onClose={() => setShowEditMaintenanceModal(false)}
             />

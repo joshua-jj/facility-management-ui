@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Layout from '@/components/Layout';
 import React, { useEffect, useState } from 'react';
 import { Column, Table } from '@/components/Table';
@@ -9,8 +8,8 @@ import { RootState } from '@/redux/reducers';
 import { itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Item } from '@/types';
-import { isWithinInterval, parseISO } from 'date-fns';
-import classNames from 'classnames';
+// import { isWithinInterval, parseISO } from 'date-fns';
+// import classNames from 'classnames';
 import { Pagination } from '@/components/Pagination';
 import AddItem from '@/components/Modals/AddItem';
 import PrivateRoute from '@/components/PrivateRoute';
@@ -34,7 +33,7 @@ const Items = () => {
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // const [dateTo, setDateTo] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [showEditItemModal, setShowEditItemModal] = useState(false);
@@ -46,11 +45,8 @@ const Items = () => {
   const { IsRequestingAllItems, IsSearchingItem, allItemsList, pagination } =
     useSelector((s: RootState) => s.item);
   const { meta } = pagination;
-  const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
+  const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
-  // useEffect(() => {
-  //   dispatch(itemActions.getAllItems() as unknown as UnknownAction);
-  // }, [dispatch]);
   useEffect(() => {
     if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
       dispatch(
@@ -66,11 +62,21 @@ const Items = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     if (!query) {
-      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
+      dispatch(
+        userDetails?.roleId === 3 && userDetails?.departmentId !== undefined
+          ? (itemActions.getDepartmentItems({
+              departmentId: userDetails.departmentId,
+            }) as unknown as UnknownAction)
+          : (itemActions.getAllItems() as unknown as UnknownAction)
+      );
     }
     setSearchQuery(query);
     dispatch(
-      itemActions.searchItem({ text: query }) as unknown as UnknownAction
+      itemActions.searchItem(
+        userDetails?.roleId === 3
+          ? { departmentId: userDetails.departmentId, text: query }
+          : { text: query }
+      ) as unknown as UnknownAction
     );
   };
 
@@ -80,27 +86,27 @@ const Items = () => {
     value: obj.id.toString(),
   }));
 
-  const filtered = allItemsList?.filter((emp) => {
-    const matchStatus = statusFilter ? emp.status === statusFilter : true;
-    const matchDept = deptFilter ? emp.name === deptFilter : true;
-    const matchDate =
-      dateFrom && dateTo
-        ? isWithinInterval(parseISO(emp.createdAt!), {
-            start: parseISO(dateFrom),
-            end: parseISO(dateTo),
-          })
-        : true;
-    const matchSearch = emp.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+  // const filtered = allItemsList?.filter((emp) => {
+  //   const matchStatus = statusFilter ? emp.status === statusFilter : true;
+  //   const matchDept = deptFilter ? emp.name === deptFilter : true;
+  //   const matchDate =
+  //     dateFrom && dateTo
+  //       ? isWithinInterval(parseISO(emp.createdAt!), {
+  //           start: parseISO(dateFrom),
+  //           end: parseISO(dateTo),
+  //         })
+  //       : true;
+  //   const matchSearch = emp.name
+  //     .toLowerCase()
+  //     .includes(searchQuery.toLowerCase());
 
-    return matchStatus && matchDept && matchDate && matchSearch;
-  });
+  //   return matchStatus && matchDept && matchDate && matchSearch;
+  // });
 
-  const pageSize = 10;
+  // const pageSize = 10;
   // const totalPages = Math.ceil(filtered.length / pageSize);
-  const start = (currentPage - 1) * pageSize;
-  const paginated = filtered.slice(start, start + pageSize);
+  // const start = (currentPage - 1) * pageSize;
+  // const paginated = filtered.slice(start, start + pageSize);
 
   const handleOpen = (data: Item) => {
     console.log('🚀 ~ handleOpen ~ data:', data);
@@ -232,10 +238,6 @@ const Items = () => {
                   value={searchQuery}
                   placeholder="Search"
                   onChange={handleSearch}
-                  // onChange={(e) => {
-                  //   setSearchQuery(e.target.value);
-                  //   // setCurrentPage(1); // reset on new search
-                  // }}
                   className="px-3 py-[0.65rem] block w-full text-xs rounded border border-[rgba(15,37,82,0.2)]"
                 />
               </div>
@@ -336,9 +338,6 @@ const Items = () => {
               onClose={() => setShowDeleteItemModal(false)}
             />
           )}
-          {/* {allItemsList.length === 0 && !IsRequestingAllItems && (
-            <div className="text-center py-4">No items found</div>
-          )} */}
         </div>
       </Layout>
     </PrivateRoute>

@@ -20,23 +20,6 @@ const optionsFilter = [
   { value: '5', label: 'pending' },
 ];
 
-// interface ReportTypes {
-//   id: number;
-//   title: string;
-//   username: string;
-//   status: string;
-//   description: string;
-// }
-
-// const reports = [
-//   {id: 1, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-//   {id: 2, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-//   {id: 3, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-//   {id: 4, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'pending', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-//   {id: 5, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-//   {id: 6, title: 'Consequatur voluptatum qui incidunt', username: 'ronnie spinka', status: 'treated', description: 'Consequatur maxime quas totam laudanime Labore est est corporis voluptatem. Ea ne Ipsam accusamus ut nulla molestiae .'},
-// ];
-
 const Reports = () => {
   const dispatch = useDispatch();
   const { IsRequestingReports, IsSearchingReport, allReportsList } =
@@ -210,9 +193,6 @@ const Dropdown = (props: Report) => {
           <button className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
             open
           </button>
-          {/* <Report className="absolute right-0 text-xs font-semibold capitalize rounded-[3px] px-2 py-1 bg-[#ffffff] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)]">
-              open
-            </Report> */}
         </div>
       )}
     </>
