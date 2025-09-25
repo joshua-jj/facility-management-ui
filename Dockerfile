@@ -5,7 +5,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Declare build-time argument
+# Declare build-time arguments
 ARG NEXT_PUBLIC_BASE_URL
 
 # Set env so Next.js sees it during build
