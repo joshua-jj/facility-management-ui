@@ -84,19 +84,7 @@ const Requests = () => {
     (s: RootState) => s.request
   );
   const { meta } = pagination;
-  const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
-  // useEffect(() => {
-  //   dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
-  //   if (userDetails?.roleId === 3) {
-  //     dispatch(
-  //       requestActions.getDepartmentRequests({
-  //         departmentId: userDetails?.departmentId ?? 0,
-  //       }) as unknown as UnknownAction
-  //     );
-  //   } else {
-  //     dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
-  //   }
-  // }, [dispatch, userDetails]);
+  const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
   useEffect(() => {
     dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);

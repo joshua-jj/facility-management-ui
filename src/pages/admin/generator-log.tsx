@@ -12,6 +12,7 @@ import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
 import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
 import { format, parseISO } from 'date-fns';
+import { Pagination } from '@/components/Pagination';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -33,7 +34,11 @@ const GeneratorLogs = () => {
     IsRequestingGeneratorLogs,
     IsSearchingGeneratorLog,
     allGeneratorLogsList,
+    pagination,
   } = useSelector((s: RootState) => s.generator);
+
+  const { meta } = pagination;
+  const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
   useEffect(() => {
     dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
@@ -60,6 +65,12 @@ const GeneratorLogs = () => {
 
   const handleUpdate = (data: object) => {
     console.log('🚀 ~ handleUpdate ~ data:', data);
+  };
+
+  const handleChangePage = (page: number) => {
+    dispatch(
+      generatorActions.getGeneratorLogs({ page }) as unknown as UnknownAction
+    );
   };
 
   // const handleDelete = (data: object) => {
@@ -196,6 +207,14 @@ const GeneratorLogs = () => {
             columns={columns}
             data={allGeneratorLogsList}
           />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              pageSize={itemsPerPage}
+              onPageChange={handleChangePage}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>

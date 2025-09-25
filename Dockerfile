@@ -5,6 +5,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Declare build-time argument
+ARG NEXT_PUBLIC_BASE_URL
+
+# Set env so Next.js sees it during build
+ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+
 # Copy dependency files
 COPY package.json yarn.lock ./
 

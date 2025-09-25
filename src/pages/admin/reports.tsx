@@ -70,17 +70,6 @@ const Reports = () => {
     value: obj.id.toString(),
   }));
 
-  // const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const query = e.target.value;
-  //   // if (!query) {
-  //   //   dispatch(itemActions.getAllItems() as unknown as UnknownAction);
-  //   // }
-  //   setSearchQuery(query);
-  //   // dispatch(
-  //   //   itemActions.searchItem({ text: query }) as unknown as UnknownAction
-  //   // );
-  // };
-
   return (
     <PrivateRoute allowedRoles={[1, 2, 4, 5]}>
       <Layout title="Reports">

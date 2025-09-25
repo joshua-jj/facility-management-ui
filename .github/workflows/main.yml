@@ -75,6 +75,8 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.CI_REGISTRY_NAME }}:${{ steps.next-version.outputs.new_version }}
+          build-args: |
+            NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}
 
       - name: Install Kustomize
         run: |

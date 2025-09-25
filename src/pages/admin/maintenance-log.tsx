@@ -14,6 +14,7 @@ import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionDropDown from '@/components/ActionDropDown';
 import { numberWithCommas } from '@/utilities/helpers';
+import { Pagination } from '@/components/Pagination';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -25,6 +26,13 @@ const optionsFilter = [
 
 const MaintenanceLogs = () => {
   const dispatch = useDispatch();
+  const {
+    IsRequestingMaintenanceLogs,
+    IsSearchingMaintenanceLog,
+    allMaintenanceLogsList,
+    pagination,
+  } = useSelector((s: RootState) => s.maintenance);
+
   const [statusFilter, setStatusFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -36,11 +44,8 @@ const MaintenanceLogs = () => {
   const [editMaintenanceData, setEditMaintenanceData] =
     useState<MaintenanceLog | null>(null);
 
-  const {
-    IsRequestingMaintenanceLogs,
-    IsSearchingMaintenanceLog,
-    allMaintenanceLogsList,
-  } = useSelector((s: RootState) => s.maintenance);
+  const { meta } = pagination;
+  const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
   useEffect(() => {
     dispatch(
@@ -76,6 +81,14 @@ const MaintenanceLogs = () => {
     console.log('🚀 ~ handleUpdate ~ data:', data);
     setEditMaintenanceData(data);
     setShowEditMaintenanceModal(true);
+  };
+
+  const handleChangePage = (page: number) => {
+    dispatch(
+      maintenanceActions.getMaintenanceLogs({
+        page,
+      }) as unknown as UnknownAction
+    );
   };
 
   // const handleDelete = (data: object) => {
@@ -207,6 +220,14 @@ const MaintenanceLogs = () => {
             columns={columns}
             data={allMaintenanceLogsList}
           />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              pageSize={itemsPerPage}
+              onPageChange={handleChangePage}
+            />
+          )}
           {showEditMaintenanceModal && (
             <AddMaintenanceLog
               className="text-start w-full cursor-pointer"
