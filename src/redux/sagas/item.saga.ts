@@ -280,7 +280,9 @@ function* searchItem({ data }: SearchItemAction) {
       getObjectFromStorage,
       authConstants.USER_KEY
     );
-    const itemUri = `${itemConstants.ITEM_URI}/search?q=${data.text}`;
+    const itemUri = data.departmentId
+      ? `${itemConstants.ITEM_URI}/search?q=${data.text}&department=${data.departmentId}`
+      : `${itemConstants.ITEM_URI}/search?q=${data.text}`;
 
     const requestFn = () =>
       createRequestWithToken(itemUri, { method: 'GET' })(user?.token as string);

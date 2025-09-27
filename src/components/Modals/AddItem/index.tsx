@@ -422,12 +422,12 @@ const AddItem: React.FC<AddItemModalProps> = ({
               disabled={!canSubmit}
               className="w-full px-4 py-2 mt-8 bg-yellow-500 text-white rounded hover:bg-yellow-600 flex items-center justify-center disabled:opacity-50 cursor-pointer"
             >
-              {editIndex !== null || item ? (
-                'Update item'
-              ) : IsCreatingItem ? (
+              {IsCreatingItem ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
+              ) : editIndex !== null || item ? (
+                'Update item'
               ) : (
                 'Add item'
               )}
@@ -435,7 +435,6 @@ const AddItem: React.FC<AddItemModalProps> = ({
           </Formsy>
         </div>
       </FullscreenModal>
-
       <SuccessModal
         open={isSuccessOpen}
         onClose={() => setIsSuccessOpen(false)}

@@ -22,7 +22,7 @@ export interface GetAnItemAction {
 
 export interface SearchItemAction {
   type: typeof itemConstants.SEARCH_ITEM;
-  data: { text: string };
+  data: { text: string; departmentId?: number };
 }
 
 export interface CreateItemAction {
@@ -67,7 +67,10 @@ const getAnItem = (data: { id: number }): GetAnItemAction => ({
   data,
 });
 
-const searchItem = (data: { text: string }): SearchItemAction => ({
+const searchItem = (data: {
+  text: string;
+  departmentId?: number;
+}): SearchItemAction => ({
   type: itemConstants.SEARCH_ITEM,
   data,
 });
