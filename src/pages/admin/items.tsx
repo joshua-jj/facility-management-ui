@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Layout from '@/components/Layout';
 import React, { useEffect, useState } from 'react';
 import { Column, Table } from '@/components/Table';
@@ -9,8 +8,8 @@ import { RootState } from '@/redux/reducers';
 import { itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Item } from '@/types';
-import { isWithinInterval, parseISO } from 'date-fns';
-import classNames from 'classnames';
+// import { isWithinInterval, parseISO } from 'date-fns';
+// import classNames from 'classnames';
 import { Pagination } from '@/components/Pagination';
 import AddItem from '@/components/Modals/AddItem';
 import PrivateRoute from '@/components/PrivateRoute';
@@ -19,22 +18,22 @@ import ActionDropDown from '@/components/ActionDropDown';
 import { useRouter } from 'next/router';
 import DeleteModal from '@/components/Modals/Delete';
 
-const optionsFilter = [
-  { value: '1', label: 'approved' },
-  { value: '2', label: 'assigned' },
-  { value: '3', label: 'collected' },
-  { value: '4', label: 'declined' },
-  { value: '5', label: 'pending' },
-];
+// const optionsFilter = [
+//   { value: '1', label: 'approved' },
+//   { value: '2', label: 'assigned' },
+//   { value: '3', label: 'collected' },
+//   { value: '4', label: 'declined' },
+//   { value: '5', label: 'pending' },
+// ];
 
 const Items = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const [statusFilter, setStatusFilter] = useState('');
+  // const [statusFilter, setStatusFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
+  // const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // const [dateTo, setDateTo] = useState('');
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [showEditItemModal, setShowEditItemModal] = useState(false);
@@ -43,14 +42,12 @@ const Items = () => {
   const [deleteItemData, setDeleteItemData] = useState<Item | null>(null);
 
   const { userDetails } = useSelector((s: RootState) => s.user);
+  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
   const { IsRequestingAllItems, IsSearchingItem, allItemsList, pagination } =
     useSelector((s: RootState) => s.item);
   const { meta } = pagination;
-  const { currentPage, itemCount, itemsPerPage, totalItems, totalPages } = meta;
+  const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
-  // useEffect(() => {
-  //   dispatch(itemActions.getAllItems() as unknown as UnknownAction);
-  // }, [dispatch]);
   useEffect(() => {
     if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
       dispatch(
@@ -66,41 +63,75 @@ const Items = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     if (!query) {
-      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
+      dispatch(
+        userDetails?.roleId === 3 && userDetails?.departmentId !== undefined
+          ? (itemActions.getDepartmentItems({
+              departmentId: userDetails.departmentId,
+            }) as unknown as UnknownAction)
+          : (itemActions.getAllItems() as unknown as UnknownAction)
+      );
     }
     setSearchQuery(query);
     dispatch(
-      itemActions.searchItem({ text: query }) as unknown as UnknownAction
+      itemActions.searchItem(
+        userDetails?.roleId === 3
+          ? { departmentId: userDetails.departmentId, text: query }
+          : { text: query }
+      ) as unknown as UnknownAction
     );
   };
+  const handleResetFilters = () => {
+    if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
+      dispatch(
+        itemActions.getDepartmentItems({
+          departmentId: userDetails.departmentId,
+        }) as unknown as UnknownAction
+      );
+    } else {
+      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
+    }
+    setDeptFilter('');
+    setShowFilterOptions(false);
+  };
 
-  const allDepartmentsArray = allItemsList?.map((obj) => ({
+  const handleFilter = () => {
+    if (deptFilter) {
+      dispatch(
+        itemActions.getDepartmentItems({
+          departmentId: Number(deptFilter),
+        }) as unknown as UnknownAction
+      );
+      setShowFilterOptions(false);
+    }
+  };
+
+  const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
     ...obj,
     label: obj.name,
     value: obj.id.toString(),
   }));
 
-  const filtered = allItemsList?.filter((emp) => {
-    const matchStatus = statusFilter ? emp.status === statusFilter : true;
-    const matchDept = deptFilter ? emp.name === deptFilter : true;
-    const matchDate =
-      dateFrom && dateTo
-        ? isWithinInterval(parseISO(emp.createdAt!), {
-            start: parseISO(dateFrom),
-            end: parseISO(dateTo),
-          })
-        : true;
-    const matchSearch = emp.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+  // const filtered = allItemsList?.filter((emp) => {
+  //   const matchStatus = statusFilter ? emp.status === statusFilter : true;
+  //   const matchDept = deptFilter ? emp.name === deptFilter : true;
+  //   const matchDate =
+  //     dateFrom && dateTo
+  //       ? isWithinInterval(parseISO(emp.createdAt!), {
+  //           start: parseISO(dateFrom),
+  //           end: parseISO(dateTo),
+  //         })
+  //       : true;
+  //   const matchSearch = emp.name
+  //     .toLowerCase()
+  //     .includes(searchQuery.toLowerCase());
 
-    return matchStatus && matchDept && matchDate && matchSearch;
-  });
+  //   return matchStatus && matchDept && matchDate && matchSearch;
+  // });
 
-  const pageSize = 10;
+  // const pageSize = 10;
   // const totalPages = Math.ceil(filtered.length / pageSize);
-  const start = (currentPage - 1) * pageSize;
-  const paginated = filtered.slice(start, start + pageSize);
+  // const start = (currentPage - 1) * pageSize;
+  // const paginated = filtered.slice(start, start + pageSize);
 
   const handleOpen = (data: Item) => {
     console.log('🚀 ~ handleOpen ~ data:', data);
@@ -124,6 +155,7 @@ const Items = () => {
     setDeleteItemData(data);
     setShowDeleteItemModal(true);
   };
+  console.log('🚀 ~ deptFilter:', deptFilter);
 
   const columns: Column<Item>[] = [
     { key: 'name', header: 'ITEM TITLE' },
@@ -232,10 +264,6 @@ const Items = () => {
                   value={searchQuery}
                   placeholder="Search"
                   onChange={handleSearch}
-                  // onChange={(e) => {
-                  //   setSearchQuery(e.target.value);
-                  //   // setCurrentPage(1); // reset on new search
-                  // }}
                   className="px-3 py-[0.65rem] block w-full text-xs rounded border border-[rgba(15,37,82,0.2)]"
                 />
               </div>
@@ -252,7 +280,7 @@ const Items = () => {
                     <hr className="m-0 p-0 border border-[rgba(228,229,231,1)]" />
 
                     <div className="p-4">
-                      <div className="mb-4">
+                      {/* <div className="mb-4">
                         <CustomDropdownSelect
                           options={optionsFilter}
                           value={statusFilter}
@@ -260,7 +288,7 @@ const Items = () => {
                           placeholder="Status"
                           // showSelectedLabel
                         />
-                      </div>
+                      </div> */}
 
                       <div className="mb-4">
                         <CustomDropdownSelect
@@ -271,8 +299,7 @@ const Items = () => {
                           // showSelectedLabel
                         />
                       </div>
-                      <div className="mb-4">
-                        {/* <label className="block text-sm font-medium text-gray-700">From</label> */}
+                      {/* <div className="mb-4">
                         <input
                           type="date"
                           value={dateFrom}
@@ -280,12 +307,18 @@ const Items = () => {
                           onChange={(e) => setDateFrom(e.target.value)}
                           className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
-                      </div>
+                      </div> */}
                       <div className="flex items-center justify-end">
-                        <button className="rounded text-[#B28309] border border-[#B28309] text-xs px-3 py-2 mr-3 hover:bg-[#ffffff98] transition cursor-pointer">
+                        <button
+                          onClick={handleResetFilters}
+                          className="rounded text-[#B28309] border border-[#B28309] text-xs px-3 py-2 mr-3 hover:bg-[#ffffff98] transition cursor-pointer"
+                        >
                           Reset
                         </button>
-                        <button className="rounded bg-[#B28309] border border-[#B28309] text-white text-xs px-3 py-2 hover:bg-[#B2830998] hover:border-[#B2830998] transition cursor-pointer">
+                        <button
+                          onClick={handleFilter}
+                          className="rounded bg-[#B28309] border border-[#B28309] text-white text-xs px-3 py-2 hover:bg-[#B2830998] hover:border-[#B2830998] transition cursor-pointer"
+                        >
                           Apply
                         </button>
                       </div>
@@ -336,9 +369,6 @@ const Items = () => {
               onClose={() => setShowDeleteItemModal(false)}
             />
           )}
-          {/* {allItemsList.length === 0 && !IsRequestingAllItems && (
-            <div className="text-center py-4">No items found</div>
-          )} */}
         </div>
       </Layout>
     </PrivateRoute>

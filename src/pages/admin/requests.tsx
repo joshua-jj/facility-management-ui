@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Layout from '@/components/Layout';
 import React, { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
@@ -76,7 +75,6 @@ const Requests = () => {
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
   const { userDetails } = useSelector((s: RootState) => s.user);
@@ -142,7 +140,7 @@ const Requests = () => {
     // }
   };
 
-  const pageSize = 10;
+  // const pageSize = 10;
 
   const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
     ...obj,
@@ -166,7 +164,7 @@ const Requests = () => {
     {
       key: 'dateOfReturn',
       header: 'RETURN DATE',
-      render: (value: string | number, row: Request) => {
+      render: (value: string | number) => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
