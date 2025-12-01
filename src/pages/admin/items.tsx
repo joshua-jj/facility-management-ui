@@ -246,6 +246,8 @@ const Items = () => {
           page,
         }) as unknown as UnknownAction
       );
+    } else if (deptFilter) {
+      dispatch(itemActions.getDepartmentItems({ page, departmentId: Number(deptFilter) }) as unknown as UnknownAction);
     } else {
       dispatch(itemActions.getAllItems({ page }) as unknown as UnknownAction);
     }

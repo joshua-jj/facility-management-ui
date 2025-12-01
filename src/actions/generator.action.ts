@@ -11,6 +11,11 @@ export interface CreateGeneratorLogAction {
   data: GeneratorForm;
 }
 
+export interface UpdateGeneratorLogAction {
+  type: typeof generatorConstants.UPDATE_GENERATOR_LOG;
+  data: GeneratorForm;
+}
+
 export interface SearchGeneratorLogAction {
   type: typeof generatorConstants.SEARCH_GENERATOR_LOG;
   data: { text: string };
@@ -26,6 +31,11 @@ const createGeneratorLog = (data: GeneratorForm): CreateGeneratorLogAction => ({
   data,
 });
 
+const updateGeneratorLog = (data: GeneratorForm): UpdateGeneratorLogAction => ({
+  type: generatorConstants.UPDATE_GENERATOR_LOG,
+  data,
+});
+
 const searchGeneratorLog = (data: {
   text: string;
 }): SearchGeneratorLogAction => ({
@@ -36,5 +46,6 @@ const searchGeneratorLog = (data: {
 export const generatorActions = {
   getGeneratorLogs,
   createGeneratorLog,
+  updateGeneratorLog,
   searchGeneratorLog,
 };

@@ -1,9 +1,9 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
-import { StoreForm } from '@/types';
+import { Store, StoreForm } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { storeConstants } from '@/constants';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,17 +12,19 @@ import { storeActions } from '@/actions';
 import { UnknownAction } from 'redux';
 
 interface AddItemModalProps {
-  // onClose: () => void;
-  children: ReactNode;
+  children?: ReactNode;
   className: string;
-  // open: boolean;
+  store?: Store | null;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 const AddStore: React.FC<AddItemModalProps> = ({
   className,
   children,
-  // onClose,
-  // open,
+  store,
+  open,
+  onClose,
 }) => {
   const dispatch = useDispatch();
   const { IsCreatingStore } = useSelector((state: RootState) => state.store);
@@ -31,13 +33,22 @@ const AddStore: React.FC<AddItemModalProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  // const closeModal = () => setIsModalOpen(false);
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    if (onClose) onClose();
+  }, [onClose]);
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
   const handleSubmit = (data: StoreForm) => {
     console.log('data', data);
-    dispatch(storeActions.createStore(data) as unknown as UnknownAction);
+    if (store?.id) {
+      data.id = store?.id;
+      dispatch(storeActions.updateStore(data) as unknown as UnknownAction);
+    } else {
+      dispatch(storeActions.createStore(data) as unknown as UnknownAction);
+    }
   };
 
   useEffect(() => {
@@ -55,13 +66,31 @@ const AddStore: React.FC<AddItemModalProps> = ({
     return () => listener.remove();
   }, []);
 
+  useEffect(() => {
+    const listener2 = AppEmitter.addListener(
+      storeConstants.UPDATE_STORE_SUCCESS,
+      (evt: Event) => {
+        const updatedStore = evt as CustomEvent;
+        console.log('updatedStore', updatedStore);
+
+        if (updatedStore) {
+          console.log('INSIDE updatedStore', updatedStore);
+
+          closeModal();
+        }
+      }
+    );
+
+    return () => listener2.remove();
+  }, [closeModal]);
+
   return (
     <>
       <button className={className} onClick={openModal}>
         {children}
       </button>
 
-      <FullscreenModal open={isModalOpen} onClickAway={closeModal}>
+      <FullscreenModal open={open || isModalOpen} onClickAway={closeModal}>
         <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[25rem]">
           <button
             onClick={closeModal}
@@ -70,7 +99,7 @@ const AddStore: React.FC<AddItemModalProps> = ({
             <CrossIcon />
           </button>
           <h2 className="text-2xl font-semibold text-textColor mb-4">
-            Create Store
+            {store ? 'Update' : 'Create'} Store
           </h2>
           <Formsy
             onValidSubmit={handleSubmit}
@@ -81,6 +110,7 @@ const AddStore: React.FC<AddItemModalProps> = ({
             <TextInput
               type="text"
               name="name"
+              value={store?.name}
               label="Store name"
               placeholder="Enter name"
               required
@@ -96,6 +126,8 @@ const AddStore: React.FC<AddItemModalProps> = ({
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
+              ) : store ? (
+                'Update store'
               ) : (
                 'Add store'
               )}

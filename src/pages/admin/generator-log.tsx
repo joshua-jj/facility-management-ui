@@ -28,6 +28,8 @@ const GeneratorLogs = () => {
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showEditLogModal, setShowEditLogModal] = useState(false);
+  const [editLogData, setEditLogData] = useState<GeneratorLog | null>(null);
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const {
@@ -63,7 +65,9 @@ const GeneratorLogs = () => {
     value: obj.id.toString(),
   }));
 
-  const handleUpdate = (data: object) => {
+  const handleUpdate = (data: GeneratorLog) => {
+    setEditLogData(data);
+    setShowEditLogModal(true);
     console.log('🚀 ~ handleUpdate ~ data:', data);
   };
 
@@ -73,10 +77,6 @@ const GeneratorLogs = () => {
     );
   };
 
-  // const handleDelete = (data: object) => {
-  //   console.log('🚀 ~ handleDelete ~ data:', data);
-  // };
-
   const columns: Column<GeneratorLog>[] = [
     { key: 'nameOfMeeting', header: 'MEETING TITLE' },
     { key: 'generatorType', header: 'GENERATOR USED' },
@@ -85,31 +85,63 @@ const GeneratorLogs = () => {
       key: 'onTime',
       header: 'DATE',
       render: (value: string | number) => {
-        return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
+        return (
+          <span>
+            {value ? format(parseISO(String(value)), 'yyyy-MM-dd') : '--'}
+          </span>
+        );
       },
     },
     {
       key: 'onTime',
       header: 'ON TIME',
       render: (value: string | number) => {
-        return <span>{format(parseISO(String(value)), 'HH:mm')}</span>;
+        return (
+          <span>{value ? format(parseISO(String(value)), 'HH:mm') : '--'}</span>
+        );
       },
     },
     {
       key: 'offTime',
       header: 'OFF TIME',
       render: (value: string | number) => {
-        return <span>{format(parseISO(String(value)), 'HH:mm')}</span>;
+        return (
+          <span>{value ? format(parseISO(String(value)), 'HH:mm') : '--'}</span>
+        );
       },
     },
-    { key: 'engineStartHours', header: 'ENGINE START HOURS' },
-    { key: 'engineOffHours', header: 'ENGINE OFF HOURS' },
-    { key: 'dieselLevelOn', header: 'DIESEL LEVEL ON' },
-    { key: 'dieselLevelOff', header: 'DIESEL LEVEL OFF' },
+    {
+      key: 'engineStartHours',
+      header: 'ENGINE START HOURS',
+      render: (value: string | number) => {
+        return <span>{value || '--'}</span>;
+      },
+    },
+    {
+      key: 'engineOffHours',
+      header: 'ENGINE OFF HOURS',
+      render: (value: string | number) => {
+        return <span>{value || '--'}</span>;
+      },
+    },
+    {
+      key: 'dieselLevelOn',
+      header: 'DIESEL LEVEL ON',
+      render: (value: string | number) => {
+        return <span>{value || '--'}</span>;
+      },
+    },
+    {
+      key: 'dieselLevelOff',
+      header: 'DIESEL LEVEL OFF',
+      render: (value: string | number) => {
+        return <span>{value || '--'}</span>;
+      },
+    },
     {
       key: 'id',
       header: '.',
-      render: (value: string | number, row: object) => (
+      render: (value: string | number, row: GeneratorLog) => (
         <ActionDropDown handleUpdate={() => handleUpdate(row)} log={true} />
       ),
     },
@@ -209,6 +241,14 @@ const GeneratorLogs = () => {
               totalItems={totalItems}
               pageSize={itemsPerPage}
               onPageChange={handleChangePage}
+            />
+          )}
+          {showEditLogModal && (
+            <AddGeneratorLog
+              className="text-start w-full cursor-pointer"
+              generatorLog={editLogData}
+              open={showEditLogModal}
+              onClose={() => setShowEditLogModal(false)}
             />
           )}
         </div>

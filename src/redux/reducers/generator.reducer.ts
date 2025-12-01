@@ -47,9 +47,12 @@ const IsCreatingGeneratorLog = (
 ): LoadingState => {
   switch (action.type) {
     case generatorConstants.REQUEST_CREATE_GENERATOR_LOG:
+    case generatorConstants.REQUEST_UPDATE_GENERATOR_LOG:
       return true;
     case generatorConstants.CREATE_GENERATOR_LOG_SUCCESS:
     case generatorConstants.CREATE_GENERATOR_LOG_ERROR:
+    case generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS:
+    case generatorConstants.UPDATE_GENERATOR_LOG_ERROR:
       return false;
     default:
       return state;
