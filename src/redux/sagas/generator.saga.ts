@@ -13,6 +13,7 @@ import {
   CreateGeneratorLogAction,
   GetGeneratorLogsAction,
   SearchGeneratorLogAction,
+  UpdateGeneratorLogAction,
 } from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -179,6 +180,90 @@ function* createGeneratorLog({ data }: CreateGeneratorLogAction) {
   }
 }
 
+function* updateGeneratorLog({ data }: UpdateGeneratorLogAction) {
+  yield put({ type: generatorConstants.REQUEST_UPDATE_GENERATOR_LOG });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+
+    if (data) {
+      const { id, ...restData } = data;
+
+      const userUri = `${generatorConstants.GENERATOR_URI}/update/${id}`;
+      const userReq = createRequestWithToken(userUri, {
+        method: 'PATCH',
+        body: JSON.stringify(restData),
+      });
+      const req: Request = yield call(userReq, user?.token as string);
+      const response: GeneratorLog = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
+
+      yield put({
+        type: generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS,
+        user: jsonResponse?.data,
+      });
+
+      yield put({
+        type: generatorConstants.GET_GENERATOR_LOGS,
+      });
+
+      AppEmitter.emit(
+        generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS,
+        jsonResponse
+      );
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Generator log created successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: generatorConstants.UPDATE_GENERATOR_LOG_ERROR,
+        error: res?.error,
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message: res?.error ?? res?.message ?? 'Something went wrong',
+        variant: 'error',
+      };
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    yield put({
+      type: generatorConstants.UPDATE_GENERATOR_LOG_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+    const payload: SetSnackBarPayload = {
+      type: 'error',
+      message:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+      variant: 'error',
+    };
+    yield put(appActions.setSnackBar(payload));
+  }
+}
+
 function* searchGeneratorLog({ data }: SearchGeneratorLogAction) {
   yield put({ type: generatorConstants.REQUEST_SEARCH_GENERATOR_LOG });
 
@@ -241,6 +326,10 @@ function* createGeneratorLogWatcher() {
   yield takeLatest(generatorConstants.CREATE_GENERATOR_LOG, createGeneratorLog);
 }
 
+function* updateGeneratorLogWatcher() {
+  yield takeLatest(generatorConstants.UPDATE_GENERATOR_LOG, updateGeneratorLog);
+}
+
 function* searchGeneratorLogWatcher() {
   yield takeLatest(generatorConstants.SEARCH_GENERATOR_LOG, searchGeneratorLog);
 }
@@ -249,6 +338,7 @@ export default function* rootSaga() {
   yield all([
     getGeneratorLogsWatcher(),
     createGeneratorLogWatcher(),
+    updateGeneratorLogWatcher(),
     searchGeneratorLogWatcher(),
   ]);
 }

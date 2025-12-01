@@ -11,9 +11,15 @@ export interface StoreConstants {
   CREATE_STORE_SUCCESS: string;
   CREATE_STORE_ERROR: string;
 
+  REQUEST_UPDATE_STORE: string;
+  UPDATE_STORE_SUCCESS: string;
+  UPDATE_STORE_ERROR: string;
+
   GET_STORES: string;
   SEARCH_STORE: string;
   CREATE_STORE: string;
+
+  UPDATE_STORE: string;
 
   STORE_URI: string;
 }
@@ -25,6 +31,7 @@ export interface StoreForm {
     country: string;
     state: string;
   };
+  id?: number;
   // storeDescription: string;
   // storeType: string;
 }
