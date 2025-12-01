@@ -10,6 +10,11 @@ export interface CreateStoreAction {
   data: StoreForm;
 }
 
+export interface UpdateStoreAction {
+  type: typeof storeConstants.UPDATE_STORE;
+  data: StoreForm;
+}
+
 export interface SearchStoreAction {
   type: typeof storeConstants.SEARCH_STORE;
   data: { text: string };
@@ -24,6 +29,11 @@ const createStore = (data: StoreForm): CreateStoreAction => ({
   data,
 });
 
+const updateStore = (data: StoreForm): UpdateStoreAction => ({
+  type: storeConstants.UPDATE_STORE,
+  data,
+});
+
 const searchStore = (data: { text: string }): SearchStoreAction => ({
   type: storeConstants.SEARCH_STORE,
   data,
@@ -32,5 +42,6 @@ const searchStore = (data: { text: string }): SearchStoreAction => ({
 export const storeActions = {
   getStores,
   createStore,
+  updateStore,
   searchStore,
 };

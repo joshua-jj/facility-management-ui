@@ -9,10 +9,14 @@ import { UnknownAction } from 'redux';
 import { Store } from '@/types';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddStore from '@/components/Modals/AddStore';
+import ActionDropDown from '@/components/ActionDropDown';
 
 const Stores = () => {
   const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showEditStoreModal, setShowEditStoreModal] = useState(false);
+  const [editStoreData, setEditStoreData] = useState<Store | null>(null);
+
   const { IsRequestingStores, IsSearchingStore, allStoresList } = useSelector(
     (s: RootState) => s.store
   );
@@ -32,9 +36,11 @@ const Stores = () => {
     );
   };
 
-  // const handleUpdate = (data: object) => {
-  //   console.log('🚀 ~ handleUpdate ~ data:', data);
-  // };
+  const handleUpdate = (data: Store) => {
+    setEditStoreData(data);
+    setShowEditStoreModal(true);
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+  };
 
   // const handleDelete = (data: object) => {
   //   console.log('🚀 ~ handleDelete ~ data:', data);
@@ -42,16 +48,16 @@ const Stores = () => {
 
   const columns: Column<Store>[] = [
     { key: 'name', header: 'STORE TITLE' },
-    // {
-    //   key: 'id',
-    //   header: '.',
-    //   render: (value: string | number, row: object) => (
-    //     <ActionDropDown
-    //       handleUpdate={() => handleUpdate(row)}
-    //       handleDelete={() => handleDelete(row)}
-    //     />
-    //   ),
-    // },
+    {
+      key: 'id',
+      header: '.',
+      render: (value: string | number, row: Store) => (
+        <ActionDropDown
+          handleUpdate={() => handleUpdate(row)}
+          // handleDelete={() => handleDelete(row)}
+        />
+      ),
+    },
   ];
 
   return (
@@ -88,6 +94,14 @@ const Stores = () => {
             columns={columns}
             data={allStoresList}
           />
+          {showEditStoreModal && (
+            <AddStore
+              className="text-start w-full cursor-pointer"
+              store={editStoreData}
+              open={showEditStoreModal}
+              onClose={() => setShowEditStoreModal(false)}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>

@@ -40,9 +40,12 @@ const IsCreatingStore = (
 ): LoadingState => {
   switch (action.type) {
     case storeConstants.REQUEST_CREATE_STORE:
+    case storeConstants.REQUEST_UPDATE_STORE:
       return true;
     case storeConstants.CREATE_STORE_SUCCESS:
     case storeConstants.CREATE_STORE_ERROR:
+    case storeConstants.UPDATE_STORE_SUCCESS:
+    case storeConstants.UPDATE_STORE_ERROR:
       return false;
     default:
       return state;
