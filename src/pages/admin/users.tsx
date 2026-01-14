@@ -12,6 +12,8 @@ import PrivateRoute from '@/components/PrivateRoute';
 import AddUser from '@/components/Modals/AddUser';
 import ActionDropDown from '@/components/ActionDropDown';
 import { Pagination } from '@/components/Pagination';
+import UpdateRole from '@/components/Modals/UpdateRole';
+import UserStatusModal from '@/components/Modals/UserStatus';
 // import ActionDropDown from '@/components/ActionDropDown';
 
 // const optionsFilter = [
@@ -31,7 +33,13 @@ const Users = () => {
   // const [currentPage, setCurrentPage] = useState(1);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [showUpdateUserRoleModal, setShowUpdateUserRoleModal] = useState(false);
   const [editUserData, setEditUserData] = useState<User | null>(null);
+  const [showUserStatusModal, setShowUserStatusModal] = useState(false);
+  // const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userStatusAction, setUserStatusAction] = useState<
+    'activate' | 'deactivate'
+  >('deactivate');
 
   const { allRolesList } = useSelector((s: RootState) => s.role);
   const { IsRequestingUsers, IsSearchingUser, allUsersList, pagination } =
@@ -83,9 +91,21 @@ const Users = () => {
     setEditUserData(data);
     setShowEditUserModal(true);
   };
+  const handleRole = (data: User) => {
+    // const handleUpdate = (data: object) => {
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+    setEditUserData(data);
+    setShowUpdateUserRoleModal(true);
+  };
 
-  const handleDelete = (data: object) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
+  const handleUserStatus = (user: User) => {
+    setEditUserData(user);
+
+    setUserStatusAction(user.status === 'A' ? 'deactivate' : 'activate');
+    setShowUserStatusModal(true);
   };
 
   const columns: Column<User>[] = [
@@ -95,18 +115,21 @@ const Users = () => {
     { key: 'phoneNumber', header: 'PHONE NUMBER' },
     { key: 'role', header: 'ROLE' },
     { key: 'isVerified', header: 'VERIFIED' },
-    // {
-    //   key: 'role',
-    //   header: 'ROLE',
-    //   render: (_, row: User) => row.role?.name || 'N/A', // Access department.name
-    // },
+    {
+      key: 'status',
+      header: 'STATUS',
+      render: (_, row: User) => (row.status === 'A' ? 'Active' : 'Inactive'), // Access department.name
+    },
     {
       key: 'id',
       header: '.',
       render: (value: string | number, row: User) => (
         <ActionDropDown
+          user={true}
+          handleRole={() => handleRole(row)}
           handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
+          handleDelete={() => handleUserStatus(row)}
+          isActive={row.status === 'A' ? true : false}
         />
       ),
     },
@@ -216,6 +239,27 @@ const Users = () => {
               user={editUserData} // Pass the user data as a prop
               open={showEditUserModal}
               onClose={() => setShowEditUserModal(false)}
+            />
+          )}
+          {showUpdateUserRoleModal && (
+            <UpdateRole
+              className="text-start w-full cursor-pointer"
+              user={editUserData} // Pass the user data as a prop
+              open={showUpdateUserRoleModal}
+              onClose={() => setShowUpdateUserRoleModal(false)}
+            />
+          )}
+          {showUserStatusModal && editUserData && (
+            <UserStatusModal
+              className="hidden"
+              open={showUserStatusModal}
+              userId={editUserData?.id as number}
+              userName={`${editUserData?.firstName} ${editUserData?.lastName}`}
+              action={userStatusAction}
+              onClose={() => {
+                setShowUserStatusModal(false);
+                setEditUserData(null);
+              }}
             />
           )}
         </div>

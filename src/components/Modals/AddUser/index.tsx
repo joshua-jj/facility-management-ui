@@ -79,11 +79,11 @@ const AddUser: React.FC<AddItemModalProps> = ({
   );
 
   const handleSubmit = (data: CreateUserForm) => {
-    if (!role) {
+    if (!user && !role) {
       setRoleError('Please select a role.');
       return;
     }
-    if (role.id === 3 && !department) {
+    if (!user && role?.id === 3 && !department) {
       setDepartmentError('Please select a department for this role.');
       return;
     }
@@ -179,26 +179,27 @@ const AddUser: React.FC<AddItemModalProps> = ({
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
             />
-            <div className="mb-3 group">
-              <div className="flex justify-between items-center">
-                <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
-                  Role
-                </label>
-              </div>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setRoleIsOpen(!roleIsOpen)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
-                >
-                  {role?.name || String(user?.role) || 'Select role'}
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
-                    <CaretIcon className="rotate-90" />
-                  </span>
-                </button>
-                {roleIsOpen && (
-                  <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
-                    {/* <div className="p-2">
+            {!user && (
+              <div className="mb-3 group">
+                <div className="flex justify-between items-center">
+                  <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
+                    Role
+                  </label>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setRoleIsOpen(!roleIsOpen)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
+                  >
+                    {role?.name || 'Select role'}
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
+                      <CaretIcon className="rotate-90" />
+                    </span>
+                  </button>
+                  {roleIsOpen && (
+                    <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
+                      {/* <div className="p-2">
                       <div className="relative">
                         <input
                           type="text"
@@ -212,22 +213,23 @@ const AddUser: React.FC<AddItemModalProps> = ({
                         </span>
                       </div>
                     </div> */}
-                    <ul className="max-h-40 overflow-y-auto">
-                      {allRolesArray.map((role) => (
-                        <li
-                          key={role.id}
-                          onClick={() => handleRoleSelect(role)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                        >
-                          <span className="mr-4">{role.name}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                      <ul className="max-h-40 overflow-y-auto">
+                        {allRolesArray.map((role) => (
+                          <li
+                            key={role.id}
+                            onClick={() => handleRoleSelect(role)}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                          >
+                            <span className="mr-4">{role.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <p className="text-red-500 text-sm">{roleError}</p>
               </div>
-              <p className="text-red-500 text-sm">{roleError}</p>
-            </div>
+            )}
             {role?.id === 3 && (
               <div className="mb-3 group">
                 <div className="flex justify-between items-center">

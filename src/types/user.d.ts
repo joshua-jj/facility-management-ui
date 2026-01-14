@@ -15,11 +15,26 @@ export interface UserConstants {
   CREATE_USER_SUCCESS: string;
   CREATE_USER_ERROR: string;
 
+  REQUEST_UPDATE_USER_ROLE: string;
+  UPDATE_USER_ROLE_SUCCESS: string;
+  UPDATE_USER_ROLE_ERROR: string;
+
+  REQUEST_ACTIVATE_USER: string;
+  ACTIVATE_USER_SUCCESS: string;
+  ACTIVATE_USER_ERROR: string;
+
+  REQUEST_DEACTIVATE_USER: string;
+  DEACTIVATE_USER_SUCCESS: string;
+  DEACTIVATE_USER_ERROR: string;
+
   GET_USERS: string;
   SEARCH_USER: string;
   GET_USERS_BY_ROLE: string;
 
   CREATE_USER: string;
+  UPDATE_USER_ROLE: string;
+  ACTIVATE_USER: string;
+  DEACTIVATE_USER: string;
 
   USER_URI: string;
 }
@@ -96,4 +111,12 @@ export interface CreateUserForm {
   phoneNumber: string;
   role: number;
   departmentId?: number;
+}
+
+export interface UpdateUserRoleForm {
+  roleId: number;
+}
+
+export interface UserStatusForm {
+  ids: number[];
 }
