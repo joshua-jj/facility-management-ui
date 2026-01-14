@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState, useCallback } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
@@ -60,6 +60,7 @@ const UpdateRole: React.FC<UpdateRoleModalProps> = ({
 
   const handleSubmit = (data: UpdateUserRoleForm) => {
     data.roleId = role?.id as number;
+    data.userId = user?.id as number;
 
     dispatch(userActions.updateUserRole(data) as unknown as UnknownAction);
   };

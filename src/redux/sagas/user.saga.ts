@@ -307,10 +307,12 @@ function* updateUserRole({ data }: UpdateUserRoleAction) {
     );
 
     if (data) {
-      const userUri = `${userConstants.USER_URI}/user/${data.roleId}/role`;
+      const { userId, ...restData } = data;
+
+      const userUri = `${userConstants.USER_URI}/${userId}/role`;
       const userReq = createRequestWithToken(userUri, {
         method: 'PATCH',
-        body: JSON.stringify(data),
+        body: JSON.stringify(restData),
       });
       const req: Request = yield call(userReq, user?.token as string);
       const response: Users = yield call(fetch, req);
