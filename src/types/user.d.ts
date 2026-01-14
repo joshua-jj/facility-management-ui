@@ -114,6 +114,7 @@ export interface CreateUserForm {
 }
 
 export interface UpdateUserRoleForm {
+  userId: number;
   roleId: number;
 }
 

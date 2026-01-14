@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import FullscreenModal from '../';
 import CrossIcon from '../../../../public/assets/icons/Cross.svg';
 import Formsy from 'formsy-react';
@@ -44,7 +44,11 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
   const [search, setSearch] = useState('');
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  // const closeModal = () => setIsModalOpen(false);
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    if (onClose) onClose();
+  }, [onClose]);
   const enableButton = () => setCanSubmit(true);
   const disableButton = () => setCanSubmit(false);
 
@@ -133,9 +137,25 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
   //   }
   // };
 
+  console.log(
+    'generator',
+    departmentItemsList?.find(
+      (item) => item.name === generatorLog?.generatorType
+    )?.id
+  );
   const handleSubmit = (data: GeneratorForm) => {
+    // const generatorTypeItem = departmentItemsList?.find(
+    //   (item) => item.name === generatorLog?.generatorType
+    // );
+    const generatorTypeId = departmentItemsList?.find(
+      (item) => item.name === generatorLog?.generatorType
+    )?.id;
+    console.log('generatorTypeId', generatorTypeId);
+
+    // const generatorTypeId = generatorTypeItem?.id;
+
     const base: Partial<GeneratorForm> = {
-      generatorTypeId: item?.id ?? generatorLog?.generatorTypeId,
+      generatorTypeId: generatorLog ? generatorTypeId : item?.id,
       // personnelName:
       //   `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim(),
     };
@@ -181,7 +201,8 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       ...base,
       ...cleaned,
       id: generatorLog?.id ?? undefined,
-      generatorTypeId: item?.id ?? generatorLog?.generatorTypeId ?? 0,
+      generatorTypeId: generatorLog ? generatorTypeId : item?.id,
+      // generatorTypeId: item?.id ?? generatorLog?.generatorTypeId ?? 0,
     } as GeneratorForm;
 
     if (generatorLog?.id) {
@@ -206,9 +227,22 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
         }
       }
     );
+    const listener2 = AppEmitter.addListener(
+      generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS,
+      (evt: Event) => {
+        const newUser = evt as CustomEvent;
 
-    return () => listener.remove();
-  }, []);
+        if (newUser) {
+          closeModal();
+        }
+      }
+    );
+
+    return () => {
+      listener.remove();
+      listener2.remove();
+    };
+  }, [closeModal]);
 
   return (
     <>
@@ -256,54 +290,57 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
               className="text-[#0F2552] rounded font-medium text-sm"
               inputClass="font-normal border border-gray-300 rounded"
             />
-            <div className="mb-3 group">
-              <div className="flex justify-between items-center">
-                <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
-                  Generator used
-                </label>
-              </div>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setItemIsOpen(!itemIsOpen)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
-                >
-                  {item?.name || generatorLog?.generatorType || 'Select item'}
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
-                    <CaretIcon className="rotate-90" />
-                  </span>
-                </button>
-                {itemIsOpen && (
-                  <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
-                    <div className="p-2">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search"
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                          <SearchIcon />
-                        </span>
+            {!generatorLog && (
+              <div className="mb-3 group">
+                <div className="flex justify-between items-center">
+                  <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
+                    Generator used
+                  </label>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setItemIsOpen(!itemIsOpen)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
+                  >
+                    {item?.name || 'Select item'}
+                    {/* {item?.name || generatorLog?.generatorType || 'Select item'} */}
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[1.5rem] text-[rgba(15, 37, 82, 1)]">
+                      <CaretIcon className="rotate-90" />
+                    </span>
+                  </button>
+                  {itemIsOpen && (
+                    <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
+                      <div className="p-2">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <SearchIcon />
+                          </span>
+                        </div>
                       </div>
+                      <ul className="max-h-40 overflow-y-auto">
+                        {departmentItemsArray.map((item) => (
+                          <li
+                            key={item.id}
+                            onClick={() => handleItemSelect(item)}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                          >
+                            <span className="mr-4">{item.name}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="max-h-40 overflow-y-auto">
-                      {departmentItemsArray.map((item) => (
-                        <li
-                          key={item.id}
-                          onClick={() => handleItemSelect(item)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                        >
-                          <span className="mr-4">{item.name}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
             <TextInput
               type="datetime-local"
               className="text-[#0F2552] rounded font-medium text-sm"
