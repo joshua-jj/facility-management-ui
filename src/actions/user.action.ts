@@ -1,5 +1,5 @@
 import { userConstants } from '@/constants';
-import { CreateUserForm } from '@/types';
+import { CreateUserForm, UpdateUserRoleForm, UserStatusForm } from '@/types';
 
 export interface GetUsersAction {
   type: typeof userConstants.GET_USERS;
@@ -18,6 +18,16 @@ export interface GetUsersByRoleAction {
 export interface CreateUserAction {
   type: typeof userConstants.CREATE_USER;
   data: CreateUserForm;
+}
+
+export interface UpdateUserRoleAction {
+  type: typeof userConstants.UPDATE_USER_ROLE;
+  data: UpdateUserRoleForm;
+}
+
+export interface UserStatusAction {
+  type: typeof userConstants.ACTIVATE_USER;
+  data: UserStatusForm;
 }
 
 const getUsers = (data?: { page: number }): GetUsersAction => ({
@@ -40,9 +50,27 @@ const createUser = (data: CreateUserForm): CreateUserAction => ({
   data,
 });
 
+const updateUserRole = (data: UpdateUserRoleForm): UpdateUserRoleAction => ({
+  type: userConstants.UPDATE_USER_ROLE,
+  data,
+});
+
+const activateUser = (data: UserStatusForm): UserStatusAction => ({
+  type: userConstants.ACTIVATE_USER,
+  data,
+});
+
+const deactivateUser = (data: UserStatusForm): UserStatusAction => ({
+  type: userConstants.DEACTIVATE_USER,
+  data,
+});
+
 export const userActions = {
   getUsers,
   searchUser,
   getUsersByRole,
   createUser,
+  updateUserRole,
+  activateUser,
+  deactivateUser,
 };

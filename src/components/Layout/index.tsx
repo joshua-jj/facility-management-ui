@@ -27,7 +27,6 @@ const Layout: React.FC<LayoutProps> = ({ children, className, title }) => {
       ) : (
         <div className="h-screen overflow-hidden bg-gray-50 grid grid-cols-[0.5fr_7fr] xl:grid-cols-[1fr_5.4fr]">
           <Head>
-            {/* <title>EGFM - Facility Management Admin System</title> */}
             <title>
               {title
                 ? `${title} | EGFM - Facility Management Admin System`

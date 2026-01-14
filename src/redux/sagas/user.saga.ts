@@ -14,6 +14,8 @@ import {
   GetUsersAction,
   GetUsersByRoleAction,
   SearchUserAction,
+  UpdateUserRoleAction,
+  UserStatusAction,
 } from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -295,6 +297,246 @@ function* createUser({ data }: CreateUserAction) {
   }
 }
 
+function* updateUserRole({ data }: UpdateUserRoleAction) {
+  yield put({ type: userConstants.REQUEST_UPDATE_USER_ROLE });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+
+    if (data) {
+      const userUri = `${userConstants.USER_URI}/user/${data.roleId}/role`;
+      const userReq = createRequestWithToken(userUri, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      const req: Request = yield call(userReq, user?.token as string);
+      const response: Users = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
+
+      yield put({
+        type: userConstants.UPDATE_USER_ROLE_SUCCESS,
+        user: jsonResponse?.data,
+      });
+
+      yield put({
+        type: userConstants.GET_USERS,
+      });
+
+      AppEmitter.emit(userConstants.UPDATE_USER_ROLE_SUCCESS, jsonResponse);
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'User role updated successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      console.log('res', res);
+
+      yield put({
+        type: userConstants.UPDATE_USER_ROLE_ERROR,
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        // message: res?.message ?? res?.message?.[0] ?? 'Something went wrong',
+        variant: 'error',
+      };
+      console.log('payload', payload);
+
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+  }
+}
+
+function* activateUser({ data }: UserStatusAction) {
+  yield put({ type: userConstants.REQUEST_ACTIVATE_USER });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+
+    if (data) {
+      const userUri = `${userConstants.USER_URI}/activate`;
+      const userReq = createRequestWithToken(userUri, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      const req: Request = yield call(userReq, user?.token as string);
+      const response: Users = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
+
+      yield put({
+        type: userConstants.ACTIVATE_USER_SUCCESS,
+        user: jsonResponse?.data,
+      });
+
+      yield put({
+        type: userConstants.GET_USERS,
+      });
+
+      AppEmitter.emit(userConstants.ACTIVATE_USER_SUCCESS, jsonResponse);
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'User role updated successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      console.log('res', res);
+
+      yield put({
+        type: userConstants.ACTIVATE_USER_ERROR,
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        // message: res?.message ?? res?.message?.[0] ?? 'Something went wrong',
+        variant: 'error',
+      };
+      console.log('payload', payload);
+
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+  }
+}
+
+function* deactivateUser({ data }: UserStatusAction) {
+  yield put({ type: userConstants.REQUEST_DEACTIVATE_USER });
+
+  try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+
+    if (data) {
+      const userUri = `${userConstants.USER_URI}/deactivate`;
+      const userReq = createRequestWithToken(userUri, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      const req: Request = yield call(userReq, user?.token as string);
+      const response: Users = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
+
+      yield put({
+        type: userConstants.DEACTIVATE_USER_SUCCESS,
+        user: jsonResponse?.data,
+      });
+
+      yield put({
+        type: userConstants.GET_USERS,
+      });
+
+      AppEmitter.emit(userConstants.DEACTIVATE_USER_SUCCESS, jsonResponse);
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'User role updated successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      console.log('res', res);
+
+      yield put({
+        type: userConstants.DEACTIVATE_USER_ERROR,
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        // message: res?.message ?? res?.message?.[0] ?? 'Something went wrong',
+        variant: 'error',
+      };
+      console.log('payload', payload);
+
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+  }
+}
+
 function* getUsersWatcher() {
   yield takeLatest(userConstants.GET_USERS, getUsers);
 }
@@ -310,11 +552,26 @@ function* createUserWatcher() {
   yield takeLatest(userConstants.CREATE_USER, createUser);
 }
 
+function* updateUserRoleWatcher() {
+  yield takeLatest(userConstants.UPDATE_USER_ROLE, updateUserRole);
+}
+
+function* activateUserWatcher() {
+  yield takeLatest(userConstants.ACTIVATE_USER, activateUser);
+}
+
+function* deactivateUserWatcher() {
+  yield takeLatest(userConstants.DEACTIVATE_USER, deactivateUser);
+}
+
 export default function* rootSaga() {
   yield all([
     getUsersWatcher(),
     searchUserWatcher(),
     getUsersByRoleWatcher(),
     createUserWatcher(),
+    updateUserRoleWatcher(),
+    activateUserWatcher(),
+    deactivateUserWatcher(),
   ]);
 }

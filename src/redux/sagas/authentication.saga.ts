@@ -8,8 +8,9 @@ import {
   setObjectInStorage,
   clearObjectFromStorage,
   createRequestWithToken,
+  getObjectFromStorage,
 } from '@/utilities/helpers';
-import { SetSnackBarPayload } from '@/types';
+import { SetSnackBarPayload, User } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import {
   ChangePasswordAction,
@@ -202,18 +203,15 @@ function* changePassword({ data }: ChangePasswordAction) {
   yield put({ type: authConstants.REQUEST_CHANGE_PASSWORD });
 
   try {
-    // const user: User | null = yield call(
-    //       getObjectFromStorage,
-    //       authConstants.USER_KEY
-    //     );
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
     if (data) {
       const changePasswordUri = `${authConstants.AUTH_URI}/change-password`;
-      // const resendReq = createRequest(resendUri, {
-      //   method: 'PATCH',
-      //   body: JSON.stringify(data),
-      // });
-      const token = data.token;
+      const token = data.token || user?.token;
       delete data.token;
+      delete data.confirmNewPassword;
       const changePasswordReq = createRequestWithToken(changePasswordUri, {
         method: 'PATCH',
         body: JSON.stringify(data),
