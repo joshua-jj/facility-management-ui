@@ -61,6 +61,8 @@ export interface GeneratorLog {
   remark: string;
   createdAt: string;
   updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
   status?: number;
   // generatorName: string;
   // generatorStatus: string;
@@ -70,8 +72,6 @@ export interface GeneratorLog {
   // generatorVoltage: number;
   // generatorCurrent: number;
   // generatorFrequency: number;
-  // createdAt: string;
-  // updatedAt: string;
 }
 export interface GeneratorState {
   generators: GeneratorLog[];

@@ -139,6 +139,14 @@ const GeneratorLogs = () => {
       },
     },
     {
+      key: 'createdBy',
+      header: 'LOG CREATED BY',
+    },
+    {
+      key: 'updatedBy',
+      header: 'LOG UPDATED BY',
+    },
+    {
       key: 'id',
       header: '.',
       render: (value: string | number, row: GeneratorLog) => (
