@@ -74,6 +74,13 @@ export const pageRoutes = [
     icon: <UsersIcon />,
     allowedRoles: [5, 1],
   },
+  {
+    id: 9,
+    label: 'account settings',
+    link: '/admin/account-settings',
+    icon: <UsersIcon />,
+    allowedRoles: [5, 1, 2, 3, 4],
+  },
 ];
 
 export const getPageNames = (link: string) => {
@@ -100,6 +107,8 @@ export const getPageNames = (link: string) => {
       return 'reports';
     case '/admin/users':
       return 'user management';
+    case '/admin/account-settings':
+      return 'account settings';
     default:
       return '';
   }

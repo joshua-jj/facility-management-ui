@@ -35,7 +35,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
   const dispatch = useDispatch();
   const { IsCreatingGeneratorLog } = useSelector((s: RootState) => s.generator);
   const { departmentItemsList } = useSelector((s: RootState) => s.item);
-  const { userDetails } = useSelector((s: RootState) => s.user);
+  // const { userDetails } = useSelector((s: RootState) => s.user);
 
   const [canSubmit, setCanSubmit] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,8 +136,8 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
   const handleSubmit = (data: GeneratorForm) => {
     const base: Partial<GeneratorForm> = {
       generatorTypeId: item?.id ?? generatorLog?.generatorTypeId,
-      personnelName:
-        `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim(),
+      // personnelName:
+      //   `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim(),
     };
 
     const cleaned: Partial<GeneratorForm> = Object.entries(data).reduce(
@@ -153,7 +153,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
           typedKey === 'dieselLevelOff' ||
           typedKey === 'nameOfMeeting' ||
           typedKey === 'meetingLocation' ||
-          typedKey === 'Remark'
+          typedKey === 'remark'
         ) {
           acc[typedKey] = value;
         } else if (typedKey === 'generatorTypeId') {
@@ -381,10 +381,10 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
             />
             <TextArea
               type="text"
-              name="Remark"
+              name="remark"
               label="Remark"
               placeholder="Add details"
-              value={generatorLog?.Remark || ''}
+              value={generatorLog?.remark || ''}
               required
             />
             <button

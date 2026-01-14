@@ -100,6 +100,21 @@ const IsCreatingUser = (
   }
 };
 
+const IsUpdatingUserRole = (
+  state: LoadingState = false,
+  action: UserAction
+): LoadingState => {
+  switch (action.type) {
+    case userConstants.REQUEST_UPDATE_USER_ROLE:
+      return true;
+    case userConstants.UPDATE_USER_ROLE_SUCCESS:
+    case userConstants.UPDATE_USER_ROLE_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allUsersList = (
   state: UsersListState = [],
   action: AllUsersAction
@@ -173,6 +188,10 @@ export interface RootState {
     state: LoadingState | undefined,
     action: UserAction
   ) => LoadingState;
+  IsUpdatingUserRole: (
+    state: LoadingState | undefined,
+    action: UserAction
+  ) => LoadingState;
   allUsersList: (
     state: UsersListState | undefined,
     action: AllUsersAction
@@ -192,6 +211,7 @@ const rootReducer = combineReducers<RootState>({
   IsRequestingUsers,
   IsSearchingUser,
   IsCreatingUser,
+  IsUpdatingUserRole,
   allUsersList,
   roleUsersList,
   pagination,
