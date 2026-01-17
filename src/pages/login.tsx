@@ -50,7 +50,13 @@ const Login: FC = () => {
           return;
         }
 
-        if (data) {
+        if (data?.user?.hasDefaultPassword) {
+          router.push({
+            pathname: '/change-password',
+            query: { email: data.user.email, accessToken: data.accessToken },
+          });
+          return;
+        } else {
           router.push('/admin/dashboard');
           return;
         }
