@@ -5,13 +5,17 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Copy dependency files
+RUN corepack enable
+RUN corepack prepare yarn@1.22.22 --activate
+
 # Declare build-time arguments
 ARG NEXT_PUBLIC_BASE_URL
 
 # Set env so Next.js sees it during build
 ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
 
-# Copy dependency files
+# Copy package.json and yarn.lock
 COPY package.json yarn.lock ./
 
 # Install deps
@@ -28,6 +32,9 @@ RUN yarn build
 # ----------------------
 FROM node:20-alpine AS runner
 WORKDIR /app
+
+RUN corepack enable
+RUN corepack prepare yarn@1.22.22 --activate
 
 ENV NODE_ENV=production
 ENV PORT=3000

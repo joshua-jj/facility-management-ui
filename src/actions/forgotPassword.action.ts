@@ -1,4 +1,4 @@
-import { ForgotPasswordForm, ResetPasswordForm } from '@/types';
+import { ForgotPasswordForm, ResetPasswordPayload } from '@/types';
 import { forgotPasswordConstants } from '@/constants';
 
 export interface ForgotPasswordAction {
@@ -8,7 +8,7 @@ export interface ForgotPasswordAction {
 
 export interface ResetPasswordAction {
   type: typeof forgotPasswordConstants.RESET_PASSWORD;
-  data: ResetPasswordForm;
+  data: ResetPasswordPayload;
 }
 
 const forgotPassword = (data: ForgotPasswordForm): ForgotPasswordAction => ({
@@ -16,7 +16,7 @@ const forgotPassword = (data: ForgotPasswordForm): ForgotPasswordAction => ({
   data,
 });
 
-const resetPassword = (data: ResetPasswordForm): ResetPasswordAction => ({
+const resetPassword = (data: ResetPasswordPayload): ResetPasswordAction => ({
   type: forgotPasswordConstants.RESET_PASSWORD,
   data,
 });
