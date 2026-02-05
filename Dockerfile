@@ -4,6 +4,9 @@ FROM node:20-alpine AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
+RUN corepack enable
+RUN corepack prepare yarn@1.22.22 --activate
+
 # Copy package.json and yarn.lock
 COPY package.json yarn.lock ./
 

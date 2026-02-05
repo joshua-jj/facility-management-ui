@@ -7,7 +7,7 @@ import { RootState } from '@/redux/reducers';
 import { forgotPasswordActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { AppEmitter } from '@/controllers/EventEmitter';
-import { authConstants } from '@/constants';
+import { forgotPasswordConstants } from '@/constants';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import EyeIcon from '../../public/assets/icons/Eye.svg';
@@ -18,7 +18,9 @@ const ResetPassword: FC = () => {
   const { token } = router?.query;
 
   const dispatch = useDispatch();
-  const { IsLoggingIn } = useSelector((s: RootState) => s.auth);
+  const { IsResettingPassword } = useSelector(
+    (s: RootState) => s.forgotPassword
+  );
 
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
   const [passwordShow, setPasswordShow] = useState<boolean>(false);
@@ -40,20 +42,27 @@ const ResetPassword: FC = () => {
       return;
     }
 
+    const payload = {
+      token: data.token,
+      newPassword: data.password,
+    };
+
+    console.log('data', data);
+
     dispatch(
-      forgotPasswordActions.resetPassword(data) as unknown as UnknownAction
+      forgotPasswordActions.resetPassword(payload) as unknown as UnknownAction
     );
   };
 
   useEffect(() => {
     const listener = AppEmitter.addListener(
-      authConstants.LOGIN_SUCCESS,
+      forgotPasswordConstants.RESET_PASSWORD_SUCCESS,
       (evt: Event) => {
         const customEvent = evt as CustomEvent;
-        const data = customEvent.detail?.data;
+        const data = customEvent.detail;
 
-        if (data) {
-          router.push('/admin/dashboard');
+        if (data?.message) {
+          router.push('/login');
           return;
         }
       }
@@ -114,7 +123,7 @@ const ResetPassword: FC = () => {
             className="bg-[#B28309] rounded text-center w-full py-3 mt-8 font-normal text-[0.9rem] text-white hover:bg-[#B2830998] transition cursor-pointer flex justify-center items-center"
             type="submit"
           >
-            {IsLoggingIn ? (
+            {IsResettingPassword ? (
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
