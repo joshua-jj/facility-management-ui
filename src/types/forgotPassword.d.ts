@@ -8,6 +8,11 @@ export interface ResetPasswordForm {
   password_confirmation: string;
 }
 
+export interface ResetPasswordPayload {
+  token: string | string[] | undefined;
+  newPassword: string;
+}
+
 export interface IsSendingResetPasswordLinkState {
   isSending: boolean;
 }

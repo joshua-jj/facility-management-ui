@@ -1,6 +1,10 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { authConstants, forgotPasswordConstants } from '@/constants';
-import { appActions, ForgotPasswordAction } from '@/actions';
+import {
+  appActions,
+  ForgotPasswordAction,
+  ResetPasswordAction,
+} from '@/actions';
 import {
   checkStatus,
   parseResponse,
@@ -122,6 +126,79 @@ function* getResetPasswordLink({ data }: ForgotPasswordAction) {
   }
 }
 
+function* resetPassword({ data }: ResetPasswordAction) {
+  yield put({ type: forgotPasswordConstants.REQUEST_RESET_PASSWORD });
+
+  try {
+    if (data) {
+      const resetPasswordLinkUri = `${authConstants.AUTH_URI}/password-reset`;
+      const resetPasswordLinkReq = createRequest(resetPasswordLinkUri, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+
+      const response: ResetPasswordAction = yield call(
+        fetch,
+        resetPasswordLinkReq
+      );
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
+
+      yield put({
+        type: forgotPasswordConstants.RESET_PASSWORD_SUCCESS,
+        user: jsonResponse?.data,
+      });
+
+      AppEmitter.emit(
+        forgotPasswordConstants.RESET_PASSWORD_SUCCESS,
+        jsonResponse
+      );
+
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: jsonResponse?.message ?? 'Password reset successfully',
+        variant: 'success',
+      };
+
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: forgotPasswordConstants.RESET_PASSWORD_ERROR,
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        variant: 'error',
+      };
+
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+  }
+}
+
 function* getResetPasswordLinkWatcher() {
   yield takeLatest(
     forgotPasswordConstants.SEND_RESET_PASSWORD_LINK,
@@ -129,6 +206,10 @@ function* getResetPasswordLinkWatcher() {
   );
 }
 
+function* resetPasswordWatcher() {
+  yield takeLatest(forgotPasswordConstants.RESET_PASSWORD, resetPassword);
+}
+
 export default function* rootSaga() {
-  yield all([getResetPasswordLinkWatcher()]);
+  yield all([getResetPasswordLinkWatcher(), resetPasswordWatcher()]);
 }
