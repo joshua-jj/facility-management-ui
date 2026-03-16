@@ -1,11 +1,11 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         textColor: '#0F2552',
-        // You can add custom colors here if needed
       },
       boxShadow: {
         pry: '8px 3px 22px 0px rgba(150, 150, 150, 0.15)',
@@ -17,6 +17,7 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   plugins: [],
 };

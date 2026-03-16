@@ -33,7 +33,6 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
     if (onClose) onClose();
   };
   const handleDelete = () => {
-    console.log('Deleting item with ID:', itemId);
     dispatch(
       itemActions.deleteItem({
         id: itemId as number,
@@ -49,24 +48,24 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
       </button>
 
       <FullscreenModal open={open || isModalOpen} onClickAway={closeModal}>
-        <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[25rem] ">
+        <div className="relative bg-white dark:bg-[#1a1a2e] rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[25rem]">
           <button
             onClick={closeModal}
-            className="absolute cursor-pointer top-4 right-4 text-gray-400 hover:text-gray-600"
+            className="absolute cursor-pointer top-4 right-4 text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60"
           >
             <CrossIcon />
           </button>
-          <h2 className="text-2xl font-semibold text-textColor mb-4">
+          <h2 className="text-2xl font-semibold text-textColor dark:text-white mb-4">
             Delete Item
           </h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 dark:text-white/50 mb-4">
             Are you sure you want to delete this item? This action cannot be
             undone.
           </p>
           <div className="flex justify-end">
             <button
               onClick={closeModal}
-              className="bg-gray-200 text-gray-700 cursor-pointer px-4 py-2 rounded-md mr-2"
+              className="bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white/70 cursor-pointer px-4 py-2 rounded-md mr-2"
             >
               Cancel
             </button>

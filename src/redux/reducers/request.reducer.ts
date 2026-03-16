@@ -101,13 +101,15 @@ const IsRequestingRequests = (
 ): LoadingState => {
   switch (action.type) {
     case requestConstants.REQUEST_GET_ALL_REQUESTS:
-      return true;
     case requestConstants.REQUEST_GET_DEPARTMENT_REQUESTS:
+    case requestConstants.REQUEST_GET_ASSIGNED_REQUESTS:
       return true;
     case requestConstants.GET_ALL_REQUESTS_SUCCESS:
     case requestConstants.GET_ALL_REQUESTS_ERROR:
     case requestConstants.GET_DEPARTMENT_REQUESTS_SUCCESS:
     case requestConstants.GET_DEPARTMENT_REQUESTS_ERROR:
+    case requestConstants.GET_ASSIGNED_REQUESTS_SUCCESS:
+    case requestConstants.GET_ASSIGNED_REQUESTS_ERROR:
       return false;
     default:
       return state;
