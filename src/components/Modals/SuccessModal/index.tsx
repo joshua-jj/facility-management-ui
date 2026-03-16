@@ -33,14 +33,14 @@ const SuccessModal: FC<SuccessModalProps> = ({
       open={showSuccessModal}
       onClickAway={() => setShowSuccessModal(false)}
     >
-      <div className="flex flex-col items-center justify-center relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[28rem] text-center border border-gray-200">
+      <div className="flex flex-col items-center justify-center relative bg-white dark:bg-[#1a1a2e] rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[28rem] text-center border border-gray-200">
         <GreenCheckIcon className="my-3 text-[#fff]" />
         {message && (
-          <h2 className="font-bold text-xl pt-2 pb-1 text-[#0F2552]">
+          <h2 className="font-bold text-xl pt-2 pb-1 text-[#0F2552] dark:text-white">
             {message}
           </h2>
         )}
-        {subMessage && <p className="text-md text-[#0F2552]">{subMessage}</p>}
+        {subMessage && <p className="text-md text-[#0F2552] dark:text-white">{subMessage}</p>}
       </div>
     </FullscreenModal>
   );

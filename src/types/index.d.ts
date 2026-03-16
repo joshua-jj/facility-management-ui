@@ -10,3 +10,5 @@ export * from './request';
 export * from './role';
 export * from './store';
 export * from './user';
+export * from './dashboard';
+export * from './maintenanceSchedule';

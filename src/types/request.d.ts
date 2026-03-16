@@ -105,6 +105,7 @@ export interface Request {
   createdBy: string;
   requesterEmail: string;
   requesterHodEmail: string;
+  requesterHodPhone: string;
   requesterPhone: string;
   requestStatus: string;
   isMinistry: boolean;
