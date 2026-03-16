@@ -1,16 +1,27 @@
 import { combineReducers } from 'redux';
 import { departmentConstants } from '@/constants';
-import { Action, Department, LoadingState } from '@/types';
+import { Action, Department, LoadingState, PaginationState } from '@/types';
+import { updateObject } from '@/utilities/reducerUtility';
 
 interface DepartmentsAction extends Action {
-  departments: Department[];
+  departments: {
+    items: Department[];
+    links: { [key: string]: string | number | null };
+    meta: {
+      currentPage: number;
+      itemCount: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+    };
+  };
 }
 
 type DepartmentsListState = Department[];
 
 const IsRequestingDepartments = (
   state: LoadingState = false,
-  action: Action
+  action: Action,
 ): LoadingState => {
   switch (action.type) {
     case departmentConstants.REQUEST_GET_ALL_DEPARTMENTS:
@@ -25,7 +36,7 @@ const IsRequestingDepartments = (
 
 const IsCreatingDepartment = (
   state: LoadingState = false,
-  action: Action
+  action: Action,
 ): LoadingState => {
   switch (action.type) {
     case departmentConstants.REQUEST_CREATE_DEPARTMENT:
@@ -40,35 +51,41 @@ const IsCreatingDepartment = (
 
 const allDepartmentsList = (
   state: DepartmentsListState = [],
-  action: DepartmentsAction
+  action: DepartmentsAction,
 ): DepartmentsListState => {
   switch (action.type) {
     case departmentConstants.GET_ALL_DEPARTMENTS_SUCCESS:
-      return action.departments ?? state;
+      return action.departments?.items ?? state;
     default:
       return state;
   }
 };
 
-export interface RootState {
-  IsRequestingDepartments: (
-    state: LoadingState | undefined,
-    action: Action
-  ) => LoadingState;
-  IsCreatingDepartment: (
-    state: LoadingState | undefined,
-    action: Action
-  ) => LoadingState;
-  allDepartmentsList: (
-    state: DepartmentsListState | undefined,
-    action: DepartmentsAction
-  ) => DepartmentsListState;
-}
+const pagination = (
+  state: PaginationState = {
+    links: { first: null, last: null, next: null, previous: null },
+    meta: { currentPage: 0, itemCount: 0, itemsPerPage: 0, totalItems: 0, totalPages: 0 },
+  },
+  action: DepartmentsAction,
+): PaginationState => {
+  switch (action.type) {
+    case departmentConstants.GET_ALL_DEPARTMENTS_SUCCESS: {
+      if (!action.departments?.meta) return state;
+      return updateObject(state, {
+        links: action.departments.links,
+        meta: action.departments.meta,
+      });
+    }
+    default:
+      return state;
+  }
+};
 
-const rootReducer = combineReducers<RootState>({
+const rootReducer = combineReducers({
   IsRequestingDepartments,
   IsCreatingDepartment,
   allDepartmentsList,
+  pagination,
 });
 
 export default rootReducer;

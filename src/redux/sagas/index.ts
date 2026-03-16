@@ -10,6 +10,8 @@ import requestRootSaga from './request.saga';
 import roleRootSaga from './role.saga';
 import storeRootSaga from './store.saga';
 import userRootSaga from './user.saga';
+import dashboardRootSaga from './dashboard.saga';
+import maintenanceScheduleRootSaga from './maintenanceSchedule.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -24,5 +26,7 @@ export default function* rootSaga() {
     roleRootSaga(),
     storeRootSaga(),
     userRootSaga(),
+    dashboardRootSaga(),
+    maintenanceScheduleRootSaga(),
   ]);
 }

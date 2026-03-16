@@ -1,380 +1,392 @@
-import Layout from '@/components/Layout';
-import React, { useEffect, useState } from 'react';
-import { Column, Table } from '@/components/Table';
-import Formsy from 'formsy-react';
-import CustomDropdownSelect from '@/components/CustomDropdownSelect';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/redux/reducers';
-import { itemActions } from '@/actions';
-import { UnknownAction } from 'redux';
-import { Item } from '@/types';
-// import { isWithinInterval, parseISO } from 'date-fns';
-// import classNames from 'classnames';
-import { Pagination } from '@/components/Pagination';
-import AddItem from '@/components/Modals/AddItem';
-import PrivateRoute from '@/components/PrivateRoute';
-import { FilterIcon } from '@/components/Icons';
-import ActionDropDown from '@/components/ActionDropDown';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
-import DeleteModal from '@/components/Modals/Delete';
+import { useDispatch, useSelector } from 'react-redux';
+import { UnknownAction } from 'redux';
 
-// const optionsFilter = [
-//   { value: '1', label: 'approved' },
-//   { value: '2', label: 'assigned' },
-//   { value: '3', label: 'collected' },
-//   { value: '4', label: 'declined' },
-//   { value: '5', label: 'pending' },
-// ];
+import Layout from '@/components/Layout';
+import PrivateRoute from '@/components/PrivateRoute';
+import { DataTable, Column, FilterDef } from '@/components/DataTable';
+import StatusChip from '@/components/StatusChip';
+import PageHeader, { ActionButton } from '@/components/PageHeader';
+import AddItem from '@/components/Modals/AddItem';
+import DeleteModal from '@/components/Modals/Delete';
+import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+
+import { RootState } from '@/redux/reducers';
+import { appActions, itemActions } from '@/actions';
+import { Item } from '@/types';
+import { RoleId, RoleIdValue } from '@/constants/roles.constant';
+import { useDebounce } from '@/hooks/useDebounce';
+import { exportToCsv } from '@/utilities/exportCsv';
+import ExportModal from '@/components/ExportModal';
+import { getObjectFromStorage } from '@/utilities/helpers';
+import { NumberDisplay } from '@/components/FormatValue';
+import { authConstants, itemConstants } from '@/constants';
+import axios from 'axios';
+import { format, parseISO } from 'date-fns';
+
+const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>;
+
+const DEPARTMENT_SCOPED_ROLES: RoleIdValue[] = [RoleId.HOD, RoleId.MEMBER];
 
 const Items = () => {
-  const router = useRouter();
-  const dispatch = useDispatch();
-  // const [statusFilter, setStatusFilter] = useState('');
-  const [deptFilter, setDeptFilter] = useState('');
-  // const [dateFrom, setDateFrom] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  // const [dateTo, setDateTo] = useState('');
-  // const [currentPage, setCurrentPage] = useState(1);
-  const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const [showEditItemModal, setShowEditItemModal] = useState(false);
-  const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
-  const [editItemData, setEditItemData] = useState<Item | null>(null);
-  const [deleteItemData, setDeleteItemData] = useState<Item | null>(null);
+   const router = useRouter();
+   const dispatch = useDispatch();
 
-  const { userDetails } = useSelector((s: RootState) => s.user);
-  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-  const { IsRequestingAllItems, IsSearchingItem, allItemsList, pagination } =
-    useSelector((s: RootState) => s.item);
-  const { meta } = pagination;
-  const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
+   const [showAddModal, setShowAddModal] = useState(false);
+   const [editItemData, setEditItemData] = useState<Item | null>(null);
+   const [showDeleteModal, setShowDeleteModal] = useState(false);
+   const [deleteItemData, setDeleteItemData] = useState<Item | null>(null);
+   const [showExportModal, setShowExportModal] = useState(false);
+   const [isExporting, setIsExporting] = useState(false);
+   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
-      dispatch(
-        itemActions.getDepartmentItems({
-          departmentId: userDetails.departmentId,
-        }) as unknown as UnknownAction
-      );
-    } else {
-      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
-    }
-  }, [dispatch, userDetails]);
+   const { userDetails } = useSelector((s: RootState) => s.user);
+   const { IsRequestingAllItems, allItemsList, pagination } = useSelector((s: RootState) => s.item);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    if (!query) {
-      dispatch(
-        userDetails?.roleId === 3 && userDetails?.departmentId !== undefined
-          ? (itemActions.getDepartmentItems({
-              departmentId: userDetails.departmentId,
-            }) as unknown as UnknownAction)
-          : (itemActions.getAllItems() as unknown as UnknownAction)
-      );
-    }
-    setSearchQuery(query);
-    dispatch(
-      itemActions.searchItem(
-        userDetails?.roleId === 3
-          ? { departmentId: userDetails.departmentId, text: query }
-          : { text: query }
-      ) as unknown as UnknownAction
-    );
-  };
-  const handleResetFilters = () => {
-    if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
-      dispatch(
-        itemActions.getDepartmentItems({
-          departmentId: userDetails.departmentId,
-        }) as unknown as UnknownAction
-      );
-    } else {
-      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
-    }
-    setDeptFilter('');
-    setShowFilterOptions(false);
-  };
+   const { meta } = pagination;
+   const isDepartmentScoped = userDetails?.roleId !== undefined && DEPARTMENT_SCOPED_ROLES.includes(userDetails.roleId as RoleIdValue);
 
-  const handleFilter = () => {
-    if (deptFilter) {
-      dispatch(
-        itemActions.getDepartmentItems({
-          departmentId: Number(deptFilter),
-        }) as unknown as UnknownAction
-      );
-      setShowFilterOptions(false);
-    }
-  };
+   // ── Data fetching ──
 
-  const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
-    ...obj,
-    label: obj.name,
-    value: obj.id.toString(),
-  }));
-
-  // const filtered = allItemsList?.filter((emp) => {
-  //   const matchStatus = statusFilter ? emp.status === statusFilter : true;
-  //   const matchDept = deptFilter ? emp.name === deptFilter : true;
-  //   const matchDate =
-  //     dateFrom && dateTo
-  //       ? isWithinInterval(parseISO(emp.createdAt!), {
-  //           start: parseISO(dateFrom),
-  //           end: parseISO(dateTo),
-  //         })
-  //       : true;
-  //   const matchSearch = emp.name
-  //     .toLowerCase()
-  //     .includes(searchQuery.toLowerCase());
-
-  //   return matchStatus && matchDept && matchDate && matchSearch;
-  // });
-
-  // const pageSize = 10;
-  // const totalPages = Math.ceil(filtered.length / pageSize);
-  // const start = (currentPage - 1) * pageSize;
-  // const paginated = filtered.slice(start, start + pageSize);
-
-  const handleOpen = (data: Item) => {
-    console.log('🚀 ~ handleOpen ~ data:', data);
-    router.push(
-      {
-        pathname: '/admin/item/[id]',
-        query: { id: data?.id },
+   const fetchItems = useCallback(
+      (page?: number) => {
+         if (isDepartmentScoped && userDetails?.departmentId !== undefined) {
+            dispatch(
+               itemActions.getDepartmentItems({
+                  departmentId: userDetails.departmentId,
+                  ...(page && { page }),
+               }) as unknown as UnknownAction,
+            );
+         } else {
+            dispatch(itemActions.getAllItems({ page: page ?? 1 }) as unknown as UnknownAction);
+         }
       },
-      `/admin/item/${data?.id}`
-    );
-  };
+      [dispatch, isDepartmentScoped, userDetails?.departmentId],
+   );
 
-  const handleUpdate = (data: Item) => {
-    console.log('🚀 ~ handleUpdate ~ data:', data);
-    setEditItemData(data);
-    setShowEditItemModal(true);
-  };
+   useEffect(() => {
+      fetchItems();
+   }, [fetchItems]);
 
-  const handleDelete = (data: Item) => {
-    console.log('🚀 ~ handleDelete ~ data:', data);
-    setDeleteItemData(data);
-    setShowDeleteItemModal(true);
-  };
-  console.log('🚀 ~ deptFilter:', deptFilter);
+   // ── Search ──
 
-  const columns: Column<Item>[] = [
-    { key: 'name', header: 'ITEM TITLE' },
-    ...(userDetails?.roleId !== 3
-      ? [
-          {
-            key: 'department' as keyof Item,
-            header: 'DEPARTMENT',
-            render: (_: unknown, row: Item) => row.department?.name || 'N/A',
-          },
-        ]
-      : []),
-    { key: 'actualQuantity', header: 'TOTAL ITEMS' },
-    { key: 'availableQuantity', header: 'AVAILABLE ITEMS' },
-    // {
-    //   key: 'condition',
-    //   header: 'CONDITION',
-    //   render: (value: string | number, row: Item) => {
-    //     return (
-    //       <span
-    //         className={classNames(
-    //           'border rounded-[2px] uppercase text-[0.6rem] p-1',
-    //           {
-    //             // 'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-    //             //   value === 'collected',
-    //             // 'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-    //             //   value === 'assigned',
-    //             'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-    //               value === 'Good',
-    //             // 'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-    //             //   value === 'pending',
-    //             'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-    //               value === 'Bad',
-    //           }
-    //         )}
-    //       >
-    //         {value}
-    //       </span>
-    //     );
-    //   },
-    // },
-    // {
-    //   key: 'status',
-    //   header: 'STATUS',
-    //   render: (value: string | number, row: Item) => {
-    //     return (
-    //       <span
-    //         className={classNames(
-    //           'border rounded-[2px] uppercase text-[0.6rem] p-1',
-    //           {
-    //             'border-[rgba(0,82,163,0.1)] bg-[rgba(0,82,163,0.15)] text-[rgba(0,82,163,1)]':
-    //               value === 'B',
-    //             'border-[rgba(227,182,35,0.1)] bg-[rgba(227,182,35,0.15)] text-[rgba(227,182,35,1)]':
-    //               value === 'C',
-    //             'border-[rgba(0,163,92,0.1)] bg-[rgba(0,163,92,0.15)] text-[rgba(0,163,92,1)]':
-    //               value === 'A',
-    //             'border-[rgba(255,153,0,0.1))] bg-[rgba(255,153,0,0.15)] text-[rgba(255,153,0,1)]':
-    //               value === 'D',
-    //             'border-[rgba(195,25,28,0.1)] bg-[rgba(195,25,28,0.15)] text-[rgba(195,25,28,1)]':
-    //               value === 'E',
-    //           }
-    //         )}
-    //       >
-    //         {value}
-    //       </span>
-    //     );
-    //   },
-    // },
-    {
-      key: 'id',
-      header: '.',
-      render: (value: string | number, row: Item) => (
-        <ActionDropDown
-          items={true}
-          handleOpen={() => handleOpen(row)}
-          handleUpdate={() => handleUpdate(row)}
-          handleDelete={() => handleDelete(row)}
-        />
-      ),
-    },
-  ];
-
-  const handleChangePage = (page: number) => {
-    if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
+   const debouncedSearch = useDebounce((query: string) => {
       dispatch(
-        itemActions.getDepartmentItems({
-          departmentId: userDetails.departmentId,
-          page,
-        }) as unknown as UnknownAction
+         itemActions.searchItem(
+            isDepartmentScoped && userDetails?.departmentId !== undefined
+               ? { departmentId: userDetails.departmentId, text: query }
+               : { text: query },
+         ) as unknown as UnknownAction,
       );
-    } else if (deptFilter) {
-      dispatch(itemActions.getDepartmentItems({ page, departmentId: Number(deptFilter) }) as unknown as UnknownAction);
-    } else {
-      dispatch(itemActions.getAllItems({ page }) as unknown as UnknownAction);
-    }
-  };
+   });
 
-  return (
-    <PrivateRoute>
-      <Layout title="Items">
-        <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          <Formsy className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="w-full md:w-[17rem]">
-                <input
-                  type="text"
-                  name="searchQuery"
-                  value={searchQuery}
-                  placeholder="Search"
-                  onChange={handleSearch}
-                  className="px-3 py-[0.65rem] block w-full text-xs rounded border border-[rgba(15,37,82,0.2)]"
-                />
-              </div>
-              <div className="filter relative">
-                <button
-                  onClick={() => setShowFilterOptions((prev) => !prev)}
-                  className="px-3 py-2 text-xs flex items-center rounded border border-[rgba(15,37,82,0.2)]"
-                >
-                  <FilterIcon className="mr-1" /> Filter
-                </button>
-                {showFilterOptions && (
-                  <div className="z-[999] filter-options absolute bg-white rounded mt-[0.2rem] left-0 md:left-auto md:right-0 min-w-full w-[15rem] md:w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
-                    <h4 className="px-4 py-3 font-semibold">Filter by</h4>
-                    <hr className="m-0 p-0 border border-[rgba(228,229,231,1)]" />
+   const handleSearch = useCallback(
+      (query: string) => {
+         if (!query) {
+            fetchItems();
+            return;
+         }
+         debouncedSearch(query);
+      },
+      [fetchItems, debouncedSearch],
+   );
 
-                    <div className="p-4">
-                      {/* <div className="mb-4">
-                        <CustomDropdownSelect
-                          options={optionsFilter}
-                          value={statusFilter}
-                          onChange={setStatusFilter}
-                          placeholder="Status"
-                          // showSelectedLabel
-                        />
-                      </div> */}
+   // ── Pagination ──
 
-                      <div className="mb-4">
-                        <CustomDropdownSelect
-                          options={allDepartmentsArray}
-                          value={deptFilter}
-                          onChange={setDeptFilter}
-                          placeholder="Department"
-                          // showSelectedLabel
-                        />
-                      </div>
-                      {/* <div className="mb-4">
-                        <input
-                          type="date"
-                          value={dateFrom}
-                          placeholder="date"
-                          onChange={(e) => setDateFrom(e.target.value)}
-                          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div> */}
-                      <div className="flex items-center justify-end">
-                        <button
-                          onClick={handleResetFilters}
-                          className="rounded text-[#B28309] border border-[#B28309] text-xs px-3 py-2 mr-3 hover:bg-[#ffffff98] transition cursor-pointer"
-                        >
-                          Reset
-                        </button>
-                        <button
-                          onClick={handleFilter}
-                          className="rounded bg-[#B28309] border border-[#B28309] text-white text-xs px-3 py-2 hover:bg-[#B2830998] hover:border-[#B2830998] transition cursor-pointer"
-                        >
-                          Apply
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="mt-4 md:mt-0">
-              <button className="csv mr-4 md:mr-0 text-xs cursor-pointer text-[#B28309] px-3 py-3">
-                Download CSV
-              </button>
-              <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-                <AddItem className="text-start w-full cursor-pointer">
-                  Create Item
-                </AddItem>
-              </button>
-            </div>
-          </Formsy>
-          <Table
-            loading={IsRequestingAllItems}
-            searching={IsSearchingItem}
-            columns={columns}
-            data={allItemsList}
-            currentPage={currentPage}
-          />
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalItems={totalItems}
-              pageSize={itemsPerPage}
-              onPageChange={handleChangePage}
+   const handlePageChange = useCallback(
+      (page: number) => {
+         fetchItems(page);
+      },
+      [fetchItems],
+   );
+
+   // ── Export ──
+
+   const handleExport = async (from: string, to: string) => {
+      setIsExporting(true);
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         let uri = `${itemConstants.ITEM_URI}/export`;
+         const params: string[] = [];
+         if (from) params.push(`from=${from}`);
+         if (to) params.push(`to=${to}`);
+         if (params.length > 0) uri += `?${params.join('&')}`;
+
+         const resp = await axios.get(uri, {
+            headers: { Accept: 'application/json', Authorization: user?.token ? `Bearer ${user.token}` : '' },
+         });
+
+         const rows = resp.data?.data ?? [];
+         if (rows.length === 0) {
+            dispatch(appActions.setSnackBar({ type: 'warning', message: 'No records found for the selected range.', variant: 'warning' }) as unknown as UnknownAction);
+            return;
+         }
+
+         exportToCsv('Items', rows, [
+            { key: 'name', header: 'Item Name' },
+            { key: 'department', header: 'Department', format: (v) => (v && typeof v === 'object' ? (v as Record<string, unknown>).name as string : String(v ?? '')) },
+            { key: 'actualQuantity', header: 'Actual Quantity' },
+            { key: 'availableQuantity', header: 'Available Quantity' },
+            { key: 'fragile', header: 'Fragile', format: (v) => (v ? 'Yes' : 'No') },
+            { key: 'createdBy', header: 'Created By' },
+            { key: 'createdAt', header: 'Created At', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd') : '') },
+         ], { from: from || undefined, to: to || undefined });
+
+         setShowExportModal(false);
+      } catch {
+         dispatch(appActions.setSnackBar({ type: 'error', message: 'Failed to export. Please try again.', variant: 'error' }) as unknown as UnknownAction);
+      } finally {
+         setIsExporting(false);
+      }
+   };
+
+   // ── Filters ──
+
+   const handleFilterChange = (key: string, value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+   };
+
+   const filters: FilterDef[] = useMemo(
+      () => [
+         {
+            key: 'status',
+            label: 'Status',
+            options: [
+               { value: 'Active', label: 'Active' },
+               { value: 'Inactive', label: 'Inactive' },
+            ],
+         },
+         {
+            key: 'fragile',
+            label: 'Fragile',
+            options: [
+               { value: 'yes', label: 'Yes' },
+               { value: 'no', label: 'No' },
+            ],
+         },
+      ],
+      [],
+   );
+
+   const filteredItems = useMemo(() => {
+      let list = allItemsList ?? [];
+      if (filterValues.status) {
+         list = list.filter((item: Item) => {
+            const isActive = String(item.status).toUpperCase() === 'A' || String(item.status).toUpperCase() === 'ACTIVE';
+            return filterValues.status === 'Active' ? isActive : !isActive;
+         });
+      }
+      if (filterValues.fragile) {
+         list = list.filter((item: Item) => {
+            return filterValues.fragile === 'yes' ? item.fragile : !item.fragile;
+         });
+      }
+      return list;
+   }, [allItemsList, filterValues]);
+
+   // ── Row actions ──
+
+   const handleView = useCallback(
+      (item: Item) => {
+         router.push({ pathname: '/admin/item/[id]', query: { id: item.id } }, `/admin/item/${item.id}`);
+      },
+      [router],
+   );
+
+   const handleEdit = useCallback((item: Item) => {
+      setEditItemData(item);
+      setShowAddModal(true);
+   }, []);
+
+   const handleDelete = useCallback((item: Item) => {
+      setDeleteItemData(item);
+      setShowDeleteModal(true);
+   }, []);
+
+   const handleCloseAddModal = useCallback(() => {
+      setShowAddModal(false);
+      setEditItemData(null);
+   }, []);
+
+   const handleCloseDeleteModal = useCallback(() => {
+      setShowDeleteModal(false);
+      setDeleteItemData(null);
+   }, []);
+
+   const getActions = useCallback(
+      (row: Item): ActionMenuItem[] => [
+         {
+            label: 'View',
+            icon: VIEW_ICON,
+            onClick: () => handleView(row),
+         },
+         {
+            label: 'Edit',
+            icon: EDIT_ICON,
+            onClick: () => handleEdit(row),
+         },
+         {
+            label: 'Delete',
+            icon: DELETE_ICON,
+            onClick: () => handleDelete(row),
+            variant: 'danger',
+         },
+      ],
+      [handleView, handleEdit, handleDelete],
+   );
+
+   // ── Columns ──
+
+   const columns: Column<Item>[] = useMemo(() => {
+      const cols: Column<Item>[] = [
+         {
+            key: 'name',
+            header: 'Item Name',
+         },
+         ...(!isDepartmentScoped
+            ? [
+                 {
+                    key: 'department' as keyof Item,
+                    header: 'Department',
+                    render: (_: unknown, row: Item) => (
+                       <span className="text-gray-600 dark:text-white/60">{row.department?.name || 'N/A'}</span>
+                    ),
+                 },
+              ]
+            : []),
+         {
+            key: 'actualQuantity',
+            header: 'Quantity',
+            align: 'center' as const,
+            render: (value: unknown) => (
+               <NumberDisplay value={value as number} className="font-medium text-[#0F2552] dark:text-white/80" />
+            ),
+         },
+         {
+            key: 'availableQuantity',
+            header: 'Available',
+            align: 'center' as const,
+            render: (value: unknown) => (
+               <NumberDisplay value={value as number} className="font-medium text-[#0F2552] dark:text-white/80" />
+            ),
+         },
+         {
+            key: 'fragile',
+            header: 'Fragile',
+            align: 'center' as const,
+            render: (value: unknown) => <StatusChip status={value ? 'yes' : 'no'} size="sm" />,
+         },
+         {
+            key: 'createdBy' as keyof Item,
+            header: 'Created By',
+         },
+         {
+            key: 'updatedBy' as keyof Item,
+            header: 'Modified By',
+            render: (value: unknown) => <span>{String(value || '\u2014')}</span>,
+         },
+         {
+            key: 'updatedAt' as keyof Item,
+            header: 'Modified At',
+            render: (value: unknown) => {
+               if (!value) return <span>{'\u2014'}</span>;
+               try { return <span>{format(parseISO(String(value)), 'MMM d, yyyy')}</span>; }
+               catch { return <span>{'\u2014'}</span>; }
+            },
+         },
+         {
+            key: 'actions',
+            header: '',
+            align: 'center' as const,
+            width: '50px',
+            render: (_: unknown, row: Item) => <ActionMenu items={getActions(row)} />,
+         },
+      ];
+      return cols;
+   }, [isDepartmentScoped, getActions]);
+
+   // ── Render ──
+
+   return (
+      <PrivateRoute>
+         <Layout title="Items">
+            <PageHeader
+               title="Items"
+               subtitle={`Manage your inventory items${isDepartmentScoped ? ' for your department' : ''}`}
+               action={
+                  <ActionButton
+                     variant="primary"
+                     onClick={() => setShowAddModal(true)}
+                     icon={
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                     }
+                  >
+                     Add Item
+                  </ActionButton>
+               }
             />
-          )}
-          {showEditItemModal && (
-            <AddItem
-              className="text-start w-full cursor-pointer"
-              item={editItemData} // Pass the Item data as a prop
-              open={showEditItemModal}
-              onClose={() => setShowEditItemModal(false)}
+
+            <DataTable<Item>
+               columns={columns}
+               data={filteredItems}
+               loading={IsRequestingAllItems}
+               onSearch={handleSearch}
+               onExport={() => setShowExportModal(true)}
+               searchPlaceholder="Search items..."
+               filters={filters}
+               filterValues={filterValues}
+               onFilterChange={handleFilterChange}
+               pagination={{
+                  currentPage: meta.currentPage,
+                  totalItems: meta.totalItems,
+                  itemsPerPage: meta.itemsPerPage,
+                  totalPages: meta.totalPages,
+               }}
+               onPageChange={handlePageChange}
+               emptyTitle="No items found"
+               emptyDescription="Get started by adding your first inventory item."
+               emptyAction={
+                  <ActionButton variant="primary" onClick={() => setShowAddModal(true)}>
+                     Add Item
+                  </ActionButton>
+               }
             />
-          )}
-          {showDeleteItemModal && (
-            <DeleteModal
-              className="text-start w-full cursor-pointer"
-              itemId={deleteItemData?.id} // Pass the Item data as a prop
-              open={showDeleteItemModal}
-              onClose={() => setShowDeleteItemModal(false)}
+
+            {/* Add / Edit Modal */}
+            {showAddModal && (
+               <AddItem
+                  className="text-start w-full cursor-pointer"
+                  item={editItemData}
+                  open={showAddModal}
+                  onClose={handleCloseAddModal}
+               />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+               <DeleteModal
+                  className="text-start w-full cursor-pointer"
+                  itemId={deleteItemData?.id}
+                  open={showDeleteModal}
+                  onClose={handleCloseDeleteModal}
+               />
+            )}
+
+            <ExportModal
+               open={showExportModal}
+               onClose={() => setShowExportModal(false)}
+               onExport={handleExport}
+               loading={isExporting}
+               title="Export Items"
             />
-          )}
-        </div>
-      </Layout>
-    </PrivateRoute>
-  );
+         </Layout>
+      </PrivateRoute>
+   );
 };
 
 export default Items;

@@ -36,8 +36,6 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
   const disableButton = () => setCanSubmit(false);
 
   useEffect(() => {
-    console.log('itemId', itemId);
-
     dispatch(itemActions.getAnItem({ id: itemId }) as unknown as UnknownAction);
   }, [dispatch, itemId]);
 
@@ -57,8 +55,8 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
   return (
     <>
       <FullscreenModal open={open} onClickAway={onClose}>
-        <div className="bg-white rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] lg:w-[600px]">
-          <h2 className="text-2xl font-semibold text-textColor mb-4">
+        <div className="bg-white dark:bg-[#1a1a2e] rounded-lg shadow-lg mx-auto p-6 sm:w-[400px] md:w-[500px] lg:w-[600px]">
+          <h2 className="text-2xl font-semibold text-textColor dark:text-white mb-4">
             Select {itemName} Units
           </h2>
           <Formsy
@@ -69,7 +67,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
           >
             <div className="mb-3 group">
               <div className="flex justify-between items-center">
-                <label className="block text-[0.93rem] font-medium text-[#0F2552] mb-1">
+                <label className="block text-[0.93rem] font-medium text-[#0F2552] dark:text-white mb-1">
                   Unit
                 </label>
               </div>
@@ -77,7 +75,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
                 <button
                   type="button"
                   onClick={() => setUnitIsOpen(!unitIsOpen)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded text-left text-gray-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-white/15 rounded text-left text-gray-500 dark:text-white/50"
                 >
                   {'Select unit'}
                   {/* {unit?.serialNumber || 'Select unit'} */}
@@ -86,7 +84,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
                   </span>
                 </button>
                 {unitIsOpen && (
-                  <div className="absolute w-full mt-1 border border-gray-300 rounded bg-white shadow-lg z-10 text-[#0F2552]">
+                  <div className="absolute w-full mt-1 border border-gray-300 dark:border-white/15 rounded bg-white dark:bg-[#1a1a2e] shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] z-10 text-[#0F2552]">
                     <div className="p-2">
                       <div className="relative">
                         <input
@@ -96,7 +94,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
                           onChange={(e) => setSearch(e.target.value)}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-white/50">
                           <SearchIcon />
                         </span>
                       </div>
@@ -106,7 +104,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
                         <li
                           key={unit.id}
                           // onClick={() => handleUnitSelect(unit)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                          className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer flex items-center"
                         >
                           <span className="mr-4">{unit.serialNumber}</span>
                         </li>
@@ -121,7 +119,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
+                className="px-4 py-2 cursor-pointer border border-gray-300 rounded-md text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/5 transition"
               >
                 Back
               </button>

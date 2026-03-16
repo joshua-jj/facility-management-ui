@@ -95,14 +95,14 @@ const VerifyUserPage: NextPage<VerifyUserProps> = ({
 
   return (
     <Layout>
-      <div className="min-h-screen flex items-start justify-center pt-20 bg-gray-100">
-        <div className="bg-white shadow-md rounded-2xl p-8 w-full max-w-md border-[0.5px] border-[#0F255226]">
+      <div className="min-h-screen flex items-start justify-center pt-20 bg-gray-100 dark:bg-[#0e0e1a] transition-colors">
+        <div className="bg-white dark:bg-[#1a1a2e] shadow-md rounded-2xl p-8 w-full max-w-md border-[0.5px] border-[#0F255226] dark:border-white/10">
           <div className="flex flex-col items-center text-center space-y-2">
             {success ? <Tick /> : <ErrorIcon />}
-            <h1 className="text-2xl font-semibold text-textColor">
+            <h1 className="text-2xl font-semibold text-textColor dark:text-white">
               Email verification {success ? 'successful' : 'failed'}
             </h1>
-            <p className={success ? 'text-textColor' : 'text-red-600'}>
+            <p className={success ? 'text-textColor dark:text-white/80' : 'text-red-600 dark:text-red-400'}>
               {message}
             </p>
             {success && accessToken ? (

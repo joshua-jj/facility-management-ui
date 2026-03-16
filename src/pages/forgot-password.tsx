@@ -62,17 +62,17 @@ const ForgotPassword: FC = () => {
           onValidSubmit={handleSubmit}
           onValid={() => setCanSubmit(true)}
           onInvalid={() => setCanSubmit(false)}
-          className="w-md p-8 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
+          className="w-md p-8 bg-white dark:bg-[#1a1a2e] border-[0.5px] border-[rgba(15,37,82,0.15)] dark:border-white/10 shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] dark:shadow-none rounded transition-colors"
         >
-          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">
+          <h1 className="text-[#0F2552] dark:text-white font-bold text-[1.5rem]">
             Forgot password?
           </h1>
-          <p className="text-[#0F2552] text-sm">
-            Enter your email address we’ll send you a link to reset your
+          <p className="text-[#0F2552] dark:text-white/70 text-sm">
+            Enter your email address we&apos;ll send you a link to reset your
             password
           </p>
           <TextInput
-            inputClass="text-[#0F2552]"
+            inputClass="text-[#0F2552] dark:text-white"
             type="text"
             name="email"
             label="Email address"

@@ -9,6 +9,7 @@ import {
   StoreIcon,
   UsersIcon,
 } from '@/components/Icons';
+import { RoleId, ALL_DATA_ROLES, ADMIN_ROLES } from '@/constants/roles.constant';
 
 export const pageRoutes = [
   {
@@ -16,70 +17,70 @@ export const pageRoutes = [
     label: 'dashboard',
     link: '/admin/dashboard',
     icon: <DashboardIcon />,
-    allowedRoles: [5, 1, 2, 3, 4],
+    allowedRoles: ALL_DATA_ROLES,
   },
   {
     id: 2,
     label: 'requests',
     link: '/admin/requests',
     icon: <RequestsIcon />,
-    allowedRoles: [5, 1, 3, 4],
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER],
   },
   {
     id: 3,
     label: 'items',
     link: '/admin/items',
     icon: <ItemsIcon />,
-    allowedRoles: [5, 1, 2, 3, 4],
+    allowedRoles: ALL_DATA_ROLES,
   },
   {
     id: 4,
     label: 'stores',
     link: '/admin/store',
     icon: <StoreIcon />,
-    allowedRoles: [5, 1],
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
   {
     id: 5,
     label: 'departments',
     link: '/admin/departments',
     icon: <DepartmentsIcon />,
-    allowedRoles: [5, 1],
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
   {
     id: 6,
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
-    allowedRoles: [5, 1, 4],
+    allowedRoles: ADMIN_ROLES,
   },
   {
     id: 7,
     label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
-    allowedRoles: [5, 1, 4],
+    allowedRoles: ADMIN_ROLES,
   },
   {
     id: 8,
     label: 'reports',
     link: '/admin/reports',
     icon: <ReportsIcon />,
-    allowedRoles: [5, 1, 4],
-  },
-  {
-    id: 8,
-    label: 'users management',
-    link: '/admin/users',
-    icon: <UsersIcon />,
-    allowedRoles: [5, 1],
+    allowedRoles: ADMIN_ROLES,
   },
   {
     id: 9,
+    label: 'users management',
+    link: '/admin/users',
+    icon: <UsersIcon />,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+  },
+  {
+    id: 10,
     label: 'account settings',
     link: '/admin/account-settings',
     icon: <UsersIcon />,
-    allowedRoles: [5, 1, 2, 3, 4],
+    allowedRoles: ALL_DATA_ROLES,
   },
 ];
 

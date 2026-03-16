@@ -1,0 +1,95 @@
+name: Build and Push App with SemVer Tags
+
+on:
+  push:
+    branches: [ release ]  # or your preferred branch
+
+jobs:     
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Needed for git tags
+
+      - name: Read current version
+        id: get-version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Determine next version
+        id: next-version
+        run: |
+          CURRENT=${{ steps.get-version.outputs.version }}
+          echo "Current version: $CURRENT"
+
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          if echo "$COMMIT_MSG" | grep -q "#major"; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif echo "$COMMIT_MSG" | grep -q "#minor"; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "Next version: $NEW_VERSION"
+          echo "$NEW_VERSION" > VERSION
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit updated version and create tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add VERSION
+          git commit -m "chore: bump version to ${{ steps.next-version.outputs.new_version }}"
+          git tag -a "v${{ steps.next-version.outputs.new_version }}" -m "Release v${{ steps.next-version.outputs.new_version }}"
+          git push origin release --follow-tags
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.CI_REGISTRY_NAME }}:${{ steps.next-version.outputs.new_version }}
+          build-args: |
+            NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}
+
+      - name: Install Kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Clone deployment repo and update kustomization.yaml
+        run: |
+          git clone https://${{ secrets.CD_USERNAME }}:${{ secrets.CD_PUSH_TOKEN }}@gitlab.com/egfm-devops/kubernetes.git
+          cd kubernetes/egfm-projects/overlays/dev
+          kustomize edit set image ${{ secrets.CI_REGISTRY_NAME }}:${{ steps.next-version.outputs.new_version }}
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add kustomization.yaml
+          git commit -m "chore: update docker image to ${{ steps.next-version.outputs.new_version }}"
+          git push origin HEAD
