@@ -6,588 +6,264 @@ import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import { capitalizeFirstLetter, formatReadableDate } from '@/utilities/helpers';
+import { formatNumber } from '@/components/FormatValue';
 import { itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-// import { AppEmitter } from '@/controllers/EventEmitter';
 import SmallSelect from '@/components/CustomDropdownSelect/SmallSelect';
+import StatusChip from '@/components/StatusChip';
+import { DetailRow, DetailSection } from '@/components/DetailField';
+import { ActionButton } from '@/components/PageHeader';
 
 const conditionOptions = [
-  { value: 'Good', label: 'Good' },
-  //   { value: 'Fair', label: 'Fair' },
-  { value: 'Bad', label: 'Bad' },
-  //   { value: 'Damaged', label: 'Damaged' },
-  { value: 'Not specified', label: 'Not specified' },
+   { value: 'Good', label: 'Good' },
+   { value: 'Bad', label: 'Bad' },
+   { value: 'Not specified', label: 'Not specified' },
 ];
 
 interface ItemDetails {
-  name: string;
-  actualQuantity: number;
-  availableQuantity: number;
-  fragile: boolean;
-  department: {
-    name: string;
-  };
-  itemUnits: Array<{
-    id: number;
-    condition: string;
-    serialNumber: string;
-    // store: string;
-    store: {
-      id: number; // 2
-      name: string; // "Kosofe"
-      status: string; // "A"
-      location: string | null; // null
-      createdAt: string; // "2025-07-20T19:39:20.011Z" (ISO date string)
-      createdBy: string; // "SYSTEM"
-      updatedAt: string | null; // null
-      updatedBy: string | null;
-    };
-  }>;
-  createdBy: string;
-  createdAt: string;
+   name: string;
+   actualQuantity: number;
+   availableQuantity: number;
+   fragile: boolean;
+   department: { name: string };
+   itemUnits: Array<{
+      id: number;
+      condition: string;
+      serialNumber: string;
+      store: {
+         id: number;
+         name: string;
+         status: string;
+         location: string | null;
+         createdAt: string;
+         createdBy: string;
+         updatedAt: string | null;
+         updatedBy: string | null;
+      };
+   }>;
+   createdBy: string;
+   createdAt: string;
 }
 
 interface ItemDetailsProps {
-  itemDetail: ItemDetails;
+   itemDetail: ItemDetails;
 }
 
-export const getServerSideProps: GetServerSideProps<ItemDetailsProps> = async (
-  ctx
-) => {
-  const { id } = ctx.params || {};
-  if (!id || Array.isArray(id) || isNaN(Number(id))) {
-    return {
-      notFound: true,
-    };
-  }
+export const getServerSideProps: GetServerSideProps<ItemDetailsProps> = async (ctx) => {
+   const { id } = ctx.params || {};
+   if (!id || Array.isArray(id) || isNaN(Number(id))) {
+      return { notFound: true };
+   }
 
-  const cookies = parseCookies(ctx);
-  const authToken = cookies?.authToken;
+   const cookies = parseCookies(ctx);
+   const authToken = cookies?.authToken;
 
-  if (!authToken) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
+   if (!authToken) {
+      return { redirect: { destination: '/login', permanent: false } };
+   }
 
-  try {
-    const resp = await axios.get(`${itemConstants.ITEM_URI}/detail/${id}`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
-    // console.log('response data:', resp);
-    if (resp?.status !== 200) {
-      return {
-        notFound: true,
-      };
-    }
-
-    return {
-      props: {
-        itemDetail: resp.data?.data ?? null,
-      },
-    };
-  } catch (err: unknown) {
-    console.log('error:', err);
-
-    return {
-      props: {
-        itemDetail: null,
-      },
-    };
-  }
+   try {
+      const resp = await axios.get(`${itemConstants.ITEM_URI}/detail/${id}`, {
+         headers: { Accept: 'application/json', Authorization: `Bearer ${authToken}` },
+      });
+      if (resp?.status !== 200) return { notFound: true };
+      return { props: { itemDetail: resp.data?.data ?? null } };
+   } catch {
+      return { props: { itemDetail: null } };
+   }
 };
 
 const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
-  const router = useRouter();
-  const { id } = router.query;
+   const router = useRouter();
+   const { id } = router.query;
+   const dispatch = useDispatch();
+   const { IsUpdatingItem } = useSelector((s: RootState) => s.item);
+   const { allStoresList } = useSelector((s: RootState) => s.store);
 
-  const dispatch = useDispatch();
-  const { IsUpdatingItem } = useSelector((s: RootState) => s.item);
-  // const { userDetails } = useSelector((s: RootState) => s.user);
-  const { allStoresList } = useSelector((s: RootState) => s.store);
+   const [selectedStores, setSelectedStores] = useState(
+      itemDetail?.itemUnits?.map((u) => String(u.store?.id) || '') || [],
+   );
+   const [selectedConditions, setSelectedConditions] = useState(
+      itemDetail?.itemUnits?.map((u) => u.condition || '') || [],
+   );
+   const [initialConditions] = useState(
+      itemDetail?.itemUnits?.map((u) => u.condition || '') || [],
+   );
+   const [initialStores] = useState(
+      itemDetail?.itemUnits?.map((u) => String(u.store?.id) || '') || [],
+   );
 
-  //   const [requestStatus, setRequestStatus] = useState('');
-  // console.log('itemDetail?.itemUnits', itemDetail?.itemUnits[0]);
+   const arraysEqual = <T,>(a: T[], b: T[]) => a.length === b.length && a.every((v, i) => v === b[i]);
+   const isUpdateDisabled = arraysEqual(selectedConditions, initialConditions) && arraysEqual(selectedStores, initialStores);
 
-  const [selectedStores, setSelectedStores] = useState(
-    itemDetail?.itemUnits?.map((item) => String(item.store?.id) || '') || []
-  );
-  const [selectedConditions, setSelectedConditions] = useState(
-    itemDetail?.itemUnits?.map((item) => item.condition || '') || []
-  );
-  const [initialConditions] = useState(
-    itemDetail?.itemUnits?.map((item) => item.condition || '') || []
-  );
-  const [initialStores] = useState(
-    itemDetail?.itemUnits?.map((item) => String(item.store?.id) || '') || []
-  );
-  // const displayStatus = getDisplayStatus(status); // apiStatus is from backend
+   const handleStoreChange = (index: number, value: string) => {
+      const updated = [...selectedStores];
+      updated[index] = value;
+      setSelectedStores(updated);
+   };
 
-  //   const fetchRequestDetails = useCallback(async () => {
-  //     const user = await getObjectFromStorage(authConstants.USER_KEY);
-  //     const resp = await axios.get(
-  //       `${itemConstants.ITEM_URI}/detail/${id}`,
-  //       {
-  //         headers: {
-  //           Accept: 'application/json',
-  //           Authorization: user?.token ? `Bearer ${user.token}` : '',
-  //         },
-  //       }
-  //     );
-  //     setRequestDetails(resp.data.data);
-  //     // setStatus(resp.data.data.summary.requestStatus);
-  //   }, [id]);
-  const arraysEqual = <T,>(a: T[], b: T[]) =>
-    a.length === b.length && a.every((v, i) => v === b[i]);
+   const handleConditionChange = (index: number, value: string) => {
+      const updated = [...selectedConditions];
+      updated[index] = value;
+      setSelectedConditions(updated);
+   };
 
-  const isUpdateDisabled =
-    arraysEqual(selectedConditions, initialConditions) &&
-    arraysEqual(selectedStores, initialStores);
-  // Call this after your event is successful
-  //   useEffect(() => {
-  //     if (requestDetails?.items) {
-  //       const updatedItems = requestDetails.items.map((item) => ({
-  //         ...item,
-  //         quantityReleased: item.quantityLeased,
-  //       }));
-  //       setItems(updatedItems);
-  //     }
-  //   }, [requestDetails?.items]);
+   const handleUpdateItem = () => {
+      const updatedItemUnits = itemDetail.itemUnits.map((unit, index) => {
+         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+         const { serialNumber, store, ...rest } = unit;
+         return { ...rest, condition: selectedConditions[index], storeId: Number(selectedStores[index]) };
+      });
+      dispatch(itemActions.updateItem({ itemId: id as string, itemUnits: updatedItemUnits }) as unknown as UnknownAction);
+   };
 
-  const handleStoreChange = (index: number, value: string) => {
-    const updated = [...selectedStores];
-    updated[index] = value;
-    setSelectedStores(updated);
-  };
-
-  const handleConditionChange = (index: number, value: string) => {
-    const updated = [...selectedConditions];
-    updated[index] = value;
-    // updated[index] = value === '' ? '' : Number(value);
-    setSelectedConditions(updated);
-  };
-  // const handleConditionChange = useCallback(
-  //   (index: number, value: string) => {
-  //     setSelectedConditions(prev => {
-  //       const updated = [...prev];
-  //       updated[index] = value;
-  //       return updated;
-  //     });
-  //   },
-  //   []
-  // );
-
-  //   const handleQuantityChange = (index: number, value: string) => {
-  //     const updatedItems = [...items];
-  //     const maxQuantity = Number(requestDetails?.items[index].quantityLeased);
-
-  //     if (Number(value) > maxQuantity) {
-  //       alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
-  //       return;
-  //     }
-
-  //     updatedItems[index].quantityReleased = value;
-  //     setItems(updatedItems);
-  //   };
-
-  //   const handleReturnQuantityChange = (index: number, value: string) => {
-  //     const updatedItems = [...items];
-  //     const maxQuantity = Number(requestDetails?.items[index].quantityLeased);
-
-  //     if (Number(value) > maxQuantity) {
-  //       alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
-  //       return;
-  //     }
-
-  //     updatedItems[index].quantityReturned = Number(value);
-  //     setItems(updatedItems);
-  //   };
-
-  //   console.log('itemDetail:', itemDetail);
-  //   console.log('selectedConditions:', selectedConditions);
-  //   console.log('selectedStores:', selectedStores);
-  //   console.log('isUpdateDisabled:', isUpdateDisabled);
-
-  const handleUpdateItem = () => {
-    const updatedItemUnits = itemDetail.itemUnits.map((unit, index) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { serialNumber, store, ...rest } = unit;
-      return {
-        ...rest,
-        condition: selectedConditions[index],
-        storeId: Number(selectedStores[index]),
-      };
-    });
-
-    const payload = {
-      itemId: id as string,
-      itemUnits: updatedItemUnits,
-    };
-
-    console.log('payload:', payload);
-    dispatch(itemActions.updateItem(payload) as unknown as UnknownAction);
-  };
-
-  //   const filteredDepartments = allStoresList.filter((store) =>
-  //   store.name.toLowerCase().includes(search.toLowerCase())
-  // );
-
-  //   const handleAssignRequest = () => {
-  //     const payload = {
-  //       userId: Number(assignedUserId),
-  //       requestId: Number(id),
-  //     };
-  //     console.log('payload:', payload);
-  //     dispatch(requestActions.assignRequest(payload) as unknown as UnknownAction);
-  //   };
-  //   const handleReleaseRequestItems = () => {
-  //     const updatedItems = items.map((item) => ({
-  //       storeId: item.storeId,
-  //       itemId: item.itemId,
-  //       quantityLeased: Number(item.quantityLeased),
-  //       quantityReleased: Number(item.quantityReleased),
-  //       conditionBeforeLease: item.conditionBeforeLease,
-  //       leasedDate: new Date().toISOString(),
-  //     }));
-  //     const payload = {
-  //       items: updatedItems,
-  //       userId: Number(userDetails?.id),
-  //       requestId: Number(id),
-  //     };
-  //     console.log('payload:', payload);
-  //     dispatch(
-  //       requestActions.releaseRequestItems(payload) as unknown as UnknownAction
-  //     );
-  //   };
-
-  //   const handleReturnRequestItems = () => {
-  //     const updatedItems = items.map((item) => ({
-  //       storeId: item.storeId,
-  //       itemId: item.itemId,
-  //       quantityReturned: Number(item.quantityReturned),
-  //       quantityReleased: Number(item.quantityReleased),
-  //       conditionBeforeLease: item.conditionBeforeLease,
-  //       returnedDate: new Date().toISOString(),
-  //     }));
-  //     const payload = {
-  //       items: updatedItems,
-  //       userId: Number(userDetails?.id),
-  //       requestId: Number(id),
-  //     };
-  //     console.log('payload:', payload);
-  //     dispatch(
-  //       requestActions.returnRequestItems(payload) as unknown as UnknownAction
-  //     );
-  //   };
-
-  //   useEffect(() => {
-  //     const listener = AppEmitter.addListener(
-  //       requestConstants.UPDATE_REQUEST_STATUS_SUCCESS,
-  //       (evt: Event) => {
-  //         const customEvent = evt as CustomEvent;
-
-  //         if (customEvent) {
-  //           //   setStatus(displayStatus);
-  //         }
-  //       }
-  //     );
-
-  //     return () => listener.remove();
-  //   }, [requestStatus]);
-
-  // const itemDetails = [
-  //   {
-  //     serialNumber: itemDetail?.itemUnits?.[0]?.serialNumber,
-  //     name: itemDetail?.name,
-  //     id: itemDetail?.itemUnits?.[0]?.id,
-  //     value: '',
-  //   },
-  // ];
-
-  // console.log({ itemDetail });
-
-  return (
-    <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
-      <div className="md:col-span-10 md:col-start-2 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-        <h2 className="text-md md:text-xl font-semibold text-textColor mb-4">
-          Item Details
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[#0F2552]">
-          <div className="grid grid-cols-1 sm:grid-cols-subgrid col-span-2 gap-2">
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-              <h3 className="font-semibold text-xs uppercase">name</h3>
-              <p className="text-xs md:text-sm">
-                {capitalizeFirstLetter(itemDetail?.name as string)}
-              </p>
+   if (!itemDetail) {
+      return (
+         <Layout title="Item Details">
+            <div className="flex items-center justify-center h-64">
+               <p className="text-sm text-gray-400 dark:text-white/40">Item not found.</p>
             </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-              <h3 className="font-semibold text-xs uppercase">
-                actual Quantity
-              </h3>
-              <p className="text-xs md:text-sm">{itemDetail?.actualQuantity}</p>
-            </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-              <h3 className="font-semibold text-xs uppercase">
-                available Quantity
-              </h3>
-              <p className="text-xs md:text-sm">
-                {itemDetail?.availableQuantity}
-              </p>
-            </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-              <h3 className="font-semibold text-xs uppercase">department</h3>
-              <p className="text-xs md:text-sm">
-                {itemDetail?.department?.name}
-              </p>
-            </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-              <h3 className="font-semibold text-xs uppercase">created by</h3>
-              <p className="text-xs md:text-sm">{itemDetail?.createdBy}</p>
-            </div>
-            <div className="col-span-1 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-              <h3 className="font-semibold text-xs uppercase">created date</h3>
-              <p className="text-xs md:text-sm">
-                {formatReadableDate(itemDetail?.createdAt)}
-              </p>
-            </div>
-          </div>
-          <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-            <h3 className="font-semibold text-xs uppercase">fragile</h3>
-            <p className="text-xs md:text-sm">
-              {itemDetail?.fragile === true ? 'Fragile' : 'Not Fragile'}
-            </p>
-          </div>
-          <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div className="">
-                <h4 className="text-xs uppercase font-semibold mb-2">
-                  SERIAL NUMBER(s)
-                </h4>
-                {itemDetail?.itemUnits &&
-                  itemDetail?.itemUnits.map(
-                    (item: { serialNumber: string }, index: number) => (
-                      <p key={index} className="text-xs md:text-sm leading-7">
-                        {item.serialNumber}
-                      </p>
-                    )
-                  )}
-              </div>
-              <div className="">
-                <h4 className="text-xs uppercase font-semibold mb-2">ID(s)</h4>
-                {itemDetail?.itemUnits &&
-                  itemDetail?.itemUnits.map(
-                    (item: { id: number }, index: number) => (
-                      <p key={index} className="text-xs md:text-sm leading-7">
-                        {item.id}
-                      </p>
-                    )
-                  )}
-              </div>
-              <div className="">
-                <h4 className="text-xs uppercase font-semibold mb-2">
-                  CONDITION
-                </h4>
-                {itemDetail?.itemUnits &&
-                  itemDetail.itemUnits.map((item, index) => (
-                    <div key={index} className="mb-2">
-                      <SmallSelect
-                        value={selectedConditions[index]}
-                        options={conditionOptions}
-                        placeholder="Select condition"
-                        onChange={(value) =>
-                          handleConditionChange(index, value as string)
-                        }
-                      />
-                    </div>
-                  ))}
-              </div>
-              {/* {userDetails?.roleId === 5 && ( */}
-              <div className="">
-                <h4 className="text-xs uppercase font-semibold mb-2">STORE</h4>
-                {itemDetail?.itemUnits &&
-                  itemDetail.itemUnits.map((item, index) => (
-                    <div key={index} className="mb-2">
-                      <SmallSelect
-                        value={selectedStores[index]}
-                        // options={allStoresList}
-                        options={allStoresList.map((store) => ({
-                          value: String(store.id),
-                          label: store.name,
-                        }))}
-                        placeholder="Select store"
-                        onChange={(value) =>
-                          handleStoreChange(index, String(value))
-                        }
-                      />
-                    </div>
-                  ))}
-              </div>
-              {/* // )} */}
+         </Layout>
+      );
+   }
 
-              {/* <div className="">
-                <h4 className="text-xs uppercase font-semibold mb-2">
-                  QTY REQUESTED
-                </h4>
-                {requestDetails?.itemUnits &&
-                  requestDetails?.itemUnits.map(
-                    (item: { quantityLeased: string }, index: number) => (
-                      <p key={index} className="text-xs md:text-sm leading-7">
-                        {item.quantityLeased}
-                      </p>
-                    )
-                  )}
-              </div> */}
-              {/* {requestDetails?.summary?.requestStatus === 'Collected' && (
-                <div className="">
-                  <h4 className="text-xs uppercase font-semibold mb-2">
-                    QTY RELEASED
-                  </h4>
-                  {requestDetails?.items &&
-                    requestDetails?.items.map(
-                      (item: { quantityReleased: string }, index: number) => (
-                        <p key={index} className="text-xs md:text-sm leading-7">
-                          {item.quantityReleased}
-                        </p>
-                      )
-                    )}
-                </div>
-              )}
-              {requestDetails?.summary?.requestStatus === 'Completed' && (
-                <div className="">
-                  <h4 className="text-xs uppercase font-semibold mb-2">
-                    QTY RETURNED
-                  </h4>
-                  {requestDetails?.items &&
-                    requestDetails?.items.map(
-                      (item: { quantityReturned: number }, index: number) => (
-                        <p key={index} className="text-xs md:text-sm leading-7">
-                          {item.quantityReturned}
-                        </p>
-                      )
-                    )}
-                </div>
-              )} */}
-              {/* {userDetails?.roleId === 4 &&
-                requestDetails?.summary?.requestStatus === 'Assigned' && (
-                  <div className="">
-                    <h4 className="text-xs uppercase font-semibold mb-2">
-                      QTY RELEASED
-                    </h4>
-                    <div className="flex flex-col gap-2">
-                      {items &&
-                        items.map(
-                          (
-                            item: { quantityReleased?: string },
-                            index: number
-                          ) => (
-                            <input
-                              key={index}
-                              type="number"
-                              name="quantityReleased"
-                              value={item.quantityReleased}
-                              placeholder="0"
-                              onChange={(e) =>
-                                handleQuantityChange(index, e.target.value)
-                              }
-                              className="text-xs md:text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
-                            />
-                          )
-                        )}
-                    </div>
+   return (
+      <Layout title="Item Details">
+         <div className="max-w-5xl mx-auto space-y-5">
+            {/* ── Back button ── */}
+            <button
+               onClick={() => router.back()}
+               className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/40 hover:text-[#0F2552] dark:hover:text-white/70 transition-colors cursor-pointer"
+            >
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+               </svg>
+               Back to Items
+            </button>
+
+            {/* ── Header card ── */}
+            <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/8 shadow-sm p-5 sm:p-6">
+               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                     <div className="flex items-center gap-3 mb-2">
+                        <h1 className="text-xl font-bold text-[#0F2552] dark:text-white/90">
+                           {capitalizeFirstLetter(itemDetail.name)}
+                        </h1>
+                        <StatusChip status={itemDetail.fragile ? 'yes' : 'no'} size="sm" />
+                        <span className="text-[0.6rem] uppercase font-semibold text-gray-300 dark:text-white/25">
+                           {itemDetail.fragile ? 'Fragile' : 'Not Fragile'}
+                        </span>
+                     </div>
+                     <p className="text-xs text-gray-400 dark:text-white/40">
+                        {itemDetail.department?.name} &middot; Created by {itemDetail.createdBy} &middot;{' '}
+                        {formatReadableDate(itemDetail.createdAt)}
+                     </p>
                   </div>
-                )}
-              {userDetails?.roleId === 4 &&
-                requestDetails?.summary?.requestStatus === 'Collected' && (
-                  <div className="">
-                    <h4 className="text-xs uppercase font-semibold mb-2">
-                      QTY RETURNED
-                    </h4>
-                    <div className="flex flex-col gap-2">
-                      {items &&
-                        items.map(
-                          (
-                            item: { quantityReturned?: number },
-                            index: number
-                          ) => (
-                            <input
-                              key={index}
-                              type="number"
-                              name="quantityReleased"
-                              value={item.quantityReturned}
-                              placeholder="0"
-                              onChange={(e) =>
-                                handleReturnQuantityChange(
-                                  index,
-                                  e.target.value
-                                )
-                              }
-                              className="text-xs md:text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
-                            />
-                          )
-                        )}
-                    </div>
-                  </div>
-                )} */}
-            </div>
-          </div>
-        </div>
-        {/* {userDetails?.roleId === 3 &&
-          requestDetails?.summary?.requestStatus === 'Pending' && (
-            <div className="my-4">
-              <CustomDropdownSelect
-                options={optionsFilter}
-                value={requestStatus}
-                onChange={setRequestStatus}
-                placeholder="Select status"
-                noSearch
-                // showSelectedLabel
-              />
-            </div>
-          )}
-        {userDetails?.roleId === 5 &&
-          requestDetails?.summary?.requestStatus === 'Approved' && (
-            <div className="my-4">
-              <CustomDropdownSelect
-                options={roleUsersArray}
-                value={assignedUserId}
-                onChange={setAssignedUserId}
-                placeholder="Select Member to assign request to"
-                noSearch
-                // showSelectedLabel
-              />
-            </div>
-          )} */}
 
-        <div className="flex justify-end mt-8 mb-4">
-          <button
-            onClick={handleUpdateItem}
-            disabled={isUpdateDisabled}
-            className={`text-xs text-[#fff] px-5 py-3 hover:bg-[#B2830998] transition bg-[#B28309] rounded-[2px] ${
-              isUpdateDisabled
-                ? 'opacity-50 cursor-not-allowed'
-                : ' cursor-pointer'
-            }`}
-          >
-            {IsUpdatingItem ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              'Update'
-            )}
-          </button>
-        </div>
-      </div>
-    </Layout>
-  );
+                  {/* Quantity badges */}
+                  <div className="flex items-center gap-3">
+                     <div className="text-center px-4 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/8">
+                        <span className="block text-lg font-bold text-[#0F2552] dark:text-white/90">{formatNumber(itemDetail.actualQuantity)}</span>
+                        <span className="text-[0.6rem] uppercase font-semibold text-gray-400 dark:text-white/35">Total</span>
+                     </div>
+                     <div className="text-center px-4 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/15">
+                        <span className="block text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatNumber(itemDetail.availableQuantity)}</span>
+                        <span className="text-[0.6rem] uppercase font-semibold text-emerald-500/70 dark:text-emerald-400/50">Available</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* ── Overview section ── */}
+            <DetailSection title="Overview">
+               <div className="grid grid-cols-1 sm:grid-cols-2">
+                  <DetailRow label="Item Name" value={capitalizeFirstLetter(itemDetail.name)} />
+                  <DetailRow label="Department" value={itemDetail.department?.name} />
+                  <DetailRow label="Actual Quantity" value={formatNumber(itemDetail.actualQuantity)} />
+                  <DetailRow label="Available Quantity" value={formatNumber(itemDetail.availableQuantity)} />
+                  <DetailRow label="Fragile" value={<StatusChip status={itemDetail.fragile ? 'yes' : 'no'} />} />
+                  <DetailRow label="Created By" value={itemDetail.createdBy} />
+                  <DetailRow label="Created Date" value={formatReadableDate(itemDetail.createdAt)} />
+               </div>
+            </DetailSection>
+
+            {/* ── Item Units section ── */}
+            <DetailSection
+               title={`Item Units (${itemDetail.itemUnits?.length ?? 0})`}
+               action={
+                  <ActionButton
+                     variant="primary"
+                     onClick={handleUpdateItem}
+                     disabled={isUpdateDisabled || IsUpdatingItem}
+                  >
+                     {IsUpdatingItem ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                     ) : (
+                        'Save Changes'
+                     )}
+                  </ActionButton>
+               }
+            >
+               {itemDetail.itemUnits && itemDetail.itemUnits.length > 0 ? (
+                  <div className="overflow-x-auto">
+                     <table className="w-full">
+                        <thead>
+                           <tr className="bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/5">
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Serial Number</th>
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">ID</th>
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Condition</th>
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Store</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {itemDetail.itemUnits.map((unit, index) => (
+                              <tr
+                                 key={unit.id}
+                                 className={`border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 ${
+                                    index % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-white/[0.01]'
+                                 }`}
+                              >
+                                 <td className="px-4 py-3 text-sm font-mono text-[#0F2552] dark:text-white/75">
+                                    {unit.serialNumber}
+                                 </td>
+                                 <td className="px-4 py-3 text-sm text-gray-400 dark:text-white/40">
+                                    #{unit.id}
+                                 </td>
+                                 <td className="px-4 py-3">
+                                    <SmallSelect
+                                       value={selectedConditions[index]}
+                                       options={conditionOptions}
+                                       placeholder="Select condition"
+                                       onChange={(value) => handleConditionChange(index, value as string)}
+                                    />
+                                 </td>
+                                 <td className="px-4 py-3">
+                                    <SmallSelect
+                                       value={selectedStores[index]}
+                                       options={allStoresList.map((store) => ({
+                                          value: String(store.id),
+                                          label: store.name,
+                                       }))}
+                                       placeholder="Select store"
+                                       onChange={(value) => handleStoreChange(index, String(value))}
+                                    />
+                                 </td>
+                              </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+               ) : (
+                  <div className="py-12 text-center text-sm text-gray-400 dark:text-white/30">
+                     No item units registered
+                  </div>
+               )}
+            </DetailSection>
+         </div>
+      </Layout>
+   );
 };
 
 export default ItemViewPage;

@@ -1,290 +1,307 @@
-import Layout from '@/components/Layout';
-import React, { useEffect, useState } from 'react';
-import { format, parseISO } from 'date-fns';
-import { Column, Table } from '@/components/Table';
-import { Pagination } from '@/components/Pagination';
-import Formsy from 'formsy-react';
-import CustomDropdownSelect from '@/components/CustomDropdownSelect';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/redux/reducers';
-import { departmentActions, requestActions } from '@/actions';
-import { UnknownAction } from 'redux';
-import type { Request } from '@/types';
-import PrivateRoute from '@/components/PrivateRoute';
-import { DotsIcon } from '@/components/Icons';
-import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { useRouter } from 'next/router';
+import { format, parseISO } from 'date-fns';
+import { UnknownAction } from 'redux';
 
-const optionsFilter = [
-  { value: '1', label: 'approved' },
-  { value: '2', label: 'assigned' },
-  { value: '3', label: 'collected' },
-  { value: '4', label: 'declined' },
-  { value: '5', label: 'pending' },
-];
+import Layout from '@/components/Layout';
+import PrivateRoute from '@/components/PrivateRoute';
+import { DataTable, Column, FilterDef } from '@/components/DataTable';
+import StatusChip from '@/components/StatusChip';
+import PageHeader from '@/components/PageHeader';
+import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import { RootState } from '@/redux/reducers';
+import { appActions, requestActions } from '@/actions';
+import { RoleId } from '@/constants/roles.constant';
+import { exportToCsv } from '@/utilities/exportCsv';
+import ExportModal from '@/components/ExportModal';
+import { getObjectFromStorage } from '@/utilities/helpers';
+import { authConstants, requestConstants } from '@/constants';
+import axios from 'axios';
+import type { Request } from '@/types';
 
-type Props = {
-  row: Request;
-};
-
-const Dropdown = (row: Props) => {
-  const router = useRouter();
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  const ref = useOnClickOutside<HTMLUListElement>(() => setShowDropdown(false));
-
-  const handleOpen = (data: Props) => {
-    console.log('🚀 ~ handleOpen ~ data:', data);
-    router.push(
-      {
-        pathname: '/admin/request/[id]',
-        query: { id: data?.row?.id },
-      },
-      `/admin/request/${data?.row?.id}`
-    );
-  };
-
-  return (
-    <>
-      <button
-        onClick={() => setShowDropdown((prev) => !prev)}
-        className="cursor-pointer"
-      >
-        <DotsIcon />
-      </button>
-      {showDropdown && (
-        <ul
-          ref={ref}
-          className="absolute right-[2rem] bg-white z-50 py-1 shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)]"
-        >
-          <li
-            onClick={() => handleOpen(row)}
-            className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"
-          >
-            open
-          </li>
-        </ul>
-      )}
-    </>
-  );
-};
+const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 
 const Requests = () => {
-  const dispatch = useDispatch();
-  const [statusFilter, setStatusFilter] = useState('');
-  const [deptFilter, setDeptFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-  const { userDetails } = useSelector((s: RootState) => s.user);
-  const { IsRequestingRequests, allRequestsList, pagination } = useSelector(
-    (s: RootState) => s.request
-  );
-  const { meta } = pagination;
-  const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
+   const dispatch = useDispatch();
+   const router = useRouter();
+   const [searchQuery, setSearchQuery] = useState('');
+   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+   const [showExportModal, setShowExportModal] = useState(false);
+   const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+   const { userDetails } = useSelector((s: RootState) => s.user);
+   const { IsRequestingRequests, allRequestsList, pagination } = useSelector(
+      (s: RootState) => s.request,
+   );
+   const { meta } = pagination;
+   const { currentPage, totalItems, itemsPerPage, totalPages } = meta;
 
-    if (userDetails?.roleId === 3) {
-      // Role ID 3: Dispatch department-specific requests
-      dispatch(
-        requestActions.getDepartmentRequests({
-          departmentId: userDetails?.departmentId ?? 0,
-        }) as unknown as UnknownAction
-      );
-    } else if (userDetails?.roleId === 4) {
-      // Role ID 4: Dispatch user-specific requests
-      dispatch(
-        requestActions.getAssignedRequests({
-          userId: userDetails?.id ?? 0,
-        }) as unknown as UnknownAction
-      );
-    } else {
-      dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
-    }
-  }, [dispatch, userDetails]);
-
-  const handleChangePage = (page: number) => {
-    if (userDetails?.roleId === 3) {
-      // Role ID 3: Dispatch department-specific requests
-      dispatch(
-        requestActions.getDepartmentRequests({
-          departmentId: userDetails?.departmentId ?? 0,
-          page,
-        }) as unknown as UnknownAction
-      );
-    } else if (userDetails?.roleId === 4) {
-      // Role ID 4: Dispatch user-specific requests
-      dispatch(
-        requestActions.getAssignedRequests({
-          userId: userDetails?.id ?? 0,
-          page,
-        }) as unknown as UnknownAction
-      );
-    } else {
-      dispatch(
-        requestActions.getAllRequests({ page }) as unknown as UnknownAction
-      );
-    }
-    // if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
-    //   dispatch(
-    //     requestActions.getDepartmentItems({
-    //       departmentId: userDetails.departmentId,
-    //       page,
-    //     }) as unknown as UnknownAction
-    //   );
-    // } else {
-    //   dispatch(requestActions.getAllItems({ page }) as unknown as UnknownAction);
-    // }
-  };
-
-  // const pageSize = 10;
-
-  const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
-    ...obj,
-    label: obj.name,
-    value: obj.id.toString(),
-  }));
-
-  const columns: Column<Request>[] = [
-    ...(userDetails?.roleId !== 3
-      ? [
-          {
-            key: 'requesterDepartment' as keyof Request,
-            header: 'DEPARTMENT NAME',
-          },
-        ]
-      : []),
-    // { key: 'requesterDepartment', header: 'DEPARTMENT NAME' },
-    { key: 'requesterName', header: 'REQUESTER NAME' },
-    { key: 'requesterEmail', header: 'REQUESTER EMAIL ADDRESS' },
-    { key: 'ministryName', header: 'CHURCH/MINISTRY NAME' },
-    {
-      key: 'dateOfReturn',
-      header: 'RETURN DATE',
-      render: (value: string | number) => {
-        return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
+   const fetchRequests = useCallback(
+      (page?: number) => {
+         if (userDetails?.roleId === RoleId.HOD) {
+            dispatch(
+               requestActions.getDepartmentRequests({
+                  departmentId: userDetails?.departmentId ?? 0,
+                  ...(page && { page }),
+               }) as unknown as UnknownAction,
+            );
+         } else if (userDetails?.roleId === RoleId.MEMBER) {
+            dispatch(
+               requestActions.getAssignedRequests({
+                  userId: userDetails?.id ?? 0,
+                  ...(page && { page }),
+               }) as unknown as UnknownAction,
+            );
+         } else {
+            dispatch(
+               requestActions.getAllRequests(
+                  page ? { page } : undefined,
+               ) as unknown as UnknownAction,
+            );
+         }
       },
-    },
-    // {
-    //   key: 'summary',
-    //   header: 'STATUS',
-    //   render: (_, row: Request) => row.summary?.requestStatus || 'N/A', // Access department.name
-    // },
-    { key: 'requestStatus', header: 'REQUEST STATUS' },
-    {
-      key: 'id',
-      header: '.',
-      render: (value: string | number, row: Request) => <Dropdown row={row} />,
-    },
-  ];
+      [dispatch, userDetails],
+   );
 
-  return (
-    <PrivateRoute>
-      <Layout title="Requests">
-        <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          {/* =========== Filters ================= */}
-          <Formsy className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              {/* Search */}
-              <div className="w-full md:w-[17rem]">
-                <input
-                  type="text"
-                  name="searchQuery"
-                  value={searchQuery}
-                  placeholder="Search"
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // setCurrentPage(1); // reset on new search
-                  }}
-                  className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
-                />
-              </div>
+   useEffect(() => {
+      fetchRequests();
+   }, [fetchRequests]);
 
-              {/* FILTER */}
-              <div className="filter relative">
-                <button
-                  onClick={() => setShowFilterOptions((prev) => !prev)}
-                  className="px-3 py-2 rounded border border-[rgba(15,37,82,0.2)]"
-                >
-                  Filter
-                </button>
-                {showFilterOptions && (
-                  <div className="z-[999] filter-options absolute bg-white rounded mt-[0.2rem] left-0 md:left-auto md:right-0 min-w-full w-[15rem] md:w-[20rem] border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[16px_0px_32px_0px_rgba(rgba(150,150,150,0.15))]">
-                    <h4 className="px-4 py-3 font-semibold">Filter by</h4>
-                    <hr className="m-0 p-0 border border-[rgba(228,229,231,1)]" />
+   const handleChangePage = (page: number) => {
+      fetchRequests(page);
+   };
 
-                    <div className="p-4">
-                      {/* status filter */}
-                      <div className="mb-4">
-                        <CustomDropdownSelect
-                          options={optionsFilter}
-                          value={statusFilter}
-                          onChange={setStatusFilter}
-                          placeholder="Status"
-                          // showSelectedLabel
-                        />
-                      </div>
+   const handleRowClick = (row: Request) => {
+      router.push(
+         { pathname: '/admin/request/[id]', query: { id: row.id } },
+         `/admin/request/${row.id}`,
+      );
+   };
 
-                      <div className="mb-4">
-                        <CustomDropdownSelect
-                          options={allDepartmentsArray}
-                          value={deptFilter}
-                          onChange={setDeptFilter}
-                          placeholder="Department"
-                          // showSelectedLabel
-                        />
-                      </div>
+   const handleSearch = (query: string) => {
+      setSearchQuery(query);
+   };
 
-                      {/* date filter */}
-                      <div className="mb-4">
-                        {/* <label className="block text-sm font-medium text-gray-700">From</label> */}
-                        <input
-                          type="date"
-                          value={dateFrom}
-                          placeholder="date"
-                          onChange={(e) => setDateFrom(e.target.value)}
-                          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
+   const handleFilterChange = (key: string, value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+   };
 
-                      <div className="flex items-center justify-end">
-                        <button className="rounded text-[#B28309] border border-[#B28309] text-xs px-3 py-2 mr-3 hover:bg-[#ffffff98] transition cursor-pointer">
-                          Reset
-                        </button>
-                        <button className="rounded bg-[#B28309] border border-[#B28309] text-white text-xs px-3 py-2 hover:bg-[#B2830998] hover:border-[#B2830998] transition cursor-pointer">
-                          Apply
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <button className="mt-4 md:mt-0 csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-              Download CSV
-            </button>
-          </Formsy>
+   const handleExport = async (from: string, to: string) => {
+      setIsExporting(true);
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         let uri = `${requestConstants.REQUEST_URI}/export`;
+         const params: string[] = [];
+         if (from) params.push(`from=${from}`);
+         if (to) params.push(`to=${to}`);
+         if (params.length > 0) uri += `?${params.join('&')}`;
 
-          <Table
-            loading={IsRequestingRequests}
-            columns={columns}
-            data={allRequestsList}
-          />
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalItems={totalItems}
-              pageSize={itemsPerPage}
-              onPageChange={handleChangePage}
+         const resp = await axios.get(uri, {
+            headers: { Accept: 'application/json', Authorization: user?.token ? `Bearer ${user.token}` : '' },
+         });
+
+         const rows = resp.data?.data ?? [];
+         if (rows.length === 0) {
+            dispatch(appActions.setSnackBar({ type: 'warning', message: 'No records found for the selected range.', variant: 'warning' }) as unknown as UnknownAction);
+            return;
+         }
+
+         exportToCsv('Requests', rows, [
+            { key: 'requesterName', header: 'Requester Name' },
+            { key: 'requesterEmail', header: 'Email' },
+            { key: 'requesterPhone', header: 'Phone' },
+            { key: 'ministryName', header: 'Ministry' },
+            { key: 'location', header: 'Location' },
+            { key: 'dateOfReturn', header: 'Return Date', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd') : '') },
+            { key: 'requestStatus', header: 'Status' },
+            { key: 'createdBy', header: 'Created By' },
+            { key: 'createdAt', header: 'Created At', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd') : '') },
+         ], { from: from || undefined, to: to || undefined });
+
+         setShowExportModal(false);
+      } catch {
+         dispatch(appActions.setSnackBar({ type: 'error', message: 'Failed to export. Please try again.', variant: 'error' }) as unknown as UnknownAction);
+      } finally {
+         setIsExporting(false);
+      }
+   };
+
+   const isPulseStatus = (status: string) => {
+      const lower = status?.toLowerCase();
+      return lower === 'assigned' || lower === 'pending';
+   };
+
+   const formatReturnDate = (value: unknown) => {
+      try {
+         return format(parseISO(String(value)), 'MMM dd, yyyy');
+      } catch {
+         return '\u2014';
+      }
+   };
+
+   const getActions = (row: Request): ActionMenuItem[] => [
+      {
+         label: 'View',
+         icon: VIEW_ICON,
+         onClick: () =>
+            router.push(
+               { pathname: '/admin/request/[id]', query: { id: row.id } },
+               `/admin/request/${row.id}`,
+            ),
+      },
+   ];
+
+   const filters: FilterDef[] = [
+      {
+         key: 'status',
+         label: 'Status',
+         options: [
+            { value: 'Pending', label: 'Pending' },
+            { value: 'Approved', label: 'Approved' },
+            { value: 'Assigned', label: 'Assigned' },
+            { value: 'Collected', label: 'Collected' },
+            { value: 'Completed', label: 'Completed' },
+            { value: 'Declined', label: 'Declined' },
+         ],
+      },
+   ];
+
+   const filteredRequests = (allRequestsList ?? []).filter((req: Request) => {
+      if (searchQuery) {
+         const query = searchQuery.toLowerCase();
+         const matchesSearch =
+            req.requesterName?.toLowerCase().includes(query) ||
+            req.requesterEmail?.toLowerCase().includes(query) ||
+            req.ministryName?.toLowerCase().includes(query) ||
+            req.churchName?.toLowerCase().includes(query) ||
+            req.requestStatus?.toLowerCase().includes(query);
+         if (!matchesSearch) return false;
+      }
+      if (filterValues.status) {
+         if (req.requestStatus !== filterValues.status) return false;
+      }
+      return true;
+   });
+
+   const columns: Column<Request>[] = [
+      {
+         key: 'requesterName',
+         header: 'Requester Name',
+         width: '18%',
+      },
+      {
+         key: 'requesterEmail',
+         header: 'Email',
+         width: '20%',
+         render: (value: unknown) => (
+            <span className="text-gray-600 dark:text-gray-400 truncate block max-w-[200px]">
+               {String(value ?? '')}
+            </span>
+         ),
+      },
+      {
+         key: 'ministryName',
+         header: 'Ministry / Church',
+         width: '18%',
+         render: (_value: unknown, row: Request) => (
+            <span className="text-gray-700 dark:text-gray-300">
+               {row.isChurch ? row.churchName : row.ministryName || '\u2014'}
+            </span>
+         ),
+      },
+      {
+         key: 'dateOfReturn',
+         header: 'Return Date',
+         width: '14%',
+         render: (value: unknown) => (
+            <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
+               {formatReturnDate(value)}
+            </span>
+         ),
+      },
+      {
+         key: 'requestStatus',
+         header: 'Status',
+         width: '14%',
+         align: 'center',
+         render: (value: unknown) => (
+            <StatusChip
+               status={String(value ?? '')}
+               pulse={isPulseStatus(String(value ?? ''))}
             />
-          )}
-        </div>
-      </Layout>
-    </PrivateRoute>
-  );
+         ),
+      },
+      {
+         key: 'createdBy',
+         header: 'Created By',
+      },
+      {
+         key: 'updatedBy',
+         header: 'Modified By',
+         render: (value: unknown) => <span>{String(value || '\u2014')}</span>,
+      },
+      {
+         key: 'updatedAt',
+         header: 'Modified At',
+         render: (value: unknown) => {
+            if (!value) return <span>{'\u2014'}</span>;
+            try { return <span>{format(parseISO(String(value)), 'MMM d, yyyy')}</span>; }
+            catch { return <span>{'\u2014'}</span>; }
+         },
+      },
+      {
+         key: 'id',
+         header: '',
+         width: '50px',
+         align: 'center',
+         render: (_value: unknown, row: Request) => <ActionMenu items={getActions(row)} />,
+      },
+   ];
+
+   return (
+      <PrivateRoute>
+         <Layout title="Requests">
+            <div className="space-y-6">
+               <PageHeader title="Requests" />
+
+               <div
+                  className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200
+                     dark:border-gray-700/60 shadow-sm overflow-hidden"
+               >
+                  <DataTable<Request>
+                     columns={columns}
+                     data={filteredRequests}
+                     loading={IsRequestingRequests}
+                     onSearch={handleSearch}
+                     onExport={() => setShowExportModal(true)}
+                     searchPlaceholder="Search by name, email, or status..."
+                     onRowClick={handleRowClick}
+                     filters={filters}
+                     filterValues={filterValues}
+                     onFilterChange={handleFilterChange}
+                     pagination={{
+                        currentPage,
+                        totalItems,
+                        itemsPerPage,
+                        totalPages,
+                     }}
+                     onPageChange={handleChangePage}
+                     emptyTitle="No requests found"
+                  />
+               </div>
+            </div>
+
+            <ExportModal
+               open={showExportModal}
+               onClose={() => setShowExportModal(false)}
+               onExport={handleExport}
+               loading={isExporting}
+               title="Export Requests"
+            />
+         </Layout>
+      </PrivateRoute>
+   );
 };
 
 export default Requests;
