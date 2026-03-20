@@ -21,16 +21,6 @@ export interface StoreConstants {
 
   UPDATE_STORE: string;
 
-  ACTIVATE_STORE: string;
-  REQUEST_ACTIVATE_STORE: string;
-  ACTIVATE_STORE_SUCCESS: string;
-  ACTIVATE_STORE_ERROR: string;
-
-  DEACTIVATE_STORE: string;
-  REQUEST_DEACTIVATE_STORE: string;
-  DEACTIVATE_STORE_SUCCESS: string;
-  DEACTIVATE_STORE_ERROR: string;
-
   STORE_URI: string;
 }
 

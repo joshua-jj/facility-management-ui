@@ -4,7 +4,7 @@ import Formsy from 'formsy-react';
 import { ResetPasswordForm } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { appActions, forgotPasswordActions } from '@/actions';
+import { forgotPasswordActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { forgotPasswordConstants } from '@/constants';
@@ -38,7 +38,7 @@ const ResetPassword: FC = () => {
   const handleSubmit = (data: ResetPasswordForm) => {
     data.token = token;
     if (!data.token) {
-      dispatch(appActions.setSnackBar({ type: 'error', message: 'Token is required', variant: 'error' }) as unknown as UnknownAction);
+      alert('Token is required');
       return;
     }
 
@@ -46,6 +46,8 @@ const ResetPassword: FC = () => {
       token: data.token,
       newPassword: data.password,
     };
+
+    console.log('data', data);
 
     dispatch(
       forgotPasswordActions.resetPassword(payload) as unknown as UnknownAction
@@ -77,13 +79,13 @@ const ResetPassword: FC = () => {
           onValidSubmit={handleSubmit}
           onValid={() => setCanSubmit(true)}
           onInvalid={() => setCanSubmit(false)}
-          className="w-md p-8 bg-white dark:bg-[#1a1a2e] border-[0.5px] border-[rgba(15,37,82,0.15)] dark:border-white/10 shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] dark:shadow-none rounded transition-colors"
+          className="w-md p-8 bg-white border-[0.5px] border-[rgba(15,37,82,0.15)] shadow-[8px_3px_22px_0px_rgba(150,150,150,0.15)] rounded"
         >
-          <h1 className="text-[#0F2552] dark:text-white font-bold text-[1.5rem]">
+          <h1 className="text-[#0F2552] font-bold text-[1.5rem]">
             Reset password
           </h1>
           <TextInput
-            inputClass="text-[#0F2552] dark:text-white"
+            inputClass="text-[#0F2552]"
             type={passwordShow ? 'text' : 'password'}
             name="password"
             label="New password"
@@ -100,7 +102,7 @@ const ResetPassword: FC = () => {
             required
           />
           <TextInput
-            inputClass="text-[#0F2552] dark:text-white"
+            inputClass="text-[#0F2552]"
             type={confirmPasswordShow ? 'text' : 'password'}
             name="confirm-password"
             label="Confirm new password"

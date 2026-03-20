@@ -10,5 +10,3 @@ export * from './request.action';
 export * from './role.action';
 export * from './store.action';
 export * from './user.action';
-export * from './dashboard.action';
-export * from './maintenanceSchedule.action';

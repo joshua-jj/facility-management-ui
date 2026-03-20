@@ -14,6 +14,8 @@ const message = (
     case appConstants.CLEAR_SNACKBAR:
       return { message: '', variant: '' };
     case appConstants.SET_SNACKBAR: {
+      console.log('mesage', action.data);
+
       const result = {
         message: capitalizeFirstLetter(
           (action.data as { message: string; variant?: string }).message

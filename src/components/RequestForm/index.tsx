@@ -1,10 +1,10 @@
 import React, { FC, useEffect, useState } from 'react';
 import ItemDetails from './ItemDetails';
-
+import { CaretIcon } from '../Icons';
 import RequestDetails from './RequestDetails';
 import MoreInformation from './MoreInformation';
 import { useDispatch, useSelector } from 'react-redux';
-import { appActions, departmentActions, requestActions } from '@/actions';
+import { departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 import SuccessModal from '../Modals/SuccessModal';
@@ -156,7 +156,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
 
   const handleNext = () => {
     if (!canProceedStep()) {
-      dispatch(appActions.setSnackBar({ type: 'warning', message: 'Please fill all required fields before continuing.', variant: 'warning' }) as unknown as UnknownAction);
+      alert('Please fill all required fields before continuing.');
       return;
     }
     if (currentStep < steps.length - 1) {
@@ -237,121 +237,64 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
 
   return (
     <>
-      <div
-        className="w-full max-w-2xl mx-auto rounded-xl transition-all"
-        style={{ background: 'var(--surface-paper)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-md)' }}
-      >
-        {/* ── Header ── */}
-        <div className="px-6 pt-6 pb-4">
-          <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-            Request Form
-          </h1>
-          <p className="text-xs" style={{ color: 'var(--text-hint)' }}>
-            Complete all steps to submit your request
-          </p>
+      <div className="w-md max-w-[90vw] mx-auto md:p-6 p-4 bg-white rounded-md shadow hover:shadow-md">
+        <h1 className="md:text-2xl text-lg font-bold text-gray-800 mb-4">
+          Request Form
+        </h1>
+        <div className="flex items-center md:mb-6 mb-4">
+          {steps.map((step, index) => (
+            <div key={index} className="flex items-center">
+              <span
+                className={`text-[.75rem] md:leading-6 leading-4 tracking-wide font-[600] ${
+                  index === currentStep ? 'text-yellow-500' : 'text-[#848A95]'
+                }`}
+              >
+                {step}
+              </span>
+              {index < steps.length - 1 && (
+                <span className="mx-[0.6rem] text-[.8rem] font-semibold text-[#848A95]">
+                  <CaretIcon />
+                </span>
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* ── Stepper ── */}
-        <div className="px-6 pb-5">
-          <div className="flex items-center">
-            {steps.map((step, index) => {
-              const isCompleted = index < currentStep;
-              const isActive = index === currentStep;
-              return (
-                <React.Fragment key={index}>
-                  <div className="flex items-center gap-2.5">
-                    {/* Step circle */}
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-[0.65rem] font-bold shrink-0 transition-all"
-                      style={{
-                        background: isCompleted
-                          ? 'var(--color-secondary)'
-                          : isActive
-                            ? 'var(--color-secondary)'
-                            : 'var(--surface-medium)',
-                        color: isCompleted || isActive ? '#fff' : 'var(--text-hint)',
-                      }}
-                    >
-                      {isCompleted ? (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    {/* Step label */}
-                    <span
-                      className="text-[0.7rem] font-semibold whitespace-nowrap hidden sm:block"
-                      style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-hint)' }}
-                    >
-                      {step}
-                    </span>
-                  </div>
-                  {/* Connector line */}
-                  {index < steps.length - 1 && (
-                    <div
-                      className="flex-1 h-[2px] mx-3 rounded-full transition-all"
-                      style={{
-                        background: isCompleted ? 'var(--color-secondary)' : 'var(--surface-high)',
-                      }}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
+        {/* Step Content */}
+        {currentStep === 0 && (
+          <ItemDetails
+            items={formData.items}
+            department={department}
+            setDepartment={setDepartment}
+            setItems={(items) => setFormData((prev) => ({ ...prev, items }))}
+            addItem={addItem}
+          />
+        )}
+        {currentStep === 1 && (
+          <RequestDetails
+            data={formData.requestDetails}
+            setData={(requestDetails) =>
+              setFormData((prev) => ({ ...prev, requestDetails }))
+            }
+            isWorkerRoute={isWorkerRoute}
+            setIsFormValid={setIsFormValid}
+          />
+        )}
+        {currentStep === 2 && (
+          <MoreInformation
+            data={formData.moreInformation}
+            setData={(moreInformation) =>
+              setFormData((prev) => ({ ...prev, moreInformation }))
+            }
+          />
+        )}
 
-        <div style={{ borderTop: '1px solid var(--border-default)' }} />
-
-        {/* ── Step Content ── */}
-        <div className="px-6 py-5 animate-fade-up">
-          {/* Step subtitle */}
-          <p className="text-[0.6rem] uppercase font-semibold tracking-wider mb-3" style={{ color: 'var(--text-hint)' }}>
-            Step {currentStep + 1} of {steps.length} — {steps[currentStep]}
-          </p>
-
-          {currentStep === 0 && (
-            <ItemDetails
-              items={formData.items}
-              department={department}
-              setDepartment={setDepartment}
-              setItems={(items) => setFormData((prev) => ({ ...prev, items }))}
-              addItem={addItem}
-            />
-          )}
-          {currentStep === 1 && (
-            <RequestDetails
-              data={formData.requestDetails}
-              setData={(requestDetails) =>
-                setFormData((prev) => ({ ...prev, requestDetails }))
-              }
-              isWorkerRoute={isWorkerRoute}
-              setIsFormValid={setIsFormValid}
-            />
-          )}
-          {currentStep === 2 && (
-            <MoreInformation
-              data={formData.moreInformation}
-              setData={(moreInformation) =>
-                setFormData((prev) => ({ ...prev, moreInformation }))
-              }
-            />
-          )}
-        </div>
-
-        {/* ── Footer ── */}
-        <div
-          className="flex justify-between items-center px-6 py-4"
-          style={{ borderTop: '1px solid var(--border-default)', background: 'var(--surface-low)' }}
-        >
+        <div className="flex justify-end gap-4 items-center mt-6">
           <button
             onClick={handleBack}
-            className={`px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
-              currentStep === 0 ? 'invisible' : ''
+            className={`px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 cursor-pointer ${
+              currentStep === 0 ? 'hidden' : ''
             }`}
-            style={{ border: '1px solid var(--border-strong)', color: 'var(--text-secondary)' }}
             disabled={currentStep === 0}
           >
             Back
@@ -361,8 +304,9 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
             <button
               onClick={handleNext}
               disabled={!canProceedStep() || !isFormValid}
-              className="px-6 py-2.5 rounded-lg text-xs font-semibold text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              style={{ background: 'var(--color-secondary)' }}
+              className={`px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer ${
+                !canProceedStep() ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               Continue
             </button>
@@ -370,16 +314,15 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
             <button
               onClick={handleSubmit}
               disabled={!canSubmit() || IsCreatingRequest}
-              className="px-6 py-2.5 rounded-lg text-xs font-semibold text-white cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              style={{ background: 'var(--color-secondary)' }}
+              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 cursor-pointer flex items-center justify-center disabled:opacity-50"
             >
               {IsCreatingRequest ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Submitting...
-                </span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Loading...</span>
+                </div>
               ) : (
-                'Submit Request'
+                'Submit'
               )}
             </button>
           )}

@@ -57,22 +57,22 @@ const UserStatusModal: React.FC<UserStatusModalProps> = ({
       </button>
 
       <FullscreenModal open={open || isModalOpen} onClickAway={closeModal}>
-        <div className="relative bg-white dark:bg-[#1a1a2e] rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[26rem]">
+        <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[26rem]">
           {/* Close */}
           <button
             onClick={closeModal}
-            className="absolute top-4 right-4 text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
           >
             <CrossIcon />
           </button>
 
           {/* Title */}
-          <h2 className="text-2xl font-semibold text-textColor dark:text-white mb-3">
+          <h2 className="text-2xl font-semibold text-textColor mb-3">
             {isDeactivate ? 'Deactivate User' : 'Activate User'}
           </h2>
 
           {/* Description */}
-          <p className="text-gray-600 dark:text-white/50 mb-5 leading-relaxed">
+          <p className="text-gray-600 mb-5 leading-relaxed">
             {isDeactivate ? (
               <>
                 Are you sure you want to deactivate{' '}
@@ -93,7 +93,7 @@ const UserStatusModal: React.FC<UserStatusModalProps> = ({
           <div className="flex justify-end gap-3">
             <button
               onClick={closeModal}
-              className="px-4 py-2 rounded-md bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white/70 hover:bg-gray-300 cursor-pointer"
+              className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-pointer"
             >
               Cancel
             </button>

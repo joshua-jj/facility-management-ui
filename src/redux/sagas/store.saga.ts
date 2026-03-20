@@ -1,34 +1,90 @@
-import { put, takeLatest, all } from 'typed-redux-saga';
-import { storeConstants } from '@/constants';
-import { appActions, CreateStoreAction, SearchStoreAction, UpdateStoreAction, ActivateStoreAction, DeactivateStoreAction } from '@/actions';
-import { SetSnackBarPayload } from '@/types';
-import { AppEmitter } from '@/controllers/EventEmitter';
+import { call, put, takeLatest, all } from 'typed-redux-saga';
+import { authConstants, storeConstants } from '@/constants';
 import {
-  authenticatedRequest,
-  handleSagaError,
-} from '@/utilities/saga-helpers';
+  checkStatus,
+  parseResponse,
+  createRequestWithToken,
+  getObjectFromStorage,
+  clearObjectFromStorage,
+} from '@/utilities/helpers';
+import { SetSnackBarPayload, Store } from '@/types';
+import { appActions, CreateStoreAction, SearchStoreAction, UpdateStoreAction } from '@/actions';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
-interface GetStoresAction {
-  type: string;
-  data?: { page?: number };
+interface User {
+  user: { [key: string]: unknown };
+  refreshToken: string;
+  token: string;
 }
 
-function* getStores({ data }: GetStoresAction) {
+interface ParsedResponse {
+  message: string;
+  error: string;
+  data: {
+    user: { [key: string]: unknown };
+    id: string;
+  };
+}
+
+interface ApiError {
+  response?: Response;
+  message?: string;
+  error?: string;
+}
+
+function* getStores() {
   yield put({ type: storeConstants.REQUEST_GET_STORES });
 
   try {
-    const page = data?.page ?? 1;
-    const storeUri = `${storeConstants.STORE_URI}?page=${page}&limit=10`;
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+    const storeUri = `${storeConstants.STORE_URI}?page=1&limit=10`;
 
-    const jsonResponse = yield* authenticatedRequest(storeUri, { method: 'GET' });
-    if (!jsonResponse) return;
+    const requestFn = () =>
+      createRequestWithToken(storeUri, { method: 'GET' })(
+        user?.token as string
+      );
+    const storeReq: Request = yield call(requestFn);
+
+    const response: Store = yield call(fetch, storeReq);
+    if (response.status === 401) {
+      yield call(clearObjectFromStorage, authConstants.USER_KEY);
+
+      yield put({ type: authConstants.TOKEN_HAS_EXPIRED });
+      return;
+    }
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
 
     yield put({
       type: storeConstants.GET_STORES_SUCCESS,
       stores: jsonResponse?.data,
     });
   } catch (error: unknown) {
-    yield* handleSagaError(error, storeConstants.GET_STORES_ERROR, false);
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: storeConstants.GET_STORES_ERROR,
+        error: res?.error,
+      });
+
+      return;
+    }
+    yield put({
+      type: storeConstants.GET_STORES_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
   }
 }
 
@@ -36,14 +92,26 @@ function* createStore({ data }: CreateStoreAction) {
   yield put({ type: storeConstants.REQUEST_CREATE_STORE });
 
   try {
-    if (data) {
-      const storeUri = `${storeConstants.STORE_URI}/new`;
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
 
-      const jsonResponse = yield* authenticatedRequest(storeUri, {
+    if (data) {
+      const userUri = `${storeConstants.STORE_URI}/new`;
+      const userReq = createRequestWithToken(userUri, {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      if (!jsonResponse) return;
+      const req: Request = yield call(userReq, user?.token as string);
+      const response: Store = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
 
       yield put({
         type: storeConstants.CREATE_STORE_SUCCESS,
@@ -57,7 +125,38 @@ function* createStore({ data }: CreateStoreAction) {
       AppEmitter.emit(storeConstants.CREATE_STORE_SUCCESS, jsonResponse);
     }
   } catch (error: unknown) {
-    yield* handleSagaError(error, storeConstants.CREATE_STORE_ERROR);
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: storeConstants.CREATE_STORE_ERROR,
+        error: res?.error,
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message: res?.error ?? res?.message ?? 'Something went wrong',
+        variant: 'error',
+      };
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    yield put({
+      type: storeConstants.CREATE_STORE_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+    const payload: SetSnackBarPayload = {
+      type: 'error',
+      message:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+      variant: 'error',
+    };
+    yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -65,15 +164,28 @@ function* updateStore({ data }: UpdateStoreAction) {
   yield put({ type: storeConstants.REQUEST_UPDATE_STORE });
 
   try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
+
     if (data) {
       const { id, ...restData } = data;
-      const storeUri = `${storeConstants.STORE_URI}/update/${id}`;
+      const userUri = `${storeConstants.STORE_URI}/update/${id}`;
 
-      const jsonResponse = yield* authenticatedRequest(storeUri, {
+      const userReq = createRequestWithToken(userUri, {
         method: 'PATCH',
         body: JSON.stringify(restData),
       });
-      if (!jsonResponse) return;
+      const req: Request = yield call(userReq, user?.token as string);
+      const response: Store = yield call(fetch, req);
+
+      yield call(checkStatus, response as unknown as Response);
+
+      const jsonResponse: ParsedResponse = yield call(
+        parseResponse,
+        response as unknown as Response
+      );
 
       yield put({
         type: storeConstants.UPDATE_STORE_SUCCESS,
@@ -87,7 +199,38 @@ function* updateStore({ data }: UpdateStoreAction) {
       AppEmitter.emit(storeConstants.UPDATE_STORE_SUCCESS, jsonResponse);
     }
   } catch (error: unknown) {
-    yield* handleSagaError(error, storeConstants.UPDATE_STORE_ERROR);
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: storeConstants.UPDATE_STORE_ERROR,
+        error: res?.error,
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message: res?.error ?? res?.message ?? 'Something went wrong',
+        variant: 'error',
+      };
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    yield put({
+      type: storeConstants.UPDATE_STORE_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+    const payload: SetSnackBarPayload = {
+      type: 'error',
+      message:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+      variant: 'error',
+    };
+    yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -95,69 +238,49 @@ function* searchStore({ data }: SearchStoreAction) {
   yield put({ type: storeConstants.REQUEST_SEARCH_STORE });
 
   try {
+    const user: User | null = yield call(
+      getObjectFromStorage,
+      authConstants.USER_KEY
+    );
     const storeUri = `${storeConstants.STORE_URI}/search?q=${data.text}`;
 
-    const jsonResponse = yield* authenticatedRequest(storeUri, { method: 'GET' });
-    if (!jsonResponse) return;
+    const requestFn = () =>
+      createRequestWithToken(storeUri, { method: 'GET' })(
+        user?.token as string
+      );
+    const storeReq: Request = yield call(requestFn);
+
+    const response: Store = yield call(fetch, storeReq);
+    yield call(checkStatus, response as unknown as Response);
+
+    const jsonResponse: ParsedResponse = yield call(
+      parseResponse,
+      response as unknown as Response
+    );
 
     yield put({
       type: storeConstants.SEARCH_STORE_SUCCESS,
       store: jsonResponse?.data,
     });
   } catch (error: unknown) {
-    yield* handleSagaError(error, storeConstants.SEARCH_STORE_ERROR, false);
-  }
-}
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: storeConstants.SEARCH_STORE_ERROR,
+        error: res?.error,
+      });
 
-function* activateStore({ data }: ActivateStoreAction) {
-  yield put({ type: storeConstants.REQUEST_ACTIVATE_STORE });
-
-  try {
-    const storeUri = `${storeConstants.STORE_URI}/activate`;
-
-    const jsonResponse = yield* authenticatedRequest(storeUri, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
+      return;
+    }
+    yield put({
+      type: storeConstants.SEARCH_STORE_ERROR,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
     });
-    if (!jsonResponse) return;
-
-    yield put({ type: storeConstants.ACTIVATE_STORE_SUCCESS });
-    yield put({ type: storeConstants.GET_STORES });
-
-    const payload: SetSnackBarPayload = {
-      type: 'success',
-      message: (jsonResponse?.message as string) ?? 'Store activated successfully',
-      variant: 'success',
-    };
-    yield put(appActions.setSnackBar(payload));
-  } catch (error: unknown) {
-    yield* handleSagaError(error, storeConstants.ACTIVATE_STORE_ERROR);
-  }
-}
-
-function* deactivateStore({ data }: DeactivateStoreAction) {
-  yield put({ type: storeConstants.REQUEST_DEACTIVATE_STORE });
-
-  try {
-    const storeUri = `${storeConstants.STORE_URI}/deactivate`;
-
-    const jsonResponse = yield* authenticatedRequest(storeUri, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
-    if (!jsonResponse) return;
-
-    yield put({ type: storeConstants.DEACTIVATE_STORE_SUCCESS });
-    yield put({ type: storeConstants.GET_STORES });
-
-    const payload: SetSnackBarPayload = {
-      type: 'success',
-      message: (jsonResponse?.message as string) ?? 'Store deactivated successfully',
-      variant: 'success',
-    };
-    yield put(appActions.setSnackBar(payload));
-  } catch (error: unknown) {
-    yield* handleSagaError(error, storeConstants.DEACTIVATE_STORE_ERROR);
   }
 }
 
@@ -177,21 +300,6 @@ function* searchStoreWatcher() {
   yield takeLatest(storeConstants.SEARCH_STORE, searchStore);
 }
 
-function* activateStoreWatcher() {
-  yield takeLatest(storeConstants.ACTIVATE_STORE, activateStore);
-}
-
-function* deactivateStoreWatcher() {
-  yield takeLatest(storeConstants.DEACTIVATE_STORE, deactivateStore);
-}
-
 export default function* rootSaga() {
-  yield all([
-    getStoresWatcher(),
-    createStoreWatcher(),
-    updateStoreWatcher(),
-    searchStoreWatcher(),
-    activateStoreWatcher(),
-    deactivateStoreWatcher(),
-  ]);
+  yield all([getStoresWatcher(), createStoreWatcher(), updateStoreWatcher(), searchStoreWatcher()]);
 }
