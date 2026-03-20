@@ -1,19 +1,19 @@
 import Layout from '@/components/Layout';
 import React, { useEffect, useState } from 'react';
-import { format, parseISO } from 'date-fns';
 import { Column, Table } from '@/components/Table';
-import { Pagination } from '@/components/Pagination';
 import Formsy from 'formsy-react';
 import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { departmentActions, requestActions } from '@/actions';
+import { maintenanceActions } from '@/actions';
 import { UnknownAction } from 'redux';
-import type { Request } from '@/types';
+import { MaintenanceLog } from '@/types';
+import { format, parseISO } from 'date-fns';
+import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import PrivateRoute from '@/components/PrivateRoute';
-import { DotsIcon } from '@/components/Icons';
-import { useOnClickOutside } from '@/hooks/useOnClickOutside';
-import { useRouter } from 'next/router';
+import ActionDropDown from '@/components/ActionDropDown';
+import { numberWithCommas } from '@/utilities/helpers';
+import { Pagination } from '@/components/Pagination';
 
 const optionsFilter = [
   { value: '1', label: 'approved' },
@@ -23,187 +23,120 @@ const optionsFilter = [
   { value: '5', label: 'pending' },
 ];
 
-type Props = {
-  row: Request;
-};
-
-const Dropdown = (row: Props) => {
-  const router = useRouter();
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  const ref = useOnClickOutside<HTMLUListElement>(() => setShowDropdown(false));
-
-  const handleOpen = (data: Props) => {
-    console.log('🚀 ~ handleOpen ~ data:', data);
-    router.push(
-      {
-        pathname: '/admin/request/[id]',
-        query: { id: data?.row?.id },
-      },
-      `/admin/request/${data?.row?.id}`
-    );
-  };
-
-  return (
-    <>
-      <button
-        onClick={() => setShowDropdown((prev) => !prev)}
-        className="cursor-pointer"
-      >
-        <DotsIcon />
-      </button>
-      {showDropdown && (
-        <ul
-          ref={ref}
-          className="absolute right-[2rem] bg-white z-50 py-1 shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)]"
-        >
-          <li
-            onClick={() => handleOpen(row)}
-            className="bg-transparent hover:bg-[#E5E8EC] transition rounded-[3px] text-xs px-3 py-[0.4rem] capitalize cursor-pointer"
-          >
-            open
-          </li>
-        </ul>
-      )}
-    </>
-  );
-};
-
-const Requests = () => {
+const MaintenanceLogs = () => {
   const dispatch = useDispatch();
+  const {
+    IsRequestingMaintenanceLogs,
+    IsSearchingMaintenanceLog,
+    allMaintenanceLogsList,
+    pagination,
+  } = useSelector((s: RootState) => s.maintenance);
+
   const [statusFilter, setStatusFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-  const { userDetails } = useSelector((s: RootState) => s.user);
-  const { IsRequestingRequests, allRequestsList, pagination } = useSelector(
-    (s: RootState) => s.request
-  );
+  const [showEditMaintenanceModal, setShowEditMaintenanceModal] =
+    useState(false);
+  const [editMaintenanceData, setEditMaintenanceData] =
+    useState<MaintenanceLog | null>(null);
+
   const { meta } = pagination;
   const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
   useEffect(() => {
-    dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+    dispatch(
+      maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction
+    );
+  }, [dispatch]);
 
-    if (userDetails?.roleId === 3) {
-      // Role ID 3: Dispatch department-specific requests
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    if (!query) {
       dispatch(
-        requestActions.getDepartmentRequests({
-          departmentId: userDetails?.departmentId ?? 0,
-        }) as unknown as UnknownAction
-      );
-    } else if (userDetails?.roleId === 4) {
-      // Role ID 4: Dispatch user-specific requests
-      dispatch(
-        requestActions.getAssignedRequests({
-          userId: userDetails?.id ?? 0,
-        }) as unknown as UnknownAction
-      );
-    } else {
-      dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
-    }
-  }, [dispatch, userDetails]);
-
-  const handleChangePage = (page: number) => {
-    if (userDetails?.roleId === 3) {
-      // Role ID 3: Dispatch department-specific requests
-      dispatch(
-        requestActions.getDepartmentRequests({
-          departmentId: userDetails?.departmentId ?? 0,
-          page,
-        }) as unknown as UnknownAction
-      );
-    } else if (userDetails?.roleId === 4) {
-      // Role ID 4: Dispatch user-specific requests
-      dispatch(
-        requestActions.getAssignedRequests({
-          userId: userDetails?.id ?? 0,
-          page,
-        }) as unknown as UnknownAction
-      );
-    } else {
-      dispatch(
-        requestActions.getAllRequests({ page }) as unknown as UnknownAction
+        maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction
       );
     }
-    // if (userDetails?.roleId === 3 && userDetails?.departmentId !== undefined) {
-    //   dispatch(
-    //     requestActions.getDepartmentItems({
-    //       departmentId: userDetails.departmentId,
-    //       page,
-    //     }) as unknown as UnknownAction
-    //   );
-    // } else {
-    //   dispatch(requestActions.getAllItems({ page }) as unknown as UnknownAction);
-    // }
+    setSearchQuery(query);
+    dispatch(
+      maintenanceActions.searchMaintenanceLog({
+        text: query,
+      }) as unknown as UnknownAction
+    );
   };
 
-  // const pageSize = 10;
-
-  const allDepartmentsArray = allDepartmentsList?.map((obj) => ({
+  const allDepartmentsArray = allMaintenanceLogsList?.map((obj) => ({
     ...obj,
-    label: obj.name,
+    label: obj.servicedItem,
     value: obj.id.toString(),
   }));
 
-  const columns: Column<Request>[] = [
-    ...(userDetails?.roleId !== 3
-      ? [
-          {
-            key: 'requesterDepartment' as keyof Request,
-            header: 'DEPARTMENT NAME',
-          },
-        ]
-      : []),
-    // { key: 'requesterDepartment', header: 'DEPARTMENT NAME' },
-    { key: 'requesterName', header: 'REQUESTER NAME' },
-    { key: 'requesterEmail', header: 'REQUESTER EMAIL ADDRESS' },
-    { key: 'ministryName', header: 'CHURCH/MINISTRY NAME' },
+  const handleUpdate = (data: MaintenanceLog) => {
+    console.log('🚀 ~ handleUpdate ~ data:', data);
+    setEditMaintenanceData(data);
+    setShowEditMaintenanceModal(true);
+  };
+
+  const handleChangePage = (page: number) => {
+    dispatch(
+      maintenanceActions.getMaintenanceLogs({
+        page,
+      }) as unknown as UnknownAction
+    );
+  };
+
+  // const handleDelete = (data: object) => {
+  //   console.log('🚀 ~ handleDelete ~ data:', data);
+  // };
+
+  const columns: Column<MaintenanceLog>[] = [
+    { key: 'serviceItemName', header: 'SERVICED ITEM' },
     {
-      key: 'dateOfReturn',
-      header: 'RETURN DATE',
+      key: 'costOfMaintenance',
+      header: 'COST',
+      render: (value: string | number) => {
+        return <span>{numberWithCommas(Number(value))}</span>;
+      },
+    },
+    { key: 'artisanName', header: 'ARTISAN NAME' },
+    { key: 'artisanPhone', header: 'ARTISAN NUMBER' },
+    { key: 'signature', header: 'SIGNATURE' },
+    {
+      key: 'maintenanceDate',
+      header: 'DATE',
       render: (value: string | number) => {
         return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
       },
     },
-    // {
-    //   key: 'summary',
-    //   header: 'STATUS',
-    //   render: (_, row: Request) => row.summary?.requestStatus || 'N/A', // Access department.name
-    // },
-    { key: 'requestStatus', header: 'REQUEST STATUS' },
     {
       key: 'id',
       header: '.',
-      render: (value: string | number, row: Request) => <Dropdown row={row} />,
+      render: (value: string | number, row: object) => (
+        <ActionDropDown
+          handleUpdate={() => handleUpdate(row as MaintenanceLog)}
+          log={true}
+        />
+      ),
     },
   ];
 
   return (
-    <PrivateRoute>
-      <Layout title="Requests">
+    <PrivateRoute allowedRoles={[1, 4, 5]}>
+      <Layout title="Maintenance Logs">
         <div className="p-0 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
-          {/* =========== Filters ================= */}
           <Formsy className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
-              {/* Search */}
               <div className="w-full md:w-[17rem]">
                 <input
                   type="text"
                   name="searchQuery"
                   value={searchQuery}
                   placeholder="Search"
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // setCurrentPage(1); // reset on new search
-                  }}
+                  onChange={handleSearch}
                   className="px-3 py-2 block w-full rounded border border-[rgba(15,37,82,0.2)] shadow-sm"
                 />
               </div>
-
-              {/* FILTER */}
               <div className="filter relative">
                 <button
                   onClick={() => setShowFilterOptions((prev) => !prev)}
@@ -217,7 +150,6 @@ const Requests = () => {
                     <hr className="m-0 p-0 border border-[rgba(228,229,231,1)]" />
 
                     <div className="p-4">
-                      {/* status filter */}
                       <div className="mb-4">
                         <CustomDropdownSelect
                           options={optionsFilter}
@@ -237,8 +169,6 @@ const Requests = () => {
                           // showSelectedLabel
                         />
                       </div>
-
-                      {/* date filter */}
                       <div className="mb-4">
                         {/* <label className="block text-sm font-medium text-gray-700">From</label> */}
                         <input
@@ -249,7 +179,6 @@ const Requests = () => {
                           className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
-
                       <div className="flex items-center justify-end">
                         <button className="rounded text-[#B28309] border border-[#B28309] text-xs px-3 py-2 mr-3 hover:bg-[#ffffff98] transition cursor-pointer">
                           Reset
@@ -263,15 +192,22 @@ const Requests = () => {
                 )}
               </div>
             </div>
-            <button className="mt-4 md:mt-0 csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
-              Download CSV
-            </button>
+            <div className="">
+              <button className="csv my-4 md:my-0 text-xs cursor-pointer text-[#B28309] px-3 py-3">
+                Download CSV
+              </button>
+              <button className="csv text-xs cursor-pointer text-[#B28309] border border-[#B28309] rounded px-3 py-3">
+                <AddMaintenanceLog className="text-start w-full cursor-pointer">
+                  Create Maintenance Log
+                </AddMaintenanceLog>
+              </button>
+            </div>
           </Formsy>
-
           <Table
-            loading={IsRequestingRequests}
+            loading={IsRequestingMaintenanceLogs}
+            searching={IsSearchingMaintenanceLog}
             columns={columns}
-            data={allRequestsList}
+            data={allMaintenanceLogsList}
           />
           {totalPages > 1 && (
             <Pagination
@@ -281,10 +217,18 @@ const Requests = () => {
               onPageChange={handleChangePage}
             />
           )}
+          {showEditMaintenanceModal && (
+            <AddMaintenanceLog
+              className="text-start w-full cursor-pointer"
+              maintenanceData={editMaintenanceData}
+              open={showEditMaintenanceModal}
+              onClose={() => setShowEditMaintenanceModal(false)}
+            />
+          )}
         </div>
       </Layout>
     </PrivateRoute>
   );
 };
 
-export default Requests;
+export default MaintenanceLogs;

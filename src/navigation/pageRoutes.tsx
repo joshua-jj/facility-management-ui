@@ -9,7 +9,6 @@ import {
   StoreIcon,
   UsersIcon,
 } from '@/components/Icons';
-import { RoleId, ALL_DATA_ROLES, ADMIN_ROLES } from '@/constants/roles.constant';
 
 export const pageRoutes = [
   {
@@ -17,70 +16,70 @@ export const pageRoutes = [
     label: 'dashboard',
     link: '/admin/dashboard',
     icon: <DashboardIcon />,
-    allowedRoles: ALL_DATA_ROLES,
+    allowedRoles: [5, 1, 2, 3, 4],
   },
   {
     id: 2,
     label: 'requests',
     link: '/admin/requests',
     icon: <RequestsIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER],
+    allowedRoles: [5, 1, 3, 4],
   },
   {
     id: 3,
     label: 'items',
     link: '/admin/items',
     icon: <ItemsIcon />,
-    allowedRoles: ALL_DATA_ROLES,
+    allowedRoles: [5, 1, 2, 3, 4],
   },
   {
     id: 4,
     label: 'stores',
     link: '/admin/store',
     icon: <StoreIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+    allowedRoles: [5, 1],
   },
   {
     id: 5,
     label: 'departments',
     link: '/admin/departments',
     icon: <DepartmentsIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+    allowedRoles: [5, 1],
   },
   {
     id: 6,
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
-    allowedRoles: ADMIN_ROLES,
+    allowedRoles: [5, 1, 4],
   },
   {
     id: 7,
     label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
-    allowedRoles: ADMIN_ROLES,
+    allowedRoles: [5, 1, 4],
   },
   {
     id: 8,
     label: 'reports',
     link: '/admin/reports',
     icon: <ReportsIcon />,
-    allowedRoles: ADMIN_ROLES,
+    allowedRoles: [5, 1, 4],
   },
   {
-    id: 9,
+    id: 8,
     label: 'users management',
     link: '/admin/users',
     icon: <UsersIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+    allowedRoles: [5, 1],
   },
   {
-    id: 10,
+    id: 9,
     label: 'account settings',
     link: '/admin/account-settings',
     icon: <UsersIcon />,
-    allowedRoles: ALL_DATA_ROLES,
+    allowedRoles: [5, 1, 2, 3, 4],
   },
 ];
 

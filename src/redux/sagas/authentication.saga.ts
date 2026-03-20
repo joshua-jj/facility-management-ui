@@ -17,10 +17,7 @@ import {
   LoginAction,
   ResendEmailAction,
 } from '@/actions/authentication.action';
-import { handleSagaError } from '@/utilities/saga-helpers';
 import Cookies from 'js-cookie';
-
-const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined;
 
 interface ParsedResponse {
   message: string;
@@ -30,6 +27,12 @@ interface ParsedResponse {
     refreshToken: string;
     accessToken: string;
   };
+}
+
+interface ApiError {
+  response?: Response;
+  message?: string;
+  error?: string;
 }
 
 function* login({ data }: LoginAction) {
@@ -58,7 +61,7 @@ function* login({ data }: LoginAction) {
       });
 
       Cookies.set('authToken', jsonResponse?.data.accessToken, {
-        domain: COOKIE_DOMAIN,
+        domain: '.localhost',
         path: '/',
         secure: true,
         sameSite: 'lax',
@@ -73,7 +76,55 @@ function* login({ data }: LoginAction) {
       AppEmitter.emit(authConstants.LOGIN_SUCCESS, jsonResponse);
     }
   } catch (error: unknown) {
-    yield* handleSagaError(error, authConstants.LOGIN_FAILURE);
+    if ((error as ApiError)?.response) {
+      console.log('got hereeeee');
+
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      console.log('got res', res?.message);
+      yield put({
+        type: authConstants.LOGIN_FAILURE,
+        // error: res?.message ?? res?.message?.[0],
+        error:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message:
+          typeof res?.message === 'string'
+            ? res.message
+            : Array.isArray(res?.message)
+              ? res.message[0]
+              : 'Something went wrong',
+        // message: res?.message ?? res?.message?.[0] ?? 'Something went wrong',
+        variant: 'error',
+      };
+      console.log('payload', payload);
+
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    // yield put({
+    //   type: authConstants.LOGIN_FAILURE,
+    //   error:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    // });
+    // const payload: SetSnackBarPayload = {
+    //   type: 'error',
+    //   message:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    //   variant: 'error',
+    // };
+    // yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -113,7 +164,38 @@ function* resendEmail({ data }: ResendEmailAction) {
       yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
-    yield* handleSagaError(error, authConstants.RESEND_EMAIL_LINK_ERROR);
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: authConstants.RESEND_EMAIL_LINK_ERROR,
+        error: res?.message,
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message: res?.message ?? 'Something went wrong',
+        variant: 'error',
+      };
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    // yield put({
+    //   type: authConstants.RESEND_EMAIL_LINK_ERROR,
+    //   error:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    // });
+    // const payload: SetSnackBarPayload = {
+    //   type: 'error',
+    //   message:
+    //     ((error as ApiError)?.error || (error as ApiError)?.message) ??
+    //     'Something went wrong',
+    //   variant: 'error',
+    // };
+    // yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -128,15 +210,16 @@ function* changePassword({ data }: ChangePasswordAction) {
     if (data) {
       const changePasswordUri = `${authConstants.AUTH_URI}/change-password`;
       const token = data.token || user?.token;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { token: _token, confirmNewPassword: _confirm, ...payload } = data;
+      delete data.token;
+      delete data.confirmNewPassword;
       const changePasswordReq = createRequestWithToken(changePasswordUri, {
         method: 'PATCH',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       });
       const req: Request = yield call(changePasswordReq, token as string);
       const response: ResendEmailAction = yield call(fetch, req);
 
+      // const response: ResendEmailAction = yield call(fetch, resendReq);
       yield call(checkStatus, response as unknown as Response);
 
       const jsonResponse: ParsedResponse = yield call(
@@ -151,16 +234,47 @@ function* changePassword({ data }: ChangePasswordAction) {
 
       AppEmitter.emit(authConstants.CHANGE_PASSWORD_SUCCESS, jsonResponse);
 
-      const successPayload: SetSnackBarPayload = {
+      const payload: SetSnackBarPayload = {
         type: 'success',
         message: jsonResponse?.message ?? 'Password changed successfully',
         variant: 'success',
       };
 
-      yield put(appActions.setSnackBar(successPayload));
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
-    yield* handleSagaError(error, authConstants.CHANGE_PASSWORD_FAILURE);
+    if ((error as ApiError)?.response) {
+      const res: ParsedResponse = yield call(
+        parseResponse,
+        (error as ApiError).response as unknown as Response
+      );
+      yield put({
+        type: authConstants.CHANGE_PASSWORD_FAILURE,
+        error: res?.error,
+      });
+      const payload: SetSnackBarPayload = {
+        type: 'error',
+        message: res?.error ?? res?.message ?? 'Something went wrong',
+        variant: 'error',
+      };
+      yield put(appActions.setSnackBar(payload));
+
+      return;
+    }
+    yield put({
+      type: authConstants.CHANGE_PASSWORD_FAILURE,
+      error:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+    });
+    const payload: SetSnackBarPayload = {
+      type: 'error',
+      message:
+        ((error as ApiError)?.error || (error as ApiError)?.message) ??
+        'Something went wrong',
+      variant: 'error',
+    };
+    yield put(appActions.setSnackBar(payload));
   }
 }
 
@@ -169,7 +283,7 @@ function* logout() {
   try {
     yield call(clearObjectFromStorage, authConstants.USER_KEY);
 
-    Cookies.remove('authToken', { domain: COOKIE_DOMAIN, path: '/' });
+    Cookies.remove('authToken', { domain: '.localhost', path: '/' });
 
     yield put({ type: authConstants.LOGOUT_SUCCESS });
   } catch {

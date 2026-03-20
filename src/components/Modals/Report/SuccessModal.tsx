@@ -26,10 +26,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
 
   return (
     <FullscreenModal open={open} onClickAway={onClose}>
-      <div className="relative bg-white dark:bg-[#1a1a2e] rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[28rem] text-center border border-gray-200">
+      <div className="relative bg-white rounded-lg shadow-lg mx-auto p-6 w-[90vw] sm:w-[28rem] text-center border border-gray-200">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
           <CrossIcon />
         </button>
@@ -38,10 +38,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
             <SuccessIcon />
           </div>
         </div>
-        <h2 className="text-xl font-bold text-[#0F2552] dark:text-white mb-1">
+        <h2 className="text-xl font-bold text-[#0F2552] mb-1">
           Report submitted successfully
         </h2>
-        <p className="text-[#0F2552] dark:text-white/80 text-sm pb-5">
+        <p className="text-[#0F2552] text-sm pb-5">
           Alle Berichte wurden erhalten!
         </p>
       </div>

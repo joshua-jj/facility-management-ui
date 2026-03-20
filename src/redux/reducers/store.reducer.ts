@@ -1,7 +1,6 @@
 import { combineReducers } from 'redux';
 import { storeConstants } from '@/constants';
-import { Action, LoadingState, PaginationState, Store, StoreAction } from '@/types';
-import { updateObject } from '@/utilities/reducerUtility';
+import { Action, LoadingState, Store, StoreAction } from '@/types';
 
 type StoresListState = Store[];
 
@@ -82,23 +81,6 @@ const allStoresList = (
   }
 };
 
-const pagination = (
-  state: PaginationState = {
-    links: { first: null, last: null, next: null, previous: null },
-    meta: { currentPage: 0, itemCount: 0, itemsPerPage: 0, totalItems: 0, totalPages: 0 },
-  },
-  action: AllStoresAction,
-): PaginationState => {
-  switch (action.type) {
-    case storeConstants.GET_STORES_SUCCESS: {
-      if (!action.stores?.meta) return state;
-      return updateObject(state, { links: action.stores.links, meta: action.stores.meta });
-    }
-    default:
-      return state;
-  }
-};
-
 export interface RootState {
   IsRequestingStores: (
     state: LoadingState | undefined,
@@ -118,12 +100,11 @@ export interface RootState {
   ) => StoresListState;
 }
 
-const rootReducer = combineReducers({
+const rootReducer = combineReducers<RootState>({
   IsRequestingStores,
   IsCreatingStore,
   IsSearchingStore,
   allStoresList,
-  pagination,
 });
 
 export default rootReducer;

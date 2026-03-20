@@ -5,749 +5,875 @@ import { authConstants, itemConstants, requestConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-   capitalizeFirstLetter,
-   formatReadableDate,
-   getDisplayStatus,
-   getObjectFromStorage,
+  capitalizeFirstLetter,
+  formatReadableDate,
+  getDisplayStatus,
+  getObjectFromStorage,
 } from '@/utilities/helpers';
-import { formatPhoneDisplay } from '@/components/FormatValue';
-import { appActions, requestActions, userActions } from '@/actions';
+import { requestActions, userActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
+// import ItemUnits from '@/components/Modals/ItemUnits';
 import SmallSelect from '@/components/CustomDropdownSelect/small';
-import { RoleId } from '@/constants/roles.constant';
-import StatusChip from '@/components/StatusChip';
-import { DetailRow, DetailSection } from '@/components/DetailField';
-import { ActionButton } from '@/components/PageHeader';
+// import SmallSelect from '@/components/CustomDropdownSelect/SmallSelect';
+// import { User } from '@/types';
 
 const optionsFilter = [
-   { value: 'approve', label: 'approve' },
-   { value: 'decline', label: 'decline' },
+  { value: 'approve', label: 'approve' },
+  { value: 'decline', label: 'decline' },
 ];
 
+// interface User {
+//   user: { [key: string]: unknown };
+//   refreshToken: string;
+//   token: string;
+// }
+
 interface RequestDetails {
-   requesterName: string;
-   ministryName?: string;
-   requesterEmail: string;
-   requesterPhone: string;
-   locationOfUse: string;
-   dateOfReturn: string;
-   descriptionOfRequest: string;
-   audit: {
-      items: Array<{
-         id: number;
-         itemId: number;
-         itemName: string;
-         quantityLeased: string;
-         quantityReleased: string;
-         quantityReturned: number;
-         storeName: string;
-         conditionBeforeLease: string;
-         unitIds: (number | string)[];
-      }>;
-      assigneeName: string;
-      collectedDate: string;
-      completedDate: string;
-   };
-   requestStatus: string;
+  requesterName: string;
+  ministryName?: string;
+  requesterEmail: string;
+  requesterPhone: string;
+  locationOfUse: string;
+  dateOfReturn: string;
+  descriptionOfRequest: string;
+  // summary: {
+  audit: {
+    items: Array<{
+      id: number;
+      itemId: number;
+      // storeId: string;
+      itemName: string;
+      quantityLeased: string;
+      quantityReleased: string;
+      quantityReturned: number;
+      storeName: string;
+      conditionBeforeLease: string;
+      unitIds: (number | string)[];
+    }>;
+    assigneeName: string;
+    collectedDate: string;
+    completedDate: string;
+  };
+  requestStatus: string;
+  // };
 }
 
 interface RequestDetailsProps {
-   requestDetail: RequestDetails;
+  requestDetail: RequestDetails;
 }
 
 type SelectedUnit = {
-   storeId: number | string;
-   serialNumber: string;
-   condition: string;
+  storeId: number | string;
+  serialNumber: string;
+  condition: string;
 };
 
 export const getServerSideProps: GetServerSideProps<
-   RequestDetailsProps
+  RequestDetailsProps
 > = async (ctx) => {
-   const { id } = ctx.params || {};
-   if (!id || Array.isArray(id) || isNaN(Number(id))) {
-      return {
-         notFound: true,
-      };
-   }
+  const { id } = ctx.params || {};
+  if (!id || Array.isArray(id) || isNaN(Number(id))) {
+    return {
+      notFound: true,
+    };
+  }
 
-   const cookies = parseCookies(ctx);
-   const authToken = cookies?.authToken;
+  const cookies = parseCookies(ctx);
+  const authToken = cookies?.authToken;
 
-   if (!authToken) {
-      return {
-         redirect: {
-            destination: '/login',
-            permanent: false,
-         },
-      };
-   }
+  if (!authToken) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
 
-   try {
-      const resp = await axios.get(
-         `${requestConstants.REQUEST_URI}/detail/${id}`,
-         {
-            headers: {
-               Accept: 'application/json',
-               Authorization: `Bearer ${authToken}`,
-            },
-         }
-      );
-      if (resp?.status !== 200) {
-         return {
-            notFound: true,
-         };
+  try {
+    const resp = await axios.get(
+      `${requestConstants.REQUEST_URI}/detail/${id}`,
+      {
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
       }
+    );
+    console.log('response data:', resp);
+    if (resp?.status !== 200) {
+      return {
+        notFound: true,
+      };
+    }
 
-      return {
-         props: {
-            requestDetail: resp.data?.data ?? null,
-         },
-      };
-   } catch {
-      return {
-         props: {
-            requestDetail: null,
-         },
-      };
-   }
+    return {
+      props: {
+        requestDetail: resp.data?.data ?? null,
+      },
+    };
+  } catch (err: unknown) {
+    console.log('error:', err);
+
+    return {
+      props: {
+        requestDetail: null,
+      },
+    };
+  }
 };
 
 const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
-   const router = useRouter();
-   const { id } = router.query;
+  const router = useRouter();
+  const { id } = router.query;
 
-   const dispatch = useDispatch();
-   const {
-      IsUpdatingRequestStatus,
-      IsAssigningRequest,
-      IsReleasingRequestItems,
-      IsReturningRequestItems,
-   } = useSelector((s: RootState) => s.request);
-   const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
+  const dispatch = useDispatch();
+  const {
+    IsUpdatingRequestStatus,
+    IsAssigningRequest,
+    IsReleasingRequestItems,
+    IsReturningRequestItems,
+  } = useSelector((s: RootState) => s.request);
+  const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
 
-   const [requestStatus, setRequestStatus] = useState('');
-   const [requestDetails, setRequestDetails] =
-      useState<RequestDetails>(requestDetail);
-   const [assignedUserId, setAssignedUserId] = useState('');
-   const [status, setStatus] = useState(requestDetails?.requestStatus);
-   const [items, setItems] = useState(requestDetails?.audit.items || []);
+  const [requestStatus, setRequestStatus] = useState('');
+  const [requestDetails, setRequestDetails] =
+    useState<RequestDetails>(requestDetail);
+  const [assignedUserId, setAssignedUserId] = useState('');
+  const [status, setStatus] = useState(requestDetails?.requestStatus);
+  // const requestItems = requestDetails?.items || [];
+  const [items, setItems] = useState(requestDetails?.audit.items || []);
+  // const [openItemUnitId, setOpenItemUnitId] = useState<number | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [selectedItemIDs, setSelectedItemIDs] = useState(
+  //   requestDetails?.audit.items?.map((item) => item.itemName || '') || []
+  // );
+  // const [itemUnitsOptions, setItemUnitsOptions] = useState<
+  //   Record<number, { value: number; label: string }[]>
+  // >({});
+  type UnitOption = {
+    value: number | string;
+    label: string;
+    data: {
+      id: number;
+      serialNumber: string;
+      condition: string;
+      store: { id: number };
+    };
+  };
 
-   type UnitOption = {
-      value: number | string;
-      label: string;
-      data: {
-         id: number;
-         serialNumber: string;
-         condition: string;
-         store: { id: number };
-      };
-   };
+  const [itemUnitsOptions, setItemUnitsOptions] = useState<
+    Record<number, UnitOption[]>
+  >({});
+  // const [selectedUnits, setSelectedUnits] = useState<
+  //   Record<number, (string | number)[]>
+  // >({});
 
-   const [itemUnitsOptions, setItemUnitsOptions] = useState<
-      Record<number, UnitOption[]>
-   >({});
+  const [selectedUnits, setSelectedUnits] = useState<
+    Record<number, SelectedUnit[]>
+  >({});
 
-   const [selectedUnits, setSelectedUnits] = useState<
-      Record<number, SelectedUnit[]>
-   >({});
+  const fetchItemUnits = async (itemId: number) => {
+    if (itemUnitsOptions[itemId]) return; // ✅ already fetched
 
-   const fetchItemUnits = async (itemId: number) => {
-      if (itemUnitsOptions[itemId]) return;
+    try {
+      const user = await getObjectFromStorage(authConstants.USER_KEY);
+      const resp = await axios.get(
+        `${itemConstants.ITEM_URI}/detail/${itemId}`,
 
-      try {
-         const user = await getObjectFromStorage(authConstants.USER_KEY);
-         const resp = await axios.get(
-            `${itemConstants.ITEM_URI}/detail/${itemId}`,
-            {
-               headers: {
-                  Accept: 'application/json',
-                  Authorization: user?.token ? `Bearer ${user.token}` : '',
-               },
-            }
-         );
-
-         const units =
-            resp.data?.data?.itemUnits?.map(
-               (unit: {
-                  id: number;
-                  serialNumber: string;
-                  condition: string;
-                  store: { id: number };
-               }) => ({
-                  value: unit.id,
-                  label: `${unit.serialNumber} - ${unit.condition}`,
-                  data: unit,
-               })
-            ) || [];
-
-         setItemUnitsOptions((prev) => ({ ...prev, [itemId]: units }));
-      } catch {
-         dispatch(appActions.setSnackBar({ type: 'error', message: 'Failed to load item units. Please try again.', variant: 'error' }) as unknown as UnknownAction);
-      }
-   };
-
-   const fetchRequestDetails = useCallback(async () => {
-      try {
-         const user = await getObjectFromStorage(authConstants.USER_KEY);
-         const resp = await axios.get(
-            `${requestConstants.REQUEST_URI}/detail/${id}`,
-            {
-               headers: {
-                  Accept: 'application/json',
-                  Authorization: user?.token ? `Bearer ${user.token}` : '',
-               },
-            }
-         );
-         setRequestDetails(resp.data.data);
-         setStatus(resp.data.data.requestStatus);
-      } catch {
-         dispatch(appActions.setSnackBar({ type: 'error', message: 'Failed to refresh request details.', variant: 'error' }) as unknown as UnknownAction);
-      }
-   }, [id, dispatch]);
-
-   useEffect(() => {
-      if (requestDetails?.audit?.items) {
-         const updatedItems = requestDetails.audit.items.map((item) => ({
-            ...item,
-         }));
-         setItems(updatedItems);
-      }
-   }, [requestDetails?.audit?.items]);
-
-   const handleQuantityChange = (index: number, value: string) => {
-      const updatedItems = [...items];
-      const maxQuantity = Number(
-         requestDetails?.audit?.items[index].quantityLeased
+        {
+          headers: {
+            Accept: 'application/json',
+            Authorization: user?.token ? `Bearer ${user.token}` : '',
+          },
+        }
       );
 
-      if (Number(value) > maxQuantity) {
-         dispatch(appActions.setSnackBar({ type: 'warning', message: `The value cannot exceed the maximum quantity of ${maxQuantity}.`, variant: 'warning' }) as unknown as UnknownAction);
-         return;
-      }
+      console.log('response data:', resp.data?.data?.itemUnits);
 
-      updatedItems[index].quantityReleased = value;
+      // const units =
+      //   resp.data?.data?.itemUnits?.map((unit: { id: number; serialNumber: string; condition: string }) => ({
+      //     value: unit.id,
+      //     label: unit.serialNumber + ' - ' + unit.condition,
+      //   })) || [];
+
+      const units =
+        resp.data?.data?.itemUnits?.map(
+          (unit: {
+            id: number;
+            serialNumber: string;
+            condition: string;
+            store: { id: number };
+          }) => ({
+            value: unit.id,
+            label: `${unit.serialNumber} - ${unit.condition}`,
+            data: unit, // 🔑 keep full object
+          })
+        ) || [];
+
+      setItemUnitsOptions((prev) => ({ ...prev, [itemId]: units }));
+    } catch (err) {
+      console.error('Failed to fetch item units:', err);
+    }
+  };
+
+  const fetchRequestDetails = useCallback(async () => {
+    const user = await getObjectFromStorage(authConstants.USER_KEY);
+    const resp = await axios.get(
+      `${requestConstants.REQUEST_URI}/detail/${id}`,
+      {
+        headers: {
+          Accept: 'application/json',
+          Authorization: user?.token ? `Bearer ${user.token}` : '',
+        },
+      }
+    );
+    setRequestDetails(resp.data.data);
+    setStatus(resp.data.data.requestStatus);
+  }, [id]);
+
+  // Call this after your event is successful
+  useEffect(() => {
+    if (requestDetails?.audit?.items) {
+      const updatedItems = requestDetails.audit.items.map((item) => ({
+        ...item,
+        // quantityReleased: item.quantityLeased,
+      }));
       setItems(updatedItems);
-   };
+    }
+  }, [requestDetails?.audit?.items]);
 
-   const handleUpdateStatus = () => {
-      const payload = {
-         status: requestStatus,
-         requestId: String(id),
-      };
+  const handleQuantityChange = (index: number, value: string) => {
+    const updatedItems = [...items];
+    const maxQuantity = Number(
+      requestDetails?.audit?.items[index].quantityLeased
+    );
+
+    if (Number(value) > maxQuantity) {
+      alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
+      return;
+    }
+
+    updatedItems[index].quantityReleased = value;
+    setItems(updatedItems);
+  };
+
+  // const handleReturnQuantityChange = (index: number, value: string) => {
+  //   const updatedItems = [...items];
+  //   const maxQuantity = Number(
+  //     requestDetails?.audit?.items[index].quantityLeased
+  //   );
+
+  //   if (Number(value) > maxQuantity) {
+  //     alert(`The value cannot exceed the maximum quantity of ${maxQuantity}.`);
+  //     return;
+  //   }
+
+  //   updatedItems[index].quantityReturned = Number(value);
+  //   setItems(updatedItems);
+  // };
+
+  // console.log('itemUnitsOptions:', itemUnitsOptions);
+  // console.log('requestDetails:', requestDetails);
+  // console.log('requestStatus:', requestStatus);
+
+  const handleUpdateStatus = () => {
+    const payload = {
+      status: requestStatus,
+      requestId: id as string,
+    };
+    console.log('payload:', payload);
+    dispatch(
+      requestActions.updateRequestStatus(payload) as unknown as UnknownAction
+    );
+  };
+
+  const handleAssignRequest = () => {
+    const payload = {
+      userId: Number(assignedUserId),
+      requestId: Number(id),
+    };
+    console.log('payload:', payload);
+    dispatch(requestActions.assignRequest(payload) as unknown as UnknownAction);
+  };
+  const handleReleaseRequestItems = () => {
+    const updatedItems = items.map((item) => ({
+      itemId: item.itemId,
+      quantityLeased: Number(item.quantityLeased),
+      quantityReleased: selectedUnits[item.itemId]?.length || 0, // ✅ use length of selected units
+      leasedDate: new Date().toISOString(),
+      units: selectedUnits[item.itemId] || [], // ✅ already full objects
+    }));
+    const payload = {
+      items: updatedItems,
+      requestId: Number(id),
+    };
+    console.log('payload:', payload);
+    dispatch(
+      requestActions.releaseRequestItems(payload) as unknown as UnknownAction
+    );
+  };
+
+  const handleReturnRequestItems = () => {
+    const updatedItems = items.map((item) => ({
+      // storeId: item.storeId,
+      itemId: item.itemId,
+      quantityReturned: selectedUnits[item.itemId]?.length || 0,
+      quantityReleased: Number(item.quantityReleased),
+      returnedDate: new Date().toISOString(),
+      units: selectedUnits[item.itemId] || [],
+    }));
+    const payload = {
+      items: updatedItems,
+      // userId: Number(userDetails?.id),
+      requestId: Number(id),
+    };
+    console.log('payload:', payload);
+    dispatch(
+      requestActions.returnRequestItems(payload) as unknown as UnknownAction
+    );
+  };
+
+  useEffect(() => {
+    if (userDetails?.roleId === 5) {
       dispatch(
-         requestActions.updateRequestStatus(payload) as unknown as UnknownAction
+        userActions.getUsersByRole({ roleId: 4 }) as unknown as UnknownAction
       );
-   };
+    }
+  }, [userDetails, dispatch]);
 
-   const handleAssignRequest = () => {
-      const payload = {
-         userId: Number(assignedUserId),
-         requestId: Number(id),
-      };
-      dispatch(requestActions.assignRequest(payload) as unknown as UnknownAction);
-   };
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      requestConstants.UPDATE_REQUEST_STATUS_SUCCESS,
+      (evt: Event) => {
+        const customEvent = evt as CustomEvent;
 
-   const handleReleaseRequestItems = () => {
-      // Validate that units are selected for each item
-      const hasEmptyUnits = items.some((item) => !selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0);
-      if (hasEmptyUnits) {
-         dispatch(appActions.setSnackBar({ type: 'warning', message: 'Please select units for all items before releasing.', variant: 'warning' }) as unknown as UnknownAction);
-         return;
+        if (customEvent) {
+          const displayStatus = getDisplayStatus(requestStatus);
+
+          setStatus(displayStatus);
+        }
       }
+    );
 
-      const updatedItems = items.map((item) => ({
-         itemId: item.itemId,
-         quantityLeased: Number(item.quantityLeased),
-         quantityReleased: selectedUnits[item.itemId]?.length || 0,
-         leasedDate: new Date().toISOString(),
-         units: selectedUnits[item.itemId] || [],
-      }));
-      const payload = {
-         items: updatedItems,
-         requestId: Number(id),
-      };
-      dispatch(
-         requestActions.releaseRequestItems(payload) as unknown as UnknownAction
-      );
-   };
+    return () => listener.remove();
+  }, [requestStatus]);
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      requestConstants.ASSIGN_REQUEST_SUCCESS,
+      (evt: Event) => {
+        const customEvent = evt as CustomEvent;
 
-   const handleReturnRequestItems = () => {
-      // Validate that units are selected for each item
-      const hasEmptyUnits = items.some((item) => !selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0);
-      if (hasEmptyUnits) {
-         dispatch(appActions.setSnackBar({ type: 'warning', message: 'Please select units for all items before returning.', variant: 'warning' }) as unknown as UnknownAction);
-         return;
+        if (customEvent) {
+          const displayStatus = getDisplayStatus('assign');
+
+          setStatus(displayStatus);
+          fetchRequestDetails();
+          setAssignedUserId('');
+        }
       }
+    );
 
-      const updatedItems = items.map((item) => ({
-         itemId: item.itemId,
-         quantityReturned: selectedUnits[item.itemId]?.length || 0,
-         quantityReleased: Number(item.quantityReleased),
-         returnedDate: new Date().toISOString(),
-         units: selectedUnits[item.itemId] || [],
-      }));
-      const payload = {
-         items: updatedItems,
-         requestId: Number(id),
-      };
-      dispatch(
-         requestActions.returnRequestItems(payload) as unknown as UnknownAction
-      );
-   };
+    return () => listener.remove();
+  }, [fetchRequestDetails]);
 
-   useEffect(() => {
-      if (userDetails?.roleId === RoleId.SUPER_ADMIN) {
-         dispatch(
-            userActions.getUsersByRole({ roleId: RoleId.MEMBER }) as unknown as UnknownAction
-         );
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      requestConstants.RELEASE_REQUEST_ITEMS_SUCCESS,
+      (evt: Event) => {
+        const customEvent = evt as CustomEvent;
+
+        if (customEvent) {
+          const displayStatus = getDisplayStatus('release');
+
+          setStatus(displayStatus);
+          fetchRequestDetails();
+        }
       }
-   }, [userDetails, dispatch]);
+    );
 
-   useEffect(() => {
-      const listener = AppEmitter.addListener(
-         requestConstants.UPDATE_REQUEST_STATUS_SUCCESS,
-         (evt: Event) => {
-            const customEvent = evt as CustomEvent;
+    return () => listener.remove();
+  }, [fetchRequestDetails]);
 
-            if (customEvent) {
-               const displayStatus = getDisplayStatus(requestStatus);
+  useEffect(() => {
+    const listener = AppEmitter.addListener(
+      requestConstants.RETURN_REQUEST_ITEMS_SUCCESS,
+      (evt: Event) => {
+        const customEvent = evt as CustomEvent;
 
-               setStatus(displayStatus);
-            }
-         }
-      );
+        if (customEvent) {
+          const displayStatus = getDisplayStatus('return');
 
-      return () => listener.remove();
-   }, [requestStatus]);
+          setStatus(displayStatus);
+          fetchRequestDetails();
+        }
+      }
+    );
 
-   useEffect(() => {
-      const listener = AppEmitter.addListener(
-         requestConstants.ASSIGN_REQUEST_SUCCESS,
-         (evt: Event) => {
-            const customEvent = evt as CustomEvent;
+    return () => listener.remove();
+  }, [fetchRequestDetails]);
 
-            if (customEvent) {
-               const displayStatus = getDisplayStatus('assign');
+  const roleUsersArray = roleUsersList?.map((obj) => ({
+    ...obj,
+    label: obj.firstName + ' ' + obj.lastName,
+    value: obj.id.toString(),
+  }));
 
-               setStatus(displayStatus);
-               fetchRequestDetails();
-               setAssignedUserId('');
-            }
-         }
-      );
+  return (
+    <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
+      <div className="md:col-span-10 md:col-start-2 p-4 bg-white rounded border-[0.5px] border-[rgba(15,37,82,0.1)] shadow-[8px_3px_22px_10px_rgba(150,150,150,0.11)]">
+        <h2 className="text-md md:text-xl font-semibold text-textColor mb-4">
+          Request Details
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[#0F2552]">
+          {/* <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <h3 className="font-semibold text-xs uppercase">
+              church/ministry/name
+            </h3>
+            <p className="text-xs md:text-sm">
+              {capitalizeFirstLetter(requestDetails?.ministryName as string)}
+            </p>
+          </div> */}
+          {/* <div className="col-span-2 bg-[#EFF2F6] p-4 text-sm rounded-[2px]">
+            <h3 className="font-semibold text-xs uppercase">
+              requester&apos;s name
+            </h3>
+            <p className="">{requestDetails?.assigneeName}</p>
+          </div> */}
+          <div className="grid grid-cols-1 sm:grid-cols-subgrid col-span-2 gap-2">
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+              <h3 className="font-semibold text-xs uppercase">
+                church/ministry name
+              </h3>
+              <p className="text-xs md:text-sm">
+                {capitalizeFirstLetter(requestDetails?.ministryName as string)}
+              </p>
+            </div>
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+              <h3 className="font-semibold text-xs uppercase">status</h3>
+              <p className="text-xs md:text-sm">{status}</p>
+            </div>
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+              <h3 className="font-semibold text-xs uppercase">
+                requester&apos;s name
+              </h3>
+              <p className="text-xs md:text-sm">
+                {capitalizeFirstLetter(requestDetails?.requesterName)}
+              </p>
+            </div>
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+              <h3 className="font-semibold text-xs uppercase">email address</h3>
+              <p className="text-xs md:text-sm">
+                {requestDetails?.requesterEmail}
+              </p>
+            </div>
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+              <h3 className="font-semibold text-xs uppercase">phone number</h3>
+              <p className="text-xs md:text-sm">
+                {requestDetails?.requesterPhone}
+              </p>
+            </div>
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+              <h3 className="font-semibold text-xs uppercase">location</h3>
+              <p className="text-xs md:text-sm">
+                {capitalizeFirstLetter(requestDetails?.locationOfUse)}
+              </p>
+            </div>
 
-      return () => listener.remove();
-   }, [fetchRequestDetails]);
-
-   useEffect(() => {
-      const listener = AppEmitter.addListener(
-         requestConstants.RELEASE_REQUEST_ITEMS_SUCCESS,
-         (evt: Event) => {
-            const customEvent = evt as CustomEvent;
-
-            if (customEvent) {
-               const displayStatus = getDisplayStatus('release');
-
-               setStatus(displayStatus);
-               fetchRequestDetails();
-            }
-         }
-      );
-
-      return () => listener.remove();
-   }, [fetchRequestDetails]);
-
-   useEffect(() => {
-      const listener = AppEmitter.addListener(
-         requestConstants.RETURN_REQUEST_ITEMS_SUCCESS,
-         (evt: Event) => {
-            const customEvent = evt as CustomEvent;
-
-            if (customEvent) {
-               const displayStatus = getDisplayStatus('return');
-
-               setStatus(displayStatus);
-               fetchRequestDetails();
-            }
-         }
-      );
-
-      return () => listener.remove();
-   }, [fetchRequestDetails]);
-
-   const roleUsersArray = useMemo(
-      () =>
-         roleUsersList?.map((obj) => ({
-            ...obj,
-            label: obj.firstName + ' ' + obj.lastName,
-            value: obj.id.toString(),
-         })),
-      [roleUsersList]
-   );
-
-   const showReleasedQty = requestDetails?.requestStatus === 'Collected' || requestDetails?.requestStatus === 'Completed';
-   const showReturnedQty = requestDetails?.requestStatus === 'Completed';
-   const isMemberAssigned = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Assigned';
-   const isMemberCollected = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Collected';
-
-   return (
-      <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
-         <div className="md:col-span-10 md:col-start-2 space-y-6">
-            {/* Back button */}
-            <button
-               onClick={() => router.back()}
-               className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/50 hover:text-[#0F2552] dark:hover:text-white/80 transition-colors cursor-pointer"
-            >
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-               </svg>
-               Back
-            </button>
-
-            {/* Header card */}
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-6">
-               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="space-y-2">
-                     <div className="flex items-center gap-3">
-                        <h1 className="text-xl font-bold text-[#0F2552] dark:text-white/90">
-                           {capitalizeFirstLetter(requestDetails?.requesterName)}
-                        </h1>
-                        <StatusChip status={status || ''} size="md" pulse />
-                     </div>
-                     {requestDetails?.ministryName && (
-                        <p className="text-sm text-gray-500 dark:text-white/50">
-                           {capitalizeFirstLetter(requestDetails.ministryName)}
+            {status === 'Collected' ? (
+              <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+                <h3 className="font-semibold text-xs uppercase">return date</h3>
+                <p className="text-xs md:text-sm">
+                  {formatReadableDate(requestDetails?.audit.collectedDate)}
+                </p>
+              </div>
+            ) : (
+              <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+                <h3 className="font-semibold text-xs uppercase">return date</h3>
+                <p className="text-xs md:text-sm">
+                  {formatReadableDate(
+                    status === 'Completed'
+                      ? requestDetails?.audit.completedDate
+                      : requestDetails?.dateOfReturn
+                  )}
+                </p>
+              </div>
+            )}
+            <div className="col-span-1 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+              <h3 className="font-semibold text-xs uppercase">
+                assigned member
+              </h3>
+              <p className="text-xs md:text-sm">
+                {requestDetails?.audit.assigneeName}
+              </p>
+            </div>
+          </div>
+          <div className="col-span-2 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+            <h3 className="font-semibold text-xs uppercase">description</h3>
+            <p className="text-xs md:text-sm">
+              {capitalizeFirstLetter(requestDetails?.descriptionOfRequest)}
+            </p>
+          </div>
+          <div className="col-span-2 bg-[#EFF2F6] p-2 md:p-4 text-sm rounded-[2px]">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-8">
+              <div className="">
+                <h4 className="text-xs uppercase font-semibold mb-2">
+                  ITEM(s)
+                </h4>
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
+                    (item: { itemName: string }, index: number) => (
+                      <p key={index} className="text-xs md:text-sm leading-7">
+                        {item.itemName}
+                      </p>
+                    )
+                  )}
+              </div>
+              {/* {
+                userDetails?.roleId !== 3 && requestDetails?.requestStatus === 'Assigned' && (
+              <div className="">
+                <h4 className="text-xs uppercase font-semibold mb-2">STORE</h4>
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
+                    (item: { storeName: string }, index: number) => (
+                      <p key={index} className="text-xs md:text-sm leading-7">
+                        {item.storeName}
+                      </p>
+                    )
+                  )}
+              </div>
+                )
+              }
+              {
+                userDetails?.roleId !== 3 && requestDetails?.requestStatus === 'Assigned' && (
+              <div className="">
+                <h4 className="text-xs uppercase font-semibold mb-2">
+                  CONDITION
+                </h4>
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
+                    (item: { conditionBeforeLease: string }, index: number) => (
+                      <p key={index} className="text-xs md:text-sm leading-7">
+                        {item.conditionBeforeLease}
+                      </p>
+                    )
+                  )}
+              </div>
+                )
+              } */}
+              <div className="">
+                <h4 className="text-xs uppercase font-semibold md:mb-2">
+                  QTY REQUESTED
+                </h4>
+                {requestDetails?.audit?.items &&
+                  requestDetails?.audit?.items.map(
+                    (item: { quantityLeased: string }, index: number) => (
+                      <p key={index} className="text-xs md:text-sm leading-7">
+                        {item.quantityLeased}
+                      </p>
+                    )
+                  )}
+              </div>
+              {requestDetails?.requestStatus === 'Collected' && (
+                <div className="">
+                  <h4 className="text-xs uppercase font-semibold md:mb-2">
+                    QTY RELEASED
+                  </h4>
+                  {requestDetails?.audit?.items &&
+                    requestDetails?.audit?.items.map(
+                      (item: { quantityReleased: string }, index: number) => (
+                        <p key={index} className="text-xs md:text-sm leading-7">
+                          {item.quantityReleased}
                         </p>
-                     )}
-                     <div className="flex flex-wrap items-center gap-4 pt-1">
-                        {requestDetails?.requesterEmail && (
-                           <span className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/40">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
-                              {requestDetails.requesterEmail}
-                           </span>
-                        )}
-                        {requestDetails?.requesterPhone && (
-                           <span className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/40">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                              </svg>
-                              {formatPhoneDisplay(requestDetails.requesterPhone)}
-                           </span>
-                        )}
-                     </div>
-                  </div>
-               </div>
-            </div>
+                      )
+                    )}
+                </div>
+              )}
+              {requestDetails?.requestStatus === 'Completed' && (
+                <div className="">
+                  <h4 className="text-xs uppercase font-semibold md:mb-2">
+                    QTY RETURNED
+                  </h4>
+                  {requestDetails?.audit?.items &&
+                    requestDetails?.audit?.items.map(
+                      (item: { quantityReturned: number }, index: number) => (
+                        <p key={index} className="text-xs md:text-sm leading-7">
+                          {item.quantityReturned}
+                        </p>
+                      )
+                    )}
+                </div>
+              )}
+              {userDetails?.roleId === 4 &&
+                requestDetails?.requestStatus === 'Assigned' && (
+                  <>
+                    <div className="">
+                      <h4 className="text-xs uppercase font-semibold md:mb-2">
+                        QTY RELEASED
+                      </h4>
+                      <div className="flex flex-col gap-2">
+                        {items &&
+                          items.map(
+                            (
+                              item: { quantityReleased?: string },
+                              index: number
+                            ) => (
+                              <input
+                                key={index}
+                                type="number"
+                                name="quantityReleased"
+                                value={item.quantityReleased}
+                                placeholder="0"
+                                onChange={(e) =>
+                                  handleQuantityChange(index, e.target.value)
+                                }
+                                className="text-xs md:text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
+                              />
+                            )
+                          )}
+                      </div>
+                    </div>
+                    <div className="">
+                      <h4 className="text-xs uppercase font-semibold md:mb-2">
+                        SELECT ITEM UNITS RELEASED
+                      </h4>
 
-            {/* Request Information */}
-            <DetailSection title="Request Information">
-               <DetailRow
-                  label="Ministry Name"
-                  value={capitalizeFirstLetter(requestDetails?.ministryName as string)}
-               />
-               <DetailRow
-                  label="Requester Name"
-                  value={capitalizeFirstLetter(requestDetails?.requesterName)}
-               />
-               <DetailRow
-                  label="Email"
-                  value={requestDetails?.requesterEmail}
-               />
-               <DetailRow
-                  label="Phone"
-                  value={formatPhoneDisplay(requestDetails?.requesterPhone)}
-               />
-               <DetailRow
-                  label="Location"
-                  value={capitalizeFirstLetter(requestDetails?.locationOfUse)}
-               />
-               <DetailRow
-                  label="Return Date"
-                  value={
-                     status === 'Collected'
-                        ? formatReadableDate(requestDetails?.audit.collectedDate)
-                        : formatReadableDate(
-                             status === 'Completed'
-                                ? requestDetails?.audit.completedDate
-                                : requestDetails?.dateOfReturn
-                          )
-                  }
-               />
-               <DetailRow
-                  label="Description"
-                  value={capitalizeFirstLetter(requestDetails?.descriptionOfRequest)}
-               />
-               <DetailRow
-                  label="Assigned Member"
-                  value={requestDetails?.audit.assigneeName}
-               />
-            </DetailSection>
-
-            {/* Requested Items */}
-            <DetailSection title="Requested Items">
-               <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                     <thead>
-                        <tr className="border-b border-gray-100 dark:border-white/5">
-                           <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                              Item Name
-                           </th>
-                           <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                              Qty Requested
-                           </th>
-                           {(showReleasedQty || isMemberAssigned) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                                 Qty Released
-                              </th>
-                           )}
-                           {(showReturnedQty || isMemberCollected) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                                 Qty Returned
-                              </th>
-                           )}
-                           {(isMemberAssigned || isMemberCollected) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                                 Select Units
-                              </th>
-                           )}
-                        </tr>
-                     </thead>
-                     <tbody>
+                      <div className="flex flex-col gap-2">
                         {requestDetails?.audit?.items &&
-                           requestDetails.audit.items.map((item, index) => (
-                              <tr
-                                 key={index}
-                                 className="border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
-                              >
-                                 <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                    {item.itemName}
-                                 </td>
-                                 <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                    {item.quantityLeased}
-                                 </td>
+                          requestDetails?.audit?.items.map(
+                            (
+                              item: {
+                                itemId: number;
+                                itemName: string;
+                                quantityLeased?: string;
+                              },
+                              index: number
+                            ) => (
+                              <div key={index} className="md:mb-2">
+                                <SmallSelect
+                                  multiple
+                                  quantity={Number(item.quantityLeased) || 1}
+                                  value={(selectedUnits[item.itemId] || []).map(
+                                    (u) => u.serialNumber
+                                  )} // ✅ pass serialNumbers (or IDs)
+                                  options={(
+                                    itemUnitsOptions[item.itemId] || []
+                                  ).map((opt) => ({
+                                    value: opt.data.serialNumber, // ✅ use serialNumber or id as stable key
+                                    label: `${opt.data.serialNumber} - ${opt.data.condition}`,
+                                    data: opt.data,
+                                  }))}
+                                  placeholder="Select item units"
+                                  onOpen={() => fetchItemUnits(item.itemId)}
+                                  onChange={(selectedIds) => {
+                                    const fullUnits = (
+                                      itemUnitsOptions[item.itemId] || []
+                                    )
+                                      .filter((opt) =>
+                                        selectedIds.includes(
+                                          opt.data.serialNumber
+                                        )
+                                      )
+                                      .map((opt) => ({
+                                        storeId: opt.data.store.id,
+                                        serialNumber: opt.data.serialNumber,
+                                        condition: opt.data.condition,
+                                      }));
 
-                                 {/* Released qty - read-only for Collected/Completed status */}
-                                 {showReleasedQty && !isMemberAssigned && (
-                                    <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                       {item.quantityReleased}
-                                    </td>
-                                 )}
+                                    setSelectedUnits((prev) => ({
+                                      ...prev,
+                                      [item.itemId]: fullUnits,
+                                    }));
+                                  }}
+                                />
+                              </div>
+                            )
+                          )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              {userDetails?.roleId === 4 &&
+                requestDetails?.requestStatus === 'Collected' && (
+                  <div className="">
+                    <h4 className="text-xs uppercase font-semibold mb-2">
+                      QTY RETURNED
+                    </h4>
+                    <div className="flex flex-col gap-2">
+                      {items &&
+                        items.map((item, index) => (
+                          <div key={index} className="mb-4">
+                            {/* Quantity input */}
+                            {/* <input
+                type="number"
+                name="quantityReturned"
+                value={item.quantityReturned}
+                placeholder="0"
+                onChange={(e) =>
+                  handleReturnQuantityChange(index, e.target.value)
+                }
+                className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20 mb-2"
+              /> */}
 
-                                 {/* Released qty - editable input for MEMBER + Assigned */}
-                                 {isMemberAssigned && (
-                                    <td className="px-5 py-3.5">
-                                       <input
-                                          type="number"
-                                          name="quantityReleased"
-                                          value={items[index]?.quantityReleased ?? ''}
-                                          placeholder="0"
-                                          onChange={(e) =>
-                                             handleQuantityChange(index, e.target.value)
-                                          }
-                                          className="w-20 text-sm border border-gray-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 bg-white dark:bg-white/5 text-[#0F2552] dark:text-white/85 focus:outline-none focus:ring-2 focus:ring-[#B28309]/30 focus:border-[#B28309] transition-all"
-                                       />
-                                    </td>
-                                 )}
+                            {/* Select units being returned */}
+                            <SmallSelect
+                              multiple
+                              // quantity={Number(item.quantityReturned) || 1} // 🔑 user must return this many units
+                              quantity={Number(item.quantityReleased) || 1} // 🔑 user must return this many units
+                              value={(selectedUnits[item.itemId] || []).map(
+                                (u) => u.serialNumber
+                              )}
+                              options={(
+                                itemUnitsOptions[item.itemId] || []
+                              ).map((opt) => ({
+                                value: opt.data.serialNumber,
+                                label: `${opt.data.serialNumber} - ${opt.data.condition}`,
+                                data: opt.data,
+                              }))}
+                              placeholder="Select item units to return"
+                              onOpen={() => fetchItemUnits(item.itemId)}
+                              onChange={(selectedIds) => {
+                                const fullUnits = (
+                                  itemUnitsOptions[item.itemId] || []
+                                )
+                                  .filter((opt) =>
+                                    selectedIds.includes(opt.data.serialNumber)
+                                  )
+                                  .map((opt) => ({
+                                    storeId: opt.data.store.id,
+                                    serialNumber: opt.data.serialNumber,
+                                    condition: opt.data.condition,
+                                  }));
 
-                                 {/* Returned qty - read-only for Completed status */}
-                                 {showReturnedQty && !isMemberCollected && (
-                                    <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                       {item.quantityReturned}
-                                    </td>
-                                 )}
-
-                                 {/* Unit selection for MEMBER + Assigned (release) */}
-                                 {isMemberAssigned && (
-                                    <td className="px-5 py-3.5">
-                                       <SmallSelect
-                                          multiple
-                                          quantity={Number(item.quantityLeased) || 1}
-                                          value={(selectedUnits[item.itemId] || []).map(
-                                             (u) => u.serialNumber
-                                          )}
-                                          options={(
-                                             itemUnitsOptions[item.itemId] || []
-                                          ).map((opt) => ({
-                                             value: opt.data.serialNumber,
-                                             label: `${opt.data.serialNumber} - ${opt.data.condition}`,
-                                             data: opt.data,
-                                          }))}
-                                          placeholder="Select item units"
-                                          onOpen={() => fetchItemUnits(item.itemId)}
-                                          onChange={(selectedIds) => {
-                                             const fullUnits = (
-                                                itemUnitsOptions[item.itemId] || []
-                                             )
-                                                .filter((opt) =>
-                                                   selectedIds.includes(
-                                                      opt.data.serialNumber
-                                                   )
-                                                )
-                                                .map((opt) => ({
-                                                   storeId: opt.data.store.id,
-                                                   serialNumber: opt.data.serialNumber,
-                                                   condition: opt.data.condition,
-                                                }));
-
-                                             setSelectedUnits((prev) => ({
-                                                ...prev,
-                                                [item.itemId]: fullUnits,
-                                             }));
-                                          }}
-                                       />
-                                    </td>
-                                 )}
-
-                                 {/* Unit selection for MEMBER + Collected (return) */}
-                                 {isMemberCollected && (
-                                    <>
-                                       <td className="px-5 py-3.5">
-                                          <SmallSelect
-                                             multiple
-                                             quantity={Number(item.quantityReleased) || 1}
-                                             value={(selectedUnits[item.itemId] || []).map(
-                                                (u) => u.serialNumber
-                                             )}
-                                             options={(
-                                                itemUnitsOptions[item.itemId] || []
-                                             ).map((opt) => ({
-                                                value: opt.data.serialNumber,
-                                                label: `${opt.data.serialNumber} - ${opt.data.condition}`,
-                                                data: opt.data,
-                                             }))}
-                                             placeholder="Select item units to return"
-                                             onOpen={() => fetchItemUnits(item.itemId)}
-                                             onChange={(selectedIds) => {
-                                                const fullUnits = (
-                                                   itemUnitsOptions[item.itemId] || []
-                                                )
-                                                   .filter((opt) =>
-                                                      selectedIds.includes(opt.data.serialNumber)
-                                                   )
-                                                   .map((opt) => ({
-                                                      storeId: opt.data.store.id,
-                                                      serialNumber: opt.data.serialNumber,
-                                                      condition: opt.data.condition,
-                                                   }));
-
-                                                setSelectedUnits((prev) => ({
-                                                   ...prev,
-                                                   [item.itemId]: fullUnits,
-                                                }));
-                                             }}
-                                          />
-                                       </td>
-                                    </>
-                                 )}
-                              </tr>
-                           ))}
-                     </tbody>
-                  </table>
-               </div>
-            </DetailSection>
-
-            {/* Action area */}
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5">
-               <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-                  {/* Role-conditional dropdowns */}
-                  <div className="w-full sm:max-w-xs">
-                     {userDetails?.roleId === RoleId.HOD &&
-                        requestDetails?.requestStatus === 'Pending' && (
-                           <div>
-                              <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
-                                 Update Status
-                              </label>
-                              <CustomDropdownSelect
-                                 options={optionsFilter}
-                                 value={requestStatus}
-                                 onChange={setRequestStatus}
-                                 placeholder="Select status"
-                                 noSearch
-                              />
-                           </div>
-                        )}
-                     {userDetails?.roleId === RoleId.SUPER_ADMIN &&
-                        requestDetails?.requestStatus === 'Approved' && (
-                           <div>
-                              <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
-                                 Assign Member
-                              </label>
-                              <CustomDropdownSelect
-                                 options={roleUsersArray}
-                                 value={assignedUserId}
-                                 onChange={setAssignedUserId}
-                                 placeholder="Select Member to assign request to"
-                                 noSearch
-                              />
-                           </div>
-                        )}
+                                setSelectedUnits((prev) => ({
+                                  ...prev,
+                                  [item.itemId]: fullUnits,
+                                }));
+                              }}
+                            />
+                          </div>
+                        ))}
+                    </div>
                   </div>
+                )}
 
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-3 shrink-0">
-                     {isMemberAssigned ? (
-                        <ActionButton
-                           onClick={handleReleaseRequestItems}
-                           variant="primary"
-                           size="md"
-                        >
-                           {IsReleasingRequestItems ? (
-                              <div className="flex items-center gap-2">
-                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                 Releasing...
-                              </div>
-                           ) : (
-                              'Release Items'
-                           )}
-                        </ActionButton>
-                     ) : isMemberCollected ? (
-                        <ActionButton
-                           onClick={handleReturnRequestItems}
-                           variant="secondary"
-                           size="md"
-                        >
-                           {IsReturningRequestItems ? (
-                              <div className="flex items-center gap-2">
-                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                 Returning...
-                              </div>
-                           ) : (
-                              'Return Items'
-                           )}
-                        </ActionButton>
-                     ) : (
-                        <ActionButton
-                           onClick={
-                              requestStatus !== '' ? handleUpdateStatus : handleAssignRequest
-                           }
-                           disabled={requestStatus === '' && assignedUserId === ''}
-                           variant="primary"
-                           size="md"
-                        >
-                           {IsUpdatingRequestStatus || IsAssigningRequest ? (
-                              <div className="flex items-center gap-2">
-                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                 Processing...
-                              </div>
-                           ) : (
-                              'Submit'
-                           )}
-                        </ActionButton>
-                     )}
+              {/* {userDetails?.roleId === 4 &&
+                requestDetails?.requestStatus === 'Collected' && (
+                  <div className="">
+                    <h4 className="text-xs uppercase font-semibold mb-2">
+                      QTY RETURNED
+                    </h4>
+                    <div className="flex flex-col gap-2">
+                      {items &&
+                        items.map(
+                          (
+                            item: { quantityReturned?: number },
+                            index: number
+                          ) => (
+                            <input
+                              key={index}
+                              type="number"
+                              name="quantityReleased"
+                              value={item.quantityReturned}
+                              placeholder="0"
+                              onChange={(e) =>
+                                handleReturnQuantityChange(
+                                  index,
+                                  e.target.value
+                                )
+                              }
+                              className="text-sm leading-7 border border-gray-300 rounded px-2 py-1 w-20"
+                            />
+                          )
+                        )}
+                    </div>
                   </div>
-               </div>
+                )} */}
             </div>
-         </div>
-      </Layout>
-   );
+          </div>
+        </div>
+        {userDetails?.roleId === 3 &&
+          requestDetails?.requestStatus === 'Pending' && (
+            <div className="my-4">
+              <CustomDropdownSelect
+                options={optionsFilter}
+                value={requestStatus}
+                onChange={setRequestStatus}
+                placeholder="Select status"
+                noSearch
+                // showSelectedLabel
+              />
+            </div>
+          )}
+        {userDetails?.roleId === 5 &&
+          requestDetails?.requestStatus === 'Approved' && (
+            <div className="my-4">
+              <CustomDropdownSelect
+                options={roleUsersArray}
+                value={assignedUserId}
+                onChange={setAssignedUserId}
+                placeholder="Select Member to assign request to"
+                noSearch
+                // showSelectedLabel
+              />
+            </div>
+          )}
+
+        <div className="flex justify-end mt-8 mb-4">
+          {userDetails?.roleId === 4 &&
+          requestDetails?.requestStatus === 'Assigned' ? (
+            <button
+              onClick={handleReleaseRequestItems}
+              className="text-xs text-[#fff] px-5 py-3 hover:bg-[#B2830998] cursor-pointer transition bg-[#B28309] rounded-[2px]"
+            >
+              {IsReleasingRequestItems ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                'Release'
+              )}
+            </button>
+          ) : requestDetails?.requestStatus === 'Collected' &&
+            userDetails?.roleId === 4 ? (
+            <button
+              onClick={handleReturnRequestItems} // Replace with your actual handler for return
+              className="text-xs text-[#fff] px-5 py-3 hover:bg-[#B2830998] cursor-pointer transition bg-[#0F2552] rounded-[2px] ml-2"
+            >
+              {IsReturningRequestItems ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                'Return'
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={
+                requestStatus !== '' ? handleUpdateStatus : handleAssignRequest
+              }
+              disabled={requestStatus === '' && assignedUserId === ''}
+              className="text-xs text-[#fff] px-5 py-3 hover:bg-[#B2830998] cursor-pointer transition bg-[#B28309] rounded-[2px]"
+            >
+              {IsUpdatingRequestStatus || IsAssigningRequest ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                'Submit'
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
 };
 
 export default RequestViewPage;
