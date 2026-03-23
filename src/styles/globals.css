@@ -398,33 +398,47 @@ body {
   animation: header-enter 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-/* Stat counter pop */
+/* Stat counter pop — premium spring */
 @keyframes stat-pop {
   0% {
     opacity: 0;
-    transform: scale(0.8);
+    transform: scale(0.92) translateY(8px);
   }
-  70% {
-    transform: scale(1.03);
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(-1px);
+  }
+  80% {
+    transform: scale(0.99) translateY(0);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
 .animate-stat-pop {
-  animation: stat-pop 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+  animation: stat-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 /* Hover lift for interactive cards */
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(150, 150, 150, 0.18);
+  transform: translateY(-3px);
+  box-shadow:
+    0 10px 30px rgba(15, 37, 82, 0.08),
+    0 4px 8px rgba(15, 37, 82, 0.04);
+}
+
+.dark .hover-lift:hover {
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.12);
 }
 
 /* Button press effect */
@@ -436,8 +450,98 @@ body {
   transform: scale(0.97);
 }
 
-/* ─── Chart panel premium hover ─── */
+/* ─── Premium card & panel system ─── */
 
+.premium-card {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.3s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 25px rgba(15, 37, 82, 0.06),
+    0 4px 10px rgba(15, 37, 82, 0.04),
+    0 0 0 1px rgba(15, 37, 82, 0.03);
+}
+
+.dark .premium-card:hover {
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.2),
+    0 4px 10px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.premium-panel {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.3s ease;
+}
+
+.premium-panel:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(15, 37, 82, 0.07),
+    0 4px 14px rgba(15, 37, 82, 0.04);
+}
+
+.dark .premium-panel:hover {
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.25),
+    0 4px 14px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* KPI tiles inside panels */
+.kpi-tile {
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.kpi-tile:hover {
+  background: var(--surface-medium) !important;
+  transform: scale(1.02);
+}
+
+/* Premium scrollbar for lists */
+.premium-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(15, 37, 82, 0.12);
+  border-radius: 3px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 37, 82, 0.2);
+}
+
+.dark .premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.premium-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 37, 82, 0.12) transparent;
+}
+
+.dark .premium-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Legacy chart-panel kept for backwards compat */
 .chart-panel {
   position: relative;
   transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
