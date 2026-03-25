@@ -67,15 +67,15 @@ const options: ChartOptions<'bar'> = {
   },
 };
 
-const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const defaultLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const data: ChartData<'bar'> = {
-  labels,
+const defaultData: ChartData<'bar'> = {
+  labels: defaultLabels,
   datasets: [
     {
       label: '',
       data: [2, 4, 5, 7, 9, 6, 3],
-      backgroundColor: '#B88C00', // Tailwind indigo-500
+      backgroundColor: '#B88C00',
       borderRadius: 8,
       barThickness: 12,
       borderWidth: 2,
@@ -84,7 +84,7 @@ const data: ChartData<'bar'> = {
     {
       label: '',
       data: [4, 3, 5, 2, 7, 9, 1],
-      backgroundColor: '#E2DAC0', // Tailwind indigo-500
+      backgroundColor: '#E2DAC0',
       borderRadius: 8,
       barThickness: 12,
       borderWidth: 2,
@@ -93,8 +93,34 @@ const data: ChartData<'bar'> = {
   ],
 };
 
-const BarChart: React.FC = () => {
-  return <Bar options={options} data={data} />;
+interface BarDataPoint {
+  hoursUsed: number;
+  onTime: boolean;
+}
+
+interface BarChartProps {
+  data?: BarDataPoint[];
+}
+
+const BarChart: React.FC<BarChartProps> = ({ data }) => {
+  const chartData: ChartData<'bar'> = data && data.length > 0
+    ? {
+        labels: data.map((_, i) => `Day ${i + 1}`),
+        datasets: [
+          {
+            label: 'Hours Used',
+            data: data.map((d) => d.hoursUsed),
+            backgroundColor: data.map((d) => (d.onTime ? '#B88C00' : '#E2DAC0')),
+            borderRadius: 8,
+            barThickness: 12,
+            borderWidth: 2,
+            borderColor: 'transparent',
+          },
+        ],
+      }
+    : defaultData;
+
+  return <Bar options={options} data={chartData} />;
 };
 
 export default BarChart;

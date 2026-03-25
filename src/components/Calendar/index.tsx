@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import dayjs from 'dayjs';
-import { generateUUID } from '@/utilities/helpers';
 import isBetween from 'dayjs/plugin/isBetween';
 import isToday from 'dayjs/plugin/isToday';
 import { CaretIcon } from '../Icons';
@@ -18,32 +17,21 @@ type Event = {
 dayjs.extend(isBetween);
 dayjs.extend(isToday);
 
-const Calendar: React.FC = () => {
-  const today = dayjs(); // Get current date
+interface CalendarProps {
+  events?: Event[];
+}
+
+const defaultEvents: Event[] = [];
+
+const Calendar: React.FC<CalendarProps> = ({ events: eventsProp }) => {
+  const today = dayjs();
   const [eventModal, setEventModal] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(today);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const events: Event[] = [
-    {
-      id: generateUUID(),
-      date: today.date(5).format('YYYY-MM-DD'),
-      title: 'Meeting with John',
-      description: 'Discuss project updates.',
-    },
-    {
-      id: generateUUID(),
-      date: today.date(15).format('YYYY-MM-DD'),
-      title: 'Doctor Appointment',
-      description: 'Annual check-up.',
-    },
-    {
-      id: generateUUID(),
-      date: today.date(20).format('YYYY-MM-DD'),
-      title: 'Conference',
-      description: 'Tech conference in San Francisco.',
-    },
-  ];
+  const events: Event[] = eventsProp && eventsProp.length > 0
+    ? eventsProp
+    : defaultEvents;
 
   // Generate an array of the current month's days
   const startOfMonth = currentMonth.startOf('month');
