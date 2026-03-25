@@ -1,20 +1,15 @@
 import { combineReducers } from 'redux';
 import { dashboardConstants } from '@/constants/dashboard.constant';
-import { Action, LoadingState } from '@/types';
-import { DashboardStats, DashboardAnalytics } from '@/types/dashboard';
+import { DashboardStats, DashboardAnalytics } from '@/types';
 
-interface DashboardStatsAction extends Action {
-   stats: DashboardStats;
+interface Action {
+   type: string;
+   [key: string]: unknown;
 }
 
-interface DashboardAnalyticsAction extends Action {
-   analytics: DashboardAnalytics;
-}
+type LoadingState = boolean;
 
-const IsFetchingDashboardStats = (
-   state: LoadingState = false,
-   action: Action,
-): LoadingState => {
+const IsFetchingDashboardStats = (state: LoadingState = false, action: Action): LoadingState => {
    switch (action.type) {
       case dashboardConstants.REQUEST_GET_DASHBOARD_STATS:
          return true;
@@ -26,10 +21,7 @@ const IsFetchingDashboardStats = (
    }
 };
 
-const IsFetchingDashboardAnalytics = (
-   state: LoadingState = false,
-   action: Action,
-): LoadingState => {
+const IsFetchingDashboardAnalytics = (state: LoadingState = false, action: Action): LoadingState => {
    switch (action.type) {
       case dashboardConstants.REQUEST_GET_DASHBOARD_ANALYTICS:
          return true;
@@ -41,13 +33,10 @@ const IsFetchingDashboardAnalytics = (
    }
 };
 
-const dashboardStats = (
-   state: DashboardStats | null = null,
-   action: DashboardStatsAction,
-): DashboardStats | null => {
+const dashboardStats = (state: DashboardStats | null = null, action: Action): DashboardStats | null => {
    switch (action.type) {
       case dashboardConstants.GET_DASHBOARD_STATS_SUCCESS:
-         return action.stats ?? state;
+         return (action.stats as DashboardStats) ?? state;
       default:
          return state;
    }
@@ -55,11 +44,11 @@ const dashboardStats = (
 
 const dashboardAnalytics = (
    state: DashboardAnalytics | null = null,
-   action: DashboardAnalyticsAction,
+   action: Action,
 ): DashboardAnalytics | null => {
    switch (action.type) {
       case dashboardConstants.GET_DASHBOARD_ANALYTICS_SUCCESS:
-         return action.analytics ?? state;
+         return (action.analytics as DashboardAnalytics) ?? state;
       default:
          return state;
    }

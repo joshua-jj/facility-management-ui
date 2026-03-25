@@ -1,5 +1,6 @@
 import { combineReducers } from 'redux';
 import authRootReducer from './authentication.reducer';
+import dashboardRootReducer from './dashboard.reducer';
 import departmentRootReducer from './department.reducer';
 import forgotPasswordRootReducer from './forgotPassword.reducer';
 import generatorRootReducer from './generator.reducer';
@@ -16,6 +17,7 @@ import maintenanceScheduleRootReducer from './maintenanceSchedule.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
+  dashboard: dashboardRootReducer,
   department: departmentRootReducer,
   forgotPassword: forgotPasswordRootReducer,
   generator: generatorRootReducer,
