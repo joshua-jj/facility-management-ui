@@ -1,6 +1,5 @@
 export * from './app.action';
 export * from './authentication.action';
-export * from './dashboard.action';
 export * from './department.action';
 export * from './forgotPassword.action';
 export * from './generator.action';
@@ -11,3 +10,5 @@ export * from './request.action';
 export * from './role.action';
 export * from './store.action';
 export * from './user.action';
+export * from './dashboard.action';
+export * from './maintenanceSchedule.action';

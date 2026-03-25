@@ -1,6 +1,5 @@
 export * from './app';
 export * from './authentication';
-export * from './dashboard';
 export * from './department';
 export * from './forgotPassword';
 export * from './generator';
@@ -11,3 +10,5 @@ export * from './request';
 export * from './role';
 export * from './store';
 export * from './user';
+export * from './dashboard';
+export * from './maintenanceSchedule';

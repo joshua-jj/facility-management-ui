@@ -1,6 +1,5 @@
 import { combineReducers } from 'redux';
 import authRootReducer from './authentication.reducer';
-import dashboardRootReducer from './dashboard.reducer';
 import departmentRootReducer from './department.reducer';
 import forgotPasswordRootReducer from './forgotPassword.reducer';
 import generatorRootReducer from './generator.reducer';
@@ -12,10 +11,11 @@ import roleRootReducer from './role.reducer';
 import snackbarRootReducer from './snackbar.reducer';
 import storeRootReducer from './store.reducer';
 import userRootReducer from './user.reducer';
+import dashboardRootReducer from './dashboard.reducer';
+import maintenanceScheduleRootReducer from './maintenanceSchedule.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
-  dashboard: dashboardRootReducer,
   department: departmentRootReducer,
   forgotPassword: forgotPasswordRootReducer,
   generator: generatorRootReducer,
@@ -27,6 +27,8 @@ const rootReducer = combineReducers({
   snackbar: snackbarRootReducer,
   store: storeRootReducer,
   user: userRootReducer,
+  dashboard: dashboardRootReducer,
+  maintenanceSchedule: maintenanceScheduleRootReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

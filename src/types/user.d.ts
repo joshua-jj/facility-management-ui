@@ -95,7 +95,7 @@ export interface UserState {
 export interface UserAction {
   type: string;
   users?: Users[];
-  user?: User[s];
+  user?: Users[];
   message?: string;
   error?: string;
   loading?: boolean;

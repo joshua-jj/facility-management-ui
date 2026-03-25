@@ -1,6 +1,5 @@
 export * from './app.constant';
 export * from './authentication.constant';
-export * from './dashboard.constant';
 export * from './department.constant';
 export * from './forgotPassword.constant';
 export * from './generator.constant';
@@ -11,3 +10,5 @@ export * from './request.constant';
 export * from './role.constant';
 export * from './store.constant';
 export * from './user.constant';
+export * from './dashboard.constant';
+export * from './maintenanceSchedule.constant';
