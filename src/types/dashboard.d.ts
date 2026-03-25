@@ -1,78 +1,58 @@
-export interface RequestsByStatus {
-   status: string;
-   count: number;
-}
-
-export interface ItemsByCondition {
-   condition: string;
-   count: number;
-}
-
 export interface DashboardStats {
-   totalRequests: number;
-   dueReturns: number;
-   totalReports: number;
    totalItems: number;
-   requestsByStatus: RequestsByStatus[];
-   itemsByCondition: ItemsByCondition[];
+   totalRequests: number;
+   totalReports: number;
+   dueReturns: number;
+   itemsByCondition: { condition: string; count: string }[];
+   requestsByStatus: { status: string; count: string }[];
+   recentRequests: unknown[];
 }
 
-export interface RequestTrendItem {
-   month: string;
-   count: number;
-}
-
-export interface UpcomingSchedule {
-   id: number;
-   title: string;
-   description: string;
-   scheduledDate: string;
-}
-
-export interface DashboardGeneratorLog {
-   hoursUsed: number;
-   onTime: boolean;
-}
-
-export interface GeneratorStats {
+export interface GeneratorStatsData {
    totalLogs: number;
+   totalHours: number;
    avgHours: number;
    faultCount: number;
    dueForServiceCount: number;
-   recentLogs: DashboardGeneratorLog[];
-}
-
-export interface ComplaintByStatus {
-   status: string;
-   count: number;
-}
-
-export interface MaintenanceCostTrendItem {
-   month: string;
-   totalCost: string;
-}
-
-export interface DashboardMaintenanceLog {
-   id: number;
-   artisanName: string;
-   description: string;
-   costOfMaintenance: string;
-   maintenanceDate: string;
-}
-
-export interface ItemAvailability {
-   available: number;
-   unavailable: number;
+   recentLogs: {
+      id: number;
+      hoursUsed: number;
+      onTime: string;
+      offTime: string;
+      faultDetected: boolean;
+      generatorType: string;
+      createdAt: string;
+   }[];
 }
 
 export interface DashboardAnalytics {
    totalUsers: number;
    totalItemUnits: number;
-   itemAvailability: ItemAvailability;
-   requestTrend: RequestTrendItem[];
-   upcomingSchedules: UpcomingSchedule[];
-   generatorStats: GeneratorStats;
-   complaintsByStatus: ComplaintByStatus[];
-   maintenanceCostTrend: MaintenanceCostTrendItem[];
-   recentMaintenanceLogs: DashboardMaintenanceLog[];
+   itemAvailability: { available: string; total: string };
+   requestTrend: { month: string; count: string }[];
+   complaintsByStatus: { status: string; count: string }[];
+   generatorStats: GeneratorStatsData;
+   maintenanceCostTrend: { month: string; count: string; totalCost: string }[];
+   upcomingSchedules: {
+      id: number;
+      title: string;
+      description: string;
+      scheduledDate: string;
+      scheduleStatus: string;
+   }[];
+   recentMaintenanceLogs: {
+      id: number;
+      maintenanceDate: string;
+      description: string;
+      costOfMaintenance: string;
+      artisanName: string;
+   }[];
+   topDepartments: { departmentId: string; count: string }[];
+}
+
+export interface DashboardState {
+   IsFetchingDashboardStats: boolean;
+   IsFetchingDashboardAnalytics: boolean;
+   dashboardStats: DashboardStats | null;
+   dashboardAnalytics: DashboardAnalytics | null;
 }
