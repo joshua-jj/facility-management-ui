@@ -71,7 +71,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
   });
 
   useEffect(() => {
-    dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+    dispatch(departmentActions.getUnpaginatedDepartments() as unknown as UnknownAction);
   }, [dispatch]);
 
   useEffect(() => {

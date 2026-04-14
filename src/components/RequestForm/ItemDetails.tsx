@@ -17,6 +17,7 @@ interface ItemDetailsProps {
 const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, setDepartment, addItem }) => {
    const dispatch = useDispatch();
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   console.log("all depts", allDepartmentsList)
    const { IsRequestingAllDepartmentItems, allDepartmentItemsList } = useSelector((s: RootState) => s.item);
 
    const [search, setSearch] = useState('');
