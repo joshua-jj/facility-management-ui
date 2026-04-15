@@ -319,12 +319,14 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                const displayStatus = getDisplayStatus(requestStatus);
 
                setStatus(displayStatus);
+               fetchRequestDetails();
+               setRequestStatus('');
             }
          }
       );
 
       return () => listener.remove();
-   }, [requestStatus]);
+   }, [requestStatus, fetchRequestDetails]);
 
    useEffect(() => {
       const listener = AppEmitter.addListener(
