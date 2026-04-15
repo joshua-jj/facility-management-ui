@@ -101,9 +101,9 @@ const GeneratorLogs = () => {
          }
 
          exportToCsv('Generator Logs', rows, [
-            { key: 'nameOfMeeting', header: 'Meeting Name' },
+            { key: 'meeting', header: 'Meeting Name', format: (v) => (v as { name?: string })?.name ?? String(v ?? '') },
             { key: 'generatorType', header: 'Generator Type' },
-            { key: 'meetingLocation', header: 'Location' },
+            { key: 'location', header: 'Location', format: (v) => (v as { name?: string })?.name ?? String(v ?? '') },
             { key: 'onTime', header: 'On Time', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd h:mm a') : '') },
             { key: 'offTime', header: 'Off Time', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd h:mm a') : '') },
             { key: 'engineStartHours', header: 'Engine Start Hours' },
@@ -183,9 +183,17 @@ const GeneratorLogs = () => {
    });
 
    const columns: Column<GeneratorLog>[] = [
-      { key: 'nameOfMeeting', header: 'Meeting Name' },
+      {
+         key: 'meeting',
+         header: 'Meeting Name',
+         render: (_value, row) => <span>{row.meeting?.name ?? row.nameOfMeeting ?? '--'}</span>,
+      },
       { key: 'generatorType', header: 'Generator Type' },
-      { key: 'meetingLocation', header: 'Location' },
+      {
+         key: 'location',
+         header: 'Location',
+         render: (_value, row) => <span>{row.location?.name ?? row.meetingLocation ?? '--'}</span>,
+      },
       {
          key: 'onTime',
          header: 'On Time',

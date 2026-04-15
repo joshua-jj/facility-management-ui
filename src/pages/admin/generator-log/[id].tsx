@@ -11,9 +11,13 @@ import PageHeader from '@/components/PageHeader';
 
 interface GeneratorLogDetail {
    id: number;
-   nameOfMeeting: string;
+   meeting?: { id: number; name: string };
+   location?: { id: number; name: string };
+   /** @deprecated use meeting.name */
+   nameOfMeeting?: string;
+   /** @deprecated use location.name */
+   meetingLocation?: string;
    generatorType: string;
-   meetingLocation: string;
    onTime: string;
    offTime: string;
    engineStartHours: number;
@@ -94,12 +98,12 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                   <div>
                      <div className="flex items-center gap-3 mb-1.5">
                         <h1 className="text-xl font-bold text-[#0F2552] dark:text-white/90">
-                           {log.nameOfMeeting || 'Generator Log'}
+                           {log.meeting?.name ?? log.nameOfMeeting ?? 'Generator Log'}
                         </h1>
                         <StatusChip status={String(log.status ?? 'A')} size="md" />
                      </div>
                      <p className="text-xs text-gray-400 dark:text-white/40">
-                        {log.generatorType} &middot; {log.meetingLocation} &middot; Logged by {log.createdBy}
+                        {log.generatorType} &middot; {log.location?.name ?? log.meetingLocation ?? '--'} &middot; Logged by {log.createdBy}
                      </p>
                   </div>
                   {log.dueForService && (
@@ -113,9 +117,9 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
             {/* Generator Information */}
             <DetailSection title="Generator Information">
                <div className="grid grid-cols-1 sm:grid-cols-2">
-                  <DetailRow label="Meeting Name" value={log.nameOfMeeting} />
+                  <DetailRow label="Meeting Name" value={log.meeting?.name ?? log.nameOfMeeting} />
                   <DetailRow label="Generator Type" value={log.generatorType} />
-                  <DetailRow label="Location" value={log.meetingLocation} />
+                  <DetailRow label="Location" value={log.location?.name ?? log.meetingLocation} />
                   <DetailRow label="Hours Used" value={calculateHoursUsed()} />
                </div>
             </DetailSection>
