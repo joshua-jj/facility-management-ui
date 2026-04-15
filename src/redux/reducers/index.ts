@@ -12,8 +12,8 @@ import roleRootReducer from './role.reducer';
 import snackbarRootReducer from './snackbar.reducer';
 import storeRootReducer from './store.reducer';
 import userRootReducer from './user.reducer';
-import dashboardRootReducer from './dashboard.reducer';
 import maintenanceScheduleRootReducer from './maintenanceSchedule.reducer';
+import meetingLocationRootReducer from './meetingLocation.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
@@ -29,8 +29,8 @@ const rootReducer = combineReducers({
   snackbar: snackbarRootReducer,
   store: storeRootReducer,
   user: userRootReducer,
-  dashboard: dashboardRootReducer,
   maintenanceSchedule: maintenanceScheduleRootReducer,
+  meetingLocation: meetingLocationRootReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

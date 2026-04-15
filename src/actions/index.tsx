@@ -13,3 +13,4 @@ export * from './store.action';
 export * from './user.action';
 export * from './dashboard.action';
 export * from './maintenanceSchedule.action';
+export * from './meetingLocation.action';
