@@ -20,6 +20,8 @@ import { PhoneDisplay } from '@/components/FormatValue';
 import { authConstants, departmentConstants } from '@/constants';
 import axios from 'axios';
 
+const PAGE_LIMIT = 10;
+
 const VIEW_ICON = (
    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -34,46 +36,36 @@ const Departments = () => {
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+   const [currentPage, setCurrentPage] = useState(1);
 
    const { IsRequestingDepartments, allDepartmentsList, pagination } = useSelector((s: RootState) => s.department);
    const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
-   }, [dispatch]);
+      dispatch(departmentActions.getAllDepartments({
+         page: currentPage,
+         limit: PAGE_LIMIT,
+         search: searchQuery || undefined,
+         status: filterValues.status || undefined,
+         hasHod: filterValues.hasHod || undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
    const handlePageChange = (page: number) => {
-      dispatch(departmentActions.getAllDepartments({ page }) as unknown as UnknownAction);
+      setCurrentPage(page);
    };
-
-   const filteredDepartments = useMemo(() => {
-      let list = allDepartmentsList ?? [];
-      if (searchQuery) {
-         const q = searchQuery.toLowerCase();
-         list = list.filter(
-            (dept) =>
-               dept.name?.toLowerCase().includes(q) ||
-               dept.hodName?.toLowerCase().includes(q) ||
-               dept.hodEmail?.toLowerCase().includes(q) ||
-               dept.hodPhone?.toLowerCase().includes(q),
-         );
-      }
-      if (filterValues.status) {
-         list = list.filter((dept: Department) => {
-            const isActive = String(dept.status).toUpperCase() === 'A' || String(dept.status).toUpperCase() === 'ACTIVE';
-            return filterValues.status === 'A' ? isActive : !isActive;
-         });
-      }
-      return list;
-   }, [allDepartmentsList, searchQuery, filterValues]);
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
+      setCurrentPage(1);
    };
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
+
+   const filteredDepartments = useMemo(() => allDepartmentsList ?? [], [allDepartmentsList]);
 
    const filters: FilterDef[] = useMemo(
       () => [
@@ -83,6 +75,14 @@ const Departments = () => {
             options: [
                { value: 'A', label: 'Active' },
                { value: 'I', label: 'Inactive' },
+            ],
+         },
+         {
+            key: 'hasHod',
+            label: 'Has HOD',
+            options: [
+               { value: 'Y', label: 'Yes' },
+               { value: 'N', label: 'No' },
             ],
          },
       ],
@@ -195,7 +195,7 @@ const Departments = () => {
          <Layout title="Departments">
             <PageHeader
                title="Departments"
-               subtitle={`${filteredDepartments.length} department${filteredDepartments.length !== 1 ? 's' : ''}`}
+               subtitle={`${meta.totalItems} department${meta.totalItems !== 1 ? 's' : ''}`}
                action={
                   <AddDepartment className="text-start w-full cursor-pointer">
                      <ActionButton variant="primary">+ Add Department</ActionButton>

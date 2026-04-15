@@ -20,10 +20,16 @@ function* getUsers({ data }: GetUsersAction) {
   yield put({ type: userConstants.REQUEST_GET_USERS });
 
   try {
-    let userUri = `${userConstants.USER_URI}`;
-    if (data?.page) {
-      userUri = `${userUri}?page=${data.page}`;
-    }
+    const page = data?.page ?? 1;
+    const limit = data?.limit ?? 10;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.status) params.set('status', data.status);
+    if (data?.roleId) params.set('roleId', String(data.roleId));
+    if (data?.departmentId) params.set('departmentId', String(data.departmentId));
+    if (data?.gender) params.set('gender', data.gender);
+
+    const userUri = `${userConstants.USER_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(userUri, { method: 'GET' });
     if (!jsonResponse) return;

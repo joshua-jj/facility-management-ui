@@ -3,7 +3,7 @@ import { StoreForm } from '@/types';
 
 interface GetStoresAction {
   type: typeof storeConstants.GET_STORES;
-  data?: { page?: number };
+  data?: { page?: number; limit?: number; search?: string; status?: string };
 }
 
 export interface CreateStoreAction {
@@ -21,7 +21,7 @@ export interface SearchStoreAction {
   data: { text: string };
 }
 
-const getStores = (data?: { page?: number }): GetStoresAction => ({
+const getStores = (data?: { page?: number; limit?: number; search?: string; status?: string }): GetStoresAction => ({
   type: storeConstants.GET_STORES,
   data,
 });
