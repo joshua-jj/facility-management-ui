@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { DeleteIcon, SearchIcon } from '../Icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 import { itemActions } from '@/actions';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { Department, Item } from '@/types';
 
 interface ItemDetailsProps {
@@ -16,29 +17,26 @@ interface ItemDetailsProps {
 
 const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, setDepartment, addItem }) => {
    const dispatch = useDispatch();
-   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   const { allDepartmentsList, IsRequestingUnpaginatedDepartments } = useSelector((s: RootState) => s.department);
    const { IsRequestingAllDepartmentItems, allDepartmentItemsList } = useSelector((s: RootState) => s.item);
 
    const [search, setSearch] = useState('');
-   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
-   const [departmentIsOpen, setDepartmentIsOpen] = useState(false);
-   const deptRef = useRef<HTMLDivElement>(null);
+   const [activeDropdown, setActiveDropdown] = useState<'department' | number | null>(null);
 
-   useEffect(() => {
-      const handler = (e: MouseEvent) => {
-         if (deptRef.current && !deptRef.current.contains(e.target as Node)) {
-            setDepartmentIsOpen(false);
-         }
-      };
-      document.addEventListener('mousedown', handler);
-      return () => document.removeEventListener('mousedown', handler);
-   }, []);
+   const dropdownRef = useOnClickOutside<HTMLDivElement>(
+      useCallback(() => setActiveDropdown(null), []),
+   );
+
+   const toggleDropdown = (id: 'department' | number) => {
+      setActiveDropdown((prev) => (prev === id ? null : id));
+      setSearch('');
+   };
 
    const handleDepartmentSelect = (dept: Department) => {
       setDepartment(dept);
       dispatch(itemActions.getAllDepartmentItems(dept.id) as unknown as UnknownAction);
       setSearch('');
-      setDepartmentIsOpen(false);
+      setActiveDropdown(null);
    };
 
    const handleSelect = (item: Item, selectedItem: Item) => {
@@ -58,7 +56,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
             : i,
       );
       setItems(updatedItems);
-      setOpenDropdownId(null);
+      setActiveDropdown(null);
       setSearch('');
    };
 
@@ -76,7 +74,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
    const handleDelete = (item: Item) => {
       const updatedItems = items.filter((obj) => obj.id !== item.id);
       setItems(updatedItems.map((obj, index) => ({ ...obj, id: index + 1 })));
-      setOpenDropdownId(null);
+      setActiveDropdown(null);
    };
 
    const filteredDepartments = useMemo(
@@ -91,13 +89,13 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
    return (
       <div>
          {/* Department select */}
-         <div ref={deptRef} className="mb-5 relative">
+         <div ref={activeDropdown === 'department' ? dropdownRef : undefined} className="mb-5 relative">
             <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                Department*
             </label>
             <button
                type="button"
-               onClick={() => { setDepartmentIsOpen((p) => !p); setSearch(''); }}
+               onClick={() => toggleDropdown('department')}
                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-left cursor-pointer transition-all"
                style={{
                   background: 'var(--surface-low)',
@@ -107,13 +105,13 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
             >
                <span className="truncate">{department?.name || 'Select department'}</span>
                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                  className={`shrink-0 ml-2 transition-transform duration-200 ${departmentIsOpen ? 'rotate-180' : ''}`}
+                  className={`shrink-0 ml-2 transition-transform duration-200 ${activeDropdown === 'department' ? 'rotate-180' : ''}`}
                   style={{ color: 'var(--text-hint)' }}
                >
                   <polyline points="6 9 12 15 18 9" />
                </svg>
             </button>
-            {departmentIsOpen && (
+            {activeDropdown === 'department' && (
                <div className="absolute z-50 mt-1.5 w-full rounded-lg overflow-hidden animate-dropdown-enter"
                   style={{ background: 'var(--surface-paper)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-lg)' }}
                >
@@ -127,33 +125,31 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
                      </div>
                   </div>
                   <ul className="max-h-48 overflow-y-auto py-1">
-                     {filteredDepartments.map((d) => (
-                        <li key={d.id} onClick={() => handleDepartmentSelect(d)}
-                           className="px-3.5 py-2 text-xs cursor-pointer transition-colors"
-                           style={{ color: 'var(--text-primary)' }}
-                           onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
-                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                        >
-                           {d.name}
+                     {IsRequestingUnpaginatedDepartments ? (
+                        <li className="flex justify-center items-center py-4">
+                           <div className="w-5 h-5 border-2 border-[#B28309] border-t-transparent rounded-full animate-spin" />
                         </li>
-                     ))}
-                     {filteredDepartments.length === 0 && (
+                     ) : filteredDepartments.length === 0 ? (
                         <li className="px-3.5 py-4 text-xs text-center" style={{ color: 'var(--text-hint)' }}>No departments found</li>
+                     ) : (
+                        filteredDepartments.map((d) => (
+                           <li key={d.id} onClick={() => handleDepartmentSelect(d)}
+                              className="px-3.5 py-2 text-xs cursor-pointer transition-colors"
+                              style={{ color: 'var(--text-primary)' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                           >
+                              {d.name}
+                           </li>
+                        ))
                      )}
                   </ul>
                </div>
             )}
          </div>
 
-         {/* Loading */}
-         {IsRequestingAllDepartmentItems && (
-            <div className="flex justify-center items-center my-4">
-               <div className="w-7 h-7 border-3 border-[#B28309] border-t-transparent rounded-full animate-spin" />
-            </div>
-         )}
-
          {/* Item rows */}
-         {department && allDepartmentItemsList?.length > 0 &&
+         {department &&
             items.map((item, index) => (
                <div key={item.id} className="mb-5 group">
                   <div className="flex justify-between items-center mb-1.5">
@@ -170,9 +166,9 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
                   </div>
 
                   {/* Item select */}
-                  <div className="relative mb-3">
+                  <div className="relative mb-3" ref={activeDropdown === item.id ? dropdownRef : undefined}>
                      <button type="button"
-                        onClick={() => { setOpenDropdownId(openDropdownId === item.id ? null : item.id); setSearch(''); }}
+                        onClick={() => toggleDropdown(item.id)}
                         className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-left cursor-pointer"
                         style={{
                            background: 'var(--surface-low)',
@@ -182,13 +178,13 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
                      >
                         <span className="truncate">{item.name || 'Select item'}</span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                           className={`shrink-0 ml-2 transition-transform ${openDropdownId === item.id ? 'rotate-180' : ''}`}
+                           className={`shrink-0 ml-2 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`}
                            style={{ color: 'var(--text-hint)' }}
                         >
                            <polyline points="6 9 12 15 18 9" />
                         </svg>
                      </button>
-                     {openDropdownId === item.id && (
+                     {activeDropdown === item.id && (
                         <div className="absolute z-50 mt-1.5 w-full rounded-lg overflow-hidden animate-dropdown-enter"
                            style={{ background: 'var(--surface-paper)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-lg)' }}
                         >
@@ -202,23 +198,31 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
                               </div>
                            </div>
                            <ul className="max-h-48 overflow-y-auto py-1">
-                              {filteredItems.map((ai) => (
-                                 <li key={ai.name} onClick={() => handleSelect(item, ai)}
-                                    className="flex items-center justify-between px-3.5 py-2 text-xs cursor-pointer transition-colors"
-                                    style={{ color: 'var(--text-primary)' }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                                 >
-                                    <span>{ai.name} ({ai.availableQuantity})</span>
-                                    <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full ${
-                                       (ai.availableQuantity ?? 0) > 0
-                                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
-                                          : 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                                    }`}>
-                                       {(ai.availableQuantity ?? 0) > 0 ? 'Available' : 'Unavailable'}
-                                    </span>
+                              {IsRequestingAllDepartmentItems ? (
+                                 <li className="flex justify-center items-center py-4">
+                                    <div className="w-5 h-5 border-2 border-[#B28309] border-t-transparent rounded-full animate-spin" />
                                  </li>
-                              ))}
+                              ) : filteredItems.length === 0 ? (
+                                 <li className="px-3.5 py-4 text-xs text-center" style={{ color: 'var(--text-hint)' }}>No items found</li>
+                              ) : (
+                                 filteredItems.map((ai) => (
+                                    <li key={ai.name} onClick={() => handleSelect(item, ai)}
+                                       className="flex items-center justify-between px-3.5 py-2 text-xs cursor-pointer transition-colors"
+                                       style={{ color: 'var(--text-primary)' }}
+                                       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
+                                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                       <span>{ai.name} ({ai.availableQuantity})</span>
+                                       <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full ${
+                                          (ai.availableQuantity ?? 0) > 0
+                                             ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
+                                             : 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+                                       }`}>
+                                          {(ai.availableQuantity ?? 0) > 0 ? 'Available' : 'Unavailable'}
+                                       </span>
+                                    </li>
+                                 ))
+                              )}
                            </ul>
                         </div>
                      )}

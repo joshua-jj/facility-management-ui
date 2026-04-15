@@ -71,7 +71,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
   });
 
   useEffect(() => {
-    dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+    dispatch(departmentActions.getUnpaginatedDepartments() as unknown as UnknownAction);
   }, [dispatch]);
 
   useEffect(() => {
@@ -306,7 +306,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
         <div style={{ borderTop: '1px solid var(--border-default)' }} />
 
         {/* ── Step Content ── */}
-        <div className="px-6 py-5 animate-fade-up">
+        <div className="px-6 py-5 animate-fade-up relative z-10">
           {/* Step subtitle */}
           <p className="text-[0.6rem] uppercase font-semibold tracking-wider mb-3" style={{ color: 'var(--text-hint)' }}>
             Step {currentStep + 1} of {steps.length} — {steps[currentStep]}

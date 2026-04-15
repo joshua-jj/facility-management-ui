@@ -1,7 +1,8 @@
-import { put, takeLatest, all } from 'typed-redux-saga';
+import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { departmentConstants } from '@/constants';
 import { CreateDepartmentAction } from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
+import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
 import {
   authenticatedRequest,
   handleSagaError,
@@ -58,8 +59,34 @@ function* createDepartment({ data }: CreateDepartmentAction) {
   }
 }
 
+function* getUnpaginatedDepartments() {
+  yield put({ type: departmentConstants.REQUEST_GET_UNPAGINATED_DEPARTMENTS });
+
+  try {
+    const departmentUri = `${departmentConstants.DEPARTMENT_URI}/all`;
+    const departmentReq = createRequest(departmentUri, { method: 'GET' });
+
+    const response: Response = yield call(fetch, departmentReq);
+    yield call(checkStatus, response);
+
+    // @ts-expect-error legacy saga pattern
+    const jsonResponse = yield call(parseResponse, response);
+
+    yield put({
+      type: departmentConstants.GET_UNPAGINATED_DEPARTMENTS_SUCCESS,
+      departments: jsonResponse?.data,
+    });
+  } catch (error: unknown) {
+    yield* handleSagaError(error, departmentConstants.GET_UNPAGINATED_DEPARTMENTS_ERROR, false);
+  }
+}
+
 function* getAllDepartmentsWatcher() {
   yield takeLatest(departmentConstants.GET_ALL_DEPARTMENTS, getAllDepartments);
+}
+
+function* getUnpaginatedDepartmentsWatcher() {
+  yield takeLatest(departmentConstants.GET_UNPAGINATED_DEPARTMENTS, getUnpaginatedDepartments);
 }
 
 function* createDepartmentWatcher() {
@@ -67,5 +94,5 @@ function* createDepartmentWatcher() {
 }
 
 export default function* rootSaga() {
-  yield all([getAllDepartmentsWatcher(), createDepartmentWatcher()]);
+  yield all([getAllDepartmentsWatcher(), getUnpaginatedDepartmentsWatcher(), createDepartmentWatcher()]);
 }
