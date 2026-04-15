@@ -86,9 +86,30 @@ const Sidebar = () => {
             <ul>
                {filteredRoutes?.map((pageRoute, index) => {
                   const isActive = activeRoute(pageRoute?.link);
+                  const prevSection = index > 0 ? filteredRoutes[index - 1].section : undefined;
+                  const showSectionHeader =
+                     !!pageRoute.section && pageRoute.section !== prevSection;
                   return (
+                     <React.Fragment key={pageRoute.id}>
+                        {showSectionHeader && !collapsed && (
+                           <li
+                              className={classNames(
+                                 'mt-4 mb-1 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.1em]',
+                                 isDark ? 'text-white/40' : 'text-[#0F2552]/40',
+                              )}
+                           >
+                              {pageRoute.section}
+                           </li>
+                        )}
+                        {showSectionHeader && collapsed && (
+                           <li
+                              className={classNames(
+                                 'mt-3 mb-1 mx-auto h-[1px] w-6',
+                                 isDark ? 'bg-white/15' : 'bg-[#0F2552]/15',
+                              )}
+                           />
+                        )}
                      <li
-                        key={pageRoute.id}
                         className="animate-nav-item mb-1"
                         style={{ animationDelay: `${0.05 + index * 0.04}s` }}
                      >
@@ -138,6 +159,7 @@ const Sidebar = () => {
                            )}
                         </Link>
                      </li>
+                     </React.Fragment>
                   );
                })}
             </ul>

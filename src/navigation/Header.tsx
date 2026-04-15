@@ -136,8 +136,18 @@ const Header = () => {
                 {profileDropdown && (
                   <ul
                     role="menu"
-                    className="absolute right-0 mt-[0.1rem] p-1 min-w-[7rem] bg-white dark:bg-[#1a1a2e] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)] border-[0.5px] border-[rgba(15,37,82,0.15)] dark:border-white/10 rounded animate-dropdown-enter"
+                    className="absolute right-0 mt-[0.1rem] p-1 min-w-[9rem] bg-white dark:bg-[#1a1a2e] shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)] border-[0.5px] border-[rgba(15,37,82,0.15)] dark:border-white/10 rounded animate-dropdown-enter"
                   >
+                    <li
+                      role="menuitem"
+                      onClick={() => {
+                        setProfileDropdown(false);
+                        router.push('/admin/account-settings');
+                      }}
+                      className="bg-transparent hover:bg-[#E5E8EC] dark:hover:bg-white/10 transition rounded text-xs px-3 py-[0.4rem] cursor-pointer"
+                    >
+                      Account Settings
+                    </li>
                     <li
                       role="menuitem"
                       onClick={handleLogout}

@@ -12,3 +12,4 @@ export * from './store';
 export * from './user';
 export * from './dashboard';
 export * from './maintenanceSchedule';
+export * from './meetingLocation';

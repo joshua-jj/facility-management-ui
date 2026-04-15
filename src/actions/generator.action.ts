@@ -1,9 +1,20 @@
 import { generatorConstants } from '@/constants';
 import { GeneratorForm } from '@/types';
 
+export interface GeneratorLogFilters {
+  page?: number;
+  status?: string;
+  meetingId?: string;
+  locationId?: string;
+  dueForService?: string;
+  faultDetected?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export interface GetGeneratorLogsAction {
   type: typeof generatorConstants.GET_GENERATOR_LOGS;
-  data?: { page: number };
+  data?: GeneratorLogFilters;
 }
 
 export interface CreateGeneratorLogAction {
@@ -21,7 +32,7 @@ export interface SearchGeneratorLogAction {
   data: { text: string };
 }
 
-const getGeneratorLogs = (data?: { page: number }): GetGeneratorLogsAction => ({
+const getGeneratorLogs = (data?: GeneratorLogFilters): GetGeneratorLogsAction => ({
   type: generatorConstants.GET_GENERATOR_LOGS,
   data,
 });

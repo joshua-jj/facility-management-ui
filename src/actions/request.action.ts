@@ -13,7 +13,14 @@ export interface CreateRequestAction {
 
 export interface GetAllRequestsAction {
   type: typeof requestConstants.GET_ALL_REQUESTS;
-  data?: { page: number };
+  data?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    requestStatus?: string;
+    departmentId?: number;
+    assigneeId?: number;
+  };
 }
 
 export interface GetDepartmentRequestsAction {
@@ -51,7 +58,7 @@ const createRequest = (data: RequestForm): CreateRequestAction => ({
   data,
 });
 
-const getAllRequests = (data?: { page: number }): GetAllRequestsAction => ({
+const getAllRequests = (data?: GetAllRequestsAction['data']): GetAllRequestsAction => ({
   type: requestConstants.GET_ALL_REQUESTS,
   data,
 });

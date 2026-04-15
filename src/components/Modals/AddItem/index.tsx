@@ -1,6 +1,7 @@
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
+import NumberInput from '@/components/Inputs/NumberInput';
 import SelectInput from '@/components/Inputs/SelectInput';
 import ModalWrapper from '../ModalWrapper';
 import { RootState } from '@/redux/reducers';
@@ -214,12 +215,12 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                      placeholder="Enter item name"
                      required
                   />
-                  <TextInput
-                     type="number"
+                  <NumberInput
                      name="actualQuantity"
                      value={item?.actualQuantity}
                      label="Quantity"
                      placeholder="Enter quantity"
+                     unitLabel="unit"
                      required
                   />
                </div>

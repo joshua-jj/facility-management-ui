@@ -1,6 +1,6 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { reportConstants } from '@/constants';
-import { appActions, SearchReportAction } from '@/actions';
+import { appActions, GetReportsAction, SearchReportAction } from '@/actions';
 import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
 import { ReportForm, SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -50,18 +50,28 @@ function* sendReport({ data }: SendReportAction) {
   }
 }
 
-function* getReports() {
+function* getReports({ data }: GetReportsAction) {
   yield put({ type: reportConstants.REQUEST_GET_REPORTS });
 
   try {
-    const reportUri = `${reportConstants.REPORT_URI}`;
+    const page = data?.page ?? 1;
+    const limit = data?.limit ?? 10;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.complaintStatus) params.set('complaintStatus', data.complaintStatus);
+    if (data?.attendedTo !== undefined) params.set('attendedTo', String(data.attendedTo));
+
+    const reportUri = `${reportConstants.REPORT_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(reportUri, { method: 'GET' });
     if (!jsonResponse) return;
 
+    const payload = jsonResponse?.data ?? jsonResponse;
+
     yield put({
       type: reportConstants.GET_REPORTS_SUCCESS,
-      reports: jsonResponse?.data,
+      reports: payload,
+      meta: (payload as { meta?: unknown })?.meta ?? null,
     });
   } catch (error: unknown) {
     yield* handleSagaError(error, reportConstants.GET_REPORTS_ERROR, false);

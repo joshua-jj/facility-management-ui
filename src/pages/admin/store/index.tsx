@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { useRouter } from 'next/router';
@@ -20,6 +20,8 @@ import { getObjectFromStorage } from '@/utilities/helpers';
 import { authConstants, storeConstants } from '@/constants';
 import axios from 'axios';
 
+const PAGE_LIMIT = 10;
+
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const TOGGLE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>;
 
@@ -39,28 +41,34 @@ const Stores = () => {
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+   const [searchQuery, setSearchQuery] = useState('');
+   const [currentPage, setCurrentPage] = useState(1);
 
    const { IsRequestingStores, allStoresList, pagination } = useSelector((s: RootState) => s.store);
    const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(storeActions.getStores() as unknown as UnknownAction);
-   }, [dispatch]);
+      dispatch(storeActions.getStores({
+         page: currentPage,
+         limit: PAGE_LIMIT,
+         search: searchQuery || undefined,
+         status: filterValues.status || undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
    const handlePageChange = (page: number) => {
-      dispatch(storeActions.getStores({ page }) as unknown as UnknownAction);
+      setCurrentPage(page);
    };
 
-   const handleSearch = useCallback(
-      (query: string) => {
-         if (!query) {
-            dispatch(storeActions.getStores() as unknown as UnknownAction);
-         } else {
-            dispatch(storeActions.searchStore({ text: query }) as unknown as UnknownAction);
-         }
-      },
-      [dispatch],
-   );
+   const handleSearch = (query: string) => {
+      setSearchQuery(query);
+      setCurrentPage(1);
+   };
+
+   const handleFilterChange = (key: string, value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
+   };
 
    const handleExport = async (from: string, to: string) => {
       setIsExporting(true);
@@ -97,10 +105,6 @@ const Stores = () => {
       }
    };
 
-   const handleFilterChange = (key: string, value: string) => {
-      setFilterValues((prev) => ({ ...prev, [key]: value }));
-   };
-
    const filters: FilterDef[] = useMemo(
       () => [
          {
@@ -115,16 +119,7 @@ const Stores = () => {
       [],
    );
 
-   const filteredStores = useMemo(() => {
-      let list = allStoresList ?? [];
-      if (filterValues.status) {
-         list = list.filter((store: Store) => {
-            const isActive = String(store.status).toUpperCase() === 'A' || String(store.status).toUpperCase() === 'ACTIVE';
-            return filterValues.status === 'A' ? isActive : !isActive;
-         });
-      }
-      return list;
-   }, [allStoresList, filterValues]);
+   const filteredStores = useMemo(() => allStoresList ?? [], [allStoresList]);
 
    const handleUpdate = (data: Store) => {
       setEditStoreData(data);
@@ -205,7 +200,7 @@ const Stores = () => {
          <Layout title="Stores">
             <PageHeader
                title="Stores"
-               subtitle="Manage facility stores"
+               subtitle={`${meta.totalItems} store${meta.totalItems !== 1 ? 's' : ''}`}
                action={<ActionButton onClick={() => setShowAddModal(true)}>Add Store</ActionButton>}
             />
 

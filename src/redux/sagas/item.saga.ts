@@ -87,11 +87,14 @@ function* getAllItems({ data }: GetAllItemsAction) {
   yield put({ type: itemConstants.REQUEST_GET_ALL_ITEMS });
 
   try {
-    let itemUri = `${itemConstants.ITEM_URI}`;
+    const params = new URLSearchParams({ page: String(data?.page ?? 1), limit: String(data?.limit ?? 10) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.status) params.set('status', data.status);
+    if (data?.departmentId) params.set('departmentId', String(data.departmentId));
+    if (data?.storeId) params.set('storeId', String(data.storeId));
+    if (data?.fragile) params.set('fragile', data.fragile);
 
-    if (data?.page) {
-      itemUri = `${itemUri}?page=${data.page}`;
-    }
+    const itemUri = `${itemConstants.ITEM_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(itemUri, { method: 'GET' });
     if (!jsonResponse) return;

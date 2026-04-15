@@ -18,8 +18,18 @@ function* getGeneratorLogs({ data }: GetGeneratorLogsAction) {
   yield put({ type: generatorConstants.REQUEST_GET_GENERATOR_LOGS });
 
   try {
-    const logsUri = `${generatorConstants.GENERATOR_URI}?page=${data?.page ?? 1}&limit=10`;
+    const params = new URLSearchParams();
+    params.set('page', String(data?.page ?? 1));
+    params.set('limit', '10');
+    if (data?.status) params.set('status', data.status);
+    if (data?.meetingId) params.set('meetingId', data.meetingId);
+    if (data?.locationId) params.set('locationId', data.locationId);
+    if (data?.dueForService) params.set('dueForService', data.dueForService);
+    if (data?.faultDetected) params.set('faultDetected', data.faultDetected);
+    if (data?.dateFrom) params.set('dateFrom', data.dateFrom);
+    if (data?.dateTo) params.set('dateTo', data.dateTo);
 
+    const logsUri = `${generatorConstants.GENERATOR_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(logsUri, { method: 'GET' });
     if (!jsonResponse) return;

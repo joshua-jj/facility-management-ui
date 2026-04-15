@@ -6,8 +6,15 @@ interface SendReportAction {
   data: ReportForm;
 }
 
-interface GetReportsAction {
+export interface GetReportsAction {
   type: typeof reportConstants.GET_REPORTS;
+  data?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    complaintStatus?: string;
+    attendedTo?: boolean;
+  };
 }
 
 export interface SearchReportAction {
@@ -20,8 +27,9 @@ const sendReport = (data: ReportForm): SendReportAction => ({
   data,
 });
 
-const getReports = (): GetReportsAction => ({
+const getReports = (data?: GetReportsAction['data']): GetReportsAction => ({
   type: reportConstants.GET_REPORTS,
+  data,
 });
 
 const searchReport = (data: { text: string }): SearchReportAction => ({

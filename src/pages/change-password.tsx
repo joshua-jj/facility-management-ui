@@ -16,7 +16,8 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 const ChangePassword: FC = () => {
    const router = useRouter();
-   const query = router?.query;
+   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   const _query = router?.query;
 
    const dispatch = useDispatch();
    const { IsChangingPassword } = useSelector((s: RootState) => s.auth);
@@ -53,8 +54,6 @@ const ChangePassword: FC = () => {
       const data: ChangePasswordForm = {
          oldPassword,
          newPassword,
-         email: (query?.email as string) ?? '',
-         token: query?.accessToken as string,
       };
 
       dispatch(authActions.changePassword(data) as unknown as UnknownAction);
@@ -190,7 +189,7 @@ const ChangePassword: FC = () => {
                      <button
                         type="button"
                         onClick={() => setOldPasswordShow((prev) => !prev)}
-                        className={`shrink-0 cursor-pointer transition-opacity ${isDark ? 'opacity-40 hover:opacity-70' : 'opacity-50 hover:opacity-80'}`}
+                        className={`shrink-0 cursor-pointer transition-opacity opacity-60 hover:opacity-100 ${isDark ? 'text-white' : 'text-[#0F2552]'}`}
                         aria-label={oldPasswordShow ? 'Hide password' : 'Show password'}
                      >
                         {oldPasswordShow ? <EyeIcon /> : <HideIcon />}
@@ -235,7 +234,7 @@ const ChangePassword: FC = () => {
                      <button
                         type="button"
                         onClick={() => setPasswordShow((prev) => !prev)}
-                        className={`shrink-0 cursor-pointer transition-opacity ${isDark ? 'opacity-40 hover:opacity-70' : 'opacity-50 hover:opacity-80'}`}
+                        className={`shrink-0 cursor-pointer transition-opacity opacity-60 hover:opacity-100 ${isDark ? 'text-white' : 'text-[#0F2552]'}`}
                         aria-label={passwordShow ? 'Hide password' : 'Show password'}
                      >
                         {passwordShow ? <EyeIcon /> : <HideIcon />}
@@ -281,7 +280,7 @@ const ChangePassword: FC = () => {
                      <button
                         type="button"
                         onClick={() => setConfirmPasswordShow((prev) => !prev)}
-                        className={`shrink-0 cursor-pointer transition-opacity ${isDark ? 'opacity-40 hover:opacity-70' : 'opacity-50 hover:opacity-80'}`}
+                        className={`shrink-0 cursor-pointer transition-opacity opacity-60 hover:opacity-100 ${isDark ? 'text-white' : 'text-[#0F2552]'}`}
                         aria-label={confirmPasswordShow ? 'Hide password' : 'Show password'}
                      >
                         {confirmPasswordShow ? <EyeIcon /> : <HideIcon />}

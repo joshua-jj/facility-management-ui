@@ -3,7 +3,7 @@ import { DepartmentForm } from '@/types';
 
 interface GetAllDepartmentsAction {
   type: typeof departmentConstants.GET_ALL_DEPARTMENTS;
-  data?: { page?: number };
+  data?: { page?: number; limit?: number; search?: string; status?: string; hasHod?: string };
 }
 
 export interface GetUnpaginatedDepartmentsAction {
@@ -14,7 +14,7 @@ export interface CreateDepartmentAction {
   data: DepartmentForm;
 }
 
-const getAllDepartments = (data?: { page?: number }): GetAllDepartmentsAction => ({
+const getAllDepartments = (data?: { page?: number; limit?: number; search?: string; status?: string; hasHod?: string }): GetAllDepartmentsAction => ({
   type: departmentConstants.GET_ALL_DEPARTMENTS,
   data,
 });
