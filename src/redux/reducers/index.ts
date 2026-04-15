@@ -15,6 +15,7 @@ import userRootReducer from './user.reducer';
 import maintenanceScheduleRootReducer from './maintenanceSchedule.reducer';
 import meetingLocationRootReducer from './meetingLocation.reducer';
 import meetingRootReducer from './meeting.reducer';
+import permissionRootReducer from './permission.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
@@ -33,6 +34,7 @@ const rootReducer = combineReducers({
   maintenanceSchedule: maintenanceScheduleRootReducer,
   meetingLocation: meetingLocationRootReducer,
   meeting: meetingRootReducer,
+  permission: permissionRootReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
