@@ -12,6 +12,8 @@ import { RootState } from '@/redux/reducers';
 import { meetingConstants } from '@/constants/meeting.constant';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
+const LOCATION_PAGE_LIMIT = 15;
+
 interface AddMeetingProps {
    open: boolean;
    onClose: () => void;
@@ -24,12 +26,18 @@ const AddMeeting: React.FC<AddMeetingProps> = ({ open, onClose, initialData, onS
    const { IsCreatingMeeting, IsUpdatingMeeting } = useSelector(
       (state: RootState) => state.meeting,
    );
-   const { allMeetingLocationsList } = useSelector(
+   const { allMeetingLocationsList, IsRequestingMeetingLocations, pagination } = useSelector(
       (state: RootState) => state.meetingLocation,
    );
+
    const [canSubmit, setCanSubmit] = useState(false);
+   const [currentPage, setCurrentPage] = useState(1);
+
    const isEdit = !!initialData;
    const isBusy = isEdit ? IsUpdatingMeeting : IsCreatingMeeting;
+
+   const meta = pagination?.meta;
+   const hasMore = meta ? meta.currentPage < meta.totalPages : false;
 
    const locationOptions = useMemo(
       () =>
@@ -63,11 +71,23 @@ const AddMeeting: React.FC<AddMeetingProps> = ({ open, onClose, initialData, onS
       return () => listener.remove();
    }, [isEdit, onClose, onSaved]);
 
+   // Fetch first page when modal opens; reset page counter
    useEffect(() => {
       if (open) {
-         dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
+         setCurrentPage(1);
+         dispatch(
+            meetingLocationActions.getMeetingLocations({ page: 1, limit: LOCATION_PAGE_LIMIT, append: false }) as unknown as UnknownAction,
+         );
       }
    }, [open, dispatch]);
+
+   const handleLoadMore = () => {
+      const next = currentPage + 1;
+      setCurrentPage(next);
+      dispatch(
+         meetingLocationActions.getMeetingLocations({ page: next, limit: LOCATION_PAGE_LIMIT, append: true }) as unknown as UnknownAction,
+      );
+   };
 
    return (
       <ModalWrapper
@@ -98,6 +118,9 @@ const AddMeeting: React.FC<AddMeetingProps> = ({ open, onClose, initialData, onS
                options={locationOptions}
                value={initialData?.location ? String(initialData.location.id) : ''}
                required
+               onLoadMore={handleLoadMore}
+               hasMore={hasMore}
+               isLoading={IsRequestingMeetingLocations}
             />
 
             <div className="flex justify-end pt-3 mt-2" style={{ borderTop: '1px solid var(--border-default)' }}>

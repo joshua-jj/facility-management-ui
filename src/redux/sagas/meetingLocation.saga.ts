@@ -12,7 +12,7 @@ import { SetSnackBarPayload } from '@/types';
 
 interface GetMeetingLocationsAction {
   type: string;
-  data?: { page?: number; limit?: number };
+  data?: { page?: number; limit?: number; append?: boolean };
 }
 
 function* getMeetingLocations({ data }: GetMeetingLocationsAction) {
@@ -53,6 +53,7 @@ function* getMeetingLocations({ data }: GetMeetingLocationsAction) {
       type: meetingLocationConstants.GET_MEETING_LOCATIONS_SUCCESS,
       meetingLocations: items,
       meta,
+      append: data?.append ?? false,
     });
   } catch (error: unknown) {
     yield* handleSagaError(error, meetingLocationConstants.GET_MEETING_LOCATIONS_FAILURE, false);

@@ -19,6 +19,10 @@ export interface ComboBoxProps {
    className?: string;
    searchPlaceholder?: string;
    noResultsText?: string;
+   onLoadMore?: () => void;
+   hasMore?: boolean;
+   isLoading?: boolean;
+   loadingText?: string;
 }
 
 type Rect = { top: number; left: number; width: number; openUp: boolean; maxHeight: number };
@@ -34,6 +38,10 @@ const ComboBox: React.FC<ComboBoxProps> = ({
    className,
    searchPlaceholder = 'Search...',
    noResultsText = 'No results found',
+   onLoadMore,
+   hasMore = false,
+   isLoading = false,
+   loadingText = 'Loading...',
 }) => {
    const [open, setOpen] = useState(false);
    const [search, setSearch] = useState('');
@@ -42,12 +50,21 @@ const ComboBox: React.FC<ComboBoxProps> = ({
    const triggerRef = useRef<HTMLButtonElement>(null);
    const dropdownRef = useRef<HTMLDivElement>(null);
    const searchRef = useRef<HTMLInputElement>(null);
+   const listRef = useRef<HTMLUListElement>(null);
+   const hasScrolledRef = useRef(false);
 
    const selectedOption = options.find((o) => o.value === value);
 
    useEffect(() => {
       setMounted(true);
    }, []);
+
+   // Reset scroll-guard when dropdown opens/closes
+   useEffect(() => {
+      if (!open) {
+         hasScrolledRef.current = false;
+      }
+   }, [open]);
 
    const measure = useCallback(() => {
       if (!triggerRef.current) return;
@@ -104,6 +121,33 @@ const ComboBox: React.FC<ComboBoxProps> = ({
          searchRef.current.focus();
       }
    }, [open, searchable]);
+
+   // Scroll-to-bottom handler for infinite scroll
+   const handleListScroll = useCallback(() => {
+      const el = listRef.current;
+      if (!el) return;
+
+      // Track that user has scrolled at least once
+      if (el.scrollTop > 0) {
+         hasScrolledRef.current = true;
+      }
+
+      if (!hasScrolledRef.current) return;
+      if (!hasMore || isLoading) return;
+
+      const threshold = 40;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) {
+         onLoadMore?.();
+      }
+   }, [hasMore, isLoading, onLoadMore]);
+
+   // Attach scroll listener to the list element
+   useEffect(() => {
+      const el = listRef.current;
+      if (!el || !open) return;
+      el.addEventListener('scroll', handleListScroll, { passive: true });
+      return () => el.removeEventListener('scroll', handleListScroll);
+   }, [open, handleListScroll]);
 
    const filteredOptions = useMemo(() => {
       if (!search) return options;
@@ -178,7 +222,11 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                </div>
             )}
 
-            <ul className="overflow-y-auto py-1 flex-1 min-h-0">
+            <ul
+               ref={listRef}
+               className="overflow-y-auto py-1 flex-1 min-h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[var(--border-strong)] [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-track]:transparent"
+               style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--border-strong) transparent' }}
+            >
                {filteredOptions.length > 0 ? (
                   filteredOptions.map((opt) => {
                      const isSelected = opt.value === value;
@@ -224,6 +272,18 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                ) : (
                   <li className="px-3 py-4 text-xs text-center" style={{ color: 'var(--text-hint)' }}>
                      {noResultsText}
+                  </li>
+               )}
+
+               {isLoading && (
+                  <li
+                     className="px-3 py-3 text-xs text-center"
+                     style={{ color: 'var(--text-hint)', borderTop: filteredOptions.length > 0 ? '1px solid var(--border-default)' : 'none' }}
+                  >
+                     <span className="flex items-center justify-center gap-2">
+                        <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        {loadingText}
+                     </span>
                   </li>
                )}
             </ul>

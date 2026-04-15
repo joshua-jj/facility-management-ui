@@ -20,10 +20,27 @@ interface SelectInputProps {
    onValueChange?: (value: string) => void;
    errorMessage?: string;
    isPristine?: boolean;
+   onLoadMore?: () => void;
+   hasMore?: boolean;
+   isLoading?: boolean;
+   loadingText?: string;
 }
 
 const SelectInput: React.FC<SelectInputProps> = (props) => {
-   const { label, required, className, placeholder, options, searchable = true, errorMessage, isPristine } = props;
+   const {
+      label,
+      required,
+      className,
+      placeholder,
+      options,
+      searchable = true,
+      errorMessage,
+      isPristine,
+      onLoadMore,
+      hasMore,
+      isLoading,
+      loadingText,
+   } = props;
    const hasError = Boolean(errorMessage) && !isPristine;
 
    return (
@@ -43,6 +60,10 @@ const SelectInput: React.FC<SelectInputProps> = (props) => {
             placeholder={placeholder}
             searchable={searchable}
             error={hasError}
+            onLoadMore={onLoadMore}
+            hasMore={hasMore}
+            isLoading={isLoading}
+            loadingText={loadingText}
          />
          {hasError && <span className="text-red-500 text-xs mt-1 block">{errorMessage}</span>}
       </div>

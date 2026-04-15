@@ -96,8 +96,16 @@ const allMeetingLocationsList = (
   action: Action,
 ): MeetingLocationsListState => {
   switch (action.type) {
-    case meetingLocationConstants.GET_MEETING_LOCATIONS_SUCCESS:
-      return action.meetingLocations ?? state;
+    case meetingLocationConstants.GET_MEETING_LOCATIONS_SUCCESS: {
+      const incoming: MeetingLocation[] = action.meetingLocations ?? [];
+      if (action.append) {
+        // Append and dedupe by id
+        const existingIds = new Set(state.map((item) => item.id));
+        const newItems = incoming.filter((item) => !existingIds.has(item.id));
+        return [...state, ...newItems];
+      }
+      return incoming;
+    }
     default:
       return state;
   }
