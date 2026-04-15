@@ -34,7 +34,12 @@ function* getPermissions({ data }: GetPermissionsAction) {
       const jsonResponse = yield* authenticatedRequest(uri, { method: 'GET' });
       if (!jsonResponse) return;
 
-      const payload = jsonResponse?.data;
+      // Permission controller returns { items, meta, links } at the top level,
+      // not wrapped in { message, data }. Fall back to .data for other shapes.
+      const payload =
+         (jsonResponse as { items?: unknown } | undefined)?.items !== undefined
+            ? jsonResponse
+            : (jsonResponse as { data?: unknown } | undefined)?.data;
 
       let items: unknown[];
       let meta: unknown = null;
@@ -43,7 +48,9 @@ function* getPermissions({ data }: GetPermissionsAction) {
          items = Array.isArray(payload) ? payload : (payload as { items?: unknown[] })?.items ?? [];
          meta = (payload as { meta?: unknown })?.meta ?? null;
       } else {
-         items = Array.isArray(payload) ? payload : [];
+         items = Array.isArray(payload)
+            ? payload
+            : (payload as { items?: unknown[] })?.items ?? [];
       }
 
       yield put({
