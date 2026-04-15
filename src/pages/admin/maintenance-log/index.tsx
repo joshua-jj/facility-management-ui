@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays, startOfMonth, startOfYear } from 'date-fns';
 import { useRouter } from 'next/router';
 import { RootState } from '@/redux/reducers';
 import { appActions, maintenanceActions } from '@/actions';
@@ -35,6 +35,24 @@ const VIEW_ICON = (
    </svg>
 );
 
+// Converts a preset range label to { dateFrom, dateTo } ISO strings
+const resolveDateRange = (preset: string): { dateFrom?: string; dateTo?: string } => {
+   const today = new Date();
+   const fmt = (d: Date) => d.toISOString().split('T')[0];
+   switch (preset) {
+      case 'last7':
+         return { dateFrom: fmt(subDays(today, 7)), dateTo: fmt(today) };
+      case 'last30':
+         return { dateFrom: fmt(subDays(today, 30)), dateTo: fmt(today) };
+      case 'thisMonth':
+         return { dateFrom: fmt(startOfMonth(today)), dateTo: fmt(today) };
+      case 'thisYear':
+         return { dateFrom: fmt(startOfYear(today)), dateTo: fmt(today) };
+      default:
+         return {};
+   }
+};
+
 const filters: FilterDef[] = [
    {
       key: 'status',
@@ -42,6 +60,16 @@ const filters: FilterDef[] = [
       options: [
          { value: 'A', label: 'Active' },
          { value: 'I', label: 'Inactive' },
+      ],
+   },
+   {
+      key: 'dateRange',
+      label: 'All Dates',
+      options: [
+         { value: 'last7', label: 'Last 7 days' },
+         { value: 'last30', label: 'Last 30 days' },
+         { value: 'thisMonth', label: 'This month' },
+         { value: 'thisYear', label: 'This year' },
       ],
    },
 ];
@@ -63,6 +91,15 @@ const MaintenanceLogs = () => {
    const { meta } = pagination;
    const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
+   const buildFilterParams = useCallback((values: Record<string, string>) => {
+      const { status, dateRange } = values;
+      const dateParams = dateRange ? resolveDateRange(dateRange) : {};
+      return {
+         ...(status ? { status } : {}),
+         ...dateParams,
+      };
+   }, []);
+
    useEffect(() => {
       dispatch(maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction);
    }, [dispatch]);
@@ -70,12 +107,12 @@ const MaintenanceLogs = () => {
    const handleSearch = useCallback(
       (query: string) => {
          if (!query) {
-            dispatch(maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction);
+            dispatch(maintenanceActions.getMaintenanceLogs(buildFilterParams(filterValues)) as unknown as UnknownAction);
          } else {
             dispatch(maintenanceActions.searchMaintenanceLog({ text: query }) as unknown as UnknownAction);
          }
       },
-      [dispatch],
+      [dispatch, filterValues, buildFilterParams],
    );
 
    const handleUpdate = (data: MaintenanceLog) => {
@@ -84,18 +121,17 @@ const MaintenanceLogs = () => {
    };
 
    const handleChangePage = (page: number) => {
-      dispatch(maintenanceActions.getMaintenanceLogs({ page }) as unknown as UnknownAction);
+      dispatch(maintenanceActions.getMaintenanceLogs({ page, ...buildFilterParams(filterValues) }) as unknown as UnknownAction);
    };
 
    const handleFilterChange = (key: string, value: string) => {
-      setFilterValues((prev) => ({ ...prev, [key]: value }));
+      const newValues = { ...filterValues, [key]: value };
+      setFilterValues(newValues);
+      dispatch(maintenanceActions.getMaintenanceLogs({ page: 1, ...buildFilterParams(newValues) }) as unknown as UnknownAction);
    };
 
-   // Client-side filter on status
-   const filteredData = (allMaintenanceLogsList ?? []).filter((row) => {
-      if (filterValues.status && String(row.status) !== filterValues.status) return false;
-      return true;
-   });
+   // Data is already server-filtered; no client-side filter needed
+   const filteredData = allMaintenanceLogsList ?? [];
 
    const handleExport = async (from: string, to: string) => {
       setIsExporting(true);

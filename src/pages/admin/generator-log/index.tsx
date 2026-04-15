@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays, startOfMonth, startOfYear } from 'date-fns';
 import { useRouter } from 'next/router';
 import { RootState } from '@/redux/reducers';
-import { appActions, generatorActions } from '@/actions';
+import { appActions, generatorActions, meetingActions, meetingLocationActions } from '@/actions';
 import { GeneratorLog } from '@/types';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
@@ -20,6 +20,24 @@ import { generatorConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { authConstants } from '@/constants';
 import axios from 'axios';
+
+// Converts a preset range label to { dateFrom, dateTo } ISO strings
+const resolveDateRange = (preset: string): { dateFrom?: string; dateTo?: string } => {
+   const today = new Date();
+   const fmt = (d: Date) => d.toISOString().split('T')[0];
+   switch (preset) {
+      case 'last7':
+         return { dateFrom: fmt(subDays(today, 7)), dateTo: fmt(today) };
+      case 'last30':
+         return { dateFrom: fmt(subDays(today, 30)), dateTo: fmt(today) };
+      case 'thisMonth':
+         return { dateFrom: fmt(startOfMonth(today)), dateTo: fmt(today) };
+      case 'thisYear':
+         return { dateFrom: fmt(startOfYear(today)), dateTo: fmt(today) };
+      default:
+         return {};
+   }
+};
 
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 
@@ -43,25 +61,43 @@ const GeneratorLogs = () => {
    const { IsRequestingGeneratorLogs, allGeneratorLogsList, pagination } = useSelector(
       (s: RootState) => s.generator,
    );
+   const { allMeetingsList } = useSelector((s: RootState) => s.meeting);
+   const { allMeetingLocationsList } = useSelector((s: RootState) => s.meetingLocation);
 
    const { meta } = pagination;
    const { currentPage, itemsPerPage, totalItems, totalPages } = meta;
 
+   const buildFilterParams = useCallback((values: Record<string, string>) => {
+      const { status, meetingId, locationId, dueForService, faultDetected, dateRange } = values;
+      const dateParams = dateRange ? resolveDateRange(dateRange) : {};
+      return {
+         ...(status ? { status } : {}),
+         ...(meetingId ? { meetingId } : {}),
+         ...(locationId ? { locationId } : {}),
+         ...(dueForService ? { dueForService } : {}),
+         ...(faultDetected ? { faultDetected } : {}),
+         ...dateParams,
+      };
+   }, []);
+
    useEffect(() => {
       dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
+      // Fetch meetings and locations for filter dropdowns
+      dispatch(meetingActions.getMeetings({ limit: 200 }) as unknown as UnknownAction);
+      dispatch(meetingLocationActions.getMeetingLocations({ limit: 200 }) as unknown as UnknownAction);
    }, [dispatch]);
 
    const handleSearch = useCallback(
       (query: string) => {
          if (!query) {
-            dispatch(generatorActions.getGeneratorLogs() as unknown as UnknownAction);
+            dispatch(generatorActions.getGeneratorLogs(buildFilterParams(filterValues)) as unknown as UnknownAction);
          } else {
             dispatch(
                generatorActions.searchGeneratorLog({ text: query }) as unknown as UnknownAction,
             );
          }
       },
-      [dispatch],
+      [dispatch, filterValues, buildFilterParams],
    );
 
    const handleUpdate = (data: GeneratorLog) => {
@@ -70,11 +106,13 @@ const GeneratorLogs = () => {
    };
 
    const handleChangePage = (page: number) => {
-      dispatch(generatorActions.getGeneratorLogs({ page }) as unknown as UnknownAction);
+      dispatch(generatorActions.getGeneratorLogs({ page, ...buildFilterParams(filterValues) }) as unknown as UnknownAction);
    };
 
    const handleFilterChange = (key: string, value: string) => {
-      setFilterValues((prev) => ({ ...prev, [key]: value }));
+      const newValues = { ...filterValues, [key]: value };
+      setFilterValues(newValues);
+      dispatch(generatorActions.getGeneratorLogs({ page: 1, ...buildFilterParams(newValues) }) as unknown as UnknownAction);
    };
 
    const handleExport = async (from: string, to: string) => {
@@ -168,24 +206,65 @@ const GeneratorLogs = () => {
       },
    ];
 
-   const filters: FilterDef[] = [
+   const meetingOptions = useMemo(
+      () => (allMeetingsList ?? []).map((m) => ({ value: String(m.id), label: m.name })),
+      [allMeetingsList],
+   );
+
+   const locationOptions = useMemo(
+      () => (allMeetingLocationsList ?? []).map((l) => ({ value: String(l.id), label: l.name })),
+      [allMeetingLocationsList],
+   );
+
+   const filters: FilterDef[] = useMemo(() => [
       {
          key: 'status',
-         label: 'Status',
+         label: 'All Statuses',
          options: [
             { value: 'A', label: 'Active' },
             { value: 'I', label: 'Inactive' },
          ],
       },
-   ];
+      {
+         key: 'meetingId',
+         label: 'All Meetings',
+         options: meetingOptions,
+      },
+      {
+         key: 'locationId',
+         label: 'All Locations',
+         options: locationOptions,
+      },
+      {
+         key: 'dueForService',
+         label: 'Due For Service',
+         options: [
+            { value: 'Y', label: 'Yes' },
+            { value: 'N', label: 'No' },
+         ],
+      },
+      {
+         key: 'faultDetected',
+         label: 'Fault Detected',
+         options: [
+            { value: 'Y', label: 'Yes' },
+            { value: 'N', label: 'No' },
+         ],
+      },
+      {
+         key: 'dateRange',
+         label: 'All Dates',
+         options: [
+            { value: 'last7', label: 'Last 7 days' },
+            { value: 'last30', label: 'Last 30 days' },
+            { value: 'thisMonth', label: 'This month' },
+            { value: 'thisYear', label: 'This year' },
+         ],
+      },
+   ], [meetingOptions, locationOptions]);
 
-   const filteredData = (allGeneratorLogsList ?? []).filter((log: GeneratorLog) => {
-      if (filterValues.status) {
-         const logStatus = String((log as unknown as Record<string, unknown>).status ?? '');
-         if (logStatus !== filterValues.status) return false;
-      }
-      return true;
-   });
+   // Data is already server-filtered; no client-side filter needed
+   const filteredData = allGeneratorLogsList ?? [];
 
    const columns: Column<GeneratorLog>[] = [
       {
