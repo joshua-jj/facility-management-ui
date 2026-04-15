@@ -3,7 +3,7 @@ import { MeetingForm, MeetingUpdateForm } from '@/types/meeting';
 
 export interface GetMeetingsAction {
   type: typeof meetingConstants.GET_MEETINGS;
-  data?: { page?: number };
+  data?: { page?: number; limit?: number };
 }
 
 export interface CreateMeetingAction {
@@ -21,7 +21,7 @@ export interface DeleteMeetingAction {
   id: number;
 }
 
-const getMeetings = (data?: { page?: number }): GetMeetingsAction => ({
+const getMeetings = (data?: { page?: number; limit?: number }): GetMeetingsAction => ({
   type: meetingConstants.GET_MEETINGS,
   data,
 });

@@ -4,6 +4,7 @@ const meetingLocation: string = 'meeting-locations';
 
 export const meetingLocationConstants = {
   MEETING_LOCATION_URI: `${appConstants.BASE_URI}${meetingLocation}`,
+  MEETING_LOCATION_ALL_URI: `${appConstants.BASE_URI}${meetingLocation}/all`,
 
   GET_MEETING_LOCATIONS: 'GET_MEETING_LOCATIONS',
   REQUEST_GET_MEETING_LOCATIONS: 'REQUEST_GET_MEETING_LOCATIONS',

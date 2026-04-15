@@ -13,6 +13,8 @@ import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 
+const PAGE_LIMIT = 10;
+
 const EDIT_ICON = (
    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -34,14 +36,20 @@ const MeetingLocations = () => {
    const [searchQuery, setSearchQuery] = useState('');
    const [modalOpen, setModalOpen] = useState(false);
    const [editTarget, setEditTarget] = useState<MeetingLocation | null>(null);
+   const [currentPage, setCurrentPage] = useState(1);
 
-   const { IsRequestingMeetingLocations, allMeetingLocationsList } = useSelector(
+   const { IsRequestingMeetingLocations, allMeetingLocationsList, pagination } = useSelector(
       (s: RootState) => s.meetingLocation,
    );
+   const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
-   }, [dispatch]);
+      dispatch(meetingLocationActions.getMeetingLocations({ page: currentPage, limit: PAGE_LIMIT }) as unknown as UnknownAction);
+   }, [dispatch, currentPage]);
+
+   const handlePageChange = (page: number) => {
+      setCurrentPage(page);
+   };
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
@@ -146,7 +154,7 @@ const MeetingLocations = () => {
          <Layout title="Meeting Locations">
             <PageHeader
                title="Meeting Locations"
-               subtitle={`${filteredLocations.length} location${filteredLocations.length !== 1 ? 's' : ''}`}
+               subtitle={`${meta.totalItems} location${meta.totalItems !== 1 ? 's' : ''}`}
                action={
                   <ActionButton variant="primary" onClick={openCreate}>
                      + Add Location
@@ -162,6 +170,13 @@ const MeetingLocations = () => {
                searchPlaceholder="Search meeting locations..."
                emptyTitle="No meeting locations found"
                emptyDescription="Get started by adding your first meeting location."
+               pagination={{
+                  currentPage: meta.currentPage,
+                  totalItems: meta.totalItems,
+                  itemsPerPage: meta.itemsPerPage,
+                  totalPages: meta.totalPages,
+               }}
+               onPageChange={handlePageChange}
             />
 
             <AddMeetingLocation open={modalOpen} onClose={closeModal} initialData={editTarget} />

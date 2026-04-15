@@ -12,7 +12,7 @@ import { SetSnackBarPayload } from '@/types';
 
 interface GetMeetingsAction {
   type: string;
-  data?: { page?: number };
+  data?: { page?: number; limit?: number };
 }
 
 function* getMeetings({ data }: GetMeetingsAction) {
@@ -20,17 +20,21 @@ function* getMeetings({ data }: GetMeetingsAction) {
 
   try {
     const page = data?.page ?? 1;
-    const uri = `${meetingConstants.MEETING_URI}?page=${page}&limit=50`;
+    const limit = data?.limit ?? 10;
+    const uri = `${meetingConstants.MEETING_URI}?page=${page}&limit=${limit}`;
 
     const jsonResponse = yield* authenticatedRequest(uri, { method: 'GET' });
     if (!jsonResponse) return;
 
     const payload = jsonResponse?.data;
+    // API returns paginated { items, meta, links }
     const items = Array.isArray(payload) ? payload : (payload as { items?: unknown[] })?.items ?? payload;
+    const meta = (payload as { meta?: unknown })?.meta ?? null;
 
     yield put({
       type: meetingConstants.GET_MEETINGS_SUCCESS,
       meetings: items,
+      meta,
     });
   } catch (error: unknown) {
     yield* handleSagaError(error, meetingConstants.GET_MEETINGS_FAILURE, false);

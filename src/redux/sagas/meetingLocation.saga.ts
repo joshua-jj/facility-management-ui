@@ -12,26 +12,47 @@ import { SetSnackBarPayload } from '@/types';
 
 interface GetMeetingLocationsAction {
   type: string;
-  data?: { page?: number };
+  data?: { page?: number; limit?: number };
 }
 
 function* getMeetingLocations({ data }: GetMeetingLocationsAction) {
   yield put({ type: meetingLocationConstants.REQUEST_GET_MEETING_LOCATIONS });
 
   try {
-    const page = data?.page ?? 1;
-    const uri = `${meetingLocationConstants.MEETING_LOCATION_URI}?page=${page}&limit=50`;
+    let uri: string;
+    let paginated = false;
+
+    if (data?.limit !== undefined) {
+      // Explicit limit requested — use paginated endpoint
+      const page = data.page ?? 1;
+      const limit = data.limit;
+      uri = `${meetingLocationConstants.MEETING_LOCATION_URI}?page=${page}&limit=${limit}`;
+      paginated = true;
+    } else {
+      // No limit specified — fetch all locations (for dropdowns)
+      uri = meetingLocationConstants.MEETING_LOCATION_ALL_URI;
+    }
 
     const jsonResponse = yield* authenticatedRequest(uri, { method: 'GET' });
     if (!jsonResponse) return;
 
-    // API may return paginated { items, meta } or a plain array
     const payload = jsonResponse?.data;
-    const items = Array.isArray(payload) ? payload : (payload as { items?: unknown[] })?.items ?? payload;
+
+    let items: unknown[];
+    let meta: unknown = null;
+
+    if (paginated) {
+      items = Array.isArray(payload) ? payload : (payload as { items?: unknown[] })?.items ?? [];
+      meta = (payload as { meta?: unknown })?.meta ?? null;
+    } else {
+      // /all endpoint returns a plain array
+      items = Array.isArray(payload) ? payload : [];
+    }
 
     yield put({
       type: meetingLocationConstants.GET_MEETING_LOCATIONS_SUCCESS,
       meetingLocations: items,
+      meta,
     });
   } catch (error: unknown) {
     yield* handleSagaError(error, meetingLocationConstants.GET_MEETING_LOCATIONS_FAILURE, false);

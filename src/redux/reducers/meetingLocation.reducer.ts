@@ -11,6 +11,26 @@ interface Action {
 type LoadingState = boolean;
 type MeetingLocationsListState = MeetingLocation[];
 
+interface PaginationMeta {
+  currentPage: number;
+  itemCount: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+interface MeetingLocationsPaginationState {
+  meta: PaginationMeta;
+}
+
+const defaultMeta: PaginationMeta = {
+  currentPage: 1,
+  itemCount: 0,
+  itemsPerPage: 10,
+  totalItems: 0,
+  totalPages: 1,
+};
+
 const IsRequestingMeetingLocations = (
   state: LoadingState = false,
   action: Action,
@@ -83,12 +103,27 @@ const allMeetingLocationsList = (
   }
 };
 
+const pagination = (
+  state: MeetingLocationsPaginationState = { meta: defaultMeta },
+  action: Action,
+): MeetingLocationsPaginationState => {
+  switch (action.type) {
+    case meetingLocationConstants.GET_MEETING_LOCATIONS_SUCCESS: {
+      if (!action.meta) return state;
+      return { meta: action.meta };
+    }
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   IsRequestingMeetingLocations,
   IsCreatingMeetingLocation,
   IsUpdatingMeetingLocation,
   IsDeletingMeetingLocation,
   allMeetingLocationsList,
+  pagination,
 });
 
 export default rootReducer;

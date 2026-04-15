@@ -11,6 +11,26 @@ interface Action {
 type LoadingState = boolean;
 type MeetingsListState = Meeting[];
 
+interface PaginationMeta {
+  currentPage: number;
+  itemCount: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+interface MeetingsPaginationState {
+  meta: PaginationMeta;
+}
+
+const defaultMeta: PaginationMeta = {
+  currentPage: 1,
+  itemCount: 0,
+  itemsPerPage: 10,
+  totalItems: 0,
+  totalPages: 1,
+};
+
 const IsRequestingMeetings = (
   state: LoadingState = false,
   action: Action,
@@ -83,12 +103,27 @@ const allMeetingsList = (
   }
 };
 
+const pagination = (
+  state: MeetingsPaginationState = { meta: defaultMeta },
+  action: Action,
+): MeetingsPaginationState => {
+  switch (action.type) {
+    case meetingConstants.GET_MEETINGS_SUCCESS: {
+      if (!action.meta) return state;
+      return { meta: action.meta };
+    }
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   IsRequestingMeetings,
   IsCreatingMeeting,
   IsUpdatingMeeting,
   IsDeletingMeeting,
   allMeetingsList,
+  pagination,
 });
 
 export default rootReducer;
