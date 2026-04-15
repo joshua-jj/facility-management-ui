@@ -1,7 +1,7 @@
 import Layout from '@/components/Layout';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { DataTable, Column } from '@/components/DataTable';
+import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -12,6 +12,7 @@ import AddPermission from '@/components/Modals/AddPermission';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
+import { exportToXlsx } from '@/utilities/exportXlsx';
 
 const PAGE_LIMIT = 10;
 
@@ -34,6 +35,7 @@ const DELETE_ICON = (
 const Permissions = () => {
    const dispatch = useDispatch();
    const [searchQuery, setSearchQuery] = useState('');
+   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [modalOpen, setModalOpen] = useState(false);
    const [editTarget, setEditTarget] = useState<Permission | null>(null);
    const [currentPage, setCurrentPage] = useState(1);
@@ -63,8 +65,39 @@ const Permissions = () => {
             (p) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
          );
       }
+      if (filterValues.status) {
+         list = list.filter((p: Permission) => String((p as unknown as Record<string, unknown>).status ?? '') === filterValues.status);
+      }
       return list;
-   }, [allPermissionsList, searchQuery]);
+   }, [allPermissionsList, searchQuery, filterValues]);
+
+   const handleFilterChange = (key: string, value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+   };
+
+   const filters: FilterDef[] = useMemo(
+      () => [
+         {
+            key: 'status',
+            label: 'Status',
+            options: [
+               { value: 'A', label: 'Active' },
+               { value: 'I', label: 'Inactive' },
+            ],
+         },
+      ],
+      [],
+   );
+
+   const handleExport = () => {
+      exportToXlsx('Permissions', filteredPermissions as unknown as Record<string, unknown>[], [
+         { key: 'name', header: 'Name' },
+         { key: 'description', header: 'Description' },
+         { key: 'createdBy', header: 'Created By' },
+         { key: 'createdAt', header: 'Created Date', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
+         { key: 'status', header: 'Status' },
+      ]);
+   };
 
    const openCreate = () => {
       setEditTarget(null);
@@ -174,7 +207,11 @@ const Permissions = () => {
                data={filteredPermissions}
                loading={IsRequestingPermissions}
                onSearch={handleSearch}
+               onExport={handleExport}
                searchPlaceholder="Search permissions..."
+               filters={filters}
+               filterValues={filterValues}
+               onFilterChange={handleFilterChange}
                emptyTitle="No permissions found"
                emptyDescription="Get started by adding your first permission."
                pagination={{

@@ -1,7 +1,8 @@
 import Layout from '@/components/Layout';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { DataTable, Column } from '@/components/DataTable';
+import { DataTable, Column, FilterDef } from '@/components/DataTable';
+import { exportToXlsx } from '@/utilities/exportXlsx';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -34,6 +35,7 @@ const DELETE_ICON = (
 const MeetingLocations = () => {
    const dispatch = useDispatch();
    const [searchQuery, setSearchQuery] = useState('');
+   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [modalOpen, setModalOpen] = useState(false);
    const [editTarget, setEditTarget] = useState<MeetingLocation | null>(null);
    const [currentPage, setCurrentPage] = useState(1);
@@ -61,8 +63,38 @@ const MeetingLocations = () => {
          const q = searchQuery.toLowerCase();
          list = list.filter((loc) => loc.name?.toLowerCase().includes(q));
       }
+      if (filterValues.status) {
+         list = list.filter((loc: MeetingLocation) => String((loc as unknown as Record<string, unknown>).status ?? '') === filterValues.status);
+      }
       return list;
-   }, [allMeetingLocationsList, searchQuery]);
+   }, [allMeetingLocationsList, searchQuery, filterValues]);
+
+   const handleFilterChange = (key: string, value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+   };
+
+   const filters: FilterDef[] = useMemo(
+      () => [
+         {
+            key: 'status',
+            label: 'Status',
+            options: [
+               { value: 'A', label: 'Active' },
+               { value: 'I', label: 'Inactive' },
+            ],
+         },
+      ],
+      [],
+   );
+
+   const handleExport = () => {
+      exportToXlsx('Meeting Locations', filteredLocations as unknown as Record<string, unknown>[], [
+         { key: 'name', header: 'Name' },
+         { key: 'createdBy', header: 'Created By' },
+         { key: 'createdAt', header: 'Created Date', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
+         { key: 'status', header: 'Status' },
+      ]);
+   };
 
    const openCreate = () => {
       setEditTarget(null);
@@ -167,7 +199,11 @@ const MeetingLocations = () => {
                data={filteredLocations}
                loading={IsRequestingMeetingLocations}
                onSearch={handleSearch}
+               onExport={handleExport}
                searchPlaceholder="Search meeting locations..."
+               filters={filters}
+               filterValues={filterValues}
+               onFilterChange={handleFilterChange}
                emptyTitle="No meeting locations found"
                emptyDescription="Get started by adding your first meeting location."
                pagination={{
