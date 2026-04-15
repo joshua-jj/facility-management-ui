@@ -181,8 +181,8 @@ function* getAvailablePermissions({ roleId }: GetAvailablePermissionsAction) {
    yield put({ type: roleConstants.REQUEST_GET_AVAILABLE_PERMISSIONS });
 
    try {
-      // Available permissions for a role come from /permissions/available?role_id=X
-      const uri = `${process.env.NEXT_PUBLIC_BASE_URL}permissions/available?role_id=${roleId}&limit=100`;
+      // Available permissions for a role come from /permission/available?role_id=X
+      const uri = `${process.env.NEXT_PUBLIC_BASE_URL}permission/available?role_id=${roleId}&limit=100`;
 
       const jsonResponse = yield* authenticatedRequest(uri, { method: 'GET' });
       if (!jsonResponse) return;
@@ -205,8 +205,8 @@ function* getAssignedPermissions({ roleId }: GetAssignedPermissionsAction) {
    yield put({ type: roleConstants.REQUEST_GET_ASSIGNED_PERMISSIONS });
 
    try {
-      // Assigned permissions for a role come from /permissions/assigned?role_id=X
-      const uri = `${process.env.NEXT_PUBLIC_BASE_URL}permissions/assigned?role_id=${roleId}&limit=100`;
+      // Assigned permissions for a role come from /permission/assigned?role_id=X
+      const uri = `${process.env.NEXT_PUBLIC_BASE_URL}permission/assigned?role_id=${roleId}&limit=100`;
 
       const jsonResponse = yield* authenticatedRequest(uri, { method: 'GET' });
       if (!jsonResponse) return;

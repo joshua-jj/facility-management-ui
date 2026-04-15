@@ -1,6 +1,6 @@
 import { appConstants } from './app.constant';
 
-const permission: string = 'permissions';
+const permission: string = 'permission';
 
 export const permissionConstants = {
    PERMISSION_URI: `${appConstants.BASE_URI}${permission}`,
