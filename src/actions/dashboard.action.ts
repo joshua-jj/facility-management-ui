@@ -6,14 +6,16 @@ interface GetDashboardStatsAction {
 
 interface GetDashboardAnalyticsAction {
    type: typeof dashboardConstants.GET_DASHBOARD_ANALYTICS;
+   period?: string;
 }
 
 const getDashboardStats = (): GetDashboardStatsAction => ({
    type: dashboardConstants.GET_DASHBOARD_STATS,
 });
 
-const getDashboardAnalytics = (): GetDashboardAnalyticsAction => ({
+const getDashboardAnalytics = (period?: string): GetDashboardAnalyticsAction => ({
    type: dashboardConstants.GET_DASHBOARD_ANALYTICS,
+   period,
 });
 
 export const dashboardActions = {

@@ -30,8 +30,14 @@ export interface UpcomingSchedule {
 }
 
 export interface DashboardGeneratorLog {
+   id: number;
+   nameOfMeeting: string;
+   generatorType: string;
+   onTime: string;
+   offTime: string;
    hoursUsed: number;
-   onTime: boolean;
+   faultDetected: boolean;
+   createdAt: string;
 }
 
 export interface GeneratorStats {

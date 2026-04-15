@@ -62,12 +62,13 @@ function* getDashboardStats() {
    }
 }
 
-function* getDashboardAnalytics() {
+function* getDashboardAnalytics(action: { type: string; period?: string }) {
    yield put({ type: dashboardConstants.REQUEST_GET_DASHBOARD_ANALYTICS });
 
    try {
       const user: User | null = yield call(getObjectFromStorage, authConstants.USER_KEY);
-      const uri = `${dashboardConstants.DASHBOARD_URI}/analytics`;
+      const period = action.period || '6months';
+      const uri = `${dashboardConstants.DASHBOARD_URI}/analytics?period=${period}`;
 
       const requestFn = () => createRequestWithToken(uri, { method: 'GET' })(user?.token as string);
       const req: Request = yield call(requestFn);
