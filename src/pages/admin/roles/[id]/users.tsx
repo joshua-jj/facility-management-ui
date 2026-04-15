@@ -21,6 +21,8 @@ const RoleUsers = () => {
 
    const [searchQuery, setSearchQuery] = useState('');
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+   const [currentPage, setCurrentPage] = useState(1);
+   const PAGE_SIZE = 10;
 
    const { IsRequestingUsers, roleUsersList } = useSelector((s: RootState) => s.user);
 
@@ -49,6 +51,15 @@ const RoleUsers = () => {
       }
       return list;
    }, [roleUsersList, searchQuery, filterValues]);
+
+   const totalItems = filteredUsers.length;
+   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+   const pageStart = (currentPage - 1) * PAGE_SIZE;
+   const pagedUsers = filteredUsers.slice(pageStart, pageStart + PAGE_SIZE);
+
+   useEffect(() => {
+      if (currentPage > totalPages) setCurrentPage(1);
+   }, [totalPages, currentPage]);
 
    const filters: FilterDef[] = [
       {
@@ -144,7 +155,7 @@ const RoleUsers = () => {
 
             <DataTable
                columns={columns}
-               data={filteredUsers}
+               data={pagedUsers}
                loading={IsRequestingUsers}
                onSearch={handleSearch}
                searchPlaceholder="Search users..."
@@ -152,6 +163,8 @@ const RoleUsers = () => {
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
                onExport={handleExport}
+               pagination={{ currentPage, totalItems, itemsPerPage: PAGE_SIZE, totalPages }}
+               onPageChange={setCurrentPage}
                emptyTitle="No users found"
                emptyDescription="No users are currently assigned to this role."
             />
