@@ -78,17 +78,30 @@ const allReportsList = (
   }
 };
 
-// const pagination = (
-//   state: PaginationState = null,
-//   action: Action
-// ): PaginationState => {
-//   switch (action.type) {
-//     case eventConstants.GET_ALL_EVENTS_SUCCESS:
-//       return action.pagination ?? state;
-//     default:
-//       return state;
-//   }
-// };
+interface PaginationMeta {
+  currentPage: number;
+  itemCount: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+interface PaginationAction {
+  type: string;
+  meta?: PaginationMeta | null;
+}
+
+const pagination = (
+  state: { meta: PaginationMeta | null } = { meta: null },
+  action: PaginationAction,
+): { meta: PaginationMeta | null } => {
+  switch (action.type) {
+    case reportConstants.GET_REPORTS_SUCCESS:
+      return { meta: action.meta ?? null };
+    default:
+      return state;
+  }
+};
 
 export interface RootState {
   IsCreatingReport: (
@@ -107,7 +120,10 @@ export interface RootState {
     state: ReportsListState | undefined,
     action: AllReportsAction
   ) => ReportsListState;
-  //   pagination: PaginationState;
+  pagination: (
+    state: { meta: PaginationMeta | null } | undefined,
+    action: PaginationAction,
+  ) => { meta: PaginationMeta | null };
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -115,7 +131,7 @@ const rootReducer = combineReducers<RootState>({
   IsRequestingReports,
   IsSearchingReport,
   allReportsList,
-  //   pagination,
+  pagination,
 });
 
 export default rootReducer;

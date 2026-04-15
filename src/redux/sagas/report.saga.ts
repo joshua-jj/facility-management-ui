@@ -50,18 +50,28 @@ function* sendReport({ data }: SendReportAction) {
   }
 }
 
-function* getReports() {
+interface GetReportsSagaAction {
+  type: string;
+  data?: { page?: number; limit?: number };
+}
+
+function* getReports({ data }: GetReportsSagaAction) {
   yield put({ type: reportConstants.REQUEST_GET_REPORTS });
 
   try {
-    const reportUri = `${reportConstants.REPORT_URI}`;
+    const page = data?.page ?? 1;
+    const limit = data?.limit ?? 10;
+    const reportUri = `${reportConstants.REPORT_URI}?page=${page}&limit=${limit}`;
 
     const jsonResponse = yield* authenticatedRequest(reportUri, { method: 'GET' });
     if (!jsonResponse) return;
 
+    const payload = jsonResponse?.data ?? jsonResponse;
+
     yield put({
       type: reportConstants.GET_REPORTS_SUCCESS,
-      reports: jsonResponse?.data,
+      reports: payload,
+      meta: (payload as { meta?: unknown })?.meta ?? null,
     });
   } catch (error: unknown) {
     yield* handleSagaError(error, reportConstants.GET_REPORTS_ERROR, false);

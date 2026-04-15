@@ -28,22 +28,27 @@ const Reports = () => {
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-   const { IsRequestingReports, allReportsList } = useSelector((s: RootState) => s.report);
+   const [currentPage, setCurrentPage] = useState(1);
+   const { IsRequestingReports, allReportsList, pagination } = useSelector((s: RootState) => s.report);
+   const meta = pagination?.meta ?? null;
 
    useEffect(() => {
-      dispatch(reportActions.getReports() as unknown as UnknownAction);
-   }, [dispatch]);
+      dispatch(reportActions.getReports({ page: currentPage, limit: 10 }) as unknown as UnknownAction);
+   }, [dispatch, currentPage]);
 
    const handleSearch = useCallback(
       (query: string) => {
          if (!query) {
-            dispatch(reportActions.getReports() as unknown as UnknownAction);
+            dispatch(reportActions.getReports({ page: 1, limit: 10 }) as unknown as UnknownAction);
+            setCurrentPage(1);
          } else {
             dispatch(reportActions.searchReport({ text: query }) as unknown as UnknownAction);
          }
       },
       [dispatch],
    );
+
+   const handlePageChange = (page: number) => setCurrentPage(page);
 
    const handleExport = async (from: string, to: string) => {
       setIsExporting(true);
@@ -187,6 +192,8 @@ const Reports = () => {
                filters={filters}
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
+               pagination={meta ? { currentPage: meta.currentPage, totalItems: meta.totalItems, itemsPerPage: meta.itemsPerPage, totalPages: meta.totalPages } : undefined}
+               onPageChange={handlePageChange}
                emptyTitle="No reports found"
                emptyDescription="There are no complaint reports to display."
             />
