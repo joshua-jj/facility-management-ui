@@ -52,10 +52,15 @@ function* getAllRequests({ data }: GetAllRequestsAction) {
   yield put({ type: requestConstants.REQUEST_GET_ALL_REQUESTS });
 
   try {
-    let reqUri = `${requestConstants.REQUEST_URI}`;
-    if (data?.page) {
-      reqUri = `${reqUri}?page=${data.page}`;
-    }
+    const page = data?.page ?? 1;
+    const limit = data?.limit ?? 10;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.requestStatus) params.set('requestStatus', data.requestStatus);
+    if (data?.departmentId) params.set('departmentId', String(data.departmentId));
+    if (data?.assigneeId) params.set('assigneeId', String(data.assigneeId));
+
+    const reqUri = `${requestConstants.REQUEST_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(reqUri, { method: 'GET' });
     if (!jsonResponse) return;

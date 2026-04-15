@@ -1,6 +1,6 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { reportConstants } from '@/constants';
-import { appActions, SearchReportAction } from '@/actions';
+import { appActions, GetReportsAction, SearchReportAction } from '@/actions';
 import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
 import { ReportForm, SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -50,18 +50,18 @@ function* sendReport({ data }: SendReportAction) {
   }
 }
 
-interface GetReportsSagaAction {
-  type: string;
-  data?: { page?: number; limit?: number };
-}
-
-function* getReports({ data }: GetReportsSagaAction) {
+function* getReports({ data }: GetReportsAction) {
   yield put({ type: reportConstants.REQUEST_GET_REPORTS });
 
   try {
     const page = data?.page ?? 1;
     const limit = data?.limit ?? 10;
-    const reportUri = `${reportConstants.REPORT_URI}?page=${page}&limit=${limit}`;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.complaintStatus) params.set('complaintStatus', data.complaintStatus);
+    if (data?.attendedTo !== undefined) params.set('attendedTo', String(data.attendedTo));
+
+    const reportUri = `${reportConstants.REPORT_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(reportUri, { method: 'GET' });
     if (!jsonResponse) return;
