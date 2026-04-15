@@ -142,7 +142,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                bottom: rect.openUp ? window.innerHeight - rect.top : undefined,
                left: rect.left,
                width: rect.width,
-               zIndex: 1000,
+               zIndex: 7000,
                background: 'var(--surface-paper)',
                border: '1px solid var(--border-default)',
                boxShadow: 'var(--shadow-lg)',
