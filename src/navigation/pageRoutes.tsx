@@ -91,13 +91,6 @@ export const pageRoutes = [
     icon: <UsersIcon />,
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
-  {
-    id: 11,
-    label: 'account settings',
-    link: '/admin/account-settings',
-    icon: <UsersIcon />,
-    allowedRoles: ALL_DATA_ROLES,
-  },
 ];
 
 export const getPageNames = (link: string) => {
