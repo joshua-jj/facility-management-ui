@@ -220,12 +220,13 @@ const DateInput: React.FC<DateInputProps> = (props) => {
          {/* Dropdown calendar */}
          {open && (
             <div
-               className="absolute z-50 mt-2 rounded-xl overflow-hidden animate-dropdown-enter"
+               className="absolute z-50 mt-2 rounded-xl overflow-y-auto animate-dropdown-enter"
                style={{
                   background: 'var(--surface-paper)',
                   border: '1px solid var(--border-default)',
                   boxShadow: 'var(--shadow-lg)',
                   width: mode === 'datetime' ? 320 : 280,
+                  maxHeight: 'min(26rem, calc(100vh - 8rem))',
                }}
             >
                {/* Month/Year header */}
