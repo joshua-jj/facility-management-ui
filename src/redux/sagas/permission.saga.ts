@@ -12,7 +12,7 @@ import { SetSnackBarPayload } from '@/types';
 
 interface GetPermissionsAction {
    type: string;
-   data?: { page?: number; limit?: number; append?: boolean };
+   data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string };
 }
 
 function* getPermissions({ data }: GetPermissionsAction) {
@@ -25,7 +25,10 @@ function* getPermissions({ data }: GetPermissionsAction) {
       if (data?.limit !== undefined) {
          const page = data.page ?? 1;
          const limit = data.limit;
-         uri = `${permissionConstants.PERMISSION_URI}?page=${page}&limit=${limit}`;
+         const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+         if (data.search) params.set('search', data.search);
+         if (data.status) params.set('status', data.status);
+         uri = `${permissionConstants.PERMISSION_URI}?${params.toString()}`;
          paginated = true;
       } else {
          uri = permissionConstants.PERMISSION_ALL_URI;

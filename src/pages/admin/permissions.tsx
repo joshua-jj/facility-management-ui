@@ -46,8 +46,13 @@ const Permissions = () => {
    const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(permissionActions.getPermissions({ page: currentPage, limit: PAGE_LIMIT }) as unknown as UnknownAction);
-   }, [dispatch, currentPage]);
+      dispatch(permissionActions.getPermissions({
+         page: currentPage,
+         limit: PAGE_LIMIT,
+         search: searchQuery || undefined,
+         status: filterValues.status || undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -55,24 +60,14 @@ const Permissions = () => {
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
+      setCurrentPage(1);
    };
 
-   const filteredPermissions = useMemo(() => {
-      let list = allPermissionsList ?? [];
-      if (searchQuery) {
-         const q = searchQuery.toLowerCase();
-         list = list.filter(
-            (p) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
-         );
-      }
-      if (filterValues.status) {
-         list = list.filter((p: Permission) => String((p as unknown as Record<string, unknown>).status ?? '') === filterValues.status);
-      }
-      return list;
-   }, [allPermissionsList, searchQuery, filterValues]);
+   const filteredPermissions = useMemo(() => allPermissionsList ?? [], [allPermissionsList]);
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
 
    const filters: FilterDef[] = useMemo(

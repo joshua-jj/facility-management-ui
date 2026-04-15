@@ -12,7 +12,7 @@ import { SetSnackBarPayload } from '@/types';
 
 interface GetMeetingLocationsAction {
   type: string;
-  data?: { page?: number; limit?: number; append?: boolean };
+  data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string };
 }
 
 function* getMeetingLocations({ data }: GetMeetingLocationsAction) {
@@ -26,7 +26,10 @@ function* getMeetingLocations({ data }: GetMeetingLocationsAction) {
       // Explicit limit requested — use paginated endpoint
       const page = data.page ?? 1;
       const limit = data.limit;
-      uri = `${meetingLocationConstants.MEETING_LOCATION_URI}?page=${page}&limit=${limit}`;
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (data.search) params.set('search', data.search);
+      if (data.status) params.set('status', data.status);
+      uri = `${meetingLocationConstants.MEETING_LOCATION_URI}?${params.toString()}`;
       paginated = true;
     } else {
       // No limit specified — fetch all locations (for dropdowns)

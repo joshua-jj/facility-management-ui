@@ -12,7 +12,7 @@ import { SetSnackBarPayload } from '@/types';
 
 interface GetMeetingsAction {
   type: string;
-  data?: { page?: number; limit?: number };
+  data?: { page?: number; limit?: number; search?: string; status?: string; locationId?: string };
 }
 
 function* getMeetings({ data }: GetMeetingsAction) {
@@ -21,7 +21,11 @@ function* getMeetings({ data }: GetMeetingsAction) {
   try {
     const page = data?.page ?? 1;
     const limit = data?.limit ?? 10;
-    const uri = `${meetingConstants.MEETING_URI}?page=${page}&limit=${limit}`;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.status) params.set('status', data.status);
+    if (data?.locationId) params.set('locationId', data.locationId);
+    const uri = `${meetingConstants.MEETING_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(uri, { method: 'GET' });
     if (!jsonResponse) return;

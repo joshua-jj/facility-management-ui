@@ -44,13 +44,23 @@ const Meetings = () => {
    const { IsRequestingMeetings, allMeetingsList, pagination } = useSelector(
       (s: RootState) => s.meeting,
    );
+   const { allMeetingLocationsList } = useSelector((s: RootState) => s.meetingLocation);
    const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(meetingActions.getMeetings({ page: currentPage, limit: PAGE_LIMIT }) as unknown as UnknownAction);
-      // Fetch all locations (unpaginated) for the dropdown — no limit means /all endpoint
+      // Fetch all locations (unpaginated) for the locationId filter dropdown
       dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
-   }, [dispatch, currentPage]);
+   }, [dispatch]);
+
+   useEffect(() => {
+      dispatch(meetingActions.getMeetings({
+         page: currentPage,
+         limit: PAGE_LIMIT,
+         search: searchQuery || undefined,
+         status: filterValues.status || undefined,
+         locationId: filterValues.locationId || undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -58,30 +68,28 @@ const Meetings = () => {
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
+      setCurrentPage(1);
    };
 
-   const filteredMeetings = useMemo(() => {
-      let list = allMeetingsList ?? [];
-      if (searchQuery) {
-         const q = searchQuery.toLowerCase();
-         list = list.filter(
-            (m) =>
-               m.name?.toLowerCase().includes(q) ||
-               m.location?.name?.toLowerCase().includes(q),
-         );
-      }
-      if (filterValues.status) {
-         list = list.filter((m: Meeting) => String((m as unknown as Record<string, unknown>).status ?? '') === filterValues.status);
-      }
-      return list;
-   }, [allMeetingsList, searchQuery, filterValues]);
+   const filteredMeetings = useMemo(() => allMeetingsList ?? [], [allMeetingsList]);
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
+
+   const locationOptions = useMemo(
+      () => (allMeetingLocationsList ?? []).map((loc) => ({ value: String(loc.id), label: loc.name })),
+      [allMeetingLocationsList],
+   );
 
    const filters: FilterDef[] = useMemo(
       () => [
+         {
+            key: 'locationId',
+            label: 'Location',
+            options: locationOptions,
+         },
          {
             key: 'status',
             label: 'Status',
@@ -91,7 +99,7 @@ const Meetings = () => {
             ],
          },
       ],
-      [],
+      [locationOptions],
    );
 
    const handleExport = () => {

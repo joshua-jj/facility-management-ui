@@ -46,8 +46,13 @@ const MeetingLocations = () => {
    const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(meetingLocationActions.getMeetingLocations({ page: currentPage, limit: PAGE_LIMIT }) as unknown as UnknownAction);
-   }, [dispatch, currentPage]);
+      dispatch(meetingLocationActions.getMeetingLocations({
+         page: currentPage,
+         limit: PAGE_LIMIT,
+         search: searchQuery || undefined,
+         status: filterValues.status || undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -55,22 +60,14 @@ const MeetingLocations = () => {
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
+      setCurrentPage(1);
    };
 
-   const filteredLocations = useMemo(() => {
-      let list = allMeetingLocationsList ?? [];
-      if (searchQuery) {
-         const q = searchQuery.toLowerCase();
-         list = list.filter((loc) => loc.name?.toLowerCase().includes(q));
-      }
-      if (filterValues.status) {
-         list = list.filter((loc: MeetingLocation) => String((loc as unknown as Record<string, unknown>).status ?? '') === filterValues.status);
-      }
-      return list;
-   }, [allMeetingLocationsList, searchQuery, filterValues]);
+   const filteredLocations = useMemo(() => allMeetingLocationsList ?? [], [allMeetingLocationsList]);
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
 
    const filters: FilterDef[] = useMemo(

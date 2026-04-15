@@ -3,7 +3,7 @@ import { MeetingLocationForm, MeetingLocationUpdateForm } from '@/types/meetingL
 
 export interface GetMeetingLocationsAction {
   type: typeof meetingLocationConstants.GET_MEETING_LOCATIONS;
-  data?: { page?: number; limit?: number; append?: boolean };
+  data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string };
 }
 
 export interface CreateMeetingLocationAction {
@@ -21,7 +21,7 @@ export interface DeleteMeetingLocationAction {
   id: number;
 }
 
-const getMeetingLocations = (data?: { page?: number; limit?: number; append?: boolean }): GetMeetingLocationsAction => ({
+const getMeetingLocations = (data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string }): GetMeetingLocationsAction => ({
   type: meetingLocationConstants.GET_MEETING_LOCATIONS,
   data,
 });

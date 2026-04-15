@@ -54,8 +54,13 @@ const Roles = () => {
    const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(roleActions.getRoles({ page: currentPage, limit: PAGE_LIMIT }) as unknown as UnknownAction);
-   }, [dispatch, currentPage]);
+      dispatch(roleActions.getRoles({
+         page: currentPage,
+         limit: PAGE_LIMIT,
+         search: searchQuery || undefined,
+         status: filterValues.status || undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -63,24 +68,14 @@ const Roles = () => {
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
+      setCurrentPage(1);
    };
 
-   const filteredRoles = useMemo(() => {
-      let list = allRolesList ?? [];
-      if (searchQuery) {
-         const q = searchQuery.toLowerCase();
-         list = list.filter(
-            (r) => r.name?.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q),
-         );
-      }
-      if (filterValues.status) {
-         list = list.filter((r: Role) => String((r as unknown as Record<string, unknown>).status ?? '') === filterValues.status);
-      }
-      return list;
-   }, [allRolesList, searchQuery, filterValues]);
+   const filteredRoles = useMemo(() => allRolesList ?? [], [allRolesList]);
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
 
    const filters: FilterDef[] = useMemo(

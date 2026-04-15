@@ -3,7 +3,7 @@ import { PermissionForm, PermissionUpdateForm } from '@/types/permission';
 
 export interface GetPermissionsAction {
    type: typeof permissionConstants.GET_PERMISSIONS;
-   data?: { page?: number; limit?: number; append?: boolean };
+   data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string };
 }
 
 export interface CreatePermissionAction {
@@ -21,7 +21,7 @@ export interface DeletePermissionAction {
    id: number;
 }
 
-const getPermissions = (data?: { page?: number; limit?: number; append?: boolean }): GetPermissionsAction => ({
+const getPermissions = (data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string }): GetPermissionsAction => ({
    type: permissionConstants.GET_PERMISSIONS,
    data,
 });

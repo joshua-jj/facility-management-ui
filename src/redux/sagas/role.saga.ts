@@ -26,7 +26,10 @@ function* getRoles({ data }: GetRolesAction) {
       if (data?.limit !== undefined) {
          const page = data.page ?? 1;
          const limit = data.limit;
-         uri = `${roleConstants.ROLE_URI}?page=${page}&limit=${limit}`;
+         const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+         if (data.search) params.set('search', data.search);
+         if (data.status) params.set('status', data.status);
+         uri = `${roleConstants.ROLE_URI}?${params.toString()}`;
          paginated = true;
       } else {
          uri = roleConstants.ROLE_ALL_URI;

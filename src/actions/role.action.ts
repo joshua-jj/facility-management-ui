@@ -3,7 +3,7 @@ import { RoleForm, RoleUpdateForm } from '@/types/role';
 
 export interface GetRolesAction {
    type: typeof roleConstants.GET_ROLES;
-   data?: { page?: number; limit?: number; append?: boolean };
+   data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string };
 }
 
 export interface GetRoleAction {
@@ -46,7 +46,7 @@ export interface RemovePermissionsFromRoleAction {
    data: { roleId: number; permissionIds: number[] };
 }
 
-const getRoles = (data?: { page?: number; limit?: number; append?: boolean }): GetRolesAction => ({
+const getRoles = (data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string }): GetRolesAction => ({
    type: roleConstants.GET_ROLES,
    data,
 });
