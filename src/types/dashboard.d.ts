@@ -37,15 +37,7 @@ export interface GeneratorStats {
    avgHours: number;
    faultCount: number;
    dueForServiceCount: number;
-   recentLogs: {
-      id: number;
-      hoursUsed: number;
-      onTime: string;
-      offTime: string;
-      faultDetected: boolean;
-      generatorType: string;
-      createdAt: string;
-   }[];
+   recentLogs: DashboardGeneratorLog[];
 }
 
 export interface DashboardAnalytics {
@@ -54,7 +46,7 @@ export interface DashboardAnalytics {
    itemAvailability: { available: string; total: string };
    requestTrend: { month: string; count: string }[];
    complaintsByStatus: { status: string; count: string }[];
-   generatorStats: GeneratorStatsData;
+   generatorStats: GeneratorStats;
    maintenanceCostTrend: { month: string; count: string; totalCost: string }[];
    upcomingSchedules: {
       id: number;
