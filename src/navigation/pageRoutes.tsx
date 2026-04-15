@@ -1,4 +1,5 @@
 import {
+  CalendarIcon,
   DashboardIcon,
   DepartmentsIcon,
   GeneratorLogIcon,
@@ -56,6 +57,13 @@ export const pageRoutes = [
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
   {
+    id: 12,
+    label: 'meetings',
+    link: '/admin/meetings',
+    icon: <CalendarIcon />,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+  },
+  {
     id: 7,
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
@@ -108,6 +116,10 @@ export const getPageNames = (link: string) => {
       return 'store';
     case '/admin/departments':
       return 'departments';
+    case '/admin/meeting-locations':
+      return 'meeting locations';
+    case '/admin/meetings':
+      return 'meetings';
     case '/admin/maintenance-log':
       return 'maintenance log';
     case '/admin/generator-log':

@@ -13,6 +13,7 @@ import storeRootSaga from './store.saga';
 import userRootSaga from './user.saga';
 import maintenanceScheduleRootSaga from './maintenanceSchedule.saga';
 import meetingLocationRootSaga from './meetingLocation.saga';
+import meetingRootSaga from './meeting.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -30,5 +31,6 @@ export default function* rootSaga() {
     userRootSaga(),
     maintenanceScheduleRootSaga(),
     meetingLocationRootSaga(),
+    meetingRootSaga(),
   ]);
 }
