@@ -13,7 +13,7 @@ import DeleteModal from '@/components/Modals/Delete';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 
 import { RootState } from '@/redux/reducers';
-import { appActions, itemActions } from '@/actions';
+import { appActions, departmentActions, itemActions, storeActions } from '@/actions';
 import { Item } from '@/types';
 import { RoleId, RoleIdValue } from '@/constants/roles.constant';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -45,14 +45,26 @@ const Items = () => {
 
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { IsRequestingAllItems, allItemsList, pagination } = useSelector((s: RootState) => s.item);
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   const { allStoresList } = useSelector((s: RootState) => s.store);
 
    const { meta } = pagination;
    const isDepartmentScoped = userDetails?.roleId !== undefined && DEPARTMENT_SCOPED_ROLES.includes(userDetails.roleId as RoleIdValue);
 
+   // ── Fetch filter list data on mount ──
+
+   useEffect(() => {
+      dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
+      dispatch(storeActions.getStores({ limit: 1000 }) as unknown as UnknownAction);
+   }, [dispatch]);
+
    // ── Data fetching ──
 
+   const [searchQuery, setSearchQuery] = useState('');
+
    const fetchItems = useCallback(
-      (page?: number) => {
+      (page?: number, overrideFilters?: Record<string, string>) => {
+         const active = overrideFilters ?? filterValues;
          if (isDepartmentScoped && userDetails?.departmentId !== undefined) {
             dispatch(
                itemActions.getDepartmentItems({
@@ -61,37 +73,61 @@ const Items = () => {
                }) as unknown as UnknownAction,
             );
          } else {
-            dispatch(itemActions.getAllItems({ page: page ?? 1 }) as unknown as UnknownAction);
+            dispatch(
+               itemActions.getAllItems({
+                  page: page ?? 1,
+                  limit: 10,
+                  ...(searchQuery && { search: searchQuery }),
+                  ...(active.status && { status: active.status }),
+                  ...(active.departmentId && { departmentId: Number(active.departmentId) }),
+                  ...(active.storeId && { storeId: Number(active.storeId) }),
+                  ...(active.fragile && { fragile: active.fragile }),
+               }) as unknown as UnknownAction,
+            );
          }
       },
-      [dispatch, isDepartmentScoped, userDetails?.departmentId],
+      [dispatch, isDepartmentScoped, userDetails?.departmentId, filterValues, searchQuery],
    );
 
    useEffect(() => {
-      fetchItems();
-   }, [fetchItems]);
+      fetchItems(1);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
 
    // ── Search ──
 
-   const debouncedSearch = useDebounce((query: string) => {
-      dispatch(
-         itemActions.searchItem(
-            isDepartmentScoped && userDetails?.departmentId !== undefined
-               ? { departmentId: userDetails.departmentId, text: query }
-               : { text: query },
-         ) as unknown as UnknownAction,
-      );
+   const debouncedFetch = useDebounce((query: string) => {
+      if (isDepartmentScoped && userDetails?.departmentId !== undefined) {
+         dispatch(
+            itemActions.searchItem(
+               { departmentId: userDetails.departmentId, text: query },
+            ) as unknown as UnknownAction,
+         );
+      } else {
+         dispatch(
+            itemActions.getAllItems({
+               page: 1,
+               limit: 10,
+               search: query,
+               ...(filterValues.status && { status: filterValues.status }),
+               ...(filterValues.departmentId && { departmentId: Number(filterValues.departmentId) }),
+               ...(filterValues.storeId && { storeId: Number(filterValues.storeId) }),
+               ...(filterValues.fragile && { fragile: filterValues.fragile }),
+            }) as unknown as UnknownAction,
+         );
+      }
    });
 
    const handleSearch = useCallback(
       (query: string) => {
+         setSearchQuery(query);
          if (!query) {
-            fetchItems();
+            fetchItems(1);
             return;
          }
-         debouncedSearch(query);
+         debouncedFetch(query);
       },
-      [fetchItems, debouncedSearch],
+      [fetchItems, debouncedFetch],
    );
 
    // ── Pagination ──
@@ -146,8 +182,21 @@ const Items = () => {
    // ── Filters ──
 
    const handleFilterChange = (key: string, value: string) => {
-      setFilterValues((prev) => ({ ...prev, [key]: value }));
+      const next = { ...filterValues, [key]: value };
+      setFilterValues(next);
+      // reset to page 1 on filter change and refetch server-side
+      fetchItems(1, next);
    };
+
+   const departmentOptions = useMemo(
+      () => (allDepartmentsList ?? []).map((d: { id: number; name: string }) => ({ value: String(d.id), label: d.name })),
+      [allDepartmentsList],
+   );
+
+   const storeOptions = useMemo(
+      () => (allStoresList ?? []).map((s: { id: number; name: string }) => ({ value: String(s.id), label: s.name })),
+      [allStoresList],
+   );
 
    const filters: FilterDef[] = useMemo(
       () => [
@@ -155,37 +204,34 @@ const Items = () => {
             key: 'status',
             label: 'Status',
             options: [
-               { value: 'Active', label: 'Active' },
-               { value: 'Inactive', label: 'Inactive' },
+               { value: 'A', label: 'Active' },
+               { value: 'I', label: 'Inactive' },
             ],
          },
          {
             key: 'fragile',
             label: 'Fragile',
             options: [
-               { value: 'yes', label: 'Yes' },
-               { value: 'no', label: 'No' },
+               { value: 'Y', label: 'Yes' },
+               { value: 'N', label: 'No' },
             ],
          },
+         {
+            key: 'departmentId',
+            label: 'Department',
+            options: departmentOptions,
+         },
+         {
+            key: 'storeId',
+            label: 'Store',
+            options: storeOptions,
+         },
       ],
-      [],
+      [departmentOptions, storeOptions],
    );
 
-   const filteredItems = useMemo(() => {
-      let list = allItemsList ?? [];
-      if (filterValues.status) {
-         list = list.filter((item: Item) => {
-            const isActive = String(item.status).toUpperCase() === 'A' || String(item.status).toUpperCase() === 'ACTIVE';
-            return filterValues.status === 'Active' ? isActive : !isActive;
-         });
-      }
-      if (filterValues.fragile) {
-         list = list.filter((item: Item) => {
-            return filterValues.fragile === 'yes' ? item.fragile : !item.fragile;
-         });
-      }
-      return list;
-   }, [allItemsList, filterValues]);
+   // Items come pre-filtered from server; use as-is
+   const filteredItems = allItemsList ?? [];
 
    // ── Row actions ──
 
