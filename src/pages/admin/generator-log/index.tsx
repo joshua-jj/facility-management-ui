@@ -14,7 +14,7 @@ import PrivateRoute from '@/components/PrivateRoute';
 import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
-import { exportToCsv } from '@/utilities/exportCsv';
+import { exportToXlsx } from '@/utilities/exportXlsx';
 import ExportModal from '@/components/ExportModal';
 import { generatorConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
@@ -100,23 +100,28 @@ const GeneratorLogs = () => {
             return;
          }
 
-         exportToCsv('Generator Logs', rows, [
-            { key: 'meeting', header: 'Meeting Name', format: (v) => (v as { name?: string })?.name ?? String(v ?? '') },
+         exportToXlsx('Generator Logs', rows, [
+            { key: 'meeting', header: 'Meeting Name', format: (v) => (v as { name?: string })?.name ?? '' },
+            { key: 'location', header: 'Location', format: (v) => (v as { name?: string })?.name ?? '' },
             { key: 'generatorType', header: 'Generator Type' },
-            { key: 'location', header: 'Location', format: (v) => (v as { name?: string })?.name ?? String(v ?? '') },
-            { key: 'onTime', header: 'On Time', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd h:mm a') : '') },
-            { key: 'offTime', header: 'Off Time', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd h:mm a') : '') },
+            { key: 'onTime', header: 'On Time', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
+            { key: 'offTime', header: 'Off Time', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
+            { key: 'hoursUsed', header: 'Hours Used' },
             { key: 'engineStartHours', header: 'Engine Start Hours' },
             { key: 'engineOffHours', header: 'Engine Off Hours' },
             { key: 'dieselLevelOn', header: 'Diesel Level On' },
             { key: 'dieselLevelOff', header: 'Diesel Level Off' },
+            { key: 'lastServiceHour', header: 'Last Service Hour' },
+            { key: 'nextServiceHour', header: 'Next Service Hour' },
             { key: 'dueForService', header: 'Due For Service', format: (v) => (v ? 'Yes' : 'No') },
+            { key: 'oilFilterDueForReplacement', header: 'Oil Filter Due', format: (v) => (v ? 'Yes' : 'No') },
+            { key: 'lastOilFilterReplacement', header: 'Last Oil Filter Replacement', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
             { key: 'faultDetected', header: 'Fault Detected', format: (v) => (v ? 'Yes' : 'No') },
-            { key: 'faultDescription', header: 'Fault Description' },
-            { key: 'remark', header: 'Remark' },
+            { key: 'faultDescription', header: 'Fault Description', width: 30 },
+            { key: 'remark', header: 'Remark', width: 30 },
             { key: 'createdBy', header: 'Created By' },
-            { key: 'createdAt', header: 'Created Date', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd') : '') },
-         ], { from: from || undefined, to: to || undefined });
+            { key: 'createdAt', header: 'Created Date', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
+         ]);
 
          setShowExportModal(false);
       } catch {
