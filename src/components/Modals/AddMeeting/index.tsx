@@ -5,6 +5,7 @@ import SelectInput from '@/components/Inputs/SelectInput';
 import ModalWrapper from '../ModalWrapper';
 import { Meeting, MeetingForm } from '@/types/meeting';
 import { meetingActions } from '@/actions/meeting.action';
+import { meetingLocationActions } from '@/actions/meetingLocation.action';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -61,6 +62,12 @@ const AddMeeting: React.FC<AddMeetingProps> = ({ open, onClose, initialData, onS
       });
       return () => listener.remove();
    }, [isEdit, onClose, onSaved]);
+
+   useEffect(() => {
+      if (open) {
+         dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
+      }
+   }, [open, dispatch]);
 
    return (
       <ModalWrapper
