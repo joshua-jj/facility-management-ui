@@ -6,6 +6,7 @@ import PageHeader, { ActionButton } from '@/components/PageHeader';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { userActions } from '@/actions/user.action';
+import { departmentActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Users } from '@/types/user';
 import PrivateRoute from '@/components/PrivateRoute';
@@ -25,10 +26,12 @@ const RoleUsers = () => {
    const PAGE_SIZE = 10;
 
    const { IsRequestingUsers, roleUsersList } = useSelector((s: RootState) => s.user);
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
 
    useEffect(() => {
       if (!roleId) return;
       dispatch(userActions.getUsersByRole({ roleId }) as unknown as UnknownAction);
+      dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
    }, [dispatch, roleId]);
 
    const handleSearch = (query: string) => {
@@ -43,11 +46,22 @@ const RoleUsers = () => {
             (u) =>
                u.firstName?.toLowerCase().includes(q) ||
                u.lastName?.toLowerCase().includes(q) ||
-               u.email?.toLowerCase().includes(q),
+               u.email?.toLowerCase().includes(q) ||
+               u.phoneNumber?.toLowerCase().includes(q),
          );
       }
       if (filterValues.status) {
          list = list.filter((u) => String(u.status) === filterValues.status);
+      }
+      if (filterValues.gender) {
+         list = list.filter((u) => String(u.gender) === filterValues.gender);
+      }
+      if (filterValues.departmentId) {
+         list = list.filter((u) => {
+            const u2 = u as unknown as { department?: { id?: number }; departmentId?: number };
+            const deptId = u2.department?.id ?? u2.departmentId;
+            return String(deptId) === filterValues.departmentId;
+         });
       }
       return list;
    }, [roleUsersList, searchQuery, filterValues]);
@@ -61,17 +75,37 @@ const RoleUsers = () => {
       if (currentPage > totalPages) setCurrentPage(1);
    }, [totalPages, currentPage]);
 
-   const filters: FilterDef[] = [
-      {
-         key: 'status',
-         label: 'Status',
-         options: [
-            { value: '', label: 'All' },
-            { value: 'A', label: 'Active' },
-            { value: 'I', label: 'Inactive' },
-         ],
-      },
-   ];
+   const filters: FilterDef[] = useMemo(
+      () => [
+         {
+            key: 'status',
+            label: 'Status',
+            options: [
+               { value: '', label: 'All' },
+               { value: 'A', label: 'Active' },
+               { value: 'I', label: 'Inactive' },
+            ],
+         },
+         {
+            key: 'gender',
+            label: 'Gender',
+            options: [
+               { value: 'Male', label: 'Male' },
+               { value: 'Female', label: 'Female' },
+               { value: 'None Specified', label: 'Not Specified' },
+            ],
+         },
+         {
+            key: 'departmentId',
+            label: 'Department',
+            options: (allDepartmentsList ?? []).map((d: { id: number; name: string }) => ({
+               value: String(d.id),
+               label: d.name,
+            })),
+         },
+      ],
+      [allDepartmentsList],
+   );
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
