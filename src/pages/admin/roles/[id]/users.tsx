@@ -1,7 +1,7 @@
 import Layout from '@/components/Layout';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { DataTable, Column } from '@/components/DataTable';
+import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -11,6 +11,7 @@ import { Users } from '@/types/user';
 import PrivateRoute from '@/components/PrivateRoute';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { useRouter } from 'next/router';
+import { exportToXlsx } from '@/utilities/exportXlsx';
 
 const RoleUsers = () => {
    const dispatch = useDispatch();
@@ -19,6 +20,7 @@ const RoleUsers = () => {
    const roleId = id ? Number(id) : null;
 
    const [searchQuery, setSearchQuery] = useState('');
+   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 
    const { IsRequestingUsers, roleUsersList } = useSelector((s: RootState) => s.user);
 
@@ -42,8 +44,37 @@ const RoleUsers = () => {
                u.email?.toLowerCase().includes(q),
          );
       }
+      if (filterValues.status) {
+         list = list.filter((u) => String(u.status) === filterValues.status);
+      }
       return list;
-   }, [roleUsersList, searchQuery]);
+   }, [roleUsersList, searchQuery, filterValues]);
+
+   const filters: FilterDef[] = [
+      {
+         key: 'status',
+         label: 'Status',
+         options: [
+            { value: '', label: 'All' },
+            { value: 'A', label: 'Active' },
+            { value: 'I', label: 'Inactive' },
+         ],
+      },
+   ];
+
+   const handleFilterChange = (key: string, value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+   };
+
+   const handleExport = () => {
+      exportToXlsx('Role Users', filteredUsers as unknown as Record<string, unknown>[], [
+         { key: 'firstName', header: 'First Name' },
+         { key: 'lastName', header: 'Last Name' },
+         { key: 'email', header: 'Email' },
+         { key: 'status', header: 'Status', format: (v) => (String(v) === 'A' ? 'Active' : 'Inactive') },
+         { key: 'createdAt', header: 'Joined', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
+      ]);
+   };
 
    const columns: Column<Users>[] = [
       {
@@ -117,6 +148,10 @@ const RoleUsers = () => {
                loading={IsRequestingUsers}
                onSearch={handleSearch}
                searchPlaceholder="Search users..."
+               filters={filters}
+               filterValues={filterValues}
+               onFilterChange={handleFilterChange}
+               onExport={handleExport}
                emptyTitle="No users found"
                emptyDescription="No users are currently assigned to this role."
             />
