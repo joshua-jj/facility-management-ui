@@ -90,8 +90,24 @@ const pagination = (
   }
 };
 
+const IsRequestingUnpaginatedDepartments = (
+  state: LoadingState = false,
+  action: Action,
+): LoadingState => {
+  switch (action.type) {
+    case departmentConstants.REQUEST_GET_UNPAGINATED_DEPARTMENTS:
+      return true;
+    case departmentConstants.GET_UNPAGINATED_DEPARTMENTS_SUCCESS:
+    case departmentConstants.GET_UNPAGINATED_DEPARTMENTS_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   IsRequestingDepartments,
+  IsRequestingUnpaginatedDepartments,
   IsCreatingDepartment,
   allDepartmentsList,
   pagination,

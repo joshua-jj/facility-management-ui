@@ -16,8 +16,7 @@ interface ItemDetailsProps {
 
 const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, setDepartment, addItem }) => {
    const dispatch = useDispatch();
-   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-   console.log("all depts", allDepartmentsList)
+   const { allDepartmentsList, IsRequestingUnpaginatedDepartments } = useSelector((s: RootState) => s.department);
    const { IsRequestingAllDepartmentItems, allDepartmentItemsList } = useSelector((s: RootState) => s.item);
 
    const [search, setSearch] = useState('');
@@ -128,30 +127,28 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
                      </div>
                   </div>
                   <ul className="max-h-48 overflow-y-auto py-1">
-                     {filteredDepartments.map((d) => (
-                        <li key={d.id} onClick={() => handleDepartmentSelect(d)}
-                           className="px-3.5 py-2 text-xs cursor-pointer transition-colors"
-                           style={{ color: 'var(--text-primary)' }}
-                           onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
-                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                        >
-                           {d.name}
+                     {IsRequestingUnpaginatedDepartments ? (
+                        <li className="flex justify-center items-center py-4">
+                           <div className="w-5 h-5 border-2 border-[#B28309] border-t-transparent rounded-full animate-spin" />
                         </li>
-                     ))}
-                     {filteredDepartments.length === 0 && (
+                     ) : filteredDepartments.length === 0 ? (
                         <li className="px-3.5 py-4 text-xs text-center" style={{ color: 'var(--text-hint)' }}>No departments found</li>
+                     ) : (
+                        filteredDepartments.map((d) => (
+                           <li key={d.id} onClick={() => handleDepartmentSelect(d)}
+                              className="px-3.5 py-2 text-xs cursor-pointer transition-colors"
+                              style={{ color: 'var(--text-primary)' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                           >
+                              {d.name}
+                           </li>
+                        ))
                      )}
                   </ul>
                </div>
             )}
          </div>
-
-         {/* Loading */}
-         {IsRequestingAllDepartmentItems && (
-            <div className="flex justify-center items-center my-4">
-               <div className="w-7 h-7 border-3 border-[#B28309] border-t-transparent rounded-full animate-spin" />
-            </div>
-         )}
 
          {/* Item rows */}
          {department && allDepartmentItemsList?.length > 0 &&
@@ -203,23 +200,31 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
                               </div>
                            </div>
                            <ul className="max-h-48 overflow-y-auto py-1">
-                              {filteredItems.map((ai) => (
-                                 <li key={ai.name} onClick={() => handleSelect(item, ai)}
-                                    className="flex items-center justify-between px-3.5 py-2 text-xs cursor-pointer transition-colors"
-                                    style={{ color: 'var(--text-primary)' }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                                 >
-                                    <span>{ai.name} ({ai.availableQuantity})</span>
-                                    <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full ${
-                                       (ai.availableQuantity ?? 0) > 0
-                                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
-                                          : 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                                    }`}>
-                                       {(ai.availableQuantity ?? 0) > 0 ? 'Available' : 'Unavailable'}
-                                    </span>
+                              {IsRequestingAllDepartmentItems ? (
+                                 <li className="flex justify-center items-center py-4">
+                                    <div className="w-5 h-5 border-2 border-[#B28309] border-t-transparent rounded-full animate-spin" />
                                  </li>
-                              ))}
+                              ) : filteredItems.length === 0 ? (
+                                 <li className="px-3.5 py-4 text-xs text-center" style={{ color: 'var(--text-hint)' }}>No items found</li>
+                              ) : (
+                                 filteredItems.map((ai) => (
+                                    <li key={ai.name} onClick={() => handleSelect(item, ai)}
+                                       className="flex items-center justify-between px-3.5 py-2 text-xs cursor-pointer transition-colors"
+                                       style={{ color: 'var(--text-primary)' }}
+                                       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
+                                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                       <span>{ai.name} ({ai.availableQuantity})</span>
+                                       <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full ${
+                                          (ai.availableQuantity ?? 0) > 0
+                                             ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
+                                             : 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+                                       }`}>
+                                          {(ai.availableQuantity ?? 0) > 0 ? 'Available' : 'Unavailable'}
+                                       </span>
+                                    </li>
+                                 ))
+                              )}
                            </ul>
                         </div>
                      )}
