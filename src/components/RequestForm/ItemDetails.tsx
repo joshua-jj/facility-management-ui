@@ -151,7 +151,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
          </div>
 
          {/* Item rows */}
-         {department && allDepartmentItemsList?.length > 0 &&
+         {department &&
             items.map((item, index) => (
                <div key={item.id} className="mb-5 group">
                   <div className="flex justify-between items-center mb-1.5">
