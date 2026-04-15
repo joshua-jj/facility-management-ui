@@ -13,7 +13,16 @@ import {
 } from '@/components/Icons';
 import { RoleId, ALL_DATA_ROLES, ADMIN_ROLES } from '@/constants/roles.constant';
 
-export const pageRoutes = [
+export interface PageRoute {
+  id: number;
+  label: string;
+  link: string;
+  icon: React.ReactNode;
+  allowedRoles: readonly number[];
+  section?: string;
+}
+
+export const pageRoutes: PageRoute[] = [
   {
     id: 1,
     label: 'dashboard',
@@ -91,6 +100,22 @@ export const pageRoutes = [
     icon: <UsersIcon />,
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
+  {
+    id: 13,
+    label: 'roles',
+    link: '/admin/roles',
+    icon: <UsersIcon />,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+    section: 'Platform',
+  },
+  {
+    id: 14,
+    label: 'permissions',
+    link: '/admin/permissions',
+    icon: <UsersIcon />,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+    section: 'Platform',
+  },
 ];
 
 export const getPageNames = (link: string) => {
@@ -121,6 +146,16 @@ export const getPageNames = (link: string) => {
       return 'reports';
     case '/admin/users':
       return 'user management';
+    case '/admin/roles':
+      return 'roles';
+    case '/admin/roles/new':
+      return 'roles';
+    case '/admin/roles/[id]':
+      return 'roles';
+    case '/admin/roles/[id]/users':
+      return 'roles';
+    case '/admin/permissions':
+      return 'permissions';
     case '/admin/account-settings':
       return 'account settings';
     default:
