@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
@@ -15,7 +15,6 @@ import AddUser from '@/components/Modals/AddUser';
 import UpdateRole from '@/components/Modals/UpdateRole';
 import UserStatusModal from '@/components/Modals/UserStatus';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
-import { useDebounce } from '@/hooks/useDebounce';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
@@ -23,6 +22,8 @@ import { getObjectFromStorage } from '@/utilities/helpers';
 import { PhoneDisplay } from '@/components/FormatValue';
 import { authConstants, userConstants } from '@/constants';
 import axios from 'axios';
+
+const PAGE_LIMIT = 10;
 
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const ROLE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
@@ -45,36 +46,46 @@ const Users = () => {
    const [showUserStatusModal, setShowUserStatusModal] = useState(false);
    const [userStatusAction, setUserStatusAction] = useState<'activate' | 'deactivate'>('deactivate');
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+   const [searchQuery, setSearchQuery] = useState('');
+   const [currentPage, setCurrentPage] = useState(1);
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
 
    const { allRolesList } = useSelector((s: RootState) => s.role);
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { IsRequestingUsers, allUsersList, pagination } = useSelector((s: RootState) => s.user);
    const { meta } = pagination;
 
    useEffect(() => {
-      dispatch(userActions.getUsers() as unknown as UnknownAction);
-      dispatch(roleActions.getRoles() as unknown as UnknownAction);
-      dispatch(departmentActions.getAllDepartments() as unknown as UnknownAction);
+      // Fetch roles and departments for filter dropdowns
+      dispatch(roleActions.getRoles({ limit: 1000 }) as unknown as UnknownAction);
+      dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
    }, [dispatch]);
 
-   const debouncedSearch = useDebounce((query: string) => {
-      dispatch(userActions.searchUser({ text: query }) as unknown as UnknownAction);
-   });
+   useEffect(() => {
+      dispatch(userActions.getUsers({
+         page: currentPage,
+         limit: PAGE_LIMIT,
+         search: searchQuery || undefined,
+         status: filterValues.status || undefined,
+         roleId: filterValues.roleId ? Number(filterValues.roleId) : undefined,
+         departmentId: filterValues.departmentId ? Number(filterValues.departmentId) : undefined,
+         gender: filterValues.gender || undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
-   const handleSearch = useCallback(
-      (query: string) => {
-         if (!query) {
-            dispatch(userActions.getUsers() as unknown as UnknownAction);
-         } else {
-            debouncedSearch(query);
-         }
-      },
-      [dispatch, debouncedSearch],
-   );
+   const handlePageChange = (page: number) => {
+      setCurrentPage(page);
+   };
 
-   const handleChangePage = (page: number) => {
-      dispatch(userActions.getUsers({ page }) as unknown as UnknownAction);
+   const handleSearch = (query: string) => {
+      setSearchQuery(query);
+      setCurrentPage(1);
+   };
+
+   const handleFilterChange = (key: string, value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
 
    const handleUpdate = (data: User) => {
@@ -133,10 +144,6 @@ const Users = () => {
       }
    };
 
-   const handleFilterChange = (key: string, value: string) => {
-      setFilterValues((prev) => ({ ...prev, [key]: value }));
-   };
-
    const getActions = (row: User): ActionMenuItem[] => [
       {
          label: 'View',
@@ -164,11 +171,19 @@ const Users = () => {
    const filters: FilterDef[] = useMemo(
       () => [
          {
-            key: 'role',
+            key: 'roleId',
             label: 'Role',
             options: (allRolesList ?? []).map((r) => ({
-               value: r.id.toString(),
+               value: String(r.id),
                label: r.name,
+            })),
+         },
+         {
+            key: 'departmentId',
+            label: 'Department',
+            options: (allDepartmentsList ?? []).map((d) => ({
+               value: String(d.id),
+               label: d.name,
             })),
          },
          {
@@ -179,20 +194,20 @@ const Users = () => {
                { value: 'I', label: 'Inactive' },
             ],
          },
+         {
+            key: 'gender',
+            label: 'Gender',
+            options: [
+               { value: 'Male', label: 'Male' },
+               { value: 'Female', label: 'Female' },
+               { value: 'None Specified', label: 'Not Specified' },
+            ],
+         },
       ],
-      [allRolesList],
+      [allRolesList, allDepartmentsList],
    );
 
-   const filteredUsers = useMemo(() => {
-      let list = allUsersList ?? [];
-      if (filterValues.role) {
-         list = list.filter((u: User) => String((u as unknown as Record<string, unknown>).roleId ?? (u.role as Record<string, unknown>)?.id) === filterValues.role);
-      }
-      if (filterValues.status) {
-         list = list.filter((u: User) => u.status === filterValues.status);
-      }
-      return list;
-   }, [allUsersList, filterValues]);
+   const filteredUsers = useMemo(() => allUsersList ?? [], [allUsersList]);
 
    const columns: Column<User>[] = [
       {
@@ -284,8 +299,13 @@ const Users = () => {
                filters={filters}
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
-               pagination={meta}
-               onPageChange={handleChangePage}
+               pagination={{
+                  currentPage: meta.currentPage,
+                  totalItems: meta.totalItems,
+                  itemsPerPage: meta.itemsPerPage,
+                  totalPages: meta.totalPages,
+               }}
+               onPageChange={handlePageChange}
                emptyTitle="No users found"
                emptyDescription="Get started by adding your first user."
             />

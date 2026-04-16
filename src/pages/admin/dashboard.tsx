@@ -1,5 +1,4 @@
-import { dashboardActions, requestActions } from '@/actions';
-import BarChart from '@/components/BarChart';
+import { appActions, dashboardActions, requestActions } from '@/actions';
 import {
    DueReturnsIcon,
    TotalItemsIcon,
@@ -12,16 +11,20 @@ import { RootState } from '@/redux/reducers';
 import { Request } from '@/types';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import DoughnutChart from '@/components/DoughnutChart';
-import Calendar from '@/components/Calendar';
 import LineChart from '@/components/LineChart';
+import Calendar from '@/components/Calendar';
 import PrivateRoute from '@/components/PrivateRoute';
 import { RoleId } from '@/constants/roles.constant';
 import AnimatedNumber from '@/components/AnimatedNumber';
 import { PhoneDisplay } from '@/components/FormatValue';
+import { dashboardConstants, authConstants } from '@/constants';
+import { getObjectFromStorage } from '@/utilities/helpers';
+import { exportToCsv } from '@/utilities/exportCsv';
+import axios from 'axios';
 
 /* ── Premium design tokens ── */
 const CARD =
@@ -44,6 +47,8 @@ const SECONDARY_COLORS = ['#6B8FCC', '#3b82f6', '#22c55e', '#ef4444'];
 
 const Dashboard = () => {
    const dispatch = useDispatch();
+   const [isExportingReport, setIsExportingReport] = useState(false);
+   const [trendPeriod, setTrendPeriod] = useState<string>('6months');
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { IsRequestingRequests, allRequestsList } = useSelector((s: RootState) => s.request);
    const { IsFetchingDashboardStats, dashboardStats, dashboardAnalytics } = useSelector(
@@ -70,6 +75,109 @@ const Dashboard = () => {
          dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
       }
    }, [dispatch, userDetails]);
+
+   const handlePeriodChange = useCallback((period: string) => {
+      setTrendPeriod(period);
+      dispatch(dashboardActions.getDashboardAnalytics(period) as unknown as UnknownAction);
+   }, [dispatch]);
+
+   const handleExportDailyReport = useCallback(async () => {
+      setIsExportingReport(true);
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         const today = format(new Date(), 'yyyy-MM-dd');
+         const uri = `${dashboardConstants.DAILY_REPORT_URI}?date=${today}`;
+
+         const resp = await axios.get(uri, {
+            headers: {
+               Accept: 'application/json',
+               Authorization: user?.token ? `Bearer ${user.token}` : '',
+            },
+         });
+
+         const report = resp.data?.data;
+         if (!report) {
+            dispatch(appActions.setSnackBar({ type: 'warning', message: 'No report data available.', variant: 'warning' }) as unknown as UnknownAction);
+            return;
+         }
+
+         // Build unified transaction rows
+         type TransactionRow = { category: string; name: string; description: string; status: string; detail: string; createdBy: string; createdAt: string };
+         const rows: TransactionRow[] = [];
+
+         (report.requests ?? []).forEach((r: Record<string, unknown>) => {
+            rows.push({
+               category: 'Request',
+               name: String(r.requesterName ?? ''),
+               description: String(r.descriptionOfRequest ?? ''),
+               status: String(r.requestStatus ?? ''),
+               detail: `Ministry: ${r.ministryName ?? ''}`,
+               createdBy: String(r.createdBy ?? ''),
+               createdAt: r.createdAt ? format(parseISO(String(r.createdAt)), 'yyyy-MM-dd h:mm a') : '',
+            });
+         });
+
+         (report.generatorLogs ?? []).forEach((g: Record<string, unknown>) => {
+            rows.push({
+               category: 'Generator Log',
+               name: String(g.nameOfMeeting ?? ''),
+               description: `${g.generatorType ?? ''} at ${g.meetingLocation ?? ''}`,
+               status: g.faultDetected ? 'Fault Detected' : 'OK',
+               detail: g.onTime && g.offTime
+                  ? `On: ${format(parseISO(String(g.onTime)), 'h:mm a')} Off: ${format(parseISO(String(g.offTime)), 'h:mm a')}`
+                  : '',
+               createdBy: String(g.createdBy ?? ''),
+               createdAt: g.createdAt ? format(parseISO(String(g.createdAt)), 'yyyy-MM-dd h:mm a') : '',
+            });
+         });
+
+         (report.maintenanceLogs ?? []).forEach((m: Record<string, unknown>) => {
+            rows.push({
+               category: 'Maintenance',
+               name: String(m.artisanName ?? ''),
+               description: String(m.description ?? ''),
+               status: '',
+               detail: `Cost: NGN ${Number(m.costOfMaintenance ?? 0).toLocaleString()}`,
+               createdBy: String(m.createdBy ?? ''),
+               createdAt: m.createdAt ? format(parseISO(String(m.createdAt)), 'yyyy-MM-dd h:mm a') : '',
+            });
+         });
+
+         (report.complaints ?? []).forEach((c: Record<string, unknown>) => {
+            const summary = c.summary as Record<string, unknown> | undefined;
+            rows.push({
+               category: 'Complaint',
+               name: String(c.title ?? ''),
+               description: String(c.description ?? ''),
+               status: String(summary?.complaintStatus ?? ''),
+               detail: '',
+               createdBy: String(c.createdBy ?? ''),
+               createdAt: c.createdAt ? format(parseISO(String(c.createdAt)), 'yyyy-MM-dd h:mm a') : '',
+            });
+         });
+
+         if (rows.length === 0) {
+            dispatch(appActions.setSnackBar({ type: 'info', message: 'No transactions found for today.', variant: 'info' }) as unknown as UnknownAction);
+            return;
+         }
+
+         exportToCsv('Daily Report', rows, [
+            { key: 'category', header: 'Category' },
+            { key: 'name', header: 'Name' },
+            { key: 'description', header: 'Description' },
+            { key: 'status', header: 'Status' },
+            { key: 'detail', header: 'Detail' },
+            { key: 'createdBy', header: 'Created By' },
+            { key: 'createdAt', header: 'Date/Time' },
+         ]);
+
+         dispatch(appActions.setSnackBar({ type: 'success', message: 'Daily report downloaded successfully.', variant: 'success' }) as unknown as UnknownAction);
+      } catch {
+         dispatch(appActions.setSnackBar({ type: 'error', message: 'Failed to export daily report. Please try again.', variant: 'error' }) as unknown as UnknownAction);
+      } finally {
+         setIsExportingReport(false);
+      }
+   }, [dispatch]);
 
    const greeting = useMemo(() => {
       const hour = new Date().getHours();
@@ -141,11 +249,9 @@ const Dashboard = () => {
       }));
    }, [dashboardAnalytics]);
 
-   // ── Generator bar chart data ──
-   const generatorBarData = useMemo(() => {
-      const logs = dashboardAnalytics?.generatorStats?.recentLogs;
-      if (!logs || logs.length === 0) return undefined;
-      return logs.map((l) => ({ hoursUsed: l.hoursUsed ?? 0, onTime: l.onTime }));
+   // ── Generator recent logs for display ──
+   const recentGeneratorLogs = useMemo(() => {
+      return dashboardAnalytics?.generatorStats?.recentLogs ?? [];
    }, [dashboardAnalytics]);
 
    // ── Complaints doughnut data ──
@@ -201,9 +307,27 @@ const Dashboard = () => {
                         Here&apos;s what&apos;s happening across your facilities today
                      </p>
                   </div>
-                  <span className="text-[0.65rem] font-medium px-3 py-1.5 rounded-full bg-[#B28309]/8 dark:bg-[#D4A84B]/12 text-[#B28309] dark:text-[#D4A84B] border border-[#B28309]/15 dark:border-[#D4A84B]/20 self-start sm:self-end">
-                     {format(new Date(), 'EEEE, MMMM d, yyyy')}
-                  </span>
+                  <div className="flex items-center gap-2 self-start sm:self-end">
+                     <button
+                        onClick={handleExportDailyReport}
+                        disabled={isExportingReport}
+                        className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-[#0F2552]/15 dark:border-[#6B8FCC]/20 text-[#0F2552] dark:text-[#6B8FCC] bg-[#0F2552]/5 dark:bg-[#6B8FCC]/10 hover:bg-[#0F2552]/10 dark:hover:bg-[#6B8FCC]/20 press-effect"
+                     >
+                        {isExportingReport ? (
+                           <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                           </svg>
+                        )}
+                        Daily Report
+                     </button>
+                     <span className="text-[0.65rem] font-medium px-3 py-1.5 rounded-full bg-[#B28309]/8 dark:bg-[#D4A84B]/12 text-[#B28309] dark:text-[#D4A84B] border border-[#B28309]/15 dark:border-[#D4A84B]/20">
+                        {format(new Date(), 'EEEE, MMMM d, yyyy')}
+                     </span>
+                  </div>
                </div>
                <div className="mt-4 h-px bg-gradient-to-r from-[#B28309]/30 via-[#0F2552]/10 to-transparent dark:from-[#D4A84B]/25 dark:via-[#6B8FCC]/10 dark:to-transparent" />
             </div>
@@ -273,11 +397,28 @@ const Dashboard = () => {
                         <span className="w-1.5 h-1.5 rounded-full bg-[#B88C00] inline-block" />
                         Request Trend
                      </h2>
-                     <p className="text-[0.65rem] mt-1" style={{ color: 'var(--text-hint)' }}>Monthly request volume &amp; status overview</p>
+                     <p className="text-[0.65rem] mt-1" style={{ color: 'var(--text-hint)' }}>Request volume overview</p>
                   </div>
-                  <span className="text-[0.6rem] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full bg-[#B88C00]/8 dark:bg-[#B88C00]/12 text-[#B88C00] border border-[#B88C00]/15 self-start">
-                     Last 6 months
-                  </span>
+                  <div className="flex items-center gap-1 self-start">
+                     {[
+                        { key: 'week', label: 'Week' },
+                        { key: 'month', label: 'Month' },
+                        { key: '6months', label: '6 Months' },
+                        { key: 'year', label: 'Year' },
+                     ].map((p) => (
+                        <button
+                           key={p.key}
+                           onClick={() => handlePeriodChange(p.key)}
+                           className={`text-[0.6rem] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
+                              trendPeriod === p.key
+                                 ? 'bg-[#B88C00] text-white border-[#B88C00] shadow-sm'
+                                 : 'bg-transparent text-[#B88C00] border-[#B88C00]/15 hover:bg-[#B88C00]/8'
+                           }`}
+                        >
+                           {p.label}
+                        </button>
+                     ))}
+                  </div>
                </div>
 
                {/* Inline KPI row */}
@@ -376,8 +517,48 @@ const Dashboard = () => {
                         </h2>
                         <p className="text-[0.6rem] mt-1 font-medium" style={{ color: 'var(--text-hint)' }}>Weekly breakdown</p>
                      </div>
-                     <div style={{ height: 180 }}>
-                        <BarChart data={generatorBarData} />
+                     <div className="space-y-2 max-h-[180px] overflow-y-auto premium-scrollbar">
+                        {recentGeneratorLogs.length > 0 ? (
+                           recentGeneratorLogs.map((log) => {
+                              const hours = Math.round((log.hoursUsed ?? 0) / 3600);
+                              const maxHours = Math.max(...recentGeneratorLogs.map((l) => Math.round((l.hoursUsed ?? 0) / 3600)), 1);
+                              const pct = Math.min((hours / maxHours) * 100, 100);
+                              return (
+                                 <div key={log.id} className="group">
+                                    <div className="flex items-center justify-between mb-1">
+                                       <span className="text-[0.65rem] font-semibold truncate max-w-[60%]" style={{ color: 'var(--text-primary)' }}>
+                                          {log.nameOfMeeting || log.generatorType}
+                                       </span>
+                                       <div className="flex items-center gap-1.5">
+                                          {log.faultDetected && (
+                                             <span className="text-[0.5rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/15">
+                                                Fault
+                                             </span>
+                                          )}
+                                          <span className="text-[0.65rem] font-bold tabular-nums" style={{ color: log.faultDetected ? '#ef4444' : '#B88C00' }}>
+                                             {hours}h
+                                          </span>
+                                       </div>
+                                    </div>
+                                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-medium)' }}>
+                                       <div
+                                          className="h-full rounded-full transition-all duration-500"
+                                          style={{
+                                             width: `${pct}%`,
+                                             background: log.faultDetected
+                                                ? 'linear-gradient(90deg, #ef4444, #f87171)'
+                                                : 'linear-gradient(90deg, #B88C00, #D4A84B)',
+                                          }}
+                                       />
+                                    </div>
+                                 </div>
+                              );
+                           })
+                        ) : (
+                           <div className="flex items-center justify-center h-full py-8">
+                              <p className="text-xs font-medium" style={{ color: 'var(--text-hint)' }}>No recent logs</p>
+                           </div>
+                        )}
                      </div>
                      {dashboardAnalytics?.generatorStats && (
                         <div className="mt-5 grid grid-cols-3 gap-2.5">
@@ -417,8 +598,8 @@ const Dashboard = () => {
                         </h2>
                         <p className="text-[0.6rem] mt-1 font-medium" style={{ color: 'var(--text-hint)' }}>Spend over time</p>
                      </div>
-                     <span className="text-[0.6rem] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full bg-[#0F2552]/8 dark:bg-[#6B8FCC]/12 text-[#0F2552] dark:text-[#93b5e8] border border-[#0F2552]/10 dark:border-[#6B8FCC]/20">
-                        6 months
+                     <span className="text-[0.55rem] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#0F2552]/8 dark:bg-[#6B8FCC]/12 text-[#0F2552] dark:text-[#93b5e8] border border-[#0F2552]/10 dark:border-[#6B8FCC]/20">
+                        {trendPeriod === 'week' ? 'This week' : trendPeriod === 'month' ? 'This month' : trendPeriod === 'year' ? '12 months' : '6 months'}
                      </span>
                   </div>
                   <div style={{ height: 200 }}>

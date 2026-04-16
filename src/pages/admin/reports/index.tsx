@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { UnknownAction } from 'redux';
@@ -28,22 +28,29 @@ const Reports = () => {
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-   const { IsRequestingReports, allReportsList } = useSelector((s: RootState) => s.report);
+   const [searchQuery, setSearchQuery] = useState('');
+   const [currentPage, setCurrentPage] = useState(1);
+   const { IsRequestingReports, allReportsList, pagination } = useSelector((s: RootState) => s.report);
+   const meta = pagination?.meta ?? null;
 
    useEffect(() => {
-      dispatch(reportActions.getReports() as unknown as UnknownAction);
-   }, [dispatch]);
+      dispatch(reportActions.getReports({
+         page: currentPage,
+         limit: 10,
+         search: searchQuery || undefined,
+         complaintStatus: filterValues.complaintStatus || undefined,
+         attendedTo: filterValues.attendedTo !== undefined && filterValues.attendedTo !== ''
+            ? filterValues.attendedTo === 'true'
+            : undefined,
+      }) as unknown as UnknownAction);
+   }, [dispatch, currentPage, searchQuery, filterValues]);
 
-   const handleSearch = useCallback(
-      (query: string) => {
-         if (!query) {
-            dispatch(reportActions.getReports() as unknown as UnknownAction);
-         } else {
-            dispatch(reportActions.searchReport({ text: query }) as unknown as UnknownAction);
-         }
-      },
-      [dispatch],
-   );
+   const handleSearch = (query: string) => {
+      setSearchQuery(query);
+      setCurrentPage(1);
+   };
+
+   const handlePageChange = (page: number) => setCurrentPage(page);
 
    const handleExport = async (from: string, to: string) => {
       setIsExporting(true);
@@ -84,12 +91,13 @@ const Reports = () => {
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
 
    const filters: FilterDef[] = useMemo(
       () => [
          {
-            key: 'status',
+            key: 'complaintStatus',
             label: 'Status',
             options: [
                { value: 'Pending', label: 'Pending' },
@@ -98,20 +106,20 @@ const Reports = () => {
                { value: 'Closed', label: 'Closed' },
             ],
          },
+         {
+            key: 'attendedTo',
+            label: 'Attended',
+            options: [
+               { value: 'true', label: 'Yes' },
+               { value: 'false', label: 'No' },
+            ],
+         },
       ],
       [],
    );
 
-   const filteredReports = useMemo(() => {
-      let list = allReportsList ?? [];
-      if (filterValues.status) {
-         list = list.filter((report: Report) => {
-            const reportStatus = report.status ? String(report.status) : 'Pending';
-            return reportStatus === filterValues.status;
-         });
-      }
-      return list;
-   }, [allReportsList, filterValues]);
+   // Server-side filtered — data returned directly from the API
+   const filteredReports = useMemo(() => allReportsList ?? [], [allReportsList]);
 
    const getActions = (row: Report): ActionMenuItem[] => [
       {
@@ -183,10 +191,12 @@ const Reports = () => {
                loading={IsRequestingReports}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
-               searchPlaceholder="Search reports..."
+               searchPlaceholder="Search by name, subject, email..."
                filters={filters}
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
+               pagination={meta ? { currentPage: meta.currentPage, totalItems: meta.totalItems, itemsPerPage: meta.itemsPerPage, totalPages: meta.totalPages } : undefined}
+               onPageChange={handlePageChange}
                emptyTitle="No reports found"
                emptyDescription="There are no complaint reports to display."
             />

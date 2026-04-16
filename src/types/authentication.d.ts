@@ -10,7 +10,7 @@ export interface ChangePasswordForm {
   oldPassword: string;
   newPassword: string;
   confirmNewPassword?: string;
-  email: string;
+  email?: string;
   token?: string;
 }
 

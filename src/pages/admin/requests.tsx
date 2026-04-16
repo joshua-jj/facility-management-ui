@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { format, parseISO } from 'date-fns';
@@ -11,7 +11,7 @@ import StatusChip from '@/components/StatusChip';
 import PageHeader from '@/components/PageHeader';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { RootState } from '@/redux/reducers';
-import { appActions, requestActions } from '@/actions';
+import { appActions, departmentActions, requestActions } from '@/actions';
 import { RoleId } from '@/constants/roles.constant';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
@@ -27,6 +27,7 @@ const Requests = () => {
    const router = useRouter();
    const [searchQuery, setSearchQuery] = useState('');
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+   const [currentPage, setCurrentPage] = useState(1);
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
 
@@ -34,43 +35,45 @@ const Requests = () => {
    const { IsRequestingRequests, allRequestsList, pagination } = useSelector(
       (s: RootState) => s.request,
    );
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { meta } = pagination;
-   const { currentPage, totalItems, itemsPerPage, totalPages } = meta;
+   const { totalItems, itemsPerPage, totalPages } = meta;
 
-   const fetchRequests = useCallback(
-      (page?: number) => {
-         if (userDetails?.roleId === RoleId.HOD) {
-            dispatch(
-               requestActions.getDepartmentRequests({
-                  departmentId: userDetails?.departmentId ?? 0,
-                  ...(page && { page }),
-               }) as unknown as UnknownAction,
-            );
-         } else if (userDetails?.roleId === RoleId.MEMBER) {
-            dispatch(
-               requestActions.getAssignedRequests({
-                  userId: userDetails?.id ?? 0,
-                  ...(page && { page }),
-               }) as unknown as UnknownAction,
-            );
-         } else {
-            dispatch(
-               requestActions.getAllRequests(
-                  page ? { page } : undefined,
-               ) as unknown as UnknownAction,
-            );
-         }
-      },
-      [dispatch, userDetails],
-   );
+   // Fetch departments for filter dropdown on mount (admin-only view)
+   useEffect(() => {
+      if (userDetails?.roleId !== RoleId.HOD && userDetails?.roleId !== RoleId.MEMBER) {
+         dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
+      }
+   }, [dispatch, userDetails?.roleId]);
 
    useEffect(() => {
-      fetchRequests();
-   }, [fetchRequests]);
-
-   const handleChangePage = (page: number) => {
-      fetchRequests(page);
-   };
+      if (userDetails?.roleId === RoleId.HOD) {
+         dispatch(
+            requestActions.getDepartmentRequests({
+               departmentId: userDetails?.departmentId ?? 0,
+               page: currentPage,
+            }) as unknown as UnknownAction,
+         );
+      } else if (userDetails?.roleId === RoleId.MEMBER) {
+         dispatch(
+            requestActions.getAssignedRequests({
+               userId: userDetails?.id ?? 0,
+               page: currentPage,
+            }) as unknown as UnknownAction,
+         );
+      } else {
+         dispatch(
+            requestActions.getAllRequests({
+               page: currentPage,
+               limit: 10,
+               search: searchQuery || undefined,
+               requestStatus: filterValues.requestStatus || undefined,
+               departmentId: filterValues.departmentId ? Number(filterValues.departmentId) : undefined,
+               assigneeId: filterValues.assigneeId ? Number(filterValues.assigneeId) : undefined,
+            }) as unknown as UnknownAction,
+         );
+      }
+   }, [dispatch, userDetails, currentPage, searchQuery, filterValues]); // eslint-disable-line react-hooks/exhaustive-deps
 
    const handleRowClick = (row: Request) => {
       router.push(
@@ -81,10 +84,12 @@ const Requests = () => {
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
+      setCurrentPage(1);
    };
 
    const handleFilterChange = (key: string, value: string) => {
       setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1);
    };
 
    const handleExport = async (from: string, to: string) => {
@@ -152,9 +157,16 @@ const Requests = () => {
       },
    ];
 
+   const isAdminView = userDetails?.roleId !== RoleId.HOD && userDetails?.roleId !== RoleId.MEMBER;
+
+   const departmentOptions = (allDepartmentsList ?? []).map((d: { id: number; name: string }) => ({
+      value: String(d.id),
+      label: d.name,
+   }));
+
    const filters: FilterDef[] = [
       {
-         key: 'status',
+         key: 'requestStatus',
          label: 'Status',
          options: [
             { value: 'Pending', label: 'Pending' },
@@ -163,26 +175,23 @@ const Requests = () => {
             { value: 'Collected', label: 'Collected' },
             { value: 'Completed', label: 'Completed' },
             { value: 'Declined', label: 'Declined' },
+            { value: 'Cancelled', label: 'Cancelled' },
+            { value: 'Submitted', label: 'Submitted' },
          ],
       },
+      ...(isAdminView
+         ? [
+              {
+                 key: 'departmentId',
+                 label: 'Department',
+                 options: departmentOptions,
+              },
+           ]
+         : []),
    ];
 
-   const filteredRequests = (allRequestsList ?? []).filter((req: Request) => {
-      if (searchQuery) {
-         const query = searchQuery.toLowerCase();
-         const matchesSearch =
-            req.requesterName?.toLowerCase().includes(query) ||
-            req.requesterEmail?.toLowerCase().includes(query) ||
-            req.ministryName?.toLowerCase().includes(query) ||
-            req.churchName?.toLowerCase().includes(query) ||
-            req.requestStatus?.toLowerCase().includes(query);
-         if (!matchesSearch) return false;
-      }
-      if (filterValues.status) {
-         if (req.requestStatus !== filterValues.status) return false;
-      }
-      return true;
-   });
+   // Server-side filtered — data returned directly from the API
+   const filteredRequests = allRequestsList ?? [];
 
    const columns: Column<Request>[] = [
       {
@@ -286,7 +295,7 @@ const Requests = () => {
                         itemsPerPage,
                         totalPages,
                      }}
-                     onPageChange={handleChangePage}
+                     onPageChange={setCurrentPage}
                      emptyTitle="No requests found"
                   />
                </div>

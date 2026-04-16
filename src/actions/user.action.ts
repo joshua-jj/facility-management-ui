@@ -3,7 +3,15 @@ import { CreateUserForm, UpdateUserRoleForm, UserStatusForm } from '@/types';
 
 export interface GetUsersAction {
   type: typeof userConstants.GET_USERS;
-  data?: { page: number };
+  data?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    roleId?: number;
+    departmentId?: number;
+    gender?: string;
+  };
 }
 
 export interface SearchUserAction {
@@ -30,7 +38,15 @@ export interface UserStatusAction {
   data: UserStatusForm;
 }
 
-const getUsers = (data?: { page: number }): GetUsersAction => ({
+const getUsers = (data?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  roleId?: number;
+  departmentId?: number;
+  gender?: string;
+}): GetUsersAction => ({
   type: userConstants.GET_USERS,
   data,
 });

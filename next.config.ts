@@ -2,12 +2,21 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  webpack(config) {
+  webpack(config, { dev }) {
     config.module.rules.push({
       test: /\.svg$/,
       issuer: /\.[jt]sx?$/,
       use: ['@svgr/webpack'],
     });
+
+    // In dev, use in-memory webpack cache instead of filesystem cache.
+    // The filesystem cache has been racing with itself (ENOENT on .pack.gz renames,
+    // causing "Cannot find module './chunks/vendor-chunks/next.js'") — likely due to
+    // the project path containing a space ("EGFM project/"), which trips webpack's
+    // rename-on-commit logic on macOS. Memory cache is plenty fast for dev.
+    if (dev) {
+      config.cache = { type: 'memory' };
+    }
 
     return config;
   },

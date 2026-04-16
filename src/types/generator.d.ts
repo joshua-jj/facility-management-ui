@@ -24,10 +24,10 @@ export interface GeneratorConstants {
 }
 export interface GeneratorForm {
   id?: number;
-  nameOfMeeting: string;
+  meetingId: number;
+  locationId: number;
   generatorTypeId: number;
   generatorType?: string;
-  meetingLocation: string;
   dieselLevelOn: number;
   dieselLevelOff: number;
   // dueForService?: boolean;
@@ -44,9 +44,13 @@ export interface GeneratorForm {
 
 export interface GeneratorLog {
   id: number;
-  nameOfMeeting: string;
+  meeting?: { id: number; name: string };
+  location?: { id: number; name: string };
+  /** @deprecated use meeting.name */
+  nameOfMeeting?: string;
+  /** @deprecated use location.name */
+  meetingLocation?: string;
   generatorType: string;
-  meetingLocation: string;
   onTime: string;
   offTime: string;
   // hoursUsed: string;

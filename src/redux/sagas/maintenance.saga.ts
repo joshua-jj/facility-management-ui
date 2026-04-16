@@ -17,11 +17,15 @@ function* getMaintenanceLogs({ data }: GetMaintenanceLogsAction) {
   yield put({ type: maintenanceConstants.REQUEST_GET_MAINTENANCE_LOGS });
 
   try {
-    let logsUri = `${maintenanceConstants.MAINTENANCE_URI}`;
+    const params = new URLSearchParams();
+    params.set('page', String(data?.page ?? 1));
+    params.set('limit', '10');
+    if (data?.status) params.set('status', data.status);
+    if (data?.servicedItem) params.set('servicedItem', data.servicedItem);
+    if (data?.dateFrom) params.set('dateFrom', data.dateFrom);
+    if (data?.dateTo) params.set('dateTo', data.dateTo);
 
-    if (data?.page) {
-      logsUri = `${logsUri}?page=${data.page}`;
-    }
+    const logsUri = `${maintenanceConstants.MAINTENANCE_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(logsUri, { method: 'GET' });
     if (!jsonResponse) return;

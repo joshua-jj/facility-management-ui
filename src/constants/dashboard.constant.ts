@@ -1,5 +1,7 @@
 import { appConstants } from './app.constant';
 
+const dashboard: string = 'dashboard';
+
 export const dashboardConstants = {
   GET_DASHBOARD_STATS: 'GET_DASHBOARD_STATS',
   REQUEST_GET_DASHBOARD_STATS: 'REQUEST_GET_DASHBOARD_STATS',
@@ -11,5 +13,6 @@ export const dashboardConstants = {
   GET_DASHBOARD_ANALYTICS_SUCCESS: 'GET_DASHBOARD_ANALYTICS_SUCCESS',
   GET_DASHBOARD_ANALYTICS_ERROR: 'GET_DASHBOARD_ANALYTICS_ERROR',
 
-  DASHBOARD_URI: `${appConstants.BASE_URI}dashboard`,
+   DASHBOARD_URI: `${appConstants.BASE_URI}${dashboard}`,
+   DAILY_REPORT_URI: `${appConstants.BASE_URI}${dashboard}/daily-report`,
 };

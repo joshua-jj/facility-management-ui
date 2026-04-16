@@ -1,17 +1,21 @@
-export interface GetDashboardStatsAction {
-   type: string;
+import { dashboardConstants } from '@/constants/dashboard.constant';
+
+interface GetDashboardStatsAction {
+   type: typeof dashboardConstants.GET_DASHBOARD_STATS;
 }
 
-export interface GetDashboardAnalyticsAction {
-   type: string;
+interface GetDashboardAnalyticsAction {
+   type: typeof dashboardConstants.GET_DASHBOARD_ANALYTICS;
+   period?: string;
 }
 
 const getDashboardStats = (): GetDashboardStatsAction => ({
-   type: 'GET_DASHBOARD_STATS',
+   type: dashboardConstants.GET_DASHBOARD_STATS,
 });
 
-const getDashboardAnalytics = (): GetDashboardAnalyticsAction => ({
-   type: 'GET_DASHBOARD_ANALYTICS',
+const getDashboardAnalytics = (period?: string): GetDashboardAnalyticsAction => ({
+   type: dashboardConstants.GET_DASHBOARD_ANALYTICS,
+   period,
 });
 
 export const dashboardActions = {

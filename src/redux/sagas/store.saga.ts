@@ -10,7 +10,12 @@ import {
 
 interface GetStoresAction {
   type: string;
-  data?: { page?: number };
+  data?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  };
 }
 
 function* getStores({ data }: GetStoresAction) {
@@ -18,7 +23,12 @@ function* getStores({ data }: GetStoresAction) {
 
   try {
     const page = data?.page ?? 1;
-    const storeUri = `${storeConstants.STORE_URI}?page=${page}&limit=10`;
+    const limit = data?.limit ?? 10;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.status) params.set('filter', data.status);
+
+    const storeUri = `${storeConstants.STORE_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(storeUri, { method: 'GET' });
     if (!jsonResponse) return;

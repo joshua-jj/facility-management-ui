@@ -1,9 +1,17 @@
 import { maintenanceConstants } from '@/constants';
 import { MaintenanceForm } from '@/types';
 
+export interface MaintenanceLogFilters {
+  page?: number;
+  status?: string;
+  servicedItem?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export interface GetMaintenanceLogsAction {
   type: typeof maintenanceConstants.GET_MAINTENANCE_LOGS;
-  data?: { page: number };
+  data?: MaintenanceLogFilters;
 }
 export interface CreateMaintenanceLogAction {
   type: typeof maintenanceConstants.CREATE_MAINTENANCE_LOG;
@@ -15,9 +23,7 @@ export interface SearchMaintenanceLogAction {
   data: { text: string };
 }
 
-const getMaintenanceLogs = (data?: {
-  page: number;
-}): GetMaintenanceLogsAction => ({
+const getMaintenanceLogs = (data?: MaintenanceLogFilters): GetMaintenanceLogsAction => ({
   type: maintenanceConstants.GET_MAINTENANCE_LOGS,
   data,
 });

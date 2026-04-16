@@ -10,7 +10,13 @@ import {
 
 interface GetDepartmentsAction {
   type: string;
-  data?: { page?: number };
+  data?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    hasHod?: string;
+  };
 }
 
 function* getAllDepartments({ data }: GetDepartmentsAction) {
@@ -18,7 +24,13 @@ function* getAllDepartments({ data }: GetDepartmentsAction) {
 
   try {
     const page = data?.page ?? 1;
-    const departmentUri = `${departmentConstants.DEPARTMENT_URI}?page=${page}&limit=10`;
+    const limit = data?.limit ?? 10;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (data?.search) params.set('search', data.search);
+    if (data?.status) params.set('status', data.status);
+    if (data?.hasHod) params.set('hasHod', data.hasHod);
+
+    const departmentUri = `${departmentConstants.DEPARTMENT_URI}?${params.toString()}`;
 
     const jsonResponse = yield* authenticatedRequest(departmentUri, { method: 'GET' });
     if (!jsonResponse) return;

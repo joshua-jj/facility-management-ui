@@ -1,9 +1,11 @@
 import {
+  CalendarIcon,
   DashboardIcon,
   DepartmentsIcon,
   GeneratorLogIcon,
   ItemsIcon,
   MaintenanceLog,
+  MapPinIcon,
   ReportsIcon,
   RequestsIcon,
   StoreIcon,
@@ -11,7 +13,16 @@ import {
 } from '@/components/Icons';
 import { RoleId, ALL_DATA_ROLES, ADMIN_ROLES } from '@/constants/roles.constant';
 
-export const pageRoutes = [
+export interface PageRoute {
+  id: number;
+  label: string;
+  link: string;
+  icon: React.ReactNode;
+  allowedRoles: readonly number[];
+  section?: string;
+}
+
+export const pageRoutes: PageRoute[] = [
   {
     id: 1,
     label: 'dashboard',
@@ -49,38 +60,61 @@ export const pageRoutes = [
   },
   {
     id: 6,
+    label: 'meeting locations',
+    link: '/admin/meeting-locations',
+    icon: <MapPinIcon />,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+  },
+  {
+    id: 12,
+    label: 'meetings',
+    link: '/admin/meetings',
+    icon: <CalendarIcon />,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+  },
+  {
+    id: 7,
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
     allowedRoles: ADMIN_ROLES,
   },
   {
-    id: 7,
+    id: 8,
     label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
     allowedRoles: ADMIN_ROLES,
   },
   {
-    id: 8,
+    id: 9,
     label: 'reports',
     link: '/admin/reports',
     icon: <ReportsIcon />,
     allowedRoles: ADMIN_ROLES,
   },
   {
-    id: 9,
+    id: 10,
     label: 'users management',
     link: '/admin/users',
     icon: <UsersIcon />,
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
   {
-    id: 10,
-    label: 'account settings',
-    link: '/admin/account-settings',
+    id: 13,
+    label: 'roles',
+    link: '/admin/roles',
     icon: <UsersIcon />,
-    allowedRoles: ALL_DATA_ROLES,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+    section: 'Platform',
+  },
+  {
+    id: 14,
+    label: 'permissions',
+    link: '/admin/permissions',
+    icon: <UsersIcon />,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+    section: 'Platform',
   },
 ];
 
@@ -100,6 +134,10 @@ export const getPageNames = (link: string) => {
       return 'store';
     case '/admin/departments':
       return 'departments';
+    case '/admin/meeting-locations':
+      return 'meeting locations';
+    case '/admin/meetings':
+      return 'meetings';
     case '/admin/maintenance-log':
       return 'maintenance log';
     case '/admin/generator-log':
@@ -108,6 +146,16 @@ export const getPageNames = (link: string) => {
       return 'reports';
     case '/admin/users':
       return 'user management';
+    case '/admin/roles':
+      return 'roles';
+    case '/admin/roles/new':
+      return 'roles';
+    case '/admin/roles/[id]':
+      return 'roles';
+    case '/admin/roles/[id]/users':
+      return 'roles';
+    case '/admin/permissions':
+      return 'permissions';
     case '/admin/account-settings':
       return 'account settings';
     default:
