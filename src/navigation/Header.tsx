@@ -19,14 +19,7 @@ import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
 import { ADMIN_ROLES, RoleIdValue } from '@/constants/roles.constant';
 import ThemeToggle from '@/components/ThemeToggle';
-import { getPageNames } from '@/navigation/pageRoutes';
 import { motion } from 'framer-motion';
-
-const titleCase = (str: string) =>
-   str
-      .split(' ')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
 
 const Header = () => {
    const router = useRouter();
@@ -48,9 +41,6 @@ const Header = () => {
    };
 
    const isAdminRole = ADMIN_ROLES.includes(userDetails?.roleId as RoleIdValue);
-
-   const rawPageName = getPageNames(pathname);
-   const pageName = rawPageName ? titleCase(rawPageName) : 'Admin';
 
    // Close dropdowns on outside click
    useEffect(() => {
