@@ -4,17 +4,19 @@ import { Action, Department, LoadingState, PaginationState } from '@/types';
 import { updateObject } from '@/utilities/reducerUtility';
 
 interface DepartmentsAction extends Action {
-  departments: {
-    items: Department[];
-    links: { [key: string]: string | number | null };
-    meta: {
-      currentPage: number;
-      itemCount: number;
-      itemsPerPage: number;
-      totalItems: number;
-      totalPages: number;
-    };
-  };
+  departments:
+    | {
+        items: Department[];
+        links: { [key: string]: string | number | null };
+        meta: {
+          currentPage: number;
+          itemCount: number;
+          itemsPerPage: number;
+          totalItems: number;
+          totalPages: number;
+        };
+      }
+    | Department[];
 }
 
 type DepartmentsListState = Department[];
@@ -55,7 +57,9 @@ const allDepartmentsList = (
 ): DepartmentsListState => {
   switch (action.type) {
     case departmentConstants.GET_ALL_DEPARTMENTS_SUCCESS:
-      return action.departments?.items ?? state;
+      return (action.departments as { items: Department[] })?.items ?? state;
+    case departmentConstants.GET_UNPAGINATED_DEPARTMENTS_SUCCESS:
+      return (action.departments as Department[]) ?? state;
     default:
       return state;
   }
@@ -70,10 +74,15 @@ const pagination = (
 ): PaginationState => {
   switch (action.type) {
     case departmentConstants.GET_ALL_DEPARTMENTS_SUCCESS: {
-      if (!action.departments?.meta) return state;
+      const depts = action.departments as {
+        items: Department[];
+        links: { [key: string]: string | number | null };
+        meta: { currentPage: number; itemCount: number; itemsPerPage: number; totalItems: number; totalPages: number };
+      };
+      if (!depts?.meta) return state;
       return updateObject(state, {
-        links: action.departments.links,
-        meta: action.departments.meta,
+        links: depts.links,
+        meta: depts.meta,
       });
     }
     default:
@@ -81,8 +90,24 @@ const pagination = (
   }
 };
 
+const IsRequestingUnpaginatedDepartments = (
+  state: LoadingState = false,
+  action: Action,
+): LoadingState => {
+  switch (action.type) {
+    case departmentConstants.REQUEST_GET_UNPAGINATED_DEPARTMENTS:
+      return true;
+    case departmentConstants.GET_UNPAGINATED_DEPARTMENTS_SUCCESS:
+    case departmentConstants.GET_UNPAGINATED_DEPARTMENTS_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   IsRequestingDepartments,
+  IsRequestingUnpaginatedDepartments,
   IsCreatingDepartment,
   allDepartmentsList,
   pagination,

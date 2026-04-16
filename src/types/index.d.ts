@@ -1,6 +1,5 @@
 export * from './app';
 export * from './authentication';
-export * from './dashboard';
 export * from './department';
 export * from './forgotPassword';
 export * from './generator';
