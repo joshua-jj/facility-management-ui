@@ -37,9 +37,9 @@ const AddDepartment: React.FC<AddItemModalProps> = ({ className, children }) => 
 
    return (
       <>
-         <button className={className} onClick={openModal}>
-            {children}
-         </button>
+         <span className={className} onClick={openModal} role="button" tabIndex={0}>
+
+         </span>
 
          <ModalWrapper
             open={isModalOpen}

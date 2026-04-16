@@ -58,9 +58,9 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
 
    return (
       <>
-         <button className={className} onClick={openModal}>
-            {children}
-         </button>
+         <span className={className} onClick={openModal} role="button" tabIndex={0}>
+
+         </span>
 
          <ModalWrapper
             open={open || isModalOpen}

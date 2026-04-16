@@ -168,9 +168,9 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
 
    return (
       <>
-         <button className={className} onClick={openModal}>
-            {children}
-         </button>
+         <span className={className} onClick={openModal} role="button" tabIndex={0}>
+
+         </span>
 
          <ModalWrapper
             open={isOpen}

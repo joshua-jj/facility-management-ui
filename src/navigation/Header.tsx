@@ -99,24 +99,7 @@ const Header = () => {
                transition={{ duration: 0.25, ease: 'easeOut' }}
                className="h-16 md:h-[4.5rem] sticky top-0 z-[5001] px-4 md:px-8 border-b border-[var(--border-default)] bg-[var(--surface-paper)] text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition-colors duration-300"
             >
-               <div className="flex items-center justify-between h-full w-full">
-                  {/* Left: breadcrumb + page title */}
-                  <div className="flex flex-col justify-center min-w-0">
-                     <div className="flex items-center gap-1 text-xs leading-none mb-[3px]">
-                        <Link
-                           href="/admin/dashboard"
-                           className="text-[var(--text-hint)] hover:text-[var(--text-secondary)] transition-colors"
-                        >
-                           Admin
-                        </Link>
-                        <span className="text-[var(--text-hint)]">/</span>
-                        <span className="text-[var(--text-primary)] font-medium">{pageName}</span>
-                     </div>
-                     <h1 className="text-lg md:text-xl font-semibold leading-tight text-[var(--text-primary)] truncate">
-                        {pageName}
-                     </h1>
-                  </div>
-
+               <div className="flex items-center justify-end h-full w-full">
                   {/* Right: actions */}
                   <div className="flex items-center gap-3">
                      {/* Add Item dropdown — desktop */}
