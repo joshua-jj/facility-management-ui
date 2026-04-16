@@ -71,7 +71,7 @@ const SegmentedBar: React.FC<SegmentedBarProps> = ({
                         overflow: 'hidden',
                         flexShrink: 0,
                      }}
-                     title={`${seg.label}: ${seg.value} (${Math.round(pct)}%)`}
+                     title={`${seg.label}: ${seg.value.toLocaleString()} (${Math.round(pct)}%)`}
                   >
                      {showLabel && (
                         <span
@@ -128,7 +128,7 @@ const SegmentedBar: React.FC<SegmentedBarProps> = ({
                         >
                            {seg.label}{' '}
                            <span style={{ color: 'var(--text-hint)' }}>
-                              {seg.value} ({pct}%)
+                              {seg.value.toLocaleString()} ({pct}%)
                            </span>
                         </span>
                      </div>

@@ -857,7 +857,7 @@ const Dashboard = () => {
                                              className="text-[0.65rem] font-bold tabular-nums"
                                              style={{ color: log.faultDetected ? '#ef4444' : '#B88C00' }}
                                           >
-                                             {hours}h
+                                             {hours.toLocaleString()}h
                                           </span>
                                        </div>
                                     </div>

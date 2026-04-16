@@ -213,7 +213,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                   whiteSpace: 'nowrap',
                }}
             >
-               <strong>{tooltip.date}</strong>: {tooltip.count}
+               <strong>{tooltip.date}</strong>: {tooltip.count.toLocaleString()}
             </div>
          )}
       </div>
