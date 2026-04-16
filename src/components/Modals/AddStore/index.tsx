@@ -56,7 +56,7 @@ const AddStore: React.FC<AddItemModalProps> = ({ className, children, store, ope
    return (
       <>
          <span className={className} onClick={openModal} role="button" tabIndex={0}>
-
+            {children}
          </span>
 
          <ModalWrapper
