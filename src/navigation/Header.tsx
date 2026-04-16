@@ -1,9 +1,6 @@
 import { authActions } from '@/actions';
-import { BellIcon, BurgerMenuIcon, CaretIcon } from '@/components/Icons';
+import { BellIcon } from '@/components/Icons';
 import LetteredAvatar from '@/components/LetteredAvatar';
-import AddDepartment from '@/components/Modals/AddDepartment';
-import AddItem from '@/components/Modals/AddItem';
-import AddStore from '@/components/Modals/AddStore';
 import { RootState } from '@/redux/reducers';
 import { useRouter } from 'next/router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -15,9 +12,6 @@ import Link from 'next/link';
 import Report from '@/components/Modals/Report';
 import { useIsAuthRoute } from '@/hooks';
 
-import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
-import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
-import { ADMIN_ROLES, RoleIdValue } from '@/constants/roles.constant';
 import ThemeToggle from '@/components/ThemeToggle';
 import { motion } from 'framer-motion';
 
@@ -28,10 +22,8 @@ const Header = () => {
    const authRoutes = useIsAuthRoute();
    const { userDetails } = useSelector((s: RootState) => s.user);
    const [profileDropdown, setProfileDropdown] = useState(false);
-   const [dropdown, setDropdown] = useState(false);
    const [bellDropdown, setBellDropdown] = useState(false);
 
-   const dropdownRef = useRef<HTMLDivElement>(null);
    const profileRef = useRef<HTMLDivElement>(null);
    const bellRef = useRef<HTMLDivElement>(null);
 
@@ -40,14 +32,9 @@ const Header = () => {
       dispatch(authActions.logout() as unknown as UnknownAction);
    };
 
-   const isAdminRole = ADMIN_ROLES.includes(userDetails?.roleId as RoleIdValue);
-
    // Close dropdowns on outside click
    useEffect(() => {
       const handleMouseDown = (e: MouseEvent) => {
-         if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-            setDropdown(false);
-         }
          if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
             setProfileDropdown(false);
          }
@@ -92,72 +79,6 @@ const Header = () => {
                <div className="flex items-center justify-end h-full w-full">
                   {/* Right: actions */}
                   <div className="flex items-center gap-3">
-                     {/* Add Item dropdown — desktop */}
-                     {isAdminRole && (
-                        <div className="relative inline-block" ref={dropdownRef}>
-                           <button
-                              onClick={() => setDropdown((prev) => !prev)}
-                              aria-expanded={dropdown}
-                              aria-haspopup="true"
-                              className="hidden md:flex items-center gap-x-2 px-4 py-2 text-xs font-semibold text-white bg-[#B28309] hover:bg-[#9a7008] active:scale-95 transition-all rounded-lg cursor-pointer press-effect"
-                           >
-                              Add Item
-                              <CaretIcon className="rotate-90 opacity-80" />
-                           </button>
-
-                           {/* Mobile burger: opens same add-item menu */}
-                           <button
-                              onClick={() => setDropdown((prev) => !prev)}
-                              aria-expanded={dropdown}
-                              aria-haspopup="true"
-                              className="flex md:hidden items-center justify-center h-9 w-9 rounded-lg border border-[var(--border-default)] bg-[var(--surface-paper)] hover:bg-[var(--surface-low)] transition-colors cursor-pointer"
-                           >
-                              <BurgerMenuIcon className="text-[var(--text-primary)]" />
-                           </button>
-
-                           {dropdown && (
-                              <ul
-                                 role="menu"
-                                 className="absolute right-0 mt-1 p-1 min-w-[11rem] bg-[var(--surface-paper)] shadow-[var(--shadow-sm)] border border-[var(--border-default)] rounded-lg animate-dropdown-enter z-10"
-                              >
-                                 <li role="menuitem" className="hover:bg-[var(--surface-low)] transition rounded-md text-xs text-[var(--text-primary)]">
-                                    <AddItem className="text-start w-full px-3 py-2 capitalize cursor-pointer">
-                                       add item
-                                    </AddItem>
-                                 </li>
-                                 {isAdminRole && (
-                                    <li role="menuitem" className="hover:bg-[var(--surface-low)] transition rounded-md text-xs text-[var(--text-primary)]">
-                                       <AddStore className="text-start w-full px-3 py-2 capitalize cursor-pointer">
-                                          create store
-                                       </AddStore>
-                                    </li>
-                                 )}
-                                 {isAdminRole && (
-                                    <li role="menuitem" className="hover:bg-[var(--surface-low)] transition rounded-md text-xs text-[var(--text-primary)]">
-                                       <AddDepartment className="text-start w-full px-3 py-2 capitalize cursor-pointer">
-                                          create department
-                                       </AddDepartment>
-                                    </li>
-                                 )}
-                                 {isAdminRole && (
-                                    <li role="menuitem" className="hover:bg-[var(--surface-low)] transition rounded-md text-xs text-[var(--text-primary)]">
-                                       <AddMaintenanceLog className="text-start w-full px-3 py-2 capitalize cursor-pointer">
-                                          maintenance log
-                                       </AddMaintenanceLog>
-                                    </li>
-                                 )}
-                                 {isAdminRole && (
-                                    <li role="menuitem" className="hover:bg-[var(--surface-low)] transition rounded-md text-xs text-[var(--text-primary)]">
-                                       <AddGeneratorLog className="text-start w-full px-3 py-2 capitalize cursor-pointer">
-                                          generator log
-                                       </AddGeneratorLog>
-                                    </li>
-                                 )}
-                              </ul>
-                           )}
-                        </div>
-                     )}
-
                      {/* Notification bell */}
                      <div className="relative" ref={bellRef}>
                         <button
