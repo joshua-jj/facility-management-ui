@@ -40,12 +40,47 @@ export interface DashboardGeneratorLog {
    createdAt: string;
 }
 
+export interface SparklinePoint {
+   date: string;
+   count: number;
+}
+
+export interface TopDepartmentByRequests {
+   departmentId: number;
+   departmentName: string;
+   count: number;
+}
+
+export interface TopRequestedItem {
+   itemId: number;
+   itemName: string;
+   count: number;
+}
+
+export interface TopArtisanByCost {
+   artisanName: string;
+   totalCost: number;
+   logCount: number;
+}
+
+export interface GeneratorTrendPoint {
+   date: string;
+   hours: number;
+}
+
+export interface GeneratorFaultPoint {
+   date: string;
+   count: number;
+}
+
 export interface GeneratorStats {
    totalLogs: number;
    avgHours: number;
    faultCount: number;
    dueForServiceCount: number;
    recentLogs: DashboardGeneratorLog[];
+   hoursUsedTrend?: GeneratorTrendPoint[];
+   faultFrequency?: GeneratorFaultPoint[];
 }
 
 export interface ComplaintByStatus {
@@ -81,4 +116,15 @@ export interface DashboardAnalytics {
    complaintsByStatus: ComplaintByStatus[];
    maintenanceCostTrend: MaintenanceCostTrendItem[];
    recentMaintenanceLogs: DashboardMaintenanceLog[];
+   // New sparkline fields (14-day)
+   requestsSparkline?: SparklinePoint[];
+   itemsSparkline?: SparklinePoint[];
+   reportsSparkline?: SparklinePoint[];
+   usersSparkline?: SparklinePoint[];
+   // Top-N leaderboards
+   topDepartmentsByRequests?: TopDepartmentByRequests[];
+   topRequestedItems?: TopRequestedItem[];
+   topArtisansByCost?: TopArtisanByCost[];
+   // 90-day heatmap
+   requestVolumeHeatmap?: SparklinePoint[];
 }
