@@ -13,10 +13,7 @@ interface AuthLayoutProps {
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({ title, heading, subtitle, children, footer }) => {
-   const { theme, mounted } = useTheme();
-
-   if (!mounted) return null;
-
+   const { theme } = useTheme();
    const isDark = theme === 'dark';
 
    return (
