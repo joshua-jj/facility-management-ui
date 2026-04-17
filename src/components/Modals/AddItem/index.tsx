@@ -152,9 +152,9 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
 
    return (
       <>
-         <button className={className} onClick={openModal}>
+         <span className={className} onClick={openModal} role="button" tabIndex={0}>
             {children}
-         </button>
+         </span>
 
          <ModalWrapper
             open={open || isModalOpen}

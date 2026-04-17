@@ -129,6 +129,7 @@ const Stores = () => {
    const handleToggleStatus = (store: Store) => {
       const isActive = String(store.status).toUpperCase() === 'A' || String(store.status).toUpperCase() === 'ACTIVE';
       if (isActive) {
+         if (!window.confirm(`Deactivate store "${store.name}"? It will no longer be available for item assignments.`)) return;
          dispatch(storeActions.deactivateStore({ ids: [store.id] }) as unknown as UnknownAction);
       } else {
          dispatch(storeActions.activateStore({ ids: [store.id] }) as unknown as UnknownAction);

@@ -19,7 +19,7 @@ const ForgotPassword: FC = () => {
    );
    const dispatch = useDispatch();
    const { IsSendingResetPasswordLink } = useSelector((s: RootState) => s.forgotPassword);
-   const { theme, mounted } = useTheme();
+   const { theme } = useTheme();
 
    const [email, setEmail] = useState('');
    const [emailError, setEmailError] = useState('');
@@ -61,9 +61,6 @@ const ForgotPassword: FC = () => {
       return () => listener.remove();
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
-
-   if (!mounted) return null;
-
    return (
       <AuthLayout
          title="Forgot Password | EGFM - Facility Management System"

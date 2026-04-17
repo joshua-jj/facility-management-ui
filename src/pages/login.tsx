@@ -22,7 +22,7 @@ const Login: FC = () => {
   );
   const dispatch = useDispatch();
   const { IsLoggingIn } = useSelector((s: RootState) => s.auth);
-  const { theme, mounted } = useTheme();
+  const { theme } = useTheme();
 
   const [passwordShow, setPasswordShow] = useState<boolean>(false);
   const [email, setEmail] = useState('');
@@ -84,9 +84,6 @@ const Login: FC = () => {
     return () => listener.remove();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  if (!mounted) return null;
-
   return (
     <>
       <Head>

@@ -21,7 +21,7 @@ const ChangePassword: FC = () => {
 
    const dispatch = useDispatch();
    const { IsChangingPassword } = useSelector((s: RootState) => s.auth);
-   const { theme, mounted } = useTheme();
+   const { theme } = useTheme();
 
    const [oldPassword, setOldPassword] = useState('');
    const [newPassword, setNewPassword] = useState('');
@@ -76,9 +76,6 @@ const ChangePassword: FC = () => {
       return () => listener.remove();
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
-
-   if (!mounted) return null;
-
    return (
       <>
          <Head>

@@ -15,13 +15,28 @@ export interface DepartmentConstants {
   GET_UNPAGINATED_DEPARTMENTS: string;
   CREATE_DEPARTMENT: string;
 
+  UPDATE_DEPARTMENT: string;
+  REQUEST_UPDATE_DEPARTMENT: string;
+  UPDATE_DEPARTMENT_SUCCESS: string;
+  UPDATE_DEPARTMENT_ERROR: string;
+
+  ACTIVATE_DEPARTMENT: string;
+  REQUEST_ACTIVATE_DEPARTMENT: string;
+  ACTIVATE_DEPARTMENT_SUCCESS: string;
+  ACTIVATE_DEPARTMENT_ERROR: string;
+
+  DEACTIVATE_DEPARTMENT: string;
+  REQUEST_DEACTIVATE_DEPARTMENT: string;
+  DEACTIVATE_DEPARTMENT_SUCCESS: string;
+  DEACTIVATE_DEPARTMENT_ERROR: string;
+
   DEPARTMENT_URI: string;
 }
 export interface DepartmentForm {
-  // hodEmail: string;
-  // hodName: string;
-  // hodPhone: string;
   name: string;
+  hodName?: string;
+  hodEmail?: string;
+  hodPhone?: string;
 }
 
 export interface Department {
@@ -32,6 +47,10 @@ export interface Department {
   name: string;
   itemCount: number;
   status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 export interface DepartmentState {
   departments: Department[];
@@ -42,7 +61,5 @@ export interface DepartmentState {
   department: Department | null;
   departmentForm: DepartmentForm;
   pagination: PaginationState;
-  loadingState: LoadingState;
-  paginationState: PaginationState;
   loadingState: LoadingState;
 }

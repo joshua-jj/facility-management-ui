@@ -1,11 +1,20 @@
+export interface RequestsByStatus {
+   status: string;
+   count: number;
+}
+
+export interface ItemsByCondition {
+   condition: string;
+   count: number;
+}
+
 export interface DashboardStats {
-   totalItems: number;
    totalRequests: number;
-   totalReports: number;
    dueReturns: number;
-   itemsByCondition: { condition: string; count: string }[];
-   requestsByStatus: { status: string; count: string }[];
-   recentRequests: unknown[];
+   totalReports: number;
+   totalItems: number;
+   requestsByStatus: RequestsByStatus[];
+   itemsByCondition: ItemsByCondition[];
 }
 
 export interface RequestTrendItem {
@@ -31,43 +40,91 @@ export interface DashboardGeneratorLog {
    createdAt: string;
 }
 
+export interface SparklinePoint {
+   date: string;
+   count: number;
+}
+
+export interface TopDepartmentByRequests {
+   departmentId: number;
+   departmentName: string;
+   count: number;
+}
+
+export interface TopRequestedItem {
+   itemId: number;
+   itemName: string;
+   count: number;
+}
+
+export interface TopArtisanByCost {
+   artisanName: string;
+   totalCost: number;
+   logCount: number;
+}
+
+export interface GeneratorTrendPoint {
+   date: string;
+   hours: number;
+}
+
+export interface GeneratorFaultPoint {
+   date: string;
+   count: number;
+}
+
 export interface GeneratorStats {
    totalLogs: number;
-   totalHours: number;
    avgHours: number;
    faultCount: number;
    dueForServiceCount: number;
    recentLogs: DashboardGeneratorLog[];
+   hoursUsedTrend?: GeneratorTrendPoint[];
+   faultFrequency?: GeneratorFaultPoint[];
+}
+
+export interface ComplaintByStatus {
+   status: string;
+   count: number;
+}
+
+export interface MaintenanceCostTrendItem {
+   month: string;
+   totalCost: string;
+}
+
+export interface DashboardMaintenanceLog {
+   id: number;
+   artisanName: string;
+   description: string;
+   costOfMaintenance: string;
+   maintenanceDate: string;
+}
+
+export interface ItemAvailability {
+   available: number;
+   unavailable: number;
 }
 
 export interface DashboardAnalytics {
    totalUsers: number;
    totalItemUnits: number;
-   itemAvailability: { available: string; total: string };
-   requestTrend: { month: string; count: string }[];
-   complaintsByStatus: { status: string; count: string }[];
+   itemAvailability: ItemAvailability;
+   requestTrend: RequestTrendItem[];
+   upcomingSchedules: UpcomingSchedule[];
    generatorStats: GeneratorStats;
-   maintenanceCostTrend: { month: string; count: string; totalCost: string }[];
-   upcomingSchedules: {
-      id: number;
-      title: string;
-      description: string;
-      scheduledDate: string;
-      scheduleStatus: string;
-   }[];
-   recentMaintenanceLogs: {
-      id: number;
-      maintenanceDate: string;
-      description: string;
-      costOfMaintenance: string;
-      artisanName: string;
-   }[];
-   topDepartments: { departmentId: string; count: string }[];
-}
-
-export interface DashboardState {
-   IsFetchingDashboardStats: boolean;
-   IsFetchingDashboardAnalytics: boolean;
-   dashboardStats: DashboardStats | null;
-   dashboardAnalytics: DashboardAnalytics | null;
+   complaintsByStatus: ComplaintByStatus[];
+   maintenanceCostTrend: MaintenanceCostTrendItem[];
+   recentMaintenanceLogs: DashboardMaintenanceLog[];
+   // New sparkline fields (14-day)
+   requestsSparkline?: SparklinePoint[];
+   itemsSparkline?: SparklinePoint[];
+   reportsSparkline?: SparklinePoint[];
+   usersSparkline?: SparklinePoint[];
+   // Top-N leaderboards
+   topDepartmentsByRequests?: TopDepartmentByRequests[];
+   topRequestedItems?: TopRequestedItem[];
+   topArtisansByCost?: TopArtisanByCost[];
+   // 90-day heatmap
+   requestVolumeHeatmap?: SparklinePoint[];
 }

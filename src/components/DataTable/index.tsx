@@ -344,7 +344,11 @@ export function DataTable<T extends Record<string, any>>({
                                        }`}
                                        style={{ color: 'var(--text-primary)' }}
                                     >
-                                       {col.render ? col.render(val, row, rowIndex) : String(val ?? '')}
+                                       {col.render
+                                          ? col.render(val, row, rowIndex)
+                                          : val != null && String(val) !== ''
+                                            ? String(val)
+                                            : <span style={{ color: 'var(--text-hint)', opacity: 0.5 }}>{'\u2014'}</span>}
                                     </td>
                                  );
                               })}

@@ -68,7 +68,7 @@ export const getServerSideProps: GetServerSideProps<VerifyUserProps> = async (ct
 const VerifyUserPage: NextPage<VerifyUserProps> = ({ success, message, accessToken }) => {
    const dispatch = useDispatch();
    const { IsResendingEmail } = useSelector((s: RootState) => s.auth);
-   const { theme, mounted } = useTheme();
+   const { theme } = useTheme();
 
    const router = useRouter();
    const { email } = router.query;
@@ -85,9 +85,6 @@ const VerifyUserPage: NextPage<VerifyUserProps> = ({ success, message, accessTok
    const handleLogin = () => {
       router.push('/login');
    };
-
-   if (!mounted) return null;
-
    const heading = success ? 'Email verification successful' : 'Email verification failed';
 
    return (
