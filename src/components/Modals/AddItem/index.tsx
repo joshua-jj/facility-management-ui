@@ -154,6 +154,19 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       return () => listener.remove();
    }, [closeModal]);
 
+   useEffect(() => {
+      const listener = AppEmitter.addListener(itemConstants.UPDATE_ITEM_BASIC_SUCCESS, () => {
+         closeModal();
+         // Refresh the items list
+         if (userDetails?.roleId !== 3) {
+            dispatch(itemActions.getAllItems({ page: 1, limit: 10 }) as unknown as UnknownAction);
+         } else {
+            dispatch(itemActions.getDepartmentItems({ departmentId: Number(userDetails?.departmentId) }) as unknown as UnknownAction);
+         }
+      });
+      return () => listener.remove();
+   }, [closeModal, dispatch, userDetails]);
+
    return (
       <>
          <span className={className} onClick={openModal} role="button" tabIndex={0}>

@@ -66,7 +66,9 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
 
   try {
     const user = yield* getStoredUser();
-    let itemUri = `${itemConstants.ITEM_URI}/department/${data?.departmentId || (user?.user as Record<string, unknown>)?.departmentId}`;
+    const deptId = data?.departmentId || (user?.user as Record<string, unknown>)?.departmentId;
+    if (!deptId) return; // Guard: skip fetch if no departmentId available
+    let itemUri = `${itemConstants.ITEM_URI}/department/${deptId}`;
     if (data?.page) {
       itemUri = `${itemUri}?page=${data.page}`;
     }
