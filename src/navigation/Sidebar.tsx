@@ -8,8 +8,57 @@ import { RootState } from '@/redux/reducers';
 import Image from 'next/image';
 import { RoleIdValue } from '@/constants/roles.constant';
 import { useTheme } from '@/hooks/useTheme';
+import { motion } from 'framer-motion';
+import LetterAvatar from '@/components/LetteredAvatar';
 
 const SIDEBAR_KEY = 'egfm-sidebar-collapsed';
+
+/** Convert SNAKE_CASE role names to Title Case. e.g. SUPER_ADMIN → Super Admin */
+const formatRoleLabel = (role: string): string => {
+   if (!role) return '';
+   return role
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+const listVariants = {
+   hidden: { opacity: 0 },
+   visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.04, delayChildren: 0.08 },
+   },
+};
+
+const itemVariants = {
+   hidden: { opacity: 0, x: -8 },
+   visible: {
+      opacity: 1,
+      x: 0,
+      transition: { type: 'spring' as const, stiffness: 180, damping: 22 },
+   },
+};
+
+const logoVariants = {
+   hidden: { opacity: 0, y: -8 },
+   visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+};
+
+/** Inline chevron-right SVG */
+const ChevronRight = () => (
+   <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+   >
+      <polyline points="9 18 15 12 9 6" />
+   </svg>
+);
 
 const Sidebar = () => {
    const router = useRouter();
@@ -39,6 +88,13 @@ const Sidebar = () => {
       route.allowedRoles ? route.allowedRoles.includes(userDetails?.roleId as RoleIdValue) : true,
    );
 
+   const fullName =
+      userDetails?.firstName || userDetails?.lastName
+         ? `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim()
+         : null;
+
+   const roleLabel = userDetails?.role ? formatRoleLabel(userDetails.role) : null;
+
    return (
       <div
          className={classNames(
@@ -56,7 +112,12 @@ const Sidebar = () => {
          {/* Logo area */}
          <div className="px-4 py-5">
             <Link href="/" passHref>
-               <div className="inline-flex items-center animate-fade-in-scale">
+               <motion.div
+                  className="inline-flex items-center"
+                  variants={logoVariants}
+                  initial="hidden"
+                  animate="visible"
+               >
                   <div className="shrink-0" style={{ width: 40, height: 40 }}>
                      <Image
                         src="/assets/images/egfm-logo.png"
@@ -77,13 +138,13 @@ const Sidebar = () => {
                         Logistics
                      </span>
                   )}
-               </div>
+               </motion.div>
             </Link>
          </div>
 
          {/* Navigation */}
          <nav className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scrollbar px-2 pt-2">
-            <ul>
+            <motion.ul variants={listVariants} initial="hidden" animate="visible">
                {filteredRoutes?.map((pageRoute, index) => {
                   const isActive = activeRoute(pageRoute?.link);
                   const prevSection = index > 0 ? filteredRoutes[index - 1].section : undefined;
@@ -92,78 +153,143 @@ const Sidebar = () => {
                   return (
                      <React.Fragment key={pageRoute.id}>
                         {showSectionHeader && !collapsed && (
-                           <li
+                           <motion.li
+                              variants={itemVariants}
                               className={classNames(
                                  'mt-4 mb-1 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.1em]',
                                  isDark ? 'text-white/40' : 'text-[#0F2552]/40',
                               )}
                            >
                               {pageRoute.section}
-                           </li>
+                           </motion.li>
                         )}
                         {showSectionHeader && collapsed && (
-                           <li
+                           <motion.li
+                              variants={itemVariants}
                               className={classNames(
                                  'mt-3 mb-1 mx-auto h-[1px] w-6',
                                  isDark ? 'bg-white/15' : 'bg-[#0F2552]/15',
                               )}
                            />
                         )}
-                     <li
-                        className="animate-nav-item mb-1"
-                        style={{ animationDelay: `${0.05 + index * 0.04}s` }}
-                     >
-                        <Link
-                           href={pageRoute?.link}
-                           className={classNames(
-                              'group relative flex items-center rounded-md transition-all duration-200',
-                              collapsed ? 'justify-center py-3 px-0' : 'gap-x-3 py-2.5 px-3',
-                              isActive
-                                 ? isDark
-                                    ? 'bg-white/10 text-[#D4A84B]'
-                                    : 'bg-[#0F2552]/8 text-[#B28309]'
-                                 : isDark
-                                   ? 'text-white/60 hover:text-white hover:bg-white/5'
-                                   : 'text-[#0F2552]/60 hover:text-[#0F2552] hover:bg-[#0F2552]/5',
-                           )}
-                        >
-                           {/* Active indicator — gold left border */}
-                           {isActive && (
-                              <span
-                                 className={classNames(
-                                    'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full',
-                                    isDark ? 'bg-[#D4A84B]' : 'bg-[#B28309]',
-                                 )}
-                                 style={{ height: '60%' }}
-                              />
-                           )}
-
-                           <div
+                        <motion.li variants={itemVariants} className="mb-1">
+                           <Link
+                              href={pageRoute?.link}
                               className={classNames(
-                                 'shrink-0 transition-transform duration-200',
-                                 isActive ? 'scale-100' : 'scale-[0.9] group-hover:scale-100',
+                                 'group relative flex items-center rounded-md transition-all duration-200',
+                                 collapsed ? 'justify-center py-3 px-0' : 'gap-x-3 py-2.5 px-3',
+                                 isActive
+                                    ? isDark
+                                       ? 'bg-white/10 text-[#D4A84B]'
+                                       : 'bg-[#0F2552]/8 text-[#B28309]'
+                                    : isDark
+                                      ? 'text-white/60 hover:text-white hover:bg-white/5'
+                                      : 'text-[#0F2552]/60 hover:text-[#0F2552] hover:bg-[#0F2552]/5',
                               )}
                            >
-                              {pageRoute?.icon}
-                           </div>
+                              {/* Active indicator — gold left border */}
+                              {isActive && (
+                                 <span
+                                    className={classNames(
+                                       'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full',
+                                       isDark ? 'bg-[#D4A84B]' : 'bg-[#B28309]',
+                                    )}
+                                    style={{ height: '60%' }}
+                                 />
+                              )}
 
-                           {!collapsed && (
-                              <span className="capitalize text-[0.8rem] font-medium whitespace-nowrap overflow-hidden">
-                                 {pageRoute?.label}
-                              </span>
-                           )}
+                              {/* Icon with scale micro-interaction */}
+                              <div
+                                 className={classNames(
+                                    'shrink-0 transition-transform duration-200',
+                                    isActive ? 'scale-100' : 'scale-[0.9] group-hover:scale-110',
+                                 )}
+                              >
+                                 {pageRoute?.icon}
+                              </div>
 
-                           {/* Tooltip for collapsed mode */}
-                           {collapsed && (
-                              <span className="sidebar-tooltip">{pageRoute?.label}</span>
-                           )}
-                        </Link>
-                     </li>
+                              {!collapsed && (
+                                 <span className="capitalize text-[0.8rem] font-medium whitespace-nowrap overflow-hidden flex-1">
+                                    {pageRoute?.label}
+                                 </span>
+                              )}
+
+                              {/* Chevron — visible on hover, only when expanded & not active */}
+                              {!collapsed && !isActive && (
+                                 <span
+                                    className={classNames(
+                                       'ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200',
+                                       isDark ? 'text-white/40' : 'text-[#0F2552]/30',
+                                    )}
+                                 >
+                                    <ChevronRight />
+                                 </span>
+                              )}
+
+                              {/* Tooltip for collapsed mode */}
+                              {collapsed && (
+                                 <span className="sidebar-tooltip">{pageRoute?.label}</span>
+                              )}
+                           </Link>
+                        </motion.li>
                      </React.Fragment>
                   );
                })}
-            </ul>
+            </motion.ul>
          </nav>
+
+         {/* User profile block */}
+         {fullName && (
+            <motion.div
+               variants={itemVariants}
+               initial="hidden"
+               animate="visible"
+               className={classNames(
+                  'px-3 py-3',
+                  isDark
+                     ? 'border-t border-white/10'
+                     : 'border-t border-[var(--border-default,#e5e7eb)]',
+               )}
+            >
+               {collapsed ? (
+                  /* Collapsed: just avatar centered with tooltip */
+                  <div className="relative group flex justify-center">
+                     <LetterAvatar name={fullName} size={36} />
+                     <span className="sidebar-tooltip">
+                        {fullName}
+                        {roleLabel && ` · ${roleLabel}`}
+                     </span>
+                  </div>
+               ) : (
+                  /* Expanded: avatar + name + role */
+                  <div className="flex items-center gap-x-3 min-w-0">
+                     <div className="shrink-0">
+                        <LetterAvatar name={fullName} size={36} />
+                     </div>
+                     <div className="flex flex-col min-w-0">
+                        <span
+                           className={classNames(
+                              'text-sm font-semibold truncate leading-tight',
+                              isDark ? 'text-white' : 'text-[var(--text-primary,#0F2552)]',
+                           )}
+                        >
+                           {fullName}
+                        </span>
+                        {roleLabel && (
+                           <span
+                              className={classNames(
+                                 'text-xs truncate leading-tight mt-0.5',
+                                 isDark ? 'text-white/40' : 'text-[var(--text-hint,#6b7280)]',
+                              )}
+                           >
+                              {roleLabel}
+                           </span>
+                        )}
+                     </div>
+                  </div>
+               )}
+            </motion.div>
+         )}
 
          {/* Collapse toggle at bottom */}
          <div

@@ -51,6 +51,39 @@ const IsCreatingDepartment = (
   }
 };
 
+const IsUpdatingDepartment = (
+  state: LoadingState = false,
+  action: Action,
+): LoadingState => {
+  switch (action.type) {
+    case departmentConstants.REQUEST_UPDATE_DEPARTMENT:
+      return true;
+    case departmentConstants.UPDATE_DEPARTMENT_SUCCESS:
+    case departmentConstants.UPDATE_DEPARTMENT_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
+const IsTogglingDepartmentStatus = (
+  state: LoadingState = false,
+  action: Action,
+): LoadingState => {
+  switch (action.type) {
+    case departmentConstants.REQUEST_ACTIVATE_DEPARTMENT:
+    case departmentConstants.REQUEST_DEACTIVATE_DEPARTMENT:
+      return true;
+    case departmentConstants.ACTIVATE_DEPARTMENT_SUCCESS:
+    case departmentConstants.ACTIVATE_DEPARTMENT_ERROR:
+    case departmentConstants.DEACTIVATE_DEPARTMENT_SUCCESS:
+    case departmentConstants.DEACTIVATE_DEPARTMENT_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const allDepartmentsList = (
   state: DepartmentsListState = [],
   action: DepartmentsAction,
@@ -109,6 +142,8 @@ const rootReducer = combineReducers({
   IsRequestingDepartments,
   IsRequestingUnpaginatedDepartments,
   IsCreatingDepartment,
+  IsUpdatingDepartment,
+  IsTogglingDepartmentStatus,
   allDepartmentsList,
   pagination,
 });

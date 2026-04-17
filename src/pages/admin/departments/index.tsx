@@ -29,6 +29,26 @@ const VIEW_ICON = (
    </svg>
 );
 
+const EDIT_ICON = (
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+   </svg>
+);
+
+const DEACTIVATE_ICON = (
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+   </svg>
+);
+
+const ACTIVATE_ICON = (
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+   </svg>
+);
+
 const Departments = () => {
    const dispatch = useDispatch();
    const router = useRouter();
@@ -37,6 +57,8 @@ const Departments = () => {
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [currentPage, setCurrentPage] = useState(1);
+   const [editDepartment, setEditDepartment] = useState<Department | null>(null);
+   const [showEditModal, setShowEditModal] = useState(false);
 
    const { IsRequestingDepartments, allDepartmentsList, pagination } = useSelector((s: RootState) => s.department);
    const { meta } = pagination;
@@ -126,13 +148,36 @@ const Departments = () => {
       }
    };
 
-   const getActions = (row: Department): ActionMenuItem[] => [
-      {
-         label: 'View',
-         icon: VIEW_ICON,
-         onClick: () => router.push(`/admin/departments/${row.id}`),
-      },
-   ];
+   const handleToggleStatus = (row: Department) => {
+      const isActive = String(row.status).toUpperCase() === 'A' || String(row.status).toUpperCase() === 'ACTIVE';
+      if (isActive) {
+         if (!window.confirm(`Deactivate department "${row.name}"? It will no longer be available for assignments.`)) return;
+         dispatch(departmentActions.deactivateDepartment(row.id) as unknown as UnknownAction);
+      } else {
+         dispatch(departmentActions.activateDepartment(row.id) as unknown as UnknownAction);
+      }
+   };
+
+   const getActions = (row: Department): ActionMenuItem[] => {
+      const isActive = String(row.status).toUpperCase() === 'A' || String(row.status).toUpperCase() === 'ACTIVE';
+      return [
+         {
+            label: 'View',
+            icon: VIEW_ICON,
+            onClick: () => router.push(`/admin/departments/${row.id}`),
+         },
+         {
+            label: 'Edit',
+            icon: EDIT_ICON,
+            onClick: () => { setEditDepartment(row); setShowEditModal(true); },
+         },
+         {
+            label: isActive ? 'Deactivate' : 'Activate',
+            icon: isActive ? DEACTIVATE_ICON : ACTIVATE_ICON,
+            onClick: () => handleToggleStatus(row),
+         },
+      ];
+   };
 
    const columns: Column<Department>[] = [
       {
@@ -157,11 +202,16 @@ const Departments = () => {
          key: 'itemCount',
          header: 'Items Count',
          align: 'center',
-         render: (_, row) => (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-               {row.itemCount ?? 0}
-            </span>
-         ),
+         render: (_, row) => {
+            const count = row.itemCount ?? 0;
+            return count > 0 ? (
+               <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                  {count.toLocaleString()}
+               </span>
+            ) : (
+               <span style={{ color: 'var(--text-hint)', opacity: 0.5 }}>{'\u2014'}</span>
+            );
+         },
       },
       {
          key: 'createdBy',
@@ -231,6 +281,14 @@ const Departments = () => {
                loading={isExporting}
                title="Export Departments"
             />
+
+            {editDepartment && (
+               <AddDepartment
+                  initialData={editDepartment}
+                  open={showEditModal}
+                  onClose={() => { setShowEditModal(false); setEditDepartment(null); }}
+               />
+            )}
          </Layout>
       </PrivateRoute>
    );

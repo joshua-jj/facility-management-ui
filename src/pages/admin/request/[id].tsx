@@ -22,7 +22,7 @@ import SmallSelect from '@/components/CustomDropdownSelect/small';
 import { RoleId } from '@/constants/roles.constant';
 import StatusChip from '@/components/StatusChip';
 import { DetailRow, DetailSection } from '@/components/DetailField';
-import { ActionButton } from '@/components/PageHeader';
+import PageHeader, { ActionButton } from '@/components/PageHeader';
 
 const optionsFilter = [
    { value: 'approve', label: 'approve' },
@@ -401,6 +401,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    return (
       <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
          <div className="md:col-span-10 md:col-start-2 space-y-6">
+            <PageHeader title="Request Details" showBreadcrumbs />
             {/* Back button */}
             <button
                onClick={() => router.back()}
@@ -411,6 +412,65 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                </svg>
                Back
             </button>
+
+            {/* Workflow stepper */}
+            {requestDetails?.requestStatus && (() => {
+               const STEPS = [
+                  { label: 'Pending', key: 'Pending' },
+                  { label: 'Approved', key: 'Approved' },
+                  { label: 'Assigned', key: 'Assigned' },
+                  { label: 'Collected', key: 'Collected' },
+                  { label: 'Returned', key: 'Completed' },
+               ];
+               const currentIdx = STEPS.findIndex((s) => s.key === requestDetails.requestStatus);
+               const activeIdx = currentIdx === -1 ? 0 : currentIdx;
+
+               return (
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm px-6 py-4">
+                     <div className="flex items-center justify-between">
+                        {STEPS.map((step, idx) => {
+                           const isCompleted = idx < activeIdx;
+                           const isCurrent = idx === activeIdx;
+                           const isDeclined = requestDetails.requestStatus === 'Declined';
+                           const circleClass = isDeclined && isCurrent
+                              ? 'bg-red-500 border-red-500 text-white'
+                              : isCompleted || isCurrent
+                              ? 'bg-[#B28309] border-[#B28309] text-white'
+                              : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/15 text-gray-300 dark:text-white/25';
+                           const labelClass = isDeclined && isCurrent
+                              ? 'text-red-500 font-semibold'
+                              : isCurrent
+                              ? 'text-[#B28309] font-semibold'
+                              : isCompleted
+                              ? 'text-gray-500 dark:text-white/50'
+                              : 'text-gray-300 dark:text-white/25';
+
+                           return (
+                              <React.Fragment key={step.key}>
+                                 <div className="flex flex-col items-center gap-1.5 min-w-0">
+                                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors ${circleClass}`}>
+                                       {isCompleted ? (
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                             <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                       ) : (
+                                          idx + 1
+                                       )}
+                                    </div>
+                                    <span className={`text-[0.6rem] leading-tight text-center whitespace-nowrap transition-colors ${labelClass}`}>
+                                       {isDeclined && isCurrent ? 'Declined' : step.label}
+                                    </span>
+                                 </div>
+                                 {idx < STEPS.length - 1 && (
+                                    <div className={`flex-1 h-px mx-2 transition-colors ${idx < activeIdx ? 'bg-[#B28309]' : 'bg-gray-200 dark:bg-white/10'}`} />
+                                 )}
+                              </React.Fragment>
+                           );
+                        })}
+                     </div>
+                  </div>
+               );
+            })()}
 
             {/* Header card */}
             <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-6">
@@ -661,7 +721,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
                   {/* Role-conditional dropdowns */}
                   <div className="w-full sm:max-w-xs">
-                     {userDetails?.roleId === RoleId.HOD &&
+                     {(userDetails?.roleId === RoleId.HOD || userDetails?.roleId === RoleId.SUPER_ADMIN) &&
                         requestDetails?.requestStatus === 'Pending' && (
                            <div>
                               <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">

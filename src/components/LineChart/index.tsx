@@ -89,7 +89,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, label = 'Value', color = '#
             },
             fill: true,
             tension: 0.4,
-            pointRadius: 4,
+            pointRadius: 3,
             pointHoverRadius: 6,
             pointBackgroundColor: '#fff',
             pointBorderColor: color,
@@ -134,7 +134,25 @@ const LineChart: React.FC<LineChartProps> = ({ data, label = 'Value', color = '#
             ticks: { font: { size: 10, weight: 'bold' }, color: '#9ca3af', padding: 4 },
          },
          y: {
-            display: false,
+            display: true,
+            beginAtZero: true,
+            border: { display: false },
+            grid: {
+               color: 'rgba(156, 163, 175, 0.15)',
+               lineWidth: 1,
+            },
+            ticks: {
+               font: { size: 9 },
+               color: '#9ca3af',
+               padding: 4,
+               maxTicksLimit: 5,
+               callback: (value: number | string) => {
+                  const num = Number(value);
+                  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+                  if (num >= 1_000) return `${(num / 1_000).toFixed(0)}k`;
+                  return num.toLocaleString();
+               },
+            },
          },
       },
       animation: {
