@@ -78,7 +78,6 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       }
    };
 
-   // Only show items whose name contains "generator" (case-insensitive)
    const generatorOptions = useMemo(
       () =>
          (departmentItemsList ?? [])
