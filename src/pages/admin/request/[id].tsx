@@ -181,7 +181,9 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   store: { id: number };
                }) => ({
                   value: unit.id,
-                  label: `${unit.serialNumber} - ${unit.condition}`,
+                  label: unit.condition && unit.condition !== 'Not specified'
+                     ? `${unit.serialNumber} - ${unit.condition}`
+                     : unit.serialNumber,
                   data: unit,
                })
             ) || [];
