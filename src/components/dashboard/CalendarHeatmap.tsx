@@ -26,8 +26,8 @@ function getQuintileColor(count: number, quintiles: number[], ramp: string[]): s
 
 const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
    data,
-   cellSize = 12,
-   gap = 3,
+   cellSize = 16,
+   gap = 4,
    className,
    colorRamp = DEFAULT_COLOR_RAMP,
    onCellClick,
@@ -88,13 +88,13 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
    });
 
    const totalWidth = numWeeks * (cellSize + gap) - gap;
-   const monthLabelHeight = 16;
-   const dayLabelWidth = 24;
+   const monthLabelHeight = 20;
+   const dayLabelWidth = 30;
 
    return (
       <div
          className={className}
-         style={{ display: 'inline-block', position: 'relative', userSelect: 'none' }}
+         style={{ display: 'inline-block', position: 'relative', userSelect: 'none', minHeight: 160 }}
       >
          {/* Month labels */}
          <div
@@ -111,7 +111,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                   style={{
                      position: 'absolute',
                      left: weekIdx * (cellSize + gap),
-                     fontSize: 10,
+                     fontSize: 11,
                      color: 'var(--text-hint)',
                      whiteSpace: 'nowrap',
                   }}
@@ -140,8 +140,8 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'flex-end',
-                        paddingRight: 4,
-                        fontSize: 9,
+                        paddingRight: 5,
+                        fontSize: 11,
                         color: 'var(--text-hint)',
                      }}
                   >
@@ -181,7 +181,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                               style={{
                                  width: cellSize,
                                  height: cellSize,
-                                 borderRadius: 2,
+                                 borderRadius: 3,
                                  background: bg,
                                  cursor: onCellClick ? 'pointer' : 'default',
                                  flexShrink: 0,
@@ -204,8 +204,8 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                   background: 'var(--surface-paper)',
                   border: '1px solid var(--border-default)',
                   borderRadius: 6,
-                  padding: '4px 8px',
-                  fontSize: 11,
+                  padding: '5px 10px',
+                  fontSize: 12,
                   color: 'var(--text-primary)',
                   pointerEvents: 'none',
                   zIndex: 9999,

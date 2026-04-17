@@ -717,7 +717,7 @@ const Dashboard = () => {
                      >
                         Request Volume
                      </p>
-                     <div style={{ height: 200 }}>
+                     <div style={{ height: 220 }} className="min-h-[14rem]">
                         <LineChart
                            data={dashboardAnalytics?.requestTrend}
                            label="Requests"
@@ -732,7 +732,7 @@ const Dashboard = () => {
                      >
                         Maintenance Cost (NGN)
                      </p>
-                     <div style={{ height: 200 }}>
+                     <div style={{ height: 220 }} className="min-h-[14rem]">
                         <LineChart data={maintenanceTrend} label="Cost (NGN)" color="#0F2552" />
                      </div>
                   </div>
@@ -748,7 +748,7 @@ const Dashboard = () => {
                         >
                            Generator Hours Used
                         </p>
-                        <div style={{ height: 160 }}>
+                        <div style={{ height: 180 }} className="min-h-[11rem]">
                            <LineChart
                               data={generatorHoursTrend}
                               label="Hours"
@@ -763,7 +763,7 @@ const Dashboard = () => {
                         >
                            Generator Fault Frequency
                         </p>
-                        <div style={{ height: 160 }}>
+                        <div style={{ height: 180 }} className="min-h-[11rem]">
                            <LineChart
                               data={generatorFaultTrend}
                               label="Faults"
@@ -784,13 +784,13 @@ const Dashboard = () => {
                         <span className="w-1.5 h-1.5 rounded-full bg-[#B28309] inline-block" />
                         Request Activity — Last 90 Days
                      </h2>
-                     <p className="text-[0.6rem] mt-1 font-medium" style={{ color: 'var(--text-hint)' }}>
-                        Daily request volume heat map
+                     <p className="text-[0.65rem] mt-1 font-medium" style={{ color: 'var(--text-hint)' }}>
+                        Daily request volume heat map — color intensity = request count
                      </p>
                   </div>
                </div>
-               <div className="px-6 pb-6 pt-3 overflow-x-auto">
-                  <CalendarHeatmap data={heatmapData} cellSize={13} gap={3} />
+               <div className="px-6 pb-8 pt-3 overflow-x-auto">
+                  <CalendarHeatmap data={heatmapData} cellSize={16} gap={4} />
                </div>
             </div>
 
