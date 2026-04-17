@@ -21,9 +21,16 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             </div>
          ) : (
             <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-5">
-               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300 dark:text-white/20">
-                  <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" strokeLinecap="round" strokeLinejoin="round" />
-                  <polyline points="13 2 13 9 20 9" strokeLinecap="round" strokeLinejoin="round" />
+               <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-300 dark:text-white/20" aria-hidden="true">
+                  {/* Document */}
+                  <rect x="8" y="4" width="24" height="30" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <path d="M24 4v9h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* Document lines */}
+                  <line x1="13" y1="19" x2="25" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="13" y1="24" x2="22" y2="24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  {/* Magnifying glass */}
+                  <circle cx="33" cy="33" r="7" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <line x1="38.5" y1="38.5" x2="44" y2="44" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                </svg>
             </div>
          )}
