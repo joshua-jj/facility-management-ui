@@ -1,6 +1,6 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { departmentConstants } from '@/constants';
-import { CreateDepartmentAction } from '@/actions';
+import { CreateDepartmentAction, UpdateDepartmentAction, ActivateDepartmentAction, DeactivateDepartmentAction } from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
 import {
@@ -93,6 +93,67 @@ function* getUnpaginatedDepartments() {
   }
 }
 
+function* updateDepartment({ data }: UpdateDepartmentAction) {
+  yield put({ type: departmentConstants.REQUEST_UPDATE_DEPARTMENT });
+
+  try {
+    const { id, ...body } = data;
+    const uri = `${departmentConstants.DEPARTMENT_URI}/update/${id}`;
+
+    const jsonResponse = yield* authenticatedRequest(uri, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+    if (!jsonResponse) return;
+
+    yield put({ type: departmentConstants.UPDATE_DEPARTMENT_SUCCESS });
+    yield put({ type: departmentConstants.GET_ALL_DEPARTMENTS });
+    AppEmitter.emit(departmentConstants.UPDATE_DEPARTMENT_SUCCESS, jsonResponse);
+  } catch (error: unknown) {
+    yield* handleSagaError(error, departmentConstants.UPDATE_DEPARTMENT_ERROR);
+  }
+}
+
+function* activateDepartment({ id }: ActivateDepartmentAction) {
+  yield put({ type: departmentConstants.REQUEST_ACTIVATE_DEPARTMENT });
+
+  try {
+    const uri = `${departmentConstants.DEPARTMENT_URI}/activate`;
+
+    const jsonResponse = yield* authenticatedRequest(uri, {
+      method: 'PATCH',
+      body: JSON.stringify({ ids: [id] }),
+    });
+    if (!jsonResponse) return;
+
+    yield put({ type: departmentConstants.ACTIVATE_DEPARTMENT_SUCCESS });
+    yield put({ type: departmentConstants.GET_ALL_DEPARTMENTS });
+    AppEmitter.emit(departmentConstants.ACTIVATE_DEPARTMENT_SUCCESS, jsonResponse);
+  } catch (error: unknown) {
+    yield* handleSagaError(error, departmentConstants.ACTIVATE_DEPARTMENT_ERROR);
+  }
+}
+
+function* deactivateDepartment({ id }: DeactivateDepartmentAction) {
+  yield put({ type: departmentConstants.REQUEST_DEACTIVATE_DEPARTMENT });
+
+  try {
+    const uri = `${departmentConstants.DEPARTMENT_URI}/deactivate`;
+
+    const jsonResponse = yield* authenticatedRequest(uri, {
+      method: 'PATCH',
+      body: JSON.stringify({ ids: [id] }),
+    });
+    if (!jsonResponse) return;
+
+    yield put({ type: departmentConstants.DEACTIVATE_DEPARTMENT_SUCCESS });
+    yield put({ type: departmentConstants.GET_ALL_DEPARTMENTS });
+    AppEmitter.emit(departmentConstants.DEACTIVATE_DEPARTMENT_SUCCESS, jsonResponse);
+  } catch (error: unknown) {
+    yield* handleSagaError(error, departmentConstants.DEACTIVATE_DEPARTMENT_ERROR);
+  }
+}
+
 function* getAllDepartmentsWatcher() {
   yield takeLatest(departmentConstants.GET_ALL_DEPARTMENTS, getAllDepartments);
 }
@@ -105,6 +166,25 @@ function* createDepartmentWatcher() {
   yield takeLatest(departmentConstants.CREATE_DEPARTMENT, createDepartment);
 }
 
+function* updateDepartmentWatcher() {
+  yield takeLatest(departmentConstants.UPDATE_DEPARTMENT, updateDepartment);
+}
+
+function* activateDepartmentWatcher() {
+  yield takeLatest(departmentConstants.ACTIVATE_DEPARTMENT, activateDepartment);
+}
+
+function* deactivateDepartmentWatcher() {
+  yield takeLatest(departmentConstants.DEACTIVATE_DEPARTMENT, deactivateDepartment);
+}
+
 export default function* rootSaga() {
-  yield all([getAllDepartmentsWatcher(), getUnpaginatedDepartmentsWatcher(), createDepartmentWatcher()]);
+  yield all([
+    getAllDepartmentsWatcher(),
+    getUnpaginatedDepartmentsWatcher(),
+    createDepartmentWatcher(),
+    updateDepartmentWatcher(),
+    activateDepartmentWatcher(),
+    deactivateDepartmentWatcher(),
+  ]);
 }
