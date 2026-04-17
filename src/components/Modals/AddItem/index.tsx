@@ -34,6 +34,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       item?.department?.id ? String(item.department.id) : '',
    );
    const [fragile, setFragile] = useState(item?.fragile ? 'true' : 'false');
+   const [trackingMode, setTrackingMode] = useState(item?.trackingMode || 'Quantity');
    const [items, setItems] = useState<ItemForm[]>([]);
    const [editIndex, setEditIndex] = useState<number | null>(null);
    const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
@@ -63,10 +64,16 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       { value: 'false', label: 'No' },
    ];
 
+   const trackingOptions = [
+      { value: 'Quantity', label: 'Quantity Only' },
+      { value: 'Serialized', label: 'Serialized (Track Individual Units)' },
+   ];
+
    const handleSubmit = (data: ItemForm) => {
       data.departmentId = Number(selectedDeptId || userDetails?.departmentId || item?.department?.id);
       data.fragile = fragile === 'true';
       data.actualQuantity = Number(data.actualQuantity);
+      data.trackingMode = trackingMode;
 
       // Edit mode — dispatch update, not create
       if (item?.id) {
@@ -96,6 +103,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       formRef.current?.reset();
       setSelectedDeptId('');
       setFragile('false');
+      setTrackingMode('Quantity');
    };
 
    const handleDelete = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
@@ -126,10 +134,12 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       formData.departmentId = Number(selectedDeptId || userDetails?.departmentId);
       formData.fragile = fragile === 'true';
       formData.actualQuantity = Number(formData.actualQuantity);
+      formData.trackingMode = trackingMode;
       setItems((prev) => [...prev, formData]);
       formRef.current.reset();
       setSelectedDeptId('');
       setFragile('false');
+      setTrackingMode('Quantity');
    };
 
    useEffect(() => {
@@ -242,7 +252,21 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                   />
                </div>
 
-               {/* Row 2 — Department & Fragile */}
+               {/* Row 2 — Tracking Mode */}
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                  <SelectInput
+                     name="trackingMode"
+                     label="Tracking Mode"
+                     placeholder="Select tracking mode"
+                     options={trackingOptions}
+                     value={trackingMode}
+                     onValueChange={(val) => setTrackingMode(val)}
+                     searchable={false}
+                  />
+                  <div />
+               </div>
+
+               {/* Row 3 — Department & Fragile */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                   {userDetails?.roleId !== 3 ? (
                      <SelectInput

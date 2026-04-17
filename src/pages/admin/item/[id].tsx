@@ -27,6 +27,7 @@ interface ItemDetails {
    actualQuantity: number;
    availableQuantity: number;
    fragile: boolean;
+   trackingMode?: string;
    department: { name: string };
    itemUnits: Array<{
       id: number;
@@ -185,83 +186,89 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                   <DetailRow label="Actual Quantity" value={formatNumber(itemDetail.actualQuantity)} />
                   <DetailRow label="Available Quantity" value={formatNumber(itemDetail.availableQuantity)} />
                   <DetailRow label="Fragile" value={<StatusChip status={itemDetail.fragile ? 'yes' : 'no'} />} />
+                  <DetailRow
+                     label="Tracking Mode"
+                     value={itemDetail.trackingMode === 'Serialized' ? 'Serialized' : 'Quantity Only'}
+                  />
                   <DetailRow label="Created By" value={itemDetail.createdBy} />
                   <DetailRow label="Created Date" value={formatReadableDate(itemDetail.createdAt)} />
                </div>
             </DetailSection>
 
-            {/* ── Item Units section ── */}
-            <DetailSection
-               title={`Item Units (${itemDetail.itemUnits?.length ?? 0})`}
-               action={
-                  <ActionButton
-                     variant="primary"
-                     onClick={handleUpdateItem}
-                     disabled={isUpdateDisabled || IsUpdatingItem}
-                  >
-                     {IsUpdatingItem ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                     ) : (
-                        'Save Changes'
-                     )}
-                  </ActionButton>
-               }
-            >
-               {itemDetail.itemUnits && itemDetail.itemUnits.length > 0 ? (
-                  <div className="overflow-x-auto">
-                     <table className="w-full">
-                        <thead>
-                           <tr className="bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/5">
-                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Serial Number</th>
-                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">ID</th>
-                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Condition</th>
-                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Store</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {itemDetail.itemUnits.map((unit, index) => (
-                              <tr
-                                 key={unit.id}
-                                 className={`border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 ${
-                                    index % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-white/[0.01]'
-                                 }`}
-                              >
-                                 <td className="px-4 py-3 text-sm font-mono text-[#0F2552] dark:text-white/75">
-                                    {unit.serialNumber}
-                                 </td>
-                                 <td className="px-4 py-3 text-sm text-gray-400 dark:text-white/40">
-                                    #{unit.id}
-                                 </td>
-                                 <td className="px-4 py-3">
-                                    <SmallSelect
-                                       value={selectedConditions[index]}
-                                       options={conditionOptions}
-                                       placeholder="Select condition"
-                                       onChange={(value) => handleConditionChange(index, value as string)}
-                                    />
-                                 </td>
-                                 <td className="px-4 py-3">
-                                    <SmallSelect
-                                       value={selectedStores[index]}
-                                       options={allStoresList.map((store) => ({
-                                          value: String(store.id),
-                                          label: store.name,
-                                       }))}
-                                       placeholder="Select store"
-                                       onChange={(value) => handleStoreChange(index, String(value))}
-                                    />
-                                 </td>
+            {/* ── Item Units section (Serialized items only) ── */}
+            {itemDetail.trackingMode === 'Serialized' && (
+               <DetailSection
+                  title={`Item Units (${itemDetail.itemUnits?.length ?? 0})`}
+                  action={
+                     <ActionButton
+                        variant="primary"
+                        onClick={handleUpdateItem}
+                        disabled={isUpdateDisabled || IsUpdatingItem}
+                     >
+                        {IsUpdatingItem ? (
+                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                           'Save Changes'
+                        )}
+                     </ActionButton>
+                  }
+               >
+                  {itemDetail.itemUnits && itemDetail.itemUnits.length > 0 ? (
+                     <div className="overflow-x-auto">
+                        <table className="w-full">
+                           <thead>
+                              <tr className="bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/5">
+                                 <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Serial Number</th>
+                                 <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">ID</th>
+                                 <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Condition</th>
+                                 <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Store</th>
                               </tr>
-                           ))}
-                        </tbody>
-                     </table>
-                  </div>
-               ) : (
-                  <div className="py-12 text-center text-sm text-gray-400 dark:text-white/30">
-                     No item units registered
-                  </div>
-               )}
-            </DetailSection>
+                           </thead>
+                           <tbody>
+                              {itemDetail.itemUnits.map((unit, index) => (
+                                 <tr
+                                    key={unit.id}
+                                    className={`border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 ${
+                                       index % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-white/[0.01]'
+                                    }`}
+                                 >
+                                    <td className="px-4 py-3 text-sm font-mono text-[#0F2552] dark:text-white/75">
+                                       {unit.serialNumber}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-400 dark:text-white/40">
+                                       #{unit.id}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       <SmallSelect
+                                          value={selectedConditions[index]}
+                                          options={conditionOptions}
+                                          placeholder="Select condition"
+                                          onChange={(value) => handleConditionChange(index, value as string)}
+                                       />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       <SmallSelect
+                                          value={selectedStores[index]}
+                                          options={allStoresList.map((store) => ({
+                                             value: String(store.id),
+                                             label: store.name,
+                                          }))}
+                                          placeholder="Select store"
+                                          onChange={(value) => handleStoreChange(index, String(value))}
+                                       />
+                                    </td>
+                                 </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
+                  ) : (
+                     <div className="py-12 text-center text-sm text-gray-400 dark:text-white/30">
+                        No item units registered
+                     </div>
+                  )}
+               </DetailSection>
+            )}
          </div>
       </Layout>
    );

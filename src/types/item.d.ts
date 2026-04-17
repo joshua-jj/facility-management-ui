@@ -60,6 +60,7 @@ export interface ItemForm {
   // storeId: number;
   departmentId: number;
   fragile: boolean;
+  trackingMode?: string;
   // condition: string;
 }
 
@@ -84,6 +85,7 @@ export interface Item {
   //   itemLocation: string;
   actualQuantity?: string;
   availableQuantity?: number;
+  trackingMode?: string;
   condition?: string;
   department?: {
     id: number;
