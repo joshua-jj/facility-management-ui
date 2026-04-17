@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { format, startOfDay, subDays, eachDayOfInterval } from 'date-fns';
 
 const DEFAULT_COLOR_RAMP = ['#FDF6E3', '#F4D58D', '#DFA94D', '#B28309', '#7A5A06'];
@@ -26,13 +26,25 @@ function getQuintileColor(count: number, quintiles: number[], ramp: string[]): s
 
 const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
    data,
-   cellSize = 16,
-   gap = 4,
+   cellSize: cellSizeProp = 16,
+   gap: gapProp = 4,
    className,
    colorRamp = DEFAULT_COLOR_RAMP,
    onCellClick,
 }) => {
+   const containerRef = useRef<HTMLDivElement>(null);
+   const [containerWidth, setContainerWidth] = useState(0);
    const [tooltip, setTooltip] = useState<{ date: string; count: number; x: number; y: number } | null>(null);
+
+   const measureWidth = useCallback(() => {
+      if (containerRef.current) setContainerWidth(containerRef.current.offsetWidth);
+   }, []);
+
+   useEffect(() => {
+      measureWidth();
+      window.addEventListener('resize', measureWidth);
+      return () => window.removeEventListener('resize', measureWidth);
+   }, [measureWidth]);
 
    // Build a date->count lookup
    const countMap = useMemo(() => {
@@ -87,14 +99,22 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
       }
    });
 
-   const totalWidth = numWeeks * (cellSize + gap) - gap;
-   const monthLabelHeight = 20;
    const dayLabelWidth = 30;
+   const monthLabelHeight = 20;
+
+   // Auto-size cells to fill the container width. Fall back to the prop value if not measured yet.
+   const cellSize = containerWidth > 0
+      ? Math.max(cellSizeProp, Math.floor((containerWidth - dayLabelWidth) / numWeeks - gapProp))
+      : cellSizeProp;
+   const gap = gapProp;
+
+   const totalWidth = numWeeks * (cellSize + gap) - gap;
 
    return (
       <div
+         ref={containerRef}
          className={className}
-         style={{ display: 'inline-block', position: 'relative', userSelect: 'none', minHeight: 160 }}
+         style={{ width: '100%', position: 'relative', userSelect: 'none', minHeight: 160 }}
       >
          {/* Month labels */}
          <div
