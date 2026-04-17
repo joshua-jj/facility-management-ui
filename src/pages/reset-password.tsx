@@ -17,7 +17,7 @@ const ResetPassword: FC = () => {
 
    const dispatch = useDispatch();
    const { IsResettingPassword } = useSelector((s: RootState) => s.forgotPassword);
-   const { theme, mounted } = useTheme();
+   const { theme } = useTheme();
 
    const [password, setPassword] = useState('');
    const [confirmPassword, setConfirmPassword] = useState('');
@@ -81,9 +81,6 @@ const ResetPassword: FC = () => {
       return () => listener.remove();
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
-
-   if (!mounted) return null;
-
    return (
       <AuthLayout
          title="Reset Password | EGFM - Facility Management System"
