@@ -68,6 +68,13 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       data.fragile = fragile === 'true';
       data.actualQuantity = Number(data.actualQuantity);
 
+      // Edit mode — dispatch update, not create
+      if (item?.id) {
+         dispatch(itemActions.updateItemBasic({ ...data, id: item.id }) as unknown as UnknownAction);
+         return;
+      }
+
+      // Create mode — supports batch queue
       let updatedItems: ItemForm[] = [];
 
       if (editIndex !== null) {
@@ -80,10 +87,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
          setItems(updatedItems);
       }
 
-      if (item?.id) {
-         data.id = item.id;
-         dispatch(itemActions.createItem(data) as unknown as UnknownAction);
-      } else if (updatedItems.length === 1) {
+      if (updatedItems.length === 1) {
          dispatch(itemActions.createItem(updatedItems[0]) as unknown as UnknownAction);
       } else if (updatedItems.length > 1) {
          dispatch(itemActions.createItems(updatedItems) as unknown as UnknownAction);
@@ -160,11 +164,11 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
             open={open || isModalOpen}
             onClose={closeModal}
             title={item ? 'Update Item' : 'Add New Item'}
-            subtitle="Add items to the facility inventory"
+            subtitle={item ? 'Update item details' : 'Add items to the facility inventory'}
             width="sm:w-[36rem]"
          >
-            {/* Queued items */}
-            {items.length > 0 && (
+            {/* Queued items — only in create mode */}
+            {!item && items.length > 0 && (
                <div className="mb-4 space-y-2 pb-3" style={{ borderBottom: '1px solid var(--border-default)' }}>
                   <p className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint)' }}>
                      Queued Items ({items.length})
