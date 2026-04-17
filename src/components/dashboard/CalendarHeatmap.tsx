@@ -55,9 +55,9 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
       return m;
    }, [data]);
 
-   // 90 days back from today
+   // Full year back from today (like GitLab activity graph)
    const today = startOfDay(new Date());
-   const startDate = subDays(today, 89);
+   const startDate = subDays(today, 364);
    const allDays = eachDayOfInterval({ start: startDate, end: today });
 
    // Compute quintile thresholds from non-zero values
@@ -103,9 +103,8 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
    const monthLabelHeight = 20;
 
    // Auto-size cells to stretch across the full container (like GitLab's activity graph).
-   // Cap at 24px so cells stay compact on wide screens.
    const cellSize = containerWidth > 0
-      ? Math.min(24, Math.floor((containerWidth - dayLabelWidth - 4) / numWeeks - gapProp))
+      ? Math.floor((containerWidth - dayLabelWidth - 4) / numWeeks - gapProp)
       : cellSizeProp;
    const gap = gapProp;
 

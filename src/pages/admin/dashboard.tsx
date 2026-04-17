@@ -775,14 +775,14 @@ const Dashboard = () => {
                )}
             </div>
 
-            {/* ── E. Request Activity Heatmap (90 days, full width) ── */}
+            {/* ── E. Request Activity Heatmap (12 months, full width) ── */}
             <div className={`${PANEL} mb-5 overflow-hidden`}>
                <div className="h-[2px] bg-gradient-to-r from-[#B28309] via-[#B28309]/40 to-transparent" />
                <div className="px-6 pt-5 pb-2 flex items-center justify-between">
                   <div>
                      <h2 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
                         <span className="w-1.5 h-1.5 rounded-full bg-[#B28309] inline-block" />
-                        Request Activity — Last 90 Days
+                        Request Activity — Last 12 Months
                      </h2>
                      <p className="text-[0.65rem] mt-1 font-medium" style={{ color: 'var(--text-hint)' }}>
                         Daily request volume heat map — color intensity = request count
