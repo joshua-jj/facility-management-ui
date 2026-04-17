@@ -721,7 +721,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
                   {/* Role-conditional dropdowns */}
                   <div className="w-full sm:max-w-xs">
-                     {(userDetails?.roleId === RoleId.HOD || userDetails?.roleId === RoleId.SUPER_ADMIN) &&
+                     {(userDetails?.roleId === RoleId.HOD) &&
                         requestDetails?.requestStatus === 'Pending' && (
                            <div>
                               <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
