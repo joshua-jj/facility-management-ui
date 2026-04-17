@@ -102,9 +102,10 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
    const dayLabelWidth = 30;
    const monthLabelHeight = 20;
 
-   // Auto-size cells to fill the container width. Fall back to the prop value if not measured yet.
+   // Auto-size cells to fill ~75% of container width (leaves breathing room on the right).
+   // Clamp between the prop minimum and 28px max so cells stay compact.
    const cellSize = containerWidth > 0
-      ? Math.max(cellSizeProp, Math.floor((containerWidth - dayLabelWidth) / numWeeks - gapProp))
+      ? Math.min(28, Math.max(cellSizeProp, Math.floor((containerWidth * 0.75 - dayLabelWidth) / numWeeks - gapProp)))
       : cellSizeProp;
    const gap = gapProp;
 
