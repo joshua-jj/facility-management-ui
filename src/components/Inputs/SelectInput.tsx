@@ -16,6 +16,7 @@ interface SelectInputProps {
    placeholder?: string;
    options: Option[];
    searchable?: boolean;
+   disabled?: boolean;
    setValue: (value: string) => void;
    onValueChange?: (value: string) => void;
    errorMessage?: string;
@@ -34,6 +35,7 @@ const SelectInput: React.FC<SelectInputProps> = (props) => {
       placeholder,
       options,
       searchable = true,
+      disabled = false,
       errorMessage,
       isPristine,
       onLoadMore,
@@ -59,6 +61,7 @@ const SelectInput: React.FC<SelectInputProps> = (props) => {
             options={options}
             placeholder={placeholder}
             searchable={searchable}
+            disabled={disabled}
             error={hasError}
             onLoadMore={onLoadMore}
             hasMore={hasMore}

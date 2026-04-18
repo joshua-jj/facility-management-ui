@@ -5,24 +5,19 @@ import { RootState } from '@/redux/reducers';
 import { forgotPasswordActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { AppEmitter } from '@/controllers/EventEmitter';
-import { authConstants } from '@/constants';
-import { useRouter } from 'next/router';
+import { forgotPasswordConstants } from '@/constants';
 import Link from 'next/link';
 import AuthLayout from '@/components/AuthLayout';
 import { useTheme } from '@/hooks/useTheme';
 
 const ForgotPassword: FC = () => {
-   const router = useRouter();
-   const query = router?.query;
-   const decodedFrom = decodeURIComponent(
-      Array.isArray(query?.from) ? query.from[0] : (query?.from ?? '')
-   );
    const dispatch = useDispatch();
    const { IsSendingResetPasswordLink } = useSelector((s: RootState) => s.forgotPassword);
    const { theme } = useTheme();
 
    const [email, setEmail] = useState('');
    const [emailError, setEmailError] = useState('');
+   const [emailSent, setEmailSent] = useState(false);
 
    const isDark = theme === 'dark';
 
@@ -43,24 +38,67 @@ const ForgotPassword: FC = () => {
    };
 
    useEffect(() => {
-      const listener = AppEmitter.addListener(authConstants.LOGIN_SUCCESS, (evt: Event) => {
-         const customEvent = evt as CustomEvent;
-         const data = customEvent.detail?.data;
-
-         if (data && decodedFrom?.length) {
-            router.push({ pathname: decodedFrom });
-            return;
-         }
-
-         if (data) {
-            router.push('/admin/dashboard');
-            return;
-         }
-      });
+      const listener = AppEmitter.addListener(
+         forgotPasswordConstants.SEND_RESET_PASSWORD_LINK_SUCCESS,
+         () => {
+            setEmailSent(true);
+         },
+      );
 
       return () => listener.remove();
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
+   if (emailSent) {
+      return (
+         <AuthLayout
+            title="Forgot Password | EGFM - Facility Management System"
+            heading="Check your email"
+            subtitle={`We sent a password reset link to ${email}. Check your inbox and follow the link to reset your password.`}
+            footer={
+               <Link
+                  href="/login"
+                  className={`text-xs font-semibold hover:underline transition-colors ${isDark ? 'text-[#D4A84B] hover:text-[#e8bc5f]' : 'text-[#0F2552] hover:text-[#B28309]'}`}
+               >
+                  Back to login
+               </Link>
+            }
+         >
+            <div className="animate-fade-up flex flex-col items-center gap-4 py-4">
+               <div
+                  className={`flex items-center justify-center w-16 h-16 rounded-full ${isDark ? 'bg-[#1a3a7a]/30' : 'bg-[#0F2552]/10'}`}
+               >
+                  <svg
+                     width="32"
+                     height="32"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke={isDark ? '#D4A84B' : '#0F2552'}
+                     strokeWidth="1.5"
+                     strokeLinecap="round"
+                     strokeLinejoin="round"
+                  >
+                     <rect x="2" y="4" width="20" height="16" rx="2" />
+                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+               </div>
+               <p
+                  className={`text-xs text-center transition-colors ${isDark ? 'text-white/40' : 'text-[#0F2552]/60'}`}
+               >
+                  Didn&apos;t receive the email? Check your spam folder or{' '}
+                  <button
+                     type="button"
+                     onClick={() => setEmailSent(false)}
+                     className={`font-semibold underline cursor-pointer ${isDark ? 'text-[#D4A84B]' : 'text-[#0F2552]'}`}
+                  >
+                     try again
+                  </button>
+                  .
+               </p>
+            </div>
+         </AuthLayout>
+      );
+   }
+
    return (
       <AuthLayout
          title="Forgot Password | EGFM - Facility Management System"
