@@ -98,6 +98,11 @@ const updateItem = (data: ItemUnitsForm): UpdateItemAction => ({
   data,
 });
 
+const updateItemBasic = (data: ItemForm & { id: number }) => ({
+  type: itemConstants.UPDATE_ITEM_BASIC,
+  data,
+});
+
 const deleteItem = (data: { id: number }): DeleteItemAction => ({
   type: itemConstants.DELETE_ITEM,
   data,
@@ -112,5 +117,6 @@ export const itemActions = {
   createItem,
   createItems,
   updateItem,
+  updateItemBasic,
   deleteItem,
 };

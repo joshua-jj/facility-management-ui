@@ -157,6 +157,10 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       Record<number, SelectedUnit[]>
    >({});
 
+   const [itemTrackingModes, setItemTrackingModes] = useState<
+      Record<number, string>
+   >({});
+
    const fetchItemUnits = async (itemId: number) => {
       if (itemUnitsOptions[itemId]) return;
 
@@ -172,8 +176,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             }
          );
 
+         const itemData = resp.data?.data;
+         const trackingMode = itemData?.trackingMode || 'Quantity';
+         setItemTrackingModes((prev) => ({ ...prev, [itemId]: trackingMode }));
+
          const units =
-            resp.data?.data?.itemUnits?.map(
+            itemData?.itemUnits?.map(
                (unit: {
                   id: number;
                   serialNumber: string;
@@ -181,7 +189,9 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   store: { id: number };
                }) => ({
                   value: unit.id,
-                  label: `${unit.serialNumber} - ${unit.condition}`,
+                  label: unit.condition && unit.condition !== 'Not specified'
+                     ? `${unit.serialNumber} - ${unit.condition}`
+                     : unit.serialNumber,
                   data: unit,
                })
             ) || [];
@@ -254,17 +264,22 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    };
 
    const handleReleaseRequestItems = () => {
-      // Validate that units are selected for each item
-      const hasEmptyUnits = items.some((item) => !selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0);
+      // Validate that units are selected for each SERIALIZED item
+      const hasEmptyUnits = items.some((item) => {
+         const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
+         return isSerialized && (!selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0);
+      });
       if (hasEmptyUnits) {
-         dispatch(appActions.setSnackBar({ type: 'warning', message: 'Please select units for all items before releasing.', variant: 'warning' }) as unknown as UnknownAction);
+         dispatch(appActions.setSnackBar({ type: 'warning', message: 'Please select units for all serialized items before releasing.', variant: 'warning' }) as unknown as UnknownAction);
          return;
       }
 
       const updatedItems = items.map((item) => ({
          itemId: item.itemId,
          quantityLeased: Number(item.quantityLeased),
-         quantityReleased: selectedUnits[item.itemId]?.length || 0,
+         quantityReleased: itemTrackingModes[item.itemId] === 'Serialized'
+            ? (selectedUnits[item.itemId]?.length || 0)
+            : Number(item.quantityReleased) || Number(item.quantityLeased),
          leasedDate: new Date().toISOString(),
          units: selectedUnits[item.itemId] || [],
       }));
@@ -278,16 +293,21 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    };
 
    const handleReturnRequestItems = () => {
-      // Validate that units are selected for each item
-      const hasEmptyUnits = items.some((item) => !selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0);
+      // Validate that units are selected for each SERIALIZED item
+      const hasEmptyUnits = items.some((item) => {
+         const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
+         return isSerialized && (!selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0);
+      });
       if (hasEmptyUnits) {
-         dispatch(appActions.setSnackBar({ type: 'warning', message: 'Please select units for all items before returning.', variant: 'warning' }) as unknown as UnknownAction);
+         dispatch(appActions.setSnackBar({ type: 'warning', message: 'Please select units for all serialized items before returning.', variant: 'warning' }) as unknown as UnknownAction);
          return;
       }
 
       const updatedItems = items.map((item) => ({
          itemId: item.itemId,
-         quantityReturned: selectedUnits[item.itemId]?.length || 0,
+         quantityReturned: itemTrackingModes[item.itemId] === 'Serialized'
+            ? (selectedUnits[item.itemId]?.length || 0)
+            : Number(item.quantityReleased),
          quantityReleased: Number(item.quantityReleased),
          returnedDate: new Date().toISOString(),
          units: selectedUnits[item.itemId] || [],
@@ -397,6 +417,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const showReturnedQty = requestDetails?.requestStatus === 'Completed';
    const isMemberAssigned = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Assigned';
    const isMemberCollected = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Collected';
+
+   // Pre-fetch item details (tracking mode + units) for all items when member needs to act
+   useEffect(() => {
+      if ((isMemberAssigned || isMemberCollected) && requestDetails?.audit?.items) {
+         requestDetails.audit.items.forEach((item) => {
+            fetchItemUnits(item.itemId);
+         });
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [isMemberAssigned, isMemberCollected, requestDetails?.audit?.items]);
 
    return (
       <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
@@ -629,52 +659,10 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                  {/* Unit selection for MEMBER + Assigned (release) */}
                                  {isMemberAssigned && (
                                     <td className="px-5 py-3.5">
-                                       <SmallSelect
-                                          multiple
-                                          quantity={Number(item.quantityLeased) || 1}
-                                          value={(selectedUnits[item.itemId] || []).map(
-                                             (u) => u.serialNumber
-                                          )}
-                                          options={(
-                                             itemUnitsOptions[item.itemId] || []
-                                          ).map((opt) => ({
-                                             value: opt.data.serialNumber,
-                                             label: `${opt.data.serialNumber} - ${opt.data.condition}`,
-                                             data: opt.data,
-                                          }))}
-                                          placeholder="Select item units"
-                                          onOpen={() => fetchItemUnits(item.itemId)}
-                                          onChange={(selectedIds) => {
-                                             const fullUnits = (
-                                                itemUnitsOptions[item.itemId] || []
-                                             )
-                                                .filter((opt) =>
-                                                   selectedIds.includes(
-                                                      opt.data.serialNumber
-                                                   )
-                                                )
-                                                .map((opt) => ({
-                                                   storeId: opt.data.store.id,
-                                                   serialNumber: opt.data.serialNumber,
-                                                   condition: opt.data.condition,
-                                                }));
-
-                                             setSelectedUnits((prev) => ({
-                                                ...prev,
-                                                [item.itemId]: fullUnits,
-                                             }));
-                                          }}
-                                       />
-                                    </td>
-                                 )}
-
-                                 {/* Unit selection for MEMBER + Collected (return) */}
-                                 {isMemberCollected && (
-                                    <>
-                                       <td className="px-5 py-3.5">
+                                       {itemTrackingModes[item.itemId] === 'Serialized' ? (
                                           <SmallSelect
                                              multiple
-                                             quantity={Number(item.quantityReleased) || 1}
+                                             quantity={Number(item.quantityLeased) || 1}
                                              value={(selectedUnits[item.itemId] || []).map(
                                                 (u) => u.serialNumber
                                              )}
@@ -685,14 +673,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                                 label: `${opt.data.serialNumber} - ${opt.data.condition}`,
                                                 data: opt.data,
                                              }))}
-                                             placeholder="Select item units to return"
+                                             placeholder="Select item units"
                                              onOpen={() => fetchItemUnits(item.itemId)}
                                              onChange={(selectedIds) => {
                                                 const fullUnits = (
                                                    itemUnitsOptions[item.itemId] || []
                                                 )
                                                    .filter((opt) =>
-                                                      selectedIds.includes(opt.data.serialNumber)
+                                                      selectedIds.includes(
+                                                         opt.data.serialNumber
+                                                      )
                                                    )
                                                    .map((opt) => ({
                                                       storeId: opt.data.store.id,
@@ -706,6 +696,54 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                                 }));
                                              }}
                                           />
+                                       ) : (
+                                          <span className="text-xs text-gray-400 dark:text-white/30">Quantity mode</span>
+                                       )}
+                                    </td>
+                                 )}
+
+                                 {/* Unit selection for MEMBER + Collected (return) */}
+                                 {isMemberCollected && (
+                                    <>
+                                       <td className="px-5 py-3.5">
+                                          {itemTrackingModes[item.itemId] === 'Serialized' ? (
+                                             <SmallSelect
+                                                multiple
+                                                quantity={Number(item.quantityReleased) || 1}
+                                                value={(selectedUnits[item.itemId] || []).map(
+                                                   (u) => u.serialNumber
+                                                )}
+                                                options={(
+                                                   itemUnitsOptions[item.itemId] || []
+                                                ).map((opt) => ({
+                                                   value: opt.data.serialNumber,
+                                                   label: `${opt.data.serialNumber} - ${opt.data.condition}`,
+                                                   data: opt.data,
+                                                }))}
+                                                placeholder="Select item units to return"
+                                                onOpen={() => fetchItemUnits(item.itemId)}
+                                                onChange={(selectedIds) => {
+                                                   const fullUnits = (
+                                                      itemUnitsOptions[item.itemId] || []
+                                                   )
+                                                      .filter((opt) =>
+                                                         selectedIds.includes(opt.data.serialNumber)
+                                                      )
+                                                      .map((opt) => ({
+                                                         storeId: opt.data.store.id,
+                                                         serialNumber: opt.data.serialNumber,
+                                                         condition: opt.data.condition,
+                                                      }));
+
+                                                   setSelectedUnits((prev) => ({
+                                                      ...prev,
+                                                      [item.itemId]: fullUnits,
+                                                   }));
+                                                }}
+                                             />
+                                          ) : (
+                                             <span className="text-xs text-gray-400 dark:text-white/30">Quantity mode</span>
+                                          )}
                                        </td>
                                     </>
                                  )}
