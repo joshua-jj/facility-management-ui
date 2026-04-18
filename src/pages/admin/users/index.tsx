@@ -295,6 +295,15 @@ const Users = () => {
                loading={IsRequestingUsers}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(userActions.getUsers({
+                  page: currentPage,
+                  limit: PAGE_LIMIT,
+                  search: searchQuery || undefined,
+                  status: filterValues.status || undefined,
+                  roleId: filterValues.roleId ? Number(filterValues.roleId) : undefined,
+                  departmentId: filterValues.departmentId ? Number(filterValues.departmentId) : undefined,
+                  gender: filterValues.gender || undefined,
+               }) as unknown as UnknownAction)}
                searchPlaceholder="Search users by name, email..."
                filters={filters}
                filterValues={filterValues}

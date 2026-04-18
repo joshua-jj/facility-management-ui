@@ -201,6 +201,7 @@ const Roles = () => {
                loading={IsRequestingRoles}
                onSearch={handleSearch}
                onExport={handleExport}
+               onRefresh={() => dispatch(roleActions.getRoles({ page: currentPage, search: searchQuery || undefined, status: filterValues.status || undefined }) as unknown as UnknownAction)}
                searchPlaceholder="Search roles..."
                filters={filters}
                filterValues={filterValues}

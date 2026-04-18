@@ -197,6 +197,7 @@ const MeetingLocations = () => {
                loading={IsRequestingMeetingLocations}
                onSearch={handleSearch}
                onExport={handleExport}
+               onRefresh={() => dispatch(meetingLocationActions.getMeetingLocations({ page: currentPage, search: searchQuery || undefined, status: filterValues.status || undefined }) as unknown as UnknownAction)}
                searchPlaceholder="Search meeting locations..."
                filters={filters}
                filterValues={filterValues}

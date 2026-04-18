@@ -257,13 +257,12 @@ const MaintenanceLogs = () => {
                loading={IsRequestingMaintenanceLogs}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(maintenanceActions.getMaintenanceLogs({ page: currentPage, ...buildFilterParams(filterValues) }) as unknown as UnknownAction)}
                searchPlaceholder="Search maintenance logs..."
                filters={filters}
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
-               pagination={
-                  totalPages > 1 ? { currentPage, totalItems, itemsPerPage, totalPages } : undefined
-               }
+               pagination={{ currentPage, totalItems, itemsPerPage, totalPages }}
                onPageChange={handleChangePage}
                emptyTitle="No maintenance logs found"
                emptyDescription="Get started by adding your first maintenance log."

@@ -398,6 +398,7 @@ const Items = () => {
                loading={IsRequestingAllItems}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => fetchItems(meta.currentPage)}
                searchPlaceholder="Search items..."
                filters={filters}
                filterValues={filterValues}

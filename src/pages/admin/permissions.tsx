@@ -203,6 +203,7 @@ const Permissions = () => {
                loading={IsRequestingPermissions}
                onSearch={handleSearch}
                onExport={handleExport}
+               onRefresh={() => dispatch(permissionActions.getPermissions({ page: currentPage, search: searchQuery || undefined, status: filterValues.status || undefined }) as unknown as UnknownAction)}
                searchPlaceholder="Search permissions..."
                filters={filters}
                filterValues={filterValues}

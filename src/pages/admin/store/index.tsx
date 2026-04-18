@@ -211,6 +211,7 @@ const Stores = () => {
                loading={IsRequestingStores}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(storeActions.getStores({ page: currentPage, search: searchQuery || undefined, status: filterValues.status || undefined }) as unknown as UnknownAction)}
                searchPlaceholder="Search stores..."
                filters={filters}
                filterValues={filterValues}

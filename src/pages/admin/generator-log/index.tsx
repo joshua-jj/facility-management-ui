@@ -352,15 +352,12 @@ const GeneratorLogs = () => {
                loading={IsRequestingGeneratorLogs}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(generatorActions.getGeneratorLogs({ page: currentPage, ...buildFilterParams(filterValues) }) as unknown as UnknownAction)}
                searchPlaceholder="Search generator logs..."
                filters={filters}
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
-               pagination={
-                  totalPages > 1
-                     ? { currentPage, totalItems, itemsPerPage, totalPages }
-                     : undefined
-               }
+               pagination={{ currentPage, totalItems, itemsPerPage, totalPages }}
                onPageChange={handleChangePage}
                emptyTitle="No generator logs found"
                emptyDescription="Get started by adding your first generator log."

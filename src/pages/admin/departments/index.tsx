@@ -259,6 +259,13 @@ const Departments = () => {
                loading={IsRequestingDepartments}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(departmentActions.getAllDepartments({
+                  page: currentPage,
+                  limit: PAGE_LIMIT,
+                  search: searchQuery || undefined,
+                  status: filterValues.status || undefined,
+                  hasHod: filterValues.hasHod || undefined,
+               }) as unknown as UnknownAction)}
                searchPlaceholder="Search departments..."
                filters={filters}
                filterValues={filterValues}

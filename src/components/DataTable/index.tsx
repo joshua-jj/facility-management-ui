@@ -2,6 +2,29 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SearchIcon, CaretIcon } from '@/components/Icons';
 import EmptyState from '@/components/EmptyState';
 
+// ── Refresh icon (inline SVG) ──
+const RefreshIcon: React.FC<{ spinning: boolean }> = ({ spinning }) => (
+   <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{
+         display: 'inline-block',
+         transition: 'transform 500ms ease',
+         transform: spinning ? 'rotate(360deg)' : 'rotate(0deg)',
+      }}
+   >
+      <polyline points="23 4 23 10 17 10" />
+      <polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+   </svg>
+);
+
 // ── Types ──
 
 export type Column<T> = {
@@ -41,6 +64,7 @@ interface DataTableProps<T> {
    onRowClick?: (row: T) => void;
    actions?: React.ReactNode;
    onExport?: () => void;
+   onRefresh?: () => void;
    emptyTitle?: string;
    emptyDescription?: string;
    emptyAction?: React.ReactNode;
@@ -96,6 +120,7 @@ export function DataTable<T extends Record<string, any>>({
    onRowClick,
    actions,
    onExport,
+   onRefresh,
    emptyTitle,
    emptyDescription,
    emptyAction,
@@ -104,10 +129,18 @@ export function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
    const [searchValue, setSearchValue] = useState('');
    const [showFilters, setShowFilters] = useState(false);
+   const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
    const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
    const visibleColumns = columns.filter((c) => !c.hidden);
 
    const activeFilterCount = Object.values(filterValues).filter((v) => v && v !== '').length;
+
+   const handleRefreshClick = () => {
+      if (!onRefresh || isRefreshSpinning) return;
+      setIsRefreshSpinning(true);
+      onRefresh();
+      setTimeout(() => setIsRefreshSpinning(false), 600);
+   };
 
    // Debounced search
    useEffect(() => {
@@ -159,10 +192,41 @@ export function DataTable<T extends Record<string, any>>({
             background: 'var(--surface-paper)',
             border: '1px solid var(--border-default)',
             boxShadow: 'var(--shadow-sm)',
+            position: 'relative',
          }}
       >
+         {/* ── Loading bar ── */}
+         {loading && (
+            <div
+               style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '3px',
+                  background: 'var(--color-primary, #C9A84C)',
+                  zIndex: 10,
+                  overflow: 'hidden',
+               }}
+            >
+               <div
+                  style={{
+                     height: '100%',
+                     width: '40%',
+                     background: 'var(--color-secondary, #F5D078)',
+                     animation: 'datatableLoadBar 1.2s ease-in-out infinite',
+                  }}
+               />
+               <style>{`
+                  @keyframes datatableLoadBar {
+                     0% { transform: translateX(-100%); }
+                     100% { transform: translateX(350%); }
+                  }
+               `}</style>
+            </div>
+         )}
          {/* ── Toolbar ── */}
-         {(onSearch || actions || onExport || filters) && (
+         {(onSearch || actions || onExport || onRefresh || filters) && (
             <div
                className="flex flex-col gap-3 px-4 sm:px-5 py-3.5"
                style={{ borderBottom: '1px solid var(--border-default)' }}
@@ -230,6 +294,20 @@ export function DataTable<T extends Record<string, any>>({
                               <line x1="12" y1="15" x2="12" y2="3" />
                            </svg>
                            Export
+                        </button>
+                     )}
+
+                     {/* Refresh */}
+                     {onRefresh && (
+                        <button
+                           onClick={handleRefreshClick}
+                           disabled={loading}
+                           className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                           style={{ border: '1px solid var(--border-strong)', color: 'var(--text-secondary)' }}
+                           title="Refresh"
+                        >
+                           <RefreshIcon spinning={isRefreshSpinning} />
+                           Refresh
                         </button>
                      )}
 
@@ -378,9 +456,9 @@ export function DataTable<T extends Record<string, any>>({
                   results
                </span>
 
-               <div className="flex items-center gap-1">
+               <div className={`flex items-center gap-1 transition-opacity duration-200 ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
                   <button
-                     disabled={currentPage <= 1}
+                     disabled={currentPage <= 1 || loading}
                      onClick={() => onPageChange?.(currentPage - 1)}
                      className="p-1.5 rounded-md disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                      style={{ color: 'var(--text-hint)' }}
@@ -396,8 +474,9 @@ export function DataTable<T extends Record<string, any>>({
                      ) : (
                         <button
                            key={p}
+                           disabled={loading}
                            onClick={() => onPageChange?.(p as number)}
-                           className="min-w-[32px] h-8 rounded-md text-xs font-medium transition-all cursor-pointer"
+                           className="min-w-[32px] h-8 rounded-md text-xs font-medium transition-all cursor-pointer disabled:cursor-not-allowed"
                            style={
                               p === currentPage
                                  ? { background: 'var(--color-primary)', color: '#fff', boxShadow: 'var(--shadow-sm)' }
@@ -410,7 +489,7 @@ export function DataTable<T extends Record<string, any>>({
                   )}
 
                   <button
-                     disabled={currentPage >= totalPages}
+                     disabled={currentPage >= totalPages || loading}
                      onClick={() => onPageChange?.(currentPage + 1)}
                      className="p-1.5 rounded-md disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                      style={{ color: 'var(--text-hint)' }}
