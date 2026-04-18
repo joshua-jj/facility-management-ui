@@ -167,6 +167,7 @@ const Items = () => {
             { key: 'actualQuantity', header: 'Actual Quantity' },
             { key: 'availableQuantity', header: 'Available Quantity' },
             { key: 'fragile', header: 'Fragile', format: (v) => (v ? 'Yes' : 'No') },
+            { key: 'trackingMode', header: 'Tracking Mode', format: (v) => (v === 'Serialized' ? 'Serialized' : 'Quantity') },
             { key: 'createdBy', header: 'Created By' },
             { key: 'createdAt', header: 'Created At', format: (v) => (v ? format(parseISO(String(v)), 'yyyy-MM-dd') : '') },
          ], { from: from || undefined, to: to || undefined });
@@ -324,6 +325,20 @@ const Items = () => {
             header: 'Fragile',
             align: 'center' as const,
             render: (value: unknown) => <StatusChip status={value ? 'yes' : 'no'} size="sm" />,
+         },
+         {
+            key: 'trackingMode' as keyof Item,
+            header: 'Tracking',
+            align: 'center' as const,
+            render: (value: unknown) => (
+               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.6rem] font-semibold ${
+                  value === 'Serialized'
+                     ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                     : 'bg-gray-50 text-gray-500 dark:bg-white/5 dark:text-white/40'
+               }`}>
+                  {value === 'Serialized' ? 'Serialized' : 'Quantity'}
+               </span>
+            ),
          },
          {
             key: 'createdBy' as keyof Item,

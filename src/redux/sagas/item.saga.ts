@@ -66,7 +66,9 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
 
   try {
     const user = yield* getStoredUser();
-    let itemUri = `${itemConstants.ITEM_URI}/department/${data?.departmentId || (user?.user as Record<string, unknown>)?.departmentId}`;
+    const deptId = data?.departmentId || (user?.user as Record<string, unknown>)?.departmentId;
+    if (!deptId) return; // Guard: skip fetch if no departmentId available
+    let itemUri = `${itemConstants.ITEM_URI}/department/${deptId}`;
     if (data?.page) {
       itemUri = `${itemUri}?page=${data.page}`;
     }
@@ -240,6 +242,33 @@ function* updateItem({ data }: UpdateItemAction) {
   }
 }
 
+function* updateItemBasic({ data }: { type: string; data: { id: number; name: string; actualQuantity: number; departmentId: number; fragile: boolean } }) {
+  yield put({ type: itemConstants.REQUEST_UPDATE_ITEM_BASIC });
+
+  try {
+    const { id, ...body } = data;
+    const itemUri = `${itemConstants.ITEM_URI}/update/${id}`;
+
+    const jsonResponse = yield* authenticatedRequest(itemUri, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+    if (!jsonResponse) return;
+
+    yield put({ type: itemConstants.UPDATE_ITEM_BASIC_SUCCESS });
+    AppEmitter.emit(itemConstants.UPDATE_ITEM_BASIC_SUCCESS, jsonResponse);
+
+    const payload: SetSnackBarPayload = {
+      type: 'success',
+      message: (jsonResponse?.message as string) ?? 'Item updated successfully',
+      variant: 'success',
+    };
+    yield put(appActions.setSnackBar(payload));
+  } catch (error: unknown) {
+    yield* handleSagaError(error, itemConstants.UPDATE_ITEM_BASIC_ERROR);
+  }
+}
+
 function* deleteItem({ data }: DeleteItemAction) {
   yield put({ type: itemConstants.REQUEST_DELETE_ITEM });
 
@@ -303,6 +332,10 @@ function* updateItemWatcher() {
   yield takeLatest(itemConstants.UPDATE_ITEM, updateItem);
 }
 
+function* updateItemBasicWatcher() {
+  yield takeLatest(itemConstants.UPDATE_ITEM_BASIC, updateItemBasic);
+}
+
 function* deleteItemWatcher() {
   yield takeLatest(itemConstants.DELETE_ITEM, deleteItem);
 }
@@ -317,6 +350,7 @@ export default function* rootSaga() {
     createItemWatcher(),
     createItemsWatcher(),
     updateItemWatcher(),
+    updateItemBasicWatcher(),
     deleteItemWatcher(),
   ]);
 }
