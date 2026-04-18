@@ -585,28 +585,28 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
             {/* Requested Items */}
             <DetailSection title="Requested Items">
-               <div className="overflow-x-auto">
+               <div className="overflow-x-auto rounded-b-xl">
                   <table className="w-full text-left">
                      <thead>
-                        <tr className="border-b border-gray-100 dark:border-white/5">
-                           <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
+                        <tr className="bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/5">
+                           <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
                               Item Name
                            </th>
-                           <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
+                           <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
                               Qty Requested
                            </th>
                            {(showReleasedQty || isMemberAssigned) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
                                  Qty Released
                               </th>
                            )}
                            {(showReturnedQty || isMemberCollected) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
                                  Qty Returned
                               </th>
                            )}
                            {(isMemberAssigned || isMemberCollected) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
                                  Select Units
                               </th>
                            )}
@@ -617,48 +617,65 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                            requestDetails.audit.items.map((item, index) => (
                               <tr
                                  key={index}
-                                 className="border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                                 className={`border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 hover:bg-gray-50/60 dark:hover:bg-white/[0.025] transition-colors ${
+                                    index % 2 !== 0 ? 'bg-gray-50/40 dark:bg-white/[0.01]' : ''
+                                 }`}
                               >
-                                 <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
+                                 <td className="px-4 py-3.5 text-sm font-medium text-[#0F2552] dark:text-white/85">
                                     {item.itemName}
                                  </td>
-                                 <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
+                                 <td className="px-4 py-3.5 text-sm tabular-nums text-[#0F2552] dark:text-white/75">
                                     {item.quantityLeased}
                                  </td>
 
                                  {/* Released qty - read-only for Collected/Completed status */}
                                  {showReleasedQty && !isMemberAssigned && (
-                                    <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
+                                    <td className="px-4 py-3.5 text-sm tabular-nums text-[#0F2552] dark:text-white/75">
                                        {item.quantityReleased}
                                     </td>
                                  )}
 
                                  {/* Released qty - editable input for MEMBER + Assigned */}
                                  {isMemberAssigned && (
-                                    <td className="px-5 py-3.5">
-                                       <input
-                                          type="number"
-                                          name="quantityReleased"
-                                          value={items[index]?.quantityReleased ?? ''}
-                                          placeholder="0"
-                                          onChange={(e) =>
-                                             handleQuantityChange(index, e.target.value)
-                                          }
-                                          className="w-20 text-sm border border-gray-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 bg-white dark:bg-white/5 text-[#0F2552] dark:text-white/85 focus:outline-none focus:ring-2 focus:ring-[#B28309]/30 focus:border-[#B28309] transition-all"
-                                       />
+                                    <td className="px-4 py-3.5">
+                                       {itemTrackingModes[item.itemId] === 'Serialized' ? (
+                                          <span className="text-sm tabular-nums text-[#0F2552] dark:text-white/60">
+                                             {selectedUnits[item.itemId]?.length ?? 0}
+                                          </span>
+                                       ) : (
+                                          <input
+                                             type="text"
+                                             inputMode="numeric"
+                                             name="quantityReleased"
+                                             value={items[index]?.quantityReleased ?? ''}
+                                             placeholder="0"
+                                             onChange={(e) => {
+                                                const raw = e.target.value.replace(/[^0-9]/g, '');
+                                                const max = Number(requestDetails?.audit?.items[index]?.quantityLeased ?? 0);
+                                                const val = raw === '' ? '' : String(Math.min(Number(raw), max));
+                                                handleQuantityChange(index, val);
+                                             }}
+                                             className="w-20 text-sm text-center rounded-lg px-2.5 py-1.5 outline-none transition-all focus:ring-2 focus:ring-[#B28309]/30"
+                                             style={{
+                                                background: 'var(--surface-low, rgba(255,255,255,0.05))',
+                                                border: '1px solid var(--border-strong, rgba(15,37,82,0.3))',
+                                                color: 'var(--text-primary, #0F2552)',
+                                             }}
+                                          />
+                                       )}
                                     </td>
                                  )}
 
                                  {/* Returned qty - read-only for Completed status */}
                                  {showReturnedQty && !isMemberCollected && (
-                                    <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
+                                    <td className="px-4 py-3.5 text-sm tabular-nums text-[#0F2552] dark:text-white/75">
                                        {item.quantityReturned}
                                     </td>
                                  )}
 
                                  {/* Unit selection for MEMBER + Assigned (release) */}
                                  {isMemberAssigned && (
-                                    <td className="px-5 py-3.5">
+                                    <td className="px-4 py-3.5">
                                        {itemTrackingModes[item.itemId] === 'Serialized' ? (
                                           <SmallSelect
                                              multiple
@@ -697,7 +714,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                              }}
                                           />
                                        ) : (
-                                          <span className="text-xs text-gray-400 dark:text-white/30">Quantity mode</span>
+                                          <span className="text-xs text-gray-300 dark:text-white/20 select-none">&mdash;</span>
                                        )}
                                     </td>
                                  )}
@@ -705,7 +722,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                  {/* Unit selection for MEMBER + Collected (return) */}
                                  {isMemberCollected && (
                                     <>
-                                       <td className="px-5 py-3.5">
+                                       <td className="px-4 py-3.5">
                                           {itemTrackingModes[item.itemId] === 'Serialized' ? (
                                              <SmallSelect
                                                 multiple
@@ -742,7 +759,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                                 }}
                                              />
                                           ) : (
-                                             <span className="text-xs text-gray-400 dark:text-white/30">Quantity mode</span>
+                                             <span className="text-xs text-gray-300 dark:text-white/20 select-none">&mdash;</span>
                                           )}
                                        </td>
                                     </>
