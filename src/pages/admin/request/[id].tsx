@@ -29,6 +29,12 @@ const optionsFilter = [
    { value: 'decline', label: 'decline' },
 ];
 
+const conditionOptions = [
+   { value: 'Good', label: 'Good' },
+   { value: 'Bad', label: 'Bad' },
+   { value: 'Not specified', label: 'Not specified' },
+];
+
 interface RequestDetails {
    requesterName: string;
    ministryName?: string;
@@ -161,6 +167,13 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       Record<number, string>
    >({});
 
+   // Per-item condition for release/return
+   const [releaseConditions, setReleaseConditions] = useState<Record<number, string>>({});
+   const [returnConditions, setReturnConditions] = useState<Record<number, string>>({});
+
+   // Quantity to return per item index (mirrors items[i].quantityReleased for the return flow)
+   const [returnQuantities, setReturnQuantities] = useState<Record<number, string>>({});
+
    const fetchItemUnits = async (itemId: number) => {
       if (itemUnitsOptions[itemId]) return;
 
@@ -227,6 +240,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             ...item,
          }));
          setItems(updatedItems);
+         // Seed returnQuantities with the released qty for each item
+         const initialReturnQtys: Record<number, string> = {};
+         requestDetails.audit.items.forEach((item, idx) => {
+            initialReturnQtys[idx] = item.quantityReleased ?? '';
+         });
+         setReturnQuantities(initialReturnQtys);
       }
    }, [requestDetails?.audit?.items]);
 
@@ -243,6 +262,15 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
       updatedItems[index].quantityReleased = value;
       setItems(updatedItems);
+   };
+
+   const handleReturnQuantityChange = (index: number, value: string) => {
+      const maxQuantity = Number(requestDetails?.audit?.items[index]?.quantityReleased ?? 0);
+      if (Number(value) > maxQuantity) {
+         dispatch(appActions.setSnackBar({ type: 'warning', message: `Cannot return more than ${maxQuantity} (quantity released).`, variant: 'warning' }) as unknown as UnknownAction);
+         return;
+      }
+      setReturnQuantities((prev) => ({ ...prev, [index]: value }));
    };
 
    const handleUpdateStatus = () => {
@@ -274,15 +302,26 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
          return;
       }
 
-      const updatedItems = items.map((item) => ({
-         itemId: item.itemId,
-         quantityLeased: Number(item.quantityLeased),
-         quantityReleased: itemTrackingModes[item.itemId] === 'Serialized'
-            ? (selectedUnits[item.itemId]?.length || 0)
-            : Number(item.quantityReleased) || Number(item.quantityLeased),
-         leasedDate: new Date().toISOString(),
-         units: selectedUnits[item.itemId] || [],
-      }));
+      const updatedItems = items.map((item) => {
+         const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
+         const condition = releaseConditions[item.itemId] || 'Not specified';
+
+         let units: SelectedUnit[] = selectedUnits[item.itemId] || [];
+         // For serialized items with a global condition override, apply it to each unit
+         if (isSerialized && units.length > 0 && releaseConditions[item.itemId]) {
+            units = units.map((u) => ({ ...u, condition }));
+         }
+
+         return {
+            itemId: item.itemId,
+            quantityLeased: Number(item.quantityLeased),
+            quantityReleased: isSerialized
+               ? (selectedUnits[item.itemId]?.length || 0)
+               : Number(item.quantityReleased) || Number(item.quantityLeased),
+            leasedDate: new Date().toISOString(),
+            units,
+         };
+      });
       const payload = {
          items: updatedItems,
          requestId: Number(id),
@@ -303,15 +342,28 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
          return;
       }
 
-      const updatedItems = items.map((item) => ({
-         itemId: item.itemId,
-         quantityReturned: itemTrackingModes[item.itemId] === 'Serialized'
+      const updatedItems = items.map((item, idx) => {
+         const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
+         const condition = returnConditions[item.itemId] || 'Not specified';
+         const qtyReturning = isSerialized
             ? (selectedUnits[item.itemId]?.length || 0)
-            : Number(item.quantityReleased),
-         quantityReleased: Number(item.quantityReleased),
-         returnedDate: new Date().toISOString(),
-         units: selectedUnits[item.itemId] || [],
-      }));
+            : Number(returnQuantities[idx] ?? item.quantityReleased);
+
+         let units: SelectedUnit[] = selectedUnits[item.itemId] || [];
+         // Apply condition override to each unit
+         if (units.length > 0) {
+            units = units.map((u) => ({ ...u, condition }));
+         }
+
+         return {
+            itemId: item.itemId,
+            quantityReturned: qtyReturning,
+            quantityReleased: Number(item.quantityReleased),
+            returnedDate: new Date().toISOString(),
+            units,
+            condition, // included for non-serialized tracking
+         };
+      });
       const payload = {
          items: updatedItems,
          requestId: Number(id),
@@ -427,6 +479,37 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [isMemberAssigned, isMemberCollected, requestDetails?.audit?.items]);
+
+   // Check if return button should be disabled
+   const returnButtonDisabled = isMemberCollected && items.some((item, idx) => {
+      const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
+      if (isSerialized) {
+         return !selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0;
+      }
+      return !returnQuantities[idx] || Number(returnQuantities[idx]) <= 0;
+   });
+
+   // Check if release button should be disabled
+   const releaseButtonDisabled = isMemberAssigned && items.some((item) => {
+      const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
+      if (isSerialized) {
+         return !selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0;
+      }
+      return false;
+   });
+
+   // ── Shared styled input for qty fields ──────────────────────────────────
+   const themedInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+      <input
+         {...props}
+         className={`w-24 text-sm text-center rounded-lg px-2.5 py-1.5 outline-none transition-all focus:ring-2 focus:ring-[#B28309]/30 tabular-nums ${props.className ?? ''}`}
+         style={{
+            background: 'var(--surface-low, rgba(15,37,82,0.04))',
+            border: '1.5px solid var(--border-strong, rgba(15,37,82,0.25))',
+            color: 'var(--text-primary, #0F2552)',
+         }}
+      />
+   );
 
    return (
       <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
@@ -583,175 +666,209 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                />
             </DetailSection>
 
-            {/* Requested Items */}
+            {/* ── Requested Items ─────────────────────────────────────────────────────── */}
             <DetailSection title="Requested Items">
-               <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                     <thead>
-                        <tr className="border-b border-gray-100 dark:border-white/5">
-                           <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                              Item Name
-                           </th>
-                           <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                              Qty Requested
-                           </th>
-                           {(showReleasedQty || isMemberAssigned) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                                 Qty Released
-                              </th>
-                           )}
-                           {(showReturnedQty || isMemberCollected) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                                 Qty Returned
-                              </th>
-                           )}
-                           {(isMemberAssigned || isMemberCollected) && (
-                              <th className="px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40">
-                                 Select Units
-                              </th>
-                           )}
-                        </tr>
-                     </thead>
-                     <tbody>
-                        {requestDetails?.audit?.items &&
-                           requestDetails.audit.items.map((item, index) => (
-                              <tr
-                                 key={index}
-                                 className="border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
-                              >
-                                 <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                    {item.itemName}
-                                 </td>
-                                 <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                    {item.quantityLeased}
-                                 </td>
+               {/* Card-based layout for MEMBER action states */}
+               {(isMemberAssigned || isMemberCollected) ? (
+                  <div className="space-y-3 p-4">
+                     {requestDetails?.audit?.items && requestDetails.audit.items.map((item, index) => {
+                        const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
+                        const selectedCount = selectedUnits[item.itemId]?.length ?? 0;
+                        const releaseCondition = releaseConditions[item.itemId] || '';
+                        const returnCondition = returnConditions[item.itemId] || '';
+                        const returnQty = returnQuantities[index] ?? item.quantityReleased ?? '';
 
-                                 {/* Released qty - read-only for Collected/Completed status */}
-                                 {showReleasedQty && !isMemberAssigned && (
-                                    <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                       {item.quantityReleased}
-                                    </td>
-                                 )}
-
-                                 {/* Released qty - editable input for MEMBER + Assigned */}
-                                 {isMemberAssigned && (
-                                    <td className="px-5 py-3.5">
-                                       <input
-                                          type="number"
-                                          name="quantityReleased"
-                                          value={items[index]?.quantityReleased ?? ''}
-                                          placeholder="0"
-                                          onChange={(e) =>
-                                             handleQuantityChange(index, e.target.value)
-                                          }
-                                          className="w-20 text-sm border border-gray-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 bg-white dark:bg-white/5 text-[#0F2552] dark:text-white/85 focus:outline-none focus:ring-2 focus:ring-[#B28309]/30 focus:border-[#B28309] transition-all"
-                                       />
-                                    </td>
-                                 )}
-
-                                 {/* Returned qty - read-only for Completed status */}
-                                 {showReturnedQty && !isMemberCollected && (
-                                    <td className="px-5 py-3.5 text-sm text-[#0F2552] dark:text-white/85">
-                                       {item.quantityReturned}
-                                    </td>
-                                 )}
-
-                                 {/* Unit selection for MEMBER + Assigned (release) */}
-                                 {isMemberAssigned && (
-                                    <td className="px-5 py-3.5">
-                                       {itemTrackingModes[item.itemId] === 'Serialized' ? (
-                                          <SmallSelect
-                                             multiple
-                                             quantity={Number(item.quantityLeased) || 1}
-                                             value={(selectedUnits[item.itemId] || []).map(
-                                                (u) => u.serialNumber
-                                             )}
-                                             options={(
-                                                itemUnitsOptions[item.itemId] || []
-                                             ).map((opt) => ({
-                                                value: opt.data.serialNumber,
-                                                label: `${opt.data.serialNumber} - ${opt.data.condition}`,
-                                                data: opt.data,
-                                             }))}
-                                             placeholder="Select item units"
-                                             onOpen={() => fetchItemUnits(item.itemId)}
-                                             onChange={(selectedIds) => {
-                                                const fullUnits = (
-                                                   itemUnitsOptions[item.itemId] || []
-                                                )
-                                                   .filter((opt) =>
-                                                      selectedIds.includes(
-                                                         opt.data.serialNumber
-                                                      )
-                                                   )
-                                                   .map((opt) => ({
-                                                      storeId: opt.data.store.id,
-                                                      serialNumber: opt.data.serialNumber,
-                                                      condition: opt.data.condition,
-                                                   }));
-
-                                                setSelectedUnits((prev) => ({
-                                                   ...prev,
-                                                   [item.itemId]: fullUnits,
-                                                }));
-                                             }}
-                                          />
-                                       ) : (
-                                          <span className="text-xs text-gray-400 dark:text-white/30">Quantity mode</span>
+                        return (
+                           <div
+                              key={index}
+                              className="rounded-xl p-4 border transition-all"
+                              style={{
+                                 background: 'var(--surface-paper, #fff)',
+                                 borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
+                              }}
+                           >
+                              {/* Item header */}
+                              <div className="flex items-start justify-between mb-3">
+                                 <div>
+                                    <p className="text-sm font-semibold text-[#0F2552] dark:text-white/90 leading-tight">
+                                       {item.itemName}
+                                    </p>
+                                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
+                                       Requested:&nbsp;<span className="font-medium">{item.quantityLeased}</span>
+                                       {(showReleasedQty || isMemberCollected) && (
+                                          <>
+                                             &nbsp;&middot;&nbsp;Released:&nbsp;<span className="font-medium">{item.quantityReleased}</span>
+                                          </>
                                        )}
+                                       {isSerialized && (
+                                          <>&nbsp;&middot;&nbsp;<span className="text-[#B28309]">Serialized</span></>
+                                       )}
+                                    </p>
+                                 </div>
+                              </div>
+
+                              {/* Controls row */}
+                              <div className="flex flex-wrap gap-3 mb-3">
+                                 {/* QTY field */}
+                                 <div className="flex flex-col gap-1">
+                                    <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
+                                       {isMemberAssigned ? 'Qty Releasing' : 'Qty Returning'}
+                                    </label>
+                                    {isSerialized ? (
+                                       <div
+                                          className="w-24 text-sm text-center rounded-lg px-2.5 py-1.5 tabular-nums font-medium"
+                                          style={{
+                                             background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                                             border: '1.5px solid var(--border-default, rgba(15,37,82,0.12))',
+                                             color: 'var(--text-primary, #0F2552)',
+                                          }}
+                                       >
+                                          {selectedCount}
+                                       </div>
+                                    ) : (
+                                       themedInput({
+                                          type: 'text',
+                                          inputMode: 'numeric',
+                                          value: isMemberAssigned
+                                             ? (items[index]?.quantityReleased ?? '')
+                                             : returnQty,
+                                          placeholder: '0',
+                                          onChange: (e) => {
+                                             const raw = e.target.value.replace(/[^0-9]/g, '');
+                                             if (isMemberAssigned) {
+                                                const max = Number(requestDetails?.audit?.items[index]?.quantityLeased ?? 0);
+                                                const val = raw === '' ? '' : String(Math.min(Number(raw), max));
+                                                handleQuantityChange(index, val);
+                                             } else {
+                                                const max = Number(requestDetails?.audit?.items[index]?.quantityReleased ?? 0);
+                                                const val = raw === '' ? '' : String(Math.min(Number(raw), max));
+                                                handleReturnQuantityChange(index, val);
+                                             }
+                                          },
+                                       })
+                                    )}
+                                 </div>
+
+                                 {/* Condition dropdown */}
+                                 <div className="flex flex-col gap-1 min-w-[160px]">
+                                    <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
+                                       Condition
+                                    </label>
+                                    <SmallSelect
+                                       options={conditionOptions}
+                                       value={isMemberAssigned ? releaseCondition : returnCondition}
+                                       placeholder="Select condition"
+                                       onChange={(val) => {
+                                          if (isMemberAssigned) {
+                                             setReleaseConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
+                                          } else {
+                                             setReturnConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
+                                          }
+                                       }}
+                                    />
+                                 </div>
+                              </div>
+
+                              {/* Unit selector — serialized items only */}
+                              {isSerialized && (
+                                 <div className="flex flex-col gap-1">
+                                    <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
+                                       Select Units
+                                    </label>
+                                    <SmallSelect
+                                       multiple
+                                       quantity={
+                                          isMemberAssigned
+                                             ? Number(item.quantityLeased) || 1
+                                             : Number(item.quantityReleased) || 1
+                                       }
+                                       value={(selectedUnits[item.itemId] || []).map((u) => u.serialNumber)}
+                                       options={(itemUnitsOptions[item.itemId] || []).map((opt) => ({
+                                          value: opt.data.serialNumber,
+                                          label: `${opt.data.serialNumber}${opt.data.condition && opt.data.condition !== 'Not specified' ? ` — ${opt.data.condition}` : ''}`,
+                                          data: opt.data,
+                                       }))}
+                                       placeholder={
+                                          isMemberAssigned
+                                             ? 'Select units to release'
+                                             : 'Select units to return'
+                                       }
+                                       onOpen={() => fetchItemUnits(item.itemId)}
+                                       onChange={(selectedIds) => {
+                                          const fullUnits = (itemUnitsOptions[item.itemId] || [])
+                                             .filter((opt) => (selectedIds as string[]).includes(opt.data.serialNumber))
+                                             .map((opt) => ({
+                                                storeId: opt.data.store?.id,
+                                                serialNumber: opt.data.serialNumber,
+                                                condition: opt.data.condition,
+                                             }));
+                                          setSelectedUnits((prev) => ({
+                                             ...prev,
+                                             [item.itemId]: fullUnits,
+                                          }));
+                                       }}
+                                    />
+                                 </div>
+                              )}
+                           </div>
+                        );
+                     })}
+                  </div>
+               ) : (
+                  /* Read-only table for other roles / statuses */
+                  <div className="overflow-x-auto rounded-b-xl">
+                     <table className="w-full text-left">
+                        <thead>
+                           <tr className="bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/5">
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
+                                 Item Name
+                              </th>
+                              <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
+                                 Qty Requested
+                              </th>
+                              {showReleasedQty && (
+                                 <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
+                                    Qty Released
+                                 </th>
+                              )}
+                              {showReturnedQty && (
+                                 <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">
+                                    Qty Returned
+                                 </th>
+                              )}
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {requestDetails?.audit?.items &&
+                              requestDetails.audit.items.map((item, index) => (
+                                 <tr
+                                    key={index}
+                                    className={`border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 hover:bg-gray-50/60 dark:hover:bg-white/[0.025] transition-colors ${
+                                       index % 2 !== 0 ? 'bg-gray-50/40 dark:bg-white/[0.01]' : ''
+                                    }`}
+                                 >
+                                    <td className="px-4 py-3.5 text-sm font-medium text-[#0F2552] dark:text-white/85">
+                                       {item.itemName}
                                     </td>
-                                 )}
-
-                                 {/* Unit selection for MEMBER + Collected (return) */}
-                                 {isMemberCollected && (
-                                    <>
-                                       <td className="px-5 py-3.5">
-                                          {itemTrackingModes[item.itemId] === 'Serialized' ? (
-                                             <SmallSelect
-                                                multiple
-                                                quantity={Number(item.quantityReleased) || 1}
-                                                value={(selectedUnits[item.itemId] || []).map(
-                                                   (u) => u.serialNumber
-                                                )}
-                                                options={(
-                                                   itemUnitsOptions[item.itemId] || []
-                                                ).map((opt) => ({
-                                                   value: opt.data.serialNumber,
-                                                   label: `${opt.data.serialNumber} - ${opt.data.condition}`,
-                                                   data: opt.data,
-                                                }))}
-                                                placeholder="Select item units to return"
-                                                onOpen={() => fetchItemUnits(item.itemId)}
-                                                onChange={(selectedIds) => {
-                                                   const fullUnits = (
-                                                      itemUnitsOptions[item.itemId] || []
-                                                   )
-                                                      .filter((opt) =>
-                                                         selectedIds.includes(opt.data.serialNumber)
-                                                      )
-                                                      .map((opt) => ({
-                                                         storeId: opt.data.store.id,
-                                                         serialNumber: opt.data.serialNumber,
-                                                         condition: opt.data.condition,
-                                                      }));
-
-                                                   setSelectedUnits((prev) => ({
-                                                      ...prev,
-                                                      [item.itemId]: fullUnits,
-                                                   }));
-                                                }}
-                                             />
-                                          ) : (
-                                             <span className="text-xs text-gray-400 dark:text-white/30">Quantity mode</span>
-                                          )}
+                                    <td className="px-4 py-3.5 text-sm tabular-nums text-[#0F2552] dark:text-white/75">
+                                       {item.quantityLeased}
+                                    </td>
+                                    {showReleasedQty && (
+                                       <td className="px-4 py-3.5 text-sm tabular-nums text-[#0F2552] dark:text-white/75">
+                                          {item.quantityReleased}
                                        </td>
-                                    </>
-                                 )}
-                              </tr>
-                           ))}
-                     </tbody>
-                  </table>
-               </div>
+                                    )}
+                                    {showReturnedQty && (
+                                       <td className="px-4 py-3.5 text-sm tabular-nums text-[#0F2552] dark:text-white/75">
+                                          {item.quantityReturned}
+                                       </td>
+                                    )}
+                                 </tr>
+                              ))}
+                        </tbody>
+                     </table>
+                  </div>
+               )}
             </DetailSection>
 
             {/* Action area */}
@@ -798,6 +915,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                            onClick={handleReleaseRequestItems}
                            variant="primary"
                            size="md"
+                           disabled={releaseButtonDisabled}
                         >
                            {IsReleasingRequestItems ? (
                               <div className="flex items-center gap-2">
@@ -813,6 +931,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                            onClick={handleReturnRequestItems}
                            variant="secondary"
                            size="md"
+                           disabled={returnButtonDisabled}
                         >
                            {IsReturningRequestItems ? (
                               <div className="flex items-center gap-2">

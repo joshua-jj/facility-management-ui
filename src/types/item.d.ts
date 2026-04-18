@@ -57,7 +57,7 @@ export interface ItemForm {
   id?: number;
   name: string;
   actualQuantity: number;
-  // storeId: number;
+  storeId?: number;
   departmentId: number;
   fragile: boolean;
   trackingMode?: string;

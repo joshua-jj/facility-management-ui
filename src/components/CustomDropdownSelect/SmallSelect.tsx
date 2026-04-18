@@ -203,11 +203,9 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
 
   const getDisplayValue = () => {
     if (multiple) {
-      return placeholder;
-      // if (value.length === 0) return placeholder;
-      // return value
-      //   .map((v) => options.find((o) => o.value === v)?.label || v)
-      //   .join(", ");
+      if (value.length === 0) return placeholder;
+      if (quantity !== undefined) return `Selected (${value.length}/${quantity})`;
+      return `Selected (${value.length})`;
     } else {
       return options.find((o) => o.value === value)?.label || placeholder;
     }
