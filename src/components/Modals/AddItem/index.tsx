@@ -34,6 +34,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       item?.department?.id ? String(item.department.id) : '',
    );
    const [fragile, setFragile] = useState(item?.fragile ? 'true' : 'false');
+   const [trackingMode, setTrackingMode] = useState(item?.trackingMode || 'Quantity');
    const [items, setItems] = useState<ItemForm[]>([]);
    const [editIndex, setEditIndex] = useState<number | null>(null);
    const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
@@ -63,11 +64,24 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       { value: 'false', label: 'No' },
    ];
 
+   const trackingOptions = [
+      { value: 'Quantity', label: 'Quantity Only' },
+      { value: 'Serialized', label: 'Serialized (Track Individual Units)' },
+   ];
+
    const handleSubmit = (data: ItemForm) => {
       data.departmentId = Number(selectedDeptId || userDetails?.departmentId || item?.department?.id);
       data.fragile = fragile === 'true';
       data.actualQuantity = Number(data.actualQuantity);
+      data.trackingMode = trackingMode;
 
+      // Edit mode — dispatch update, not create
+      if (item?.id) {
+         dispatch(itemActions.updateItemBasic({ ...data, id: item.id }) as unknown as UnknownAction);
+         return;
+      }
+
+      // Create mode — supports batch queue
       let updatedItems: ItemForm[] = [];
 
       if (editIndex !== null) {
@@ -80,10 +94,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
          setItems(updatedItems);
       }
 
-      if (item?.id) {
-         data.id = item.id;
-         dispatch(itemActions.createItem(data) as unknown as UnknownAction);
-      } else if (updatedItems.length === 1) {
+      if (updatedItems.length === 1) {
          dispatch(itemActions.createItem(updatedItems[0]) as unknown as UnknownAction);
       } else if (updatedItems.length > 1) {
          dispatch(itemActions.createItems(updatedItems) as unknown as UnknownAction);
@@ -92,6 +103,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       formRef.current?.reset();
       setSelectedDeptId('');
       setFragile('false');
+      setTrackingMode('Quantity');
    };
 
    const handleDelete = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
@@ -122,10 +134,12 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       formData.departmentId = Number(selectedDeptId || userDetails?.departmentId);
       formData.fragile = fragile === 'true';
       formData.actualQuantity = Number(formData.actualQuantity);
+      formData.trackingMode = trackingMode;
       setItems((prev) => [...prev, formData]);
       formRef.current.reset();
       setSelectedDeptId('');
       setFragile('false');
+      setTrackingMode('Quantity');
    };
 
    useEffect(() => {
@@ -150,6 +164,19 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       return () => listener.remove();
    }, [closeModal]);
 
+   useEffect(() => {
+      const listener = AppEmitter.addListener(itemConstants.UPDATE_ITEM_BASIC_SUCCESS, () => {
+         closeModal();
+         // Refresh the items list
+         if (userDetails?.roleId !== 3) {
+            dispatch(itemActions.getAllItems({ page: 1, limit: 10 }) as unknown as UnknownAction);
+         } else {
+            dispatch(itemActions.getDepartmentItems({ departmentId: Number(userDetails?.departmentId) }) as unknown as UnknownAction);
+         }
+      });
+      return () => listener.remove();
+   }, [closeModal, dispatch, userDetails]);
+
    return (
       <>
          <span className={className} onClick={openModal} role="button" tabIndex={0}>
@@ -160,11 +187,11 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
             open={open || isModalOpen}
             onClose={closeModal}
             title={item ? 'Update Item' : 'Add New Item'}
-            subtitle="Add items to the facility inventory"
+            subtitle={item ? 'Update item details' : 'Add items to the facility inventory'}
             width="sm:w-[36rem]"
          >
-            {/* Queued items */}
-            {items.length > 0 && (
+            {/* Queued items — only in create mode */}
+            {!item && items.length > 0 && (
                <div className="mb-4 space-y-2 pb-3" style={{ borderBottom: '1px solid var(--border-default)' }}>
                   <p className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint)' }}>
                      Queued Items ({items.length})
@@ -225,7 +252,21 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                   />
                </div>
 
-               {/* Row 2 — Department & Fragile */}
+               {/* Row 2 — Tracking Mode */}
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                  <SelectInput
+                     name="trackingMode"
+                     label="Tracking Mode"
+                     placeholder="Select tracking mode"
+                     options={trackingOptions}
+                     value={trackingMode}
+                     onValueChange={(val) => setTrackingMode(val)}
+                     searchable={false}
+                  />
+                  <div />
+               </div>
+
+               {/* Row 3 — Department & Fragile */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                   {userDetails?.roleId !== 3 ? (
                      <SelectInput

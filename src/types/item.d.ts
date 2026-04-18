@@ -43,6 +43,10 @@ export interface ItemConstants {
   CREATE_ITEMS: string;
 
   UPDATE_ITEM: string;
+  UPDATE_ITEM_BASIC: string;
+  REQUEST_UPDATE_ITEM_BASIC: string;
+  UPDATE_ITEM_BASIC_SUCCESS: string;
+  UPDATE_ITEM_BASIC_ERROR: string;
   SEARCH_ITEM: string;
   DELETE_ITEM: string;
 
@@ -56,6 +60,7 @@ export interface ItemForm {
   // storeId: number;
   departmentId: number;
   fragile: boolean;
+  trackingMode?: string;
   // condition: string;
 }
 
@@ -80,6 +85,7 @@ export interface Item {
   //   itemLocation: string;
   actualQuantity?: string;
   availableQuantity?: number;
+  trackingMode?: string;
   condition?: string;
   department?: {
     id: number;

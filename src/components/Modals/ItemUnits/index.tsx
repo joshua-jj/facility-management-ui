@@ -43,7 +43,7 @@ const ItemUnits: React.FC<ItemUnitsProps> = ({
     dispatch(reportActions.sendReport(data) as unknown as UnknownAction);
   };
 
-  const filteredUnits = allItemUnitsList?.filter((unit) =>
+  const filteredUnits = (allItemUnitsList ?? []).filter((unit) =>
     unit.serialNumber.toLowerCase().includes(search.toLowerCase())
   );
 
