@@ -19,6 +19,7 @@ import { CurrencyDisplay, PhoneDisplay } from '@/components/FormatValue';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { maintenanceConstants, authConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
 
 const EDIT_ICON = (
@@ -103,6 +104,14 @@ const MaintenanceLogs = () => {
    useEffect(() => {
       dispatch(maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction);
    }, [dispatch]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const listener = AppEmitter.addListener(maintenanceConstants.CREATE_MAINTENANCE_LOG_SUCCESS, () =>
+         dispatch(maintenanceActions.getMaintenanceLogs({ page: currentPage, ...buildFilterParams(filterValues) }) as unknown as UnknownAction),
+      );
+      return () => listener.remove();
+   }, [currentPage, filterValues, buildFilterParams, dispatch]);
 
    const handleSearch = useCallback(
       (query: string) => {

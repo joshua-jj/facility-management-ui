@@ -61,10 +61,6 @@ function* createGeneratorLog({ data }: CreateGeneratorLogAction) {
         user: jsonResponse?.data,
       });
 
-      yield put({
-        type: generatorConstants.GET_GENERATOR_LOGS,
-      });
-
       AppEmitter.emit(
         generatorConstants.CREATE_GENERATOR_LOG_SUCCESS,
         jsonResponse
@@ -101,10 +97,6 @@ function* updateGeneratorLog({ data }: UpdateGeneratorLogAction) {
       yield put({
         type: generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS,
         user: jsonResponse?.data,
-      });
-
-      yield put({
-        type: generatorConstants.GET_GENERATOR_LOGS,
       });
 
       AppEmitter.emit(

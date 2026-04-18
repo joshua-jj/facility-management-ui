@@ -57,10 +57,6 @@ function* createMaintenanceLog({ data }: CreateMaintenanceLogAction) {
         user: jsonResponse?.data,
       });
 
-      yield put({
-        type: maintenanceConstants.GET_MAINTENANCE_LOGS,
-      });
-
       AppEmitter.emit(
         maintenanceConstants.CREATE_MAINTENANCE_LOG_SUCCESS,
         jsonResponse

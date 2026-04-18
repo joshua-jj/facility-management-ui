@@ -60,10 +60,6 @@ function* createStore({ data }: CreateStoreAction) {
         user: jsonResponse?.data,
       });
 
-      yield put({
-        type: storeConstants.GET_STORES,
-      });
-
       AppEmitter.emit(storeConstants.CREATE_STORE_SUCCESS, jsonResponse);
     }
   } catch (error: unknown) {
@@ -88,10 +84,6 @@ function* updateStore({ data }: UpdateStoreAction) {
       yield put({
         type: storeConstants.UPDATE_STORE_SUCCESS,
         user: jsonResponse?.data,
-      });
-
-      yield put({
-        type: storeConstants.GET_STORES,
       });
 
       AppEmitter.emit(storeConstants.UPDATE_STORE_SUCCESS, jsonResponse);
@@ -132,7 +124,7 @@ function* activateStore({ data }: ActivateStoreAction) {
     if (!jsonResponse) return;
 
     yield put({ type: storeConstants.ACTIVATE_STORE_SUCCESS });
-    yield put({ type: storeConstants.GET_STORES });
+    AppEmitter.emit(storeConstants.ACTIVATE_STORE_SUCCESS, jsonResponse);
 
     const payload: SetSnackBarPayload = {
       type: 'success',
@@ -158,7 +150,7 @@ function* deactivateStore({ data }: DeactivateStoreAction) {
     if (!jsonResponse) return;
 
     yield put({ type: storeConstants.DEACTIVATE_STORE_SUCCESS });
-    yield put({ type: storeConstants.GET_STORES });
+    AppEmitter.emit(storeConstants.DEACTIVATE_STORE_SUCCESS, jsonResponse);
 
     const payload: SetSnackBarPayload = {
       type: 'success',

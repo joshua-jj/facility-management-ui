@@ -179,18 +179,9 @@ function* createItems({ data }: CreateItemsAction) {
       });
       if (!jsonResponse) return;
 
-      const user = yield* getStoredUser();
-
       yield put({
         type: itemConstants.CREATE_ITEM_SUCCESS,
         item: jsonResponse?.data,
-      });
-
-      yield put({
-        type:
-          (user?.user as Record<string, unknown>)?.roleId === 3
-            ? itemConstants.GET_DEPARTMENT_ITEMS
-            : itemConstants.GET_ALL_ITEMS,
       });
 
       AppEmitter.emit(itemConstants.CREATE_ITEMS_SUCCESS, jsonResponse);
@@ -285,6 +276,8 @@ function* deleteItem({ data }: DeleteItemAction) {
         type: itemConstants.DELETE_ITEM_SUCCESS,
         id: data.id,
       });
+
+      AppEmitter.emit(itemConstants.DELETE_ITEM_SUCCESS, { id: data.id });
 
       const payload: SetSnackBarPayload = {
         type: 'success',
