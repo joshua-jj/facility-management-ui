@@ -214,7 +214,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                   }
                >
                   {itemDetail.itemUnits && itemDetail.itemUnits.length > 0 ? (
-                     <div className="overflow-x-auto">
+                     <div className="overflow-visible">
                         <table className="w-full">
                            <thead>
                               <tr className="bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/5">

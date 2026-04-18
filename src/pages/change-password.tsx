@@ -16,9 +16,6 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 const ChangePassword: FC = () => {
    const router = useRouter();
-   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-   const _query = router?.query;
-
    const dispatch = useDispatch();
    const { IsChangingPassword } = useSelector((s: RootState) => s.auth);
    const { theme } = useTheme();
@@ -54,6 +51,7 @@ const ChangePassword: FC = () => {
       const data: ChangePasswordForm = {
          oldPassword,
          newPassword,
+         token: (router?.query?.accessToken as string) || undefined,
       };
 
       dispatch(authActions.changePassword(data) as unknown as UnknownAction);
