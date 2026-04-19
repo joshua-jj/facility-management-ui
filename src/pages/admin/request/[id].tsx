@@ -360,7 +360,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             quantityReleased: Number(item.quantityReleased),
             returnedDate: new Date().toISOString(),
             units,
-            condition, // included for non-serialized tracking
          };
       });
       const payload = {
