@@ -22,6 +22,7 @@ import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { NumberDisplay } from '@/components/FormatValue';
 import { authConstants, itemConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
 import { format, parseISO } from 'date-fns';
 
@@ -93,6 +94,20 @@ const Items = () => {
       fetchItems(1);
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
+
+   // Re-fetch current page after any mutation (create, update, delete)
+   useEffect(() => {
+      const events = [
+         itemConstants.CREATE_ITEM_SUCCESS,
+         itemConstants.CREATE_ITEMS_SUCCESS,
+         itemConstants.UPDATE_ITEM_SUCCESS,
+         itemConstants.DELETE_ITEM_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () => fetchItems(meta.currentPage)),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [fetchItems, meta.currentPage]);
 
    // ── Search ──
 
@@ -398,6 +413,7 @@ const Items = () => {
                loading={IsRequestingAllItems}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => fetchItems(meta.currentPage)}
                searchPlaceholder="Search items..."
                filters={filters}
                filterValues={filterValues}

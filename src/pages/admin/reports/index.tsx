@@ -191,6 +191,7 @@ const Reports = () => {
                loading={IsRequestingReports}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(reportActions.getReports({ page: currentPage, search: searchQuery || undefined, complaintStatus: filterValues.complaintStatus || undefined, attendedTo: filterValues.attendedTo !== undefined && filterValues.attendedTo !== '' ? filterValues.attendedTo === 'true' : undefined }) as unknown as UnknownAction)}
                searchPlaceholder="Search by name, subject, email..."
                filters={filters}
                filterValues={filterValues}

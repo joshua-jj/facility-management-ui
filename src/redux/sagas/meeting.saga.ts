@@ -63,8 +63,6 @@ function* createMeeting({ data }: CreateMeetingAction) {
         meeting: jsonResponse?.data,
       });
 
-      yield put({ type: meetingConstants.GET_MEETINGS });
-
       AppEmitter.emit(meetingConstants.CREATE_MEETING_SUCCESS, jsonResponse);
 
       const payload: SetSnackBarPayload = {
@@ -98,8 +96,6 @@ function* updateMeeting({ data }: UpdateMeetingAction) {
         meeting: jsonResponse?.data,
       });
 
-      yield put({ type: meetingConstants.GET_MEETINGS });
-
       AppEmitter.emit(meetingConstants.UPDATE_MEETING_SUCCESS, jsonResponse);
 
       const payload: SetSnackBarPayload = {
@@ -124,8 +120,6 @@ function* deleteMeeting({ id }: DeleteMeetingAction) {
     if (!jsonResponse) return;
 
     yield put({ type: meetingConstants.DELETE_MEETING_SUCCESS });
-
-    yield put({ type: meetingConstants.GET_MEETINGS });
 
     AppEmitter.emit(meetingConstants.DELETE_MEETING_SUCCESS, jsonResponse);
 

@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
@@ -21,6 +21,7 @@ import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { PhoneDisplay } from '@/components/FormatValue';
 import { authConstants, userConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
 
 const PAGE_LIMIT = 10;
@@ -62,9 +63,9 @@ const Users = () => {
       dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
    }, [dispatch]);
 
-   useEffect(() => {
+   const fetchUsers = useCallback((page: number) => {
       dispatch(userActions.getUsers({
-         page: currentPage,
+         page,
          limit: PAGE_LIMIT,
          search: searchQuery || undefined,
          status: filterValues.status || undefined,
@@ -72,7 +73,25 @@ const Users = () => {
          departmentId: filterValues.departmentId ? Number(filterValues.departmentId) : undefined,
          gender: filterValues.gender || undefined,
       }) as unknown as UnknownAction);
-   }, [dispatch, currentPage, searchQuery, filterValues]);
+   }, [dispatch, searchQuery, filterValues]);
+
+   useEffect(() => {
+      fetchUsers(currentPage);
+   }, [fetchUsers, currentPage]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const events = [
+         userConstants.CREATE_USER_SUCCESS,
+         userConstants.UPDATE_USER_ROLE_SUCCESS,
+         userConstants.ACTIVATE_USER_SUCCESS,
+         userConstants.DEACTIVATE_USER_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () => fetchUsers(currentPage)),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [currentPage, fetchUsers]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -295,6 +314,7 @@ const Users = () => {
                loading={IsRequestingUsers}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => fetchUsers(currentPage)}
                searchPlaceholder="Search users by name, email..."
                filters={filters}
                filterValues={filterValues}

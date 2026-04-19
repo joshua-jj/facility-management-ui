@@ -240,7 +240,7 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
         </span>
       </button>
       {isOpen && (
-        <div className="absolute z-10 w-full bg-white dark:bg-[#1a1a2e] shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] rounded-b-md border border-t-0 border-blue-200 dark:border-white/15 max-h-40 overflow-y-auto">
+        <div className="absolute z-[100] w-full bg-white dark:bg-[#1a1a2e] shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] rounded-b-md border border-t-0 border-blue-200 dark:border-white/15 max-h-40 overflow-y-auto">
           {/* {options.map((opt) => (
             <div
               key={opt.value}
