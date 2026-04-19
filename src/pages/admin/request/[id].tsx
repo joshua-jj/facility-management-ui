@@ -67,7 +67,6 @@ interface RequestDetailsProps {
 }
 
 type SelectedUnit = {
-   storeId: number;
    serialNumber: string;
    condition: string;
 };
@@ -800,7 +799,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                           const fullUnits = (itemUnitsOptions[item.itemId] || [])
                                              .filter((opt) => (selectedIds as string[]).includes(opt.data.serialNumber))
                                              .map((opt) => ({
-                                                storeId: Number(opt.data.store?.id ?? 0),
                                                 serialNumber: opt.data.serialNumber,
                                                 condition: opt.data.condition || 'Not specified',
                                              }));
