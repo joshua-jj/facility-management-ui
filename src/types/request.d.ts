@@ -79,7 +79,6 @@ export interface AssignRequestForm {
 }
 
 type SelectedUnit = {
-  storeId: number | string;
   serialNumber: string;
   condition: string;
 };
