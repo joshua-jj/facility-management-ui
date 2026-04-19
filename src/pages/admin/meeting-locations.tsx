@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import { exportToXlsx } from '@/utilities/exportXlsx';
@@ -13,6 +13,8 @@ import AddMeetingLocation from '@/components/Modals/AddMeetingLocation';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
+import { meetingLocationConstants } from '@/constants/meetingLocation.constant';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 const PAGE_LIMIT = 10;
 
@@ -45,14 +47,31 @@ const MeetingLocations = () => {
    );
    const { meta } = pagination;
 
-   useEffect(() => {
+   const fetchMeetingLocations = useCallback((page: number) => {
       dispatch(meetingLocationActions.getMeetingLocations({
-         page: currentPage,
+         page,
          limit: PAGE_LIMIT,
          search: searchQuery || undefined,
          status: filterValues.status || undefined,
       }) as unknown as UnknownAction);
-   }, [dispatch, currentPage, searchQuery, filterValues]);
+   }, [dispatch, searchQuery, filterValues]);
+
+   useEffect(() => {
+      fetchMeetingLocations(currentPage);
+   }, [fetchMeetingLocations, currentPage]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const events = [
+         meetingLocationConstants.CREATE_MEETING_LOCATION_SUCCESS,
+         meetingLocationConstants.UPDATE_MEETING_LOCATION_SUCCESS,
+         meetingLocationConstants.DELETE_MEETING_LOCATION_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () => fetchMeetingLocations(currentPage)),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [currentPage, fetchMeetingLocations]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -197,6 +216,7 @@ const MeetingLocations = () => {
                loading={IsRequestingMeetingLocations}
                onSearch={handleSearch}
                onExport={handleExport}
+               onRefresh={() => fetchMeetingLocations(currentPage)}
                searchPlaceholder="Search meeting locations..."
                filters={filters}
                filterValues={filterValues}

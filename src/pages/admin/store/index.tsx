@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { useRouter } from 'next/router';
@@ -18,6 +18,7 @@ import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { authConstants, storeConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
 
 const PAGE_LIMIT = 10;
@@ -47,14 +48,32 @@ const Stores = () => {
    const { IsRequestingStores, allStoresList, pagination } = useSelector((s: RootState) => s.store);
    const { meta } = pagination;
 
-   useEffect(() => {
+   const fetchStores = useCallback((page: number) => {
       dispatch(storeActions.getStores({
-         page: currentPage,
+         page,
          limit: PAGE_LIMIT,
          search: searchQuery || undefined,
          status: filterValues.status || undefined,
       }) as unknown as UnknownAction);
-   }, [dispatch, currentPage, searchQuery, filterValues]);
+   }, [dispatch, searchQuery, filterValues]);
+
+   useEffect(() => {
+      fetchStores(currentPage);
+   }, [fetchStores, currentPage]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const events = [
+         storeConstants.CREATE_STORE_SUCCESS,
+         storeConstants.UPDATE_STORE_SUCCESS,
+         storeConstants.ACTIVATE_STORE_SUCCESS,
+         storeConstants.DEACTIVATE_STORE_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () => fetchStores(currentPage)),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [currentPage, fetchStores]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -211,6 +230,7 @@ const Stores = () => {
                loading={IsRequestingStores}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => fetchStores(currentPage)}
                searchPlaceholder="Search stores..."
                filters={filters}
                filterValues={filterValues}

@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import { exportToXlsx } from '@/utilities/exportXlsx';
@@ -13,6 +13,8 @@ import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { useRouter } from 'next/router';
+import { roleConstants } from '@/constants/role.constant';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 const PAGE_LIMIT = 10;
 
@@ -53,14 +55,31 @@ const Roles = () => {
    );
    const { meta } = pagination;
 
-   useEffect(() => {
+   const fetchRoles = useCallback((page: number) => {
       dispatch(roleActions.getRoles({
-         page: currentPage,
+         page,
          limit: PAGE_LIMIT,
          search: searchQuery || undefined,
          status: filterValues.status || undefined,
       }) as unknown as UnknownAction);
-   }, [dispatch, currentPage, searchQuery, filterValues]);
+   }, [dispatch, searchQuery, filterValues]);
+
+   useEffect(() => {
+      fetchRoles(currentPage);
+   }, [fetchRoles, currentPage]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const events = [
+         roleConstants.CREATE_ROLE_SUCCESS,
+         roleConstants.UPDATE_ROLE_SUCCESS,
+         roleConstants.DELETE_ROLE_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () => fetchRoles(currentPage)),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [currentPage, fetchRoles]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -201,6 +220,7 @@ const Roles = () => {
                loading={IsRequestingRoles}
                onSearch={handleSearch}
                onExport={handleExport}
+               onRefresh={() => fetchRoles(currentPage)}
                searchPlaceholder="Search roles..."
                filters={filters}
                filterValues={filterValues}

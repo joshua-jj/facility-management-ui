@@ -284,6 +284,15 @@ const Requests = () => {
                      loading={IsRequestingRequests}
                      onSearch={handleSearch}
                      onExport={() => setShowExportModal(true)}
+                     onRefresh={() => {
+                        if (userDetails?.roleId === RoleId.HOD) {
+                           dispatch(requestActions.getDepartmentRequests({ departmentId: userDetails?.departmentId ?? 0, page: currentPage }) as unknown as UnknownAction);
+                        } else if (userDetails?.roleId === RoleId.MEMBER) {
+                           dispatch(requestActions.getAssignedRequests({ userId: userDetails?.id ?? 0, page: currentPage }) as unknown as UnknownAction);
+                        } else {
+                           dispatch(requestActions.getAllRequests({ page: currentPage, limit: 10, search: searchQuery || undefined, requestStatus: filterValues.requestStatus || undefined, departmentId: filterValues.departmentId ? Number(filterValues.departmentId) : undefined, assigneeId: filterValues.assigneeId ? Number(filterValues.assigneeId) : undefined }) as unknown as UnknownAction);
+                        }
+                     }}
                      searchPlaceholder="Search by name, email, or status..."
                      onRowClick={handleRowClick}
                      filters={filters}

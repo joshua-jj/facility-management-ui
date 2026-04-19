@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
@@ -13,6 +13,8 @@ import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { exportToXlsx } from '@/utilities/exportXlsx';
+import { permissionConstants } from '@/constants/permission.constant';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 const PAGE_LIMIT = 10;
 
@@ -45,14 +47,31 @@ const Permissions = () => {
    );
    const { meta } = pagination;
 
-   useEffect(() => {
+   const fetchPermissions = useCallback((page: number) => {
       dispatch(permissionActions.getPermissions({
-         page: currentPage,
+         page,
          limit: PAGE_LIMIT,
          search: searchQuery || undefined,
          status: filterValues.status || undefined,
       }) as unknown as UnknownAction);
-   }, [dispatch, currentPage, searchQuery, filterValues]);
+   }, [dispatch, searchQuery, filterValues]);
+
+   useEffect(() => {
+      fetchPermissions(currentPage);
+   }, [fetchPermissions, currentPage]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const events = [
+         permissionConstants.CREATE_PERMISSION_SUCCESS,
+         permissionConstants.UPDATE_PERMISSION_SUCCESS,
+         permissionConstants.DELETE_PERMISSION_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () => fetchPermissions(currentPage)),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [currentPage, fetchPermissions]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -203,6 +222,7 @@ const Permissions = () => {
                loading={IsRequestingPermissions}
                onSearch={handleSearch}
                onExport={handleExport}
+               onRefresh={() => fetchPermissions(currentPage)}
                searchPlaceholder="Search permissions..."
                filters={filters}
                filterValues={filterValues}

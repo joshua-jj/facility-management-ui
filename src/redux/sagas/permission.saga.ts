@@ -86,8 +86,6 @@ function* createPermission({ data }: CreatePermissionAction) {
             permission: jsonResponse?.data,
          });
 
-         yield put({ type: permissionConstants.GET_PERMISSIONS });
-
          AppEmitter.emit(permissionConstants.CREATE_PERMISSION_SUCCESS, jsonResponse);
 
          const payload: SetSnackBarPayload = {
@@ -121,8 +119,6 @@ function* updatePermission({ data }: UpdatePermissionAction) {
             permission: jsonResponse?.data,
          });
 
-         yield put({ type: permissionConstants.GET_PERMISSIONS });
-
          AppEmitter.emit(permissionConstants.UPDATE_PERMISSION_SUCCESS, jsonResponse);
 
          const payload: SetSnackBarPayload = {
@@ -151,8 +147,6 @@ function* deletePermission({ id }: DeletePermissionAction) {
       if (!jsonResponse) return;
 
       yield put({ type: permissionConstants.DELETE_PERMISSION_SUCCESS });
-
-      yield put({ type: permissionConstants.GET_PERMISSIONS });
 
       AppEmitter.emit(permissionConstants.DELETE_PERMISSION_SUCCESS, jsonResponse);
 

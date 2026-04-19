@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import { exportToXlsx } from '@/utilities/exportXlsx';
@@ -14,6 +14,8 @@ import AddMeeting from '@/components/Modals/AddMeeting';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
+import { meetingConstants } from '@/constants/meeting.constant';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 const PAGE_LIMIT = 10;
 
@@ -52,15 +54,32 @@ const Meetings = () => {
       dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
    }, [dispatch]);
 
-   useEffect(() => {
+   const fetchMeetings = useCallback((page: number) => {
       dispatch(meetingActions.getMeetings({
-         page: currentPage,
+         page,
          limit: PAGE_LIMIT,
          search: searchQuery || undefined,
          status: filterValues.status || undefined,
          locationId: filterValues.locationId || undefined,
       }) as unknown as UnknownAction);
-   }, [dispatch, currentPage, searchQuery, filterValues]);
+   }, [dispatch, searchQuery, filterValues]);
+
+   useEffect(() => {
+      fetchMeetings(currentPage);
+   }, [fetchMeetings, currentPage]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const events = [
+         meetingConstants.CREATE_MEETING_SUCCESS,
+         meetingConstants.UPDATE_MEETING_SUCCESS,
+         meetingConstants.DELETE_MEETING_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () => fetchMeetings(currentPage)),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [currentPage, fetchMeetings]);
 
    const handlePageChange = (page: number) => {
       setCurrentPage(page);
@@ -221,6 +240,7 @@ const Meetings = () => {
                loading={IsRequestingMeetings}
                onSearch={handleSearch}
                onExport={handleExport}
+               onRefresh={() => fetchMeetings(currentPage)}
                searchPlaceholder="Search meetings..."
                filters={filters}
                filterValues={filterValues}

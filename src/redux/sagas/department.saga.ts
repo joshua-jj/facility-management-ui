@@ -62,8 +62,6 @@ function* createDepartment({ data }: CreateDepartmentAction) {
         user: jsonResponse?.data,
       });
 
-      yield put({ type: departmentConstants.GET_ALL_DEPARTMENTS });
-
       AppEmitter.emit(departmentConstants.CREATE_DEPARTMENT_SUCCESS, jsonResponse);
     }
   } catch (error: unknown) {
@@ -107,7 +105,6 @@ function* updateDepartment({ data }: UpdateDepartmentAction) {
     if (!jsonResponse) return;
 
     yield put({ type: departmentConstants.UPDATE_DEPARTMENT_SUCCESS });
-    yield put({ type: departmentConstants.GET_ALL_DEPARTMENTS });
     AppEmitter.emit(departmentConstants.UPDATE_DEPARTMENT_SUCCESS, jsonResponse);
   } catch (error: unknown) {
     yield* handleSagaError(error, departmentConstants.UPDATE_DEPARTMENT_ERROR);
@@ -127,7 +124,6 @@ function* activateDepartment({ id }: ActivateDepartmentAction) {
     if (!jsonResponse) return;
 
     yield put({ type: departmentConstants.ACTIVATE_DEPARTMENT_SUCCESS });
-    yield put({ type: departmentConstants.GET_ALL_DEPARTMENTS });
     AppEmitter.emit(departmentConstants.ACTIVATE_DEPARTMENT_SUCCESS, jsonResponse);
   } catch (error: unknown) {
     yield* handleSagaError(error, departmentConstants.ACTIVATE_DEPARTMENT_ERROR);
@@ -147,7 +143,6 @@ function* deactivateDepartment({ id }: DeactivateDepartmentAction) {
     if (!jsonResponse) return;
 
     yield put({ type: departmentConstants.DEACTIVATE_DEPARTMENT_SUCCESS });
-    yield put({ type: departmentConstants.GET_ALL_DEPARTMENTS });
     AppEmitter.emit(departmentConstants.DEACTIVATE_DEPARTMENT_SUCCESS, jsonResponse);
   } catch (error: unknown) {
     yield* handleSagaError(error, departmentConstants.DEACTIVATE_DEPARTMENT_ERROR);
