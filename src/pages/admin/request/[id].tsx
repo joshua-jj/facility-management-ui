@@ -67,7 +67,6 @@ interface RequestDetailsProps {
 }
 
 type SelectedUnit = {
-   storeId: number;
    serialNumber: string;
    condition: string;
 };
@@ -344,14 +343,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
       const updatedItems = items.map((item, idx) => {
          const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
-         const condition = returnConditions[item.itemId] || 'Not specified';
          const qtyReturning = isSerialized
             ? (selectedUnits[item.itemId]?.length || 0)
             : Number(returnQuantities[idx] ?? item.quantityReleased);
 
          let units: SelectedUnit[] = selectedUnits[item.itemId] || [];
-         // Apply condition override to each unit
-         if (units.length > 0) {
+         // Global override only applies when the user explicitly picked a value
+         // in the item-level dropdown (non-serialized path); otherwise the
+         // per-unit selections stand on their own.
+         if (isSerialized && units.length > 0 && returnConditions[item.itemId]) {
+            const condition = returnConditions[item.itemId];
             units = units.map((u) => ({ ...u, condition }));
          }
 
@@ -361,7 +362,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             quantityReleased: Number(item.quantityReleased),
             returnedDate: new Date().toISOString(),
             units,
-            condition, // included for non-serialized tracking
          };
       });
       const payload = {
@@ -800,7 +800,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                           const fullUnits = (itemUnitsOptions[item.itemId] || [])
                                              .filter((opt) => (selectedIds as string[]).includes(opt.data.serialNumber))
                                              .map((opt) => ({
-                                                storeId: Number(opt.data.store?.id ?? 0),
                                                 serialNumber: opt.data.serialNumber,
                                                 condition: opt.data.condition || 'Not specified',
                                              }));
