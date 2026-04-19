@@ -343,14 +343,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
       const updatedItems = items.map((item, idx) => {
          const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
-         const condition = returnConditions[item.itemId] || 'Not specified';
          const qtyReturning = isSerialized
             ? (selectedUnits[item.itemId]?.length || 0)
             : Number(returnQuantities[idx] ?? item.quantityReleased);
 
          let units: SelectedUnit[] = selectedUnits[item.itemId] || [];
-         // Apply condition override to each unit
-         if (units.length > 0) {
+         // Global override only applies when the user explicitly picked a value
+         // in the item-level dropdown (non-serialized path); otherwise the
+         // per-unit selections stand on their own.
+         if (isSerialized && units.length > 0 && returnConditions[item.itemId]) {
+            const condition = returnConditions[item.itemId];
             units = units.map((u) => ({ ...u, condition }));
          }
 
