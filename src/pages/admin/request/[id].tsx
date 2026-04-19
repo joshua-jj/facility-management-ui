@@ -67,7 +67,7 @@ interface RequestDetailsProps {
 }
 
 type SelectedUnit = {
-   storeId: number | string;
+   storeId: number;
    serialNumber: string;
    condition: string;
 };
@@ -749,29 +749,31 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                     )}
                                  </div>
 
-                                 {/* Condition dropdown */}
-                                 <div className="flex flex-col gap-1 min-w-[160px]">
-                                    <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
-                                       Condition
-                                    </label>
-                                    <SmallSelect
-                                       options={conditionOptions}
-                                       value={isMemberAssigned ? releaseCondition : returnCondition}
-                                       placeholder="Select condition"
-                                       onChange={(val) => {
-                                          if (isMemberAssigned) {
-                                             setReleaseConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
-                                          } else {
-                                             setReturnConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
-                                          }
-                                       }}
-                                    />
-                                 </div>
+                                 {/* Condition dropdown — only for QUANTITY items; serialized items get per-unit condition below */}
+                                 {!isSerialized && (
+                                    <div className="flex flex-col gap-1 min-w-[160px]">
+                                       <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
+                                          Condition
+                                       </label>
+                                       <SmallSelect
+                                          options={conditionOptions}
+                                          value={isMemberAssigned ? releaseCondition : returnCondition}
+                                          placeholder="Select condition"
+                                          onChange={(val) => {
+                                             if (isMemberAssigned) {
+                                                setReleaseConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
+                                             } else {
+                                                setReturnConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
+                                             }
+                                          }}
+                                       />
+                                    </div>
+                                 )}
                               </div>
 
                               {/* Unit selector — serialized items only */}
                               {isSerialized && (
-                                 <div className="flex flex-col gap-1">
+                                 <div className="flex flex-col gap-2">
                                     <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
                                        Select Units
                                     </label>
@@ -798,9 +800,9 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                           const fullUnits = (itemUnitsOptions[item.itemId] || [])
                                              .filter((opt) => (selectedIds as string[]).includes(opt.data.serialNumber))
                                              .map((opt) => ({
-                                                storeId: opt.data.store?.id,
+                                                storeId: Number(opt.data.store?.id ?? 0),
                                                 serialNumber: opt.data.serialNumber,
-                                                condition: opt.data.condition,
+                                                condition: opt.data.condition || 'Not specified',
                                              }));
                                           setSelectedUnits((prev) => ({
                                              ...prev,
@@ -808,6 +810,43 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                           }));
                                        }}
                                     />
+
+                                    {/* Per-unit condition selector — shown when units are selected */}
+                                    {(selectedUnits[item.itemId]?.length ?? 0) > 0 && (
+                                       <div className="mt-2 space-y-1.5">
+                                          <p className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
+                                             Unit Conditions
+                                          </p>
+                                          {selectedUnits[item.itemId].map((unit, uIdx) => (
+                                             <div
+                                                key={unit.serialNumber}
+                                                className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                                                style={{
+                                                   background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                                                   border: '1px solid var(--border-default, rgba(15,37,82,0.08))',
+                                                }}
+                                             >
+                                                <span className="text-xs font-mono flex-1 truncate" style={{ color: 'var(--text-primary)' }}>
+                                                   {unit.serialNumber}
+                                                </span>
+                                                <div className="w-[120px] shrink-0">
+                                                   <SmallSelect
+                                                      options={conditionOptions}
+                                                      value={unit.condition || ''}
+                                                      placeholder="Condition"
+                                                      onChange={(val) => {
+                                                         setSelectedUnits((prev) => {
+                                                            const updated = [...(prev[item.itemId] || [])];
+                                                            updated[uIdx] = { ...updated[uIdx], condition: val as string };
+                                                            return { ...prev, [item.itemId]: updated };
+                                                         });
+                                                      }}
+                                                   />
+                                                </div>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    )}
                                  </div>
                               )}
                            </div>

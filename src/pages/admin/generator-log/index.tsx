@@ -19,6 +19,7 @@ import ExportModal from '@/components/ExportModal';
 import { generatorConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { authConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
 
 // Converts a preset range label to { dateFrom, dateTo } ISO strings
@@ -86,6 +87,20 @@ const GeneratorLogs = () => {
       dispatch(meetingActions.getMeetings({ limit: 200 }) as unknown as UnknownAction);
       dispatch(meetingLocationActions.getMeetingLocations({ limit: 200 }) as unknown as UnknownAction);
    }, [dispatch]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const events = [
+         generatorConstants.CREATE_GENERATOR_LOG_SUCCESS,
+         generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS,
+      ];
+      const listeners = events.map((evt) =>
+         AppEmitter.addListener(evt, () =>
+            dispatch(generatorActions.getGeneratorLogs({ page: currentPage, ...buildFilterParams(filterValues) }) as unknown as UnknownAction),
+         ),
+      );
+      return () => listeners.forEach((l) => l.remove());
+   }, [currentPage, filterValues, buildFilterParams, dispatch]);
 
    const handleSearch = useCallback(
       (query: string) => {
@@ -352,15 +367,12 @@ const GeneratorLogs = () => {
                loading={IsRequestingGeneratorLogs}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(generatorActions.getGeneratorLogs({ page: currentPage, ...buildFilterParams(filterValues) }) as unknown as UnknownAction)}
                searchPlaceholder="Search generator logs..."
                filters={filters}
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
-               pagination={
-                  totalPages > 1
-                     ? { currentPage, totalItems, itemsPerPage, totalPages }
-                     : undefined
-               }
+               pagination={{ currentPage, totalItems, itemsPerPage, totalPages }}
                onPageChange={handleChangePage}
                emptyTitle="No generator logs found"
                emptyDescription="Get started by adding your first generator log."

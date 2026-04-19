@@ -97,8 +97,6 @@ function* createUser({ data }: CreateUserAction) {
         user: jsonResponse.data,
       });
 
-      yield put({ type: userConstants.GET_USERS });
-
       AppEmitter.emit(userConstants.CREATE_USER_SUCCESS, jsonResponse);
       const payload: SetSnackBarPayload = {
         type: 'success',
@@ -131,8 +129,6 @@ function* updateUserRole({ data }: UpdateUserRoleAction) {
         user: jsonResponse.data,
       });
 
-      yield put({ type: userConstants.GET_USERS });
-
       AppEmitter.emit(userConstants.UPDATE_USER_ROLE_SUCCESS, jsonResponse);
       const payload: SetSnackBarPayload = {
         type: 'success',
@@ -164,8 +160,6 @@ function* activateUser({ data }: UserStatusAction) {
         user: jsonResponse.data,
       });
 
-      yield put({ type: userConstants.GET_USERS });
-
       AppEmitter.emit(userConstants.ACTIVATE_USER_SUCCESS, jsonResponse);
       const payload: SetSnackBarPayload = {
         type: 'success',
@@ -196,8 +190,6 @@ function* deactivateUser({ data }: UserStatusAction) {
         type: userConstants.DEACTIVATE_USER_SUCCESS,
         user: jsonResponse.data,
       });
-
-      yield put({ type: userConstants.GET_USERS });
 
       AppEmitter.emit(userConstants.DEACTIVATE_USER_SUCCESS, jsonResponse);
       const payload: SetSnackBarPayload = {

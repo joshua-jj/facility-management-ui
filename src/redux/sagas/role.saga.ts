@@ -101,8 +101,6 @@ function* createRole({ data }: CreateRoleAction) {
             role: created,
          });
 
-         yield put({ type: roleConstants.GET_ROLES });
-
          AppEmitter.emit(roleConstants.CREATE_ROLE_SUCCESS, jsonResponse);
 
          const payload: SetSnackBarPayload = {
@@ -164,8 +162,6 @@ function* deleteRole({ id }: DeleteRoleAction) {
       if (!jsonResponse) return;
 
       yield put({ type: roleConstants.DELETE_ROLE_SUCCESS });
-
-      yield put({ type: roleConstants.GET_ROLES });
 
       AppEmitter.emit(roleConstants.DELETE_ROLE_SUCCESS, jsonResponse);
 

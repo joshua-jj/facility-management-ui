@@ -19,6 +19,7 @@ import { CurrencyDisplay, PhoneDisplay } from '@/components/FormatValue';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { maintenanceConstants, authConstants } from '@/constants';
+import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
 
 const EDIT_ICON = (
@@ -103,6 +104,14 @@ const MaintenanceLogs = () => {
    useEffect(() => {
       dispatch(maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction);
    }, [dispatch]);
+
+   // Re-fetch current page after any mutation
+   useEffect(() => {
+      const listener = AppEmitter.addListener(maintenanceConstants.CREATE_MAINTENANCE_LOG_SUCCESS, () =>
+         dispatch(maintenanceActions.getMaintenanceLogs({ page: currentPage, ...buildFilterParams(filterValues) }) as unknown as UnknownAction),
+      );
+      return () => listener.remove();
+   }, [currentPage, filterValues, buildFilterParams, dispatch]);
 
    const handleSearch = useCallback(
       (query: string) => {
@@ -257,13 +266,12 @@ const MaintenanceLogs = () => {
                loading={IsRequestingMaintenanceLogs}
                onSearch={handleSearch}
                onExport={() => setShowExportModal(true)}
+               onRefresh={() => dispatch(maintenanceActions.getMaintenanceLogs({ page: currentPage, ...buildFilterParams(filterValues) }) as unknown as UnknownAction)}
                searchPlaceholder="Search maintenance logs..."
                filters={filters}
                filterValues={filterValues}
                onFilterChange={handleFilterChange}
-               pagination={
-                  totalPages > 1 ? { currentPage, totalItems, itemsPerPage, totalPages } : undefined
-               }
+               pagination={{ currentPage, totalItems, itemsPerPage, totalPages }}
                onPageChange={handleChangePage}
                emptyTitle="No maintenance logs found"
                emptyDescription="Get started by adding your first maintenance log."
