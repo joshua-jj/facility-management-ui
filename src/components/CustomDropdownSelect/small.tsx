@@ -116,13 +116,13 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
         </span>
       </button>
       {isOpen && (
-        <div className="absolute z-10 w-full bg-white dark:bg-[#1a1a2e] shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] rounded-b-md border border-t-0 border-blue-200 dark:border-white/15 max-h-40 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#1a1a2e] shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] rounded-md border border-blue-200 dark:border-white/15 max-h-40 overflow-y-auto">
           {options.map((opt) => (
             <div
               key={opt.value}
               onClick={() => handleOptionClick(opt.value)}
-              className={`flex items-center px-3 py-2 text-[13px] font-medium text-[#0F2552] dark:text-white cursor-pointer hover:bg-[#F2F2F6] dark:hover:bg-white/5${
-                !multiple && isSelected(opt.value) ? 'bg-blue-50' : ''
+              className={`flex items-center px-3 py-2 text-[13px] font-medium text-[#0F2552] dark:text-white cursor-pointer hover:bg-[#F2F2F6] dark:hover:bg-white/5 ${
+                !multiple && isSelected(opt.value) ? 'bg-blue-50 dark:bg-white/10' : ''
               }`}
             >
               {multiple && (
