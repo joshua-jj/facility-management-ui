@@ -131,7 +131,15 @@ export function DataTable<T extends Record<string, any>>({
    const [showFilters, setShowFilters] = useState(false);
    const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
    const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+   const onSearchRef = useRef(onSearch);
+   const isInitialSearchRef = useRef(true);
    const visibleColumns = columns.filter((c) => !c.hidden);
+
+   // Keep the latest onSearch without re-triggering the debounce effect when
+   // the parent re-renders and hands us a new function identity.
+   useEffect(() => {
+      onSearchRef.current = onSearch;
+   }, [onSearch]);
 
    const activeFilterCount = Object.values(filterValues).filter((v) => v && v !== '').length;
 
@@ -142,14 +150,20 @@ export function DataTable<T extends Record<string, any>>({
       setTimeout(() => setIsRefreshSpinning(false), 600);
    };
 
-   // Debounced search
+   // Debounced search. Only reacts to the user typing — not to parent
+   // re-renders that hand us a new onSearch identity. Skips the initial
+   // empty-string fire so mounting the table doesn't trigger a spurious
+   // search that clobbers page state.
    useEffect(() => {
-      if (!onSearch) return;
+      if (isInitialSearchRef.current) {
+         isInitialSearchRef.current = false;
+         return;
+      }
       debounceRef.current = setTimeout(() => {
-         onSearch(searchValue);
+         onSearchRef.current?.(searchValue);
       }, 400);
       return () => clearTimeout(debounceRef.current);
-   }, [searchValue, onSearch]);
+   }, [searchValue]);
 
    const getValue = useCallback((row: T, key: string) => {
       const parts = key.split('.');
