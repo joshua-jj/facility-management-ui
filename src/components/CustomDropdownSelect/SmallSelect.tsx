@@ -306,9 +306,9 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
               <div
                 key={opt.value}
                 onClick={() => !disabled && handleOptionClick(opt.value)}
-                className={`flex items-center px-3 py-2 text-[13px] font-medium cursor-pointer
+                className={`flex items-center px-3 py-2 text-[13px] font-medium cursor-pointer text-[#0F2552] dark:text-white
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#F2F2F6] dark:hover:bg-white/5'}
-        ${!multiple && isSelected(opt.value) ? 'bg-blue-50' : ''}
+        ${!multiple && isSelected(opt.value) ? 'bg-blue-50 dark:bg-white/10' : ''}
       `}
               >
                 {multiple && (
