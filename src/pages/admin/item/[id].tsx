@@ -247,10 +247,10 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                   }
                >
                   {currentItem.itemUnits && currentItem.itemUnits.length > 0 ? (
-                     <div className="overflow-visible">
+                     <div className="max-h-[28rem] overflow-y-auto">
                         <table className="w-full">
-                           <thead>
-                              <tr className="bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/5">
+                           <thead className="sticky top-0 z-[1]">
+                              <tr className="bg-gray-50 dark:bg-[#1a1a2e] border-b border-gray-100 dark:border-white/5">
                                  <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Serial Number</th>
                                  <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">ID</th>
                                  <th className="px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/35 text-left">Condition</th>
