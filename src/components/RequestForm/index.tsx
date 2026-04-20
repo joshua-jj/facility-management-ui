@@ -79,19 +79,11 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       requestConstants.CREATE_REQUEST_SUCCESS,
       (evt: Event) => {
         const customEvent = evt as CustomEvent;
+        if (!customEvent) return;
 
-        if (customEvent) {
-          setShowSuccessModal(true);
-        }
-      }
-    );
-
-    return () => listener.remove();
-  }, []);
-
-  useEffect(() => {
-    if (showSuccessModal) {
-      const timer = setTimeout(() => {
+        // Reset the wizard to step 1 and clear form state synchronously on
+        // success — decoupled from modal lifecycle so early dismissal doesn't
+        // cancel the reset.
         setCurrentStep(0);
         setDepartment(null);
         setFormData({
@@ -120,11 +112,17 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
             description: '',
           },
         });
-      }, 3000);
 
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccessModal]);
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        setShowSuccessModal(true);
+      }
+    );
+
+    return () => listener.remove();
+  }, []);
 
   const canProceedStep = () => {
     if (currentStep === 0) {
