@@ -231,7 +231,6 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
             {/* ── Item Units section (Serialized items only) ── */}
             {currentItem.trackingMode === 'Serialized' && (
                <DetailSection
-                  allowOverflow
                   title={`Item Units (${currentItem.itemUnits?.length ?? 0})`}
                   action={
                      <ActionButton

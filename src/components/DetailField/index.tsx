@@ -45,13 +45,12 @@ interface DetailSectionProps {
    children: React.ReactNode;
    action?: React.ReactNode;
    className?: string;
-   allowOverflow?: boolean;
 }
 
-export const DetailSection: React.FC<DetailSectionProps> = ({ title, children, action, className = '', allowOverflow = false }) => {
+export const DetailSection: React.FC<DetailSectionProps> = ({ title, children, action, className = '' }) => {
    return (
       <div
-         className={`bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm ${allowOverflow ? '' : 'overflow-hidden'} ${className}`}
+         className={`bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden ${className}`}
       >
          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/5">
             <h3 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">{title}</h3>
