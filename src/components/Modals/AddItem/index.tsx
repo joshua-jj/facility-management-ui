@@ -453,7 +453,9 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                   />
                </div>
 
-               {/* Row 3 — Fragile & Store */}
+               {/* Row 3 — Fragile & Store. Store only makes sense when creating/adding units
+                   (applies to the new units). In update mode each unit has its own store,
+                   edited per-row on the item detail page. */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                   <SelectInput
                      name="fragile"
@@ -467,15 +469,17 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                      searchable={false}
                      disabled={isAddUnitsMode}
                   />
-                  <SelectInput
-                     name="storeId"
-                     label="Store"
-                     placeholder="Select store (optional)"
-                     options={storeOptions}
-                     value={storeId}
-                     onValueChange={(val) => setStoreId(val)}
-                     searchable
-                  />
+                  {!item?.id && (
+                     <SelectInput
+                        name="storeId"
+                        label="Store"
+                        placeholder="Select store (optional)"
+                        options={storeOptions}
+                        value={storeId}
+                        onValueChange={(val) => setStoreId(val)}
+                        searchable
+                     />
+                  )}
                </div>
 
                {/* Add more button — only in new-item create mode */}
