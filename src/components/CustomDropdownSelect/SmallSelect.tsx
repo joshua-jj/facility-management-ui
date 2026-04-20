@@ -107,7 +107,8 @@
 
 // export default SmallSelect;
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Arrow from '../../../public/assets/icons/arrow-right.svg';
 
 type Option = { value: string; label: string };
@@ -149,20 +150,42 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
   onOpen,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [popoverRect, setPopoverRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      const insideTrigger = wrapperRef.current?.contains(target);
+      const insidePopover = popoverRef.current?.contains(target);
+      if (!insideTrigger && !insidePopover) {
         setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const updatePosition = () => {
+      if (!wrapperRef.current) return;
+      const rect = wrapperRef.current.getBoundingClientRect();
+      setPopoverRect({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    };
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen]);
 
   const toggleOpen = () => {
     const newOpen = !isOpen;
@@ -239,8 +262,17 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
           <Arrow />
         </span>
       </button>
-      {isOpen && (
-        <div className="absolute z-[100] w-full bg-white dark:bg-[#1a1a2e] shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] rounded-b-md border border-t-0 border-blue-200 dark:border-white/15 max-h-40 overflow-y-auto">
+      {isOpen && popoverRect && typeof window !== 'undefined' && createPortal(
+        <div
+          ref={popoverRef}
+          style={{
+            position: 'absolute',
+            top: popoverRect.top,
+            left: popoverRect.left,
+            width: popoverRect.width,
+          }}
+          className="z-[1000] mt-1 bg-white dark:bg-[#1a1a2e] shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] rounded-md border border-blue-200 dark:border-white/15 max-h-40 overflow-y-auto"
+        >
           {/* {options.map((opt) => (
             <div
               key={opt.value}
@@ -274,9 +306,9 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
               <div
                 key={opt.value}
                 onClick={() => !disabled && handleOptionClick(opt.value)}
-                className={`flex items-center px-3 py-2 text-[13px] font-medium cursor-pointer
+                className={`flex items-center px-3 py-2 text-[13px] font-medium cursor-pointer text-[#0F2552] dark:text-white
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#F2F2F6] dark:hover:bg-white/5'}
-        ${!multiple && isSelected(opt.value) ? 'bg-blue-50' : ''}
+        ${!multiple && isSelected(opt.value) ? 'bg-blue-50 dark:bg-white/10' : ''}
       `}
               >
                 {multiple && (
@@ -294,7 +326,8 @@ const SmallSelect: React.FC<SmallSelectProps> = ({
               </div>
             );
           })}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
