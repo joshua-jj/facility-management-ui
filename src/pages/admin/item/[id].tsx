@@ -1,11 +1,11 @@
 import { GetServerSideProps, NextPage } from 'next';
 import Layout from '@/components/Layout';
-import { itemConstants } from '@/constants';
+import { authConstants, itemConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
-import React, { useState } from 'react';
-import { capitalizeFirstLetter, formatReadableDate } from '@/utilities/helpers';
+import React, { useCallback, useEffect, useState } from 'react';
+import { capitalizeFirstLetter, formatReadableDate, getObjectFromStorage } from '@/utilities/helpers';
 import { formatNumber } from '@/components/FormatValue';
 import { itemActions } from '@/actions';
 import { UnknownAction } from 'redux';
@@ -15,6 +15,7 @@ import SmallSelect from '@/components/CustomDropdownSelect/SmallSelect';
 import StatusChip from '@/components/StatusChip';
 import { DetailRow, DetailSection } from '@/components/DetailField';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
@@ -83,21 +84,53 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
    const { IsUpdatingItem } = useSelector((s: RootState) => s.item);
    const { allStoresList } = useSelector((s: RootState) => s.store);
 
+   const [currentItem, setCurrentItem] = useState<ItemDetails>(itemDetail);
+
    const [selectedStores, setSelectedStores] = useState(
       itemDetail?.itemUnits?.map((u) => String(u.store?.id) || '') || [],
    );
    const [selectedConditions, setSelectedConditions] = useState(
       itemDetail?.itemUnits?.map((u) => u.condition || '') || [],
    );
-   const [initialConditions] = useState(
+   const [initialConditions, setInitialConditions] = useState(
       itemDetail?.itemUnits?.map((u) => u.condition || '') || [],
    );
-   const [initialStores] = useState(
+   const [initialStores, setInitialStores] = useState(
       itemDetail?.itemUnits?.map((u) => String(u.store?.id) || '') || [],
    );
 
    const arraysEqual = <T,>(a: T[], b: T[]) => a.length === b.length && a.every((v, i) => v === b[i]);
    const isUpdateDisabled = arraysEqual(selectedConditions, initialConditions) && arraysEqual(selectedStores, initialStores);
+
+   const fetchItemDetails = useCallback(async () => {
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         const resp = await axios.get(`${itemConstants.ITEM_URI}/detail/${id}`, {
+            headers: {
+               Accept: 'application/json',
+               Authorization: user?.token ? `Bearer ${user.token}` : '',
+            },
+         });
+         const fresh: ItemDetails = resp.data?.data;
+         if (!fresh) return;
+         setCurrentItem(fresh);
+         const conds = fresh.itemUnits?.map((u) => u.condition || '') || [];
+         const stores = fresh.itemUnits?.map((u) => String(u.store?.id) || '') || [];
+         setSelectedConditions(conds);
+         setSelectedStores(stores);
+         setInitialConditions(conds);
+         setInitialStores(stores);
+      } catch {
+         // swallow — snackbar already shown by saga on failure paths
+      }
+   }, [id]);
+
+   useEffect(() => {
+      const listener = AppEmitter.addListener(itemConstants.UPDATE_ITEM_SUCCESS, () => {
+         fetchItemDetails();
+      });
+      return () => listener.remove();
+   }, [fetchItemDetails]);
 
    const handleStoreChange = (index: number, value: string) => {
       const updated = [...selectedStores];
@@ -112,7 +145,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
    };
 
    const handleUpdateItem = () => {
-      const updatedItemUnits = itemDetail.itemUnits.map((unit, index) => {
+      const updatedItemUnits = currentItem.itemUnits.map((unit, index) => {
          // eslint-disable-next-line @typescript-eslint/no-unused-vars
          const { serialNumber, store, ...rest } = unit;
          return { ...rest, condition: selectedConditions[index], storeId: Number(selectedStores[index]) };
@@ -120,7 +153,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
       dispatch(itemActions.updateItem({ itemId: id as string, itemUnits: updatedItemUnits }) as unknown as UnknownAction);
    };
 
-   if (!itemDetail) {
+   if (!currentItem) {
       return (
          <Layout title="Item Details">
             <div className="flex items-center justify-center h-64">
@@ -151,27 +184,27 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                   <div>
                      <div className="flex items-center gap-3 mb-2">
                         <h1 className="text-xl font-bold text-[#0F2552] dark:text-white/90">
-                           {capitalizeFirstLetter(itemDetail.name)}
+                           {capitalizeFirstLetter(currentItem.name)}
                         </h1>
-                        <StatusChip status={itemDetail.fragile ? 'yes' : 'no'} size="sm" />
+                        <StatusChip status={currentItem.fragile ? 'yes' : 'no'} size="sm" />
                         <span className="text-[0.6rem] uppercase font-semibold text-gray-300 dark:text-white/25">
-                           {itemDetail.fragile ? 'Fragile' : 'Not Fragile'}
+                           {currentItem.fragile ? 'Fragile' : 'Not Fragile'}
                         </span>
                      </div>
                      <p className="text-xs text-gray-400 dark:text-white/40">
-                        {itemDetail.department?.name} &middot; Created by {itemDetail.createdBy} &middot;{' '}
-                        {formatReadableDate(itemDetail.createdAt)}
+                        {currentItem.department?.name} &middot; Created by {currentItem.createdBy} &middot;{' '}
+                        {formatReadableDate(currentItem.createdAt)}
                      </p>
                   </div>
 
                   {/* Quantity badges */}
                   <div className="flex items-center gap-3">
                      <div className="text-center px-4 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/8">
-                        <span className="block text-lg font-bold text-[#0F2552] dark:text-white/90">{formatNumber(itemDetail.actualQuantity)}</span>
+                        <span className="block text-lg font-bold text-[#0F2552] dark:text-white/90">{formatNumber(currentItem.actualQuantity)}</span>
                         <span className="text-[0.6rem] uppercase font-semibold text-gray-400 dark:text-white/35">Total</span>
                      </div>
                      <div className="text-center px-4 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/15">
-                        <span className="block text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatNumber(itemDetail.availableQuantity)}</span>
+                        <span className="block text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatNumber(currentItem.availableQuantity)}</span>
                         <span className="text-[0.6rem] uppercase font-semibold text-emerald-500/70 dark:text-emerald-400/50">Available</span>
                      </div>
                   </div>
@@ -181,24 +214,24 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
             {/* ── Overview section ── */}
             <DetailSection title="Overview">
                <div className="grid grid-cols-1 sm:grid-cols-2">
-                  <DetailRow label="Item Name" value={capitalizeFirstLetter(itemDetail.name)} />
-                  <DetailRow label="Department" value={itemDetail.department?.name} />
-                  <DetailRow label="Actual Quantity" value={formatNumber(itemDetail.actualQuantity)} />
-                  <DetailRow label="Available Quantity" value={formatNumber(itemDetail.availableQuantity)} />
-                  <DetailRow label="Fragile" value={<StatusChip status={itemDetail.fragile ? 'yes' : 'no'} />} />
+                  <DetailRow label="Item Name" value={capitalizeFirstLetter(currentItem.name)} />
+                  <DetailRow label="Department" value={currentItem.department?.name} />
+                  <DetailRow label="Actual Quantity" value={formatNumber(currentItem.actualQuantity)} />
+                  <DetailRow label="Available Quantity" value={formatNumber(currentItem.availableQuantity)} />
+                  <DetailRow label="Fragile" value={<StatusChip status={currentItem.fragile ? 'yes' : 'no'} />} />
                   <DetailRow
                      label="Tracking Mode"
-                     value={itemDetail.trackingMode === 'Serialized' ? 'Serialized' : 'Quantity Only'}
+                     value={currentItem.trackingMode === 'Serialized' ? 'Serialized' : 'Quantity Only'}
                   />
-                  <DetailRow label="Created By" value={itemDetail.createdBy} />
-                  <DetailRow label="Created Date" value={formatReadableDate(itemDetail.createdAt)} />
+                  <DetailRow label="Created By" value={currentItem.createdBy} />
+                  <DetailRow label="Created Date" value={formatReadableDate(currentItem.createdAt)} />
                </div>
             </DetailSection>
 
             {/* ── Item Units section (Serialized items only) ── */}
-            {itemDetail.trackingMode === 'Serialized' && (
+            {currentItem.trackingMode === 'Serialized' && (
                <DetailSection
-                  title={`Item Units (${itemDetail.itemUnits?.length ?? 0})`}
+                  title={`Item Units (${currentItem.itemUnits?.length ?? 0})`}
                   action={
                      <ActionButton
                         variant="primary"
@@ -213,7 +246,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                      </ActionButton>
                   }
                >
-                  {itemDetail.itemUnits && itemDetail.itemUnits.length > 0 ? (
+                  {currentItem.itemUnits && currentItem.itemUnits.length > 0 ? (
                      <div className="overflow-visible">
                         <table className="w-full">
                            <thead>
@@ -225,7 +258,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                               </tr>
                            </thead>
                            <tbody>
-                              {itemDetail.itemUnits.map((unit, index) => (
+                              {currentItem.itemUnits.map((unit, index) => (
                                  <tr
                                     key={unit.id}
                                     className={`border-b border-gray-50 dark:border-white/[0.03] last:border-b-0 ${
