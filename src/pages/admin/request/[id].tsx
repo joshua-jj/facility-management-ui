@@ -54,6 +54,12 @@ interface RequestDetails {
          storeName: string;
          conditionBeforeLease: string;
          unitIds: (number | string)[];
+         units?: Array<{
+            serialNumber: string;
+            condition?: string;
+            storeId?: number | null;
+            storeName?: string | null;
+         }>;
       }>;
       assigneeName: string;
       collectedDate: string;
@@ -170,8 +176,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const [releaseConditions, setReleaseConditions] = useState<Record<number, string>>({});
    const [returnConditions, setReturnConditions] = useState<Record<number, string>>({});
 
-   // Quantity to return per item index (mirrors items[i].quantityReleased for the return flow)
-   const [returnQuantities, setReturnQuantities] = useState<Record<number, string>>({});
 
    const fetchItemUnits = async (itemId: number) => {
       if (itemUnitsOptions[itemId]) return;
@@ -239,12 +243,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             ...item,
          }));
          setItems(updatedItems);
-         // Seed returnQuantities with the released qty for each item
-         const initialReturnQtys: Record<number, string> = {};
-         requestDetails.audit.items.forEach((item, idx) => {
-            initialReturnQtys[idx] = item.quantityReleased ?? '';
-         });
-         setReturnQuantities(initialReturnQtys);
       }
    }, [requestDetails?.audit?.items]);
 
@@ -261,15 +259,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
       updatedItems[index].quantityReleased = value;
       setItems(updatedItems);
-   };
-
-   const handleReturnQuantityChange = (index: number, value: string) => {
-      const maxQuantity = Number(requestDetails?.audit?.items[index]?.quantityReleased ?? 0);
-      if (Number(value) > maxQuantity) {
-         dispatch(appActions.setSnackBar({ type: 'warning', message: `Cannot return more than ${maxQuantity} (quantity released).`, variant: 'warning' }) as unknown as UnknownAction);
-         return;
-      }
-      setReturnQuantities((prev) => ({ ...prev, [index]: value }));
    };
 
    const handleUpdateStatus = () => {
@@ -341,16 +330,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
          return;
       }
 
-      const updatedItems = items.map((item, idx) => {
+      // Full-return policy: quantityReturned always equals quantityReleased.
+      // For serialized items, units are seeded from the release audit, so
+      // the assignee can only edit per-unit condition — never the set.
+      const updatedItems = items.map((item) => {
          const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
-         const qtyReturning = isSerialized
-            ? (selectedUnits[item.itemId]?.length || 0)
-            : Number(returnQuantities[idx] ?? item.quantityReleased);
-
          let units: SelectedUnit[] = selectedUnits[item.itemId] || [];
-         // Global override only applies when the user explicitly picked a value
-         // in the item-level dropdown (non-serialized path); otherwise the
-         // per-unit selections stand on their own.
          if (isSerialized && units.length > 0 && returnConditions[item.itemId]) {
             const condition = returnConditions[item.itemId];
             units = units.map((u) => ({ ...u, condition }));
@@ -358,7 +343,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
          return {
             itemId: item.itemId,
-            quantityReturned: qtyReturning,
+            quantityReturned: Number(item.quantityReleased),
             quantityReleased: Number(item.quantityReleased),
             returnedDate: new Date().toISOString(),
             units,
@@ -470,6 +455,23 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const isMemberAssigned = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Assigned';
    const isMemberCollected = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Collected';
 
+   // Return flow forces full returns: seed selectedUnits with exactly the
+   // units that were released, using their release-time conditions as defaults.
+   // Prev wins so the assignee's condition edits aren't clobbered on re-render.
+   useEffect(() => {
+      if (!isMemberCollected || !requestDetails?.audit?.items) return;
+      const seed: Record<number, SelectedUnit[]> = {};
+      requestDetails.audit.items.forEach((item) => {
+         if (item.units?.length) {
+            seed[item.itemId] = item.units.map((u) => ({
+               serialNumber: u.serialNumber,
+               condition: u.condition || 'Not specified',
+            }));
+         }
+      });
+      setSelectedUnits((prev) => ({ ...seed, ...prev }));
+   }, [isMemberCollected, requestDetails?.audit?.items]);
+
    // Pre-fetch item details (tracking mode + units) for all items when member needs to act
    useEffect(() => {
       if ((isMemberAssigned || isMemberCollected) && requestDetails?.audit?.items) {
@@ -480,13 +482,15 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [isMemberAssigned, isMemberCollected, requestDetails?.audit?.items]);
 
-   // Check if return button should be disabled
-   const returnButtonDisabled = isMemberCollected && items.some((item, idx) => {
+   // Full-return policy: serialized items need units seeded from audit
+   // (always true unless the release persisted zero units, which would be a
+   // data bug). Quantity items only need quantityReleased > 0.
+   const returnButtonDisabled = isMemberCollected && items.some((item) => {
       const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
       if (isSerialized) {
          return !selectedUnits[item.itemId] || selectedUnits[item.itemId].length === 0;
       }
-      return !returnQuantities[idx] || Number(returnQuantities[idx]) <= 0;
+      return !item.quantityReleased || Number(item.quantityReleased) <= 0;
    });
 
    // Check if release button should be disabled
@@ -676,7 +680,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                         const selectedCount = selectedUnits[item.itemId]?.length ?? 0;
                         const releaseCondition = releaseConditions[item.itemId] || '';
                         const returnCondition = returnConditions[item.itemId] || '';
-                        const returnQty = returnQuantities[index] ?? item.quantityReleased ?? '';
+                        // Qty is read-only when: serialized (count derived from units),
+                        // or in return mode (full-return policy locks qty = quantityReleased).
+                        const qtyIsReadOnly = isSerialized || isMemberCollected;
+                        const qtyReadOnlyValue = isSerialized
+                           ? selectedCount
+                           : Number(item.quantityReleased ?? 0);
 
                         return (
                            <div
@@ -714,7 +723,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                     <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
                                        {isMemberAssigned ? 'Qty Releasing' : 'Qty Returning'}
                                     </label>
-                                    {isSerialized ? (
+                                    {qtyIsReadOnly ? (
                                        <div
                                           className="w-24 text-sm text-center rounded-lg px-2.5 py-1.5 tabular-nums font-medium"
                                           style={{
@@ -723,27 +732,19 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                              color: 'var(--text-primary, #0F2552)',
                                           }}
                                        >
-                                          {selectedCount}
+                                          {qtyReadOnlyValue}
                                        </div>
                                     ) : (
                                        themedInput({
                                           type: 'text',
                                           inputMode: 'numeric',
-                                          value: isMemberAssigned
-                                             ? (items[index]?.quantityReleased ?? '')
-                                             : returnQty,
+                                          value: items[index]?.quantityReleased ?? '',
                                           placeholder: '0',
                                           onChange: (e) => {
                                              const raw = e.target.value.replace(/[^0-9]/g, '');
-                                             if (isMemberAssigned) {
-                                                const max = Number(requestDetails?.audit?.items[index]?.quantityLeased ?? 0);
-                                                const val = raw === '' ? '' : String(Math.min(Number(raw), max));
-                                                handleQuantityChange(index, val);
-                                             } else {
-                                                const max = Number(requestDetails?.audit?.items[index]?.quantityReleased ?? 0);
-                                                const val = raw === '' ? '' : String(Math.min(Number(raw), max));
-                                                handleReturnQuantityChange(index, val);
-                                             }
+                                             const max = Number(requestDetails?.audit?.items[index]?.quantityLeased ?? 0);
+                                             const val = raw === '' ? '' : String(Math.min(Number(raw), max));
+                                             handleQuantityChange(index, val);
                                           },
                                        })
                                     )}
@@ -771,50 +772,49 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                  )}
                               </div>
 
-                              {/* Unit selector — serialized items only */}
+                              {/* Unit selector — serialized items only.
+                                  Release: multi-select picker + per-unit conditions.
+                                  Return: picker hidden, unit list pre-seeded from the release audit,
+                                          assignee only edits per-unit condition. */}
                               {isSerialized && (
                                  <div className="flex flex-col gap-2">
-                                    <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
-                                       Select Units
-                                    </label>
-                                    <SmallSelect
-                                       multiple
-                                       quantity={
-                                          isMemberAssigned
-                                             ? Number(item.quantityLeased) || 1
-                                             : Number(item.quantityReleased) || 1
-                                       }
-                                       value={(selectedUnits[item.itemId] || []).map((u) => u.serialNumber)}
-                                       options={(itemUnitsOptions[item.itemId] || []).map((opt) => ({
-                                          value: opt.data.serialNumber,
-                                          label: `${opt.data.serialNumber}${opt.data.condition && opt.data.condition !== 'Not specified' ? ` — ${opt.data.condition}` : ''}`,
-                                          data: opt.data,
-                                       }))}
-                                       placeholder={
-                                          isMemberAssigned
-                                             ? 'Select units to release'
-                                             : 'Select units to return'
-                                       }
-                                       onOpen={() => fetchItemUnits(item.itemId)}
-                                       onChange={(selectedIds) => {
-                                          const fullUnits = (itemUnitsOptions[item.itemId] || [])
-                                             .filter((opt) => (selectedIds as string[]).includes(opt.data.serialNumber))
-                                             .map((opt) => ({
-                                                serialNumber: opt.data.serialNumber,
-                                                condition: opt.data.condition || 'Not specified',
-                                             }));
-                                          setSelectedUnits((prev) => ({
-                                             ...prev,
-                                             [item.itemId]: fullUnits,
-                                          }));
-                                       }}
-                                    />
+                                    {isMemberAssigned && (
+                                       <>
+                                          <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
+                                             Select Units
+                                          </label>
+                                          <SmallSelect
+                                             multiple
+                                             quantity={Number(item.quantityLeased) || 1}
+                                             value={(selectedUnits[item.itemId] || []).map((u) => u.serialNumber)}
+                                             options={(itemUnitsOptions[item.itemId] || []).map((opt) => ({
+                                                value: opt.data.serialNumber,
+                                                label: `${opt.data.serialNumber}${opt.data.condition && opt.data.condition !== 'Not specified' ? ` — ${opt.data.condition}` : ''}`,
+                                                data: opt.data,
+                                             }))}
+                                             placeholder="Select units to release"
+                                             onOpen={() => fetchItemUnits(item.itemId)}
+                                             onChange={(selectedIds) => {
+                                                const fullUnits = (itemUnitsOptions[item.itemId] || [])
+                                                   .filter((opt) => (selectedIds as string[]).includes(opt.data.serialNumber))
+                                                   .map((opt) => ({
+                                                      serialNumber: opt.data.serialNumber,
+                                                      condition: opt.data.condition || 'Not specified',
+                                                   }));
+                                                setSelectedUnits((prev) => ({
+                                                   ...prev,
+                                                   [item.itemId]: fullUnits,
+                                                }));
+                                             }}
+                                          />
+                                       </>
+                                    )}
 
-                                    {/* Per-unit condition selector — shown when units are selected */}
+                                    {/* Per-unit condition selector */}
                                     {(selectedUnits[item.itemId]?.length ?? 0) > 0 && (
                                        <div className="mt-2 space-y-1.5">
                                           <p className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
-                                             Unit Conditions
+                                             {isMemberCollected ? 'Returning Units' : 'Unit Conditions'}
                                           </p>
                                           {selectedUnits[item.itemId].map((unit, uIdx) => (
                                              <div
