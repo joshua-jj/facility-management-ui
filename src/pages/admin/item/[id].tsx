@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { capitalizeFirstLetter, formatReadableDate, getObjectFromStorage } from '@/utilities/helpers';
 import { formatNumber } from '@/components/FormatValue';
-import { itemActions } from '@/actions';
+import { itemActions, storeActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -131,6 +131,12 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
       });
       return () => listener.remove();
    }, [fetchItemDetails]);
+
+   useEffect(() => {
+      if (!allStoresList || allStoresList.length === 0) {
+         dispatch(storeActions.getStores({ page: 1, limit: 1000 }) as unknown as UnknownAction);
+      }
+   }, [dispatch, allStoresList]);
 
    const handleStoreChange = (index: number, value: string) => {
       const updated = [...selectedStores];
