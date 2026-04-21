@@ -5,7 +5,7 @@ import { authConstants, itemConstants, requestConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
    capitalizeFirstLetter,
    formatReadableDate,
@@ -175,6 +175,37 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    // only Good items can enter the request workflow, so there's nothing
    // to grade at release time.
    const [returnConditions, setReturnConditions] = useState<Record<number, string>>({});
+
+   // Verify the emailed magic-link token (if one is present in the URL).
+   // Auth is still the primary gate — a bad token just means the email
+   // receipt can't be proven, so we warn and let the already-authenticated
+   // admin proceed. Ref prevents re-running on every query change.
+   const verifiedRef = useRef(false);
+   useEffect(() => {
+      if (!router.isReady || verifiedRef.current) return;
+      const token = router.query.t;
+      if (!token || Array.isArray(token)) return;
+      verifiedRef.current = true;
+
+      axios
+         .post(requestConstants.VERIFY_REQUEST_TOKEN_URI, { token })
+         .then(() => {
+            // Strip the token from the URL so it isn't leaked via referer /
+            // browser history once verification has happened.
+            const rest = { ...router.query };
+            delete rest.t;
+            router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+         })
+         .catch(() => {
+            dispatch(
+               appActions.setSnackBar({
+                  type: 'warning',
+                  message: 'This emailed link has expired or is invalid. Your session is still active — you can continue.',
+                  variant: 'warning',
+               }) as unknown as UnknownAction,
+            );
+         });
+   }, [router.isReady, router.query, dispatch, router]);
 
 
    const fetchItemUnits = async (itemId: number) => {
