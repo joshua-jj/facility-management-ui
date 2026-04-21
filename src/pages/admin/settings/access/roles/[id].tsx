@@ -76,10 +76,10 @@ const RoleDetail = () => {
                subtitle="Update role details and manage permission assignments"
                action={
                   <div className="flex items-center gap-2">
-                     <ActionButton variant="outline" onClick={() => router.push(`/admin/roles/${roleId}/users`)}>
+                     <ActionButton variant="outline" onClick={() => router.push(`/admin/settings/access/roles/${roleId}/users`)}>
                         View Users
                      </ActionButton>
-                     <ActionButton variant="outline" onClick={() => router.push('/admin/roles')}>
+                     <ActionButton variant="outline" onClick={() => router.push('/admin/settings/access')}>
                         Back to Roles
                      </ActionButton>
                   </div>
