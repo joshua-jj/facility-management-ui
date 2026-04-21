@@ -42,6 +42,7 @@ export interface RequestConstants {
   RETURN_REQUEST_ITEMS: string;
 
   REQUEST_URI: string;
+  VERIFY_REQUEST_TOKEN_URI: string;
 }
 
 export interface RequestForm {

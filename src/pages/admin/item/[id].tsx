@@ -20,7 +20,6 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
    { value: 'Bad', label: 'Bad' },
-   { value: 'Not specified', label: 'Not specified' },
 ];
 
 interface ItemDetails {
