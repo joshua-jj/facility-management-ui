@@ -33,9 +33,9 @@ const NewRole = () => {
          // so fall back to the roles list and let the user navigate to edit from there.
          const id = response?.data?.id;
          if (id) {
-            router.push(`/admin/roles/${id}`);
+            router.push(`/admin/settings/access/roles/${id}`);
          } else {
-            router.push('/admin/roles');
+            router.push('/admin/settings/access');
          }
       });
       return () => listener.remove();
@@ -48,7 +48,7 @@ const NewRole = () => {
                title="Create Role"
                subtitle="Add a new role to the system"
                action={
-                  <ActionButton variant="outline" onClick={() => router.push('/admin/roles')}>
+                  <ActionButton variant="outline" onClick={() => router.push('/admin/settings/access')}>
                      Back to Roles
                   </ActionButton>
                }
@@ -89,7 +89,7 @@ const NewRole = () => {
                      >
                         <button
                            type="button"
-                           onClick={() => router.push('/admin/roles')}
+                           onClick={() => router.push('/admin/settings/access')}
                            className="px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
                            style={{ color: 'var(--text-secondary)', border: '1px solid var(--border-strong)' }}
                         >
