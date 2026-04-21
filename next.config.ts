@@ -70,7 +70,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/admin/permissions',
-        destination: '/admin/settings/access/permissions',
+        destination: '/admin/settings/access',
         permanent: true,
       },
     ];

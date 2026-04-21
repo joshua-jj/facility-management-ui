@@ -148,8 +148,6 @@ export const getPageNames = (link: string) => {
       return 'user management';
     case '/admin/settings/access':
       return 'roles & permissions';
-    case '/admin/settings/access/permissions':
-      return 'roles & permissions';
     case '/admin/settings/access/roles/new':
       return 'roles & permissions';
     case '/admin/settings/access/roles/[id]':
