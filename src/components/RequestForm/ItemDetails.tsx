@@ -205,23 +205,30 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
                               ) : filteredItems.length === 0 ? (
                                  <li className="px-3.5 py-4 text-xs text-center" style={{ color: 'var(--text-hint)' }}>No items found</li>
                               ) : (
-                                 filteredItems.map((ai) => (
-                                    <li key={ai.name} onClick={() => handleSelect(item, ai)}
-                                       className="flex items-center justify-between px-3.5 py-2 text-xs cursor-pointer transition-colors"
-                                       style={{ color: 'var(--text-primary)' }}
-                                       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-low)'; }}
-                                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                                    >
-                                       <span>{ai.name} ({ai.availableQuantity})</span>
-                                       <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full ${
-                                          (ai.availableQuantity ?? 0) > 0
-                                             ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
-                                             : 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                                       }`}>
-                                          {(ai.availableQuantity ?? 0) > 0 ? 'Available' : 'Unavailable'}
-                                       </span>
-                                    </li>
-                                 ))
+                                 filteredItems.map((ai) => {
+                                    const isAvailable = (ai.availableQuantity ?? 0) > 0;
+                                    return (
+                                       <li
+                                          key={ai.name}
+                                          onClick={() => isAvailable && handleSelect(item, ai)}
+                                          className={`flex items-center justify-between px-3.5 py-2 text-xs transition-colors ${
+                                             isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+                                          }`}
+                                          style={{ color: 'var(--text-primary)' }}
+                                          onMouseEnter={(e) => { if (isAvailable) e.currentTarget.style.background = 'var(--surface-low)'; }}
+                                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                                       >
+                                          <span>{ai.name} ({ai.availableQuantity})</span>
+                                          <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full ${
+                                             isAvailable
+                                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
+                                                : 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+                                          }`}>
+                                             {isAvailable ? 'Available' : 'Unavailable'}
+                                          </span>
+                                       </li>
+                                    );
+                                 })
                               )}
                            </ul>
                         </div>

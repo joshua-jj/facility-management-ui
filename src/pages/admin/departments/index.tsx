@@ -218,21 +218,6 @@ const Departments = () => {
          render: (value) => <PhoneDisplay value={String(value ?? '')} />,
       },
       {
-         key: 'itemCount',
-         header: 'Items Count',
-         align: 'center',
-         render: (_, row) => {
-            const count = row.itemCount ?? 0;
-            return count > 0 ? (
-               <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-                  {count.toLocaleString()}
-               </span>
-            ) : (
-               <span style={{ color: 'var(--text-hint)', opacity: 0.5 }}>{'\u2014'}</span>
-            );
-         },
-      },
-      {
          key: 'createdBy',
          header: 'Created By',
       },
