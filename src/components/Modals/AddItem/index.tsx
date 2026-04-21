@@ -34,6 +34,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    );
    const [fragile, setFragile] = useState(item?.fragile ? 'true' : 'false');
    const [trackingMode, setTrackingMode] = useState(item?.trackingMode || 'Quantity');
+   const [condition, setCondition] = useState<string>('');
    const [storeId, setStoreId] = useState<string>('');
    const [items, setItems] = useState<ItemForm[]>([]);
    const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -124,6 +125,11 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       { value: 'false', label: 'No' },
    ];
 
+   const conditionOptions = [
+      { value: 'Good', label: 'Good' },
+      { value: 'Bad', label: 'Bad' },
+   ];
+
    const trackingOptions = [
       { value: 'Quantity', label: 'Quantity Only' },
       { value: 'Serialized', label: 'Serialized (Track Individual Units)' },
@@ -139,6 +145,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       data.fragile = fragile === 'true';
       data.actualQuantity = Number(data.actualQuantity);
       data.trackingMode = trackingMode;
+      if (condition) data.condition = condition;
       if (storeId) data.storeId = Number(storeId);
 
       // Edit mode — dispatch update, not create
@@ -159,6 +166,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                departmentId: selectedExistingItem.department?.id ?? 0,
                fragile: selectedExistingItem.fragile ?? false,
                trackingMode: selectedExistingItem.trackingMode,
+               ...(condition ? { condition } : {}),
                ...(storeId ? { storeId: Number(storeId) } : {}),
             }) as unknown as UnknownAction,
          );
@@ -191,6 +199,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       setSelectedDeptId('');
       setFragile('false');
       setTrackingMode('Quantity');
+      setCondition('');
       setStoreId('');
    };
 
@@ -210,11 +219,11 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    const addMoreItem = () => {
       if (!formRef.current) return;
       const formData: ItemForm = formRef.current.getModel();
-      if (!nameInput.trim() || !formData.actualQuantity) {
+      if (!nameInput.trim() || !formData.actualQuantity || !condition) {
          dispatch(
             appActions.setSnackBar({
                type: 'warning',
-               message: 'Please fill in item name and quantity before adding another.',
+               message: 'Please fill in item name, quantity and condition before adding another.',
                variant: 'warning',
             }) as unknown as UnknownAction,
          );
@@ -225,6 +234,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       formData.fragile = fragile === 'true';
       formData.actualQuantity = Number(formData.actualQuantity);
       formData.trackingMode = trackingMode;
+      if (condition) formData.condition = condition;
       if (storeId) formData.storeId = Number(storeId);
       setItems((prev) => [...prev, formData]);
       formRef.current.reset();
@@ -232,6 +242,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       setSelectedDeptId('');
       setFragile('false');
       setTrackingMode('Quantity');
+      setCondition('');
       setStoreId('');
    };
 
@@ -453,9 +464,9 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                   />
                </div>
 
-               {/* Row 3 — Fragile & Store. Store only makes sense when creating/adding units
-                   (applies to the new units). In update mode each unit has its own store,
-                   edited per-row on the item detail page. */}
+               {/* Row 3 — Fragile & Condition. Condition is required for new items and
+                   for adding units to existing items — real-world stock is always Good
+                   or Bad, never unspecified. */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                   <SelectInput
                      name="fragile"
@@ -471,6 +482,22 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                   />
                   {!item?.id && (
                      <SelectInput
+                        name="condition"
+                        label="Condition"
+                        placeholder="Select condition"
+                        options={conditionOptions}
+                        value={condition}
+                        onValueChange={(val) => setCondition(val)}
+                        searchable={false}
+                        required
+                     />
+                  )}
+               </div>
+
+               {/* Row 4 — Store (only on create / add-units; per-unit store lives on detail page) */}
+               {!item?.id && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                     <SelectInput
                         name="storeId"
                         label="Store"
                         placeholder="Select store (optional)"
@@ -479,8 +506,8 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                         onValueChange={(val) => setStoreId(val)}
                         searchable
                      />
-                  )}
-               </div>
+                  </div>
+               )}
 
                {/* Add more button — only in new-item create mode */}
                {!item && !isAddUnitsMode && (
@@ -509,7 +536,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                      Cancel
                   </button>
                   <button
-                     disabled={!canSubmit || !nameInput.trim()}
+                     disabled={!canSubmit || !nameInput.trim() || (!item?.id && !condition)}
                      type="submit"
                      className="px-5 py-2 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                      style={{ background: 'var(--color-secondary)' }}
