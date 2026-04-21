@@ -177,10 +177,10 @@ const RoleUsers = () => {
                subtitle={`${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''} assigned to this role`}
                action={
                   <div className="flex items-center gap-2">
-                     <ActionButton variant="outline" onClick={() => router.push(`/admin/roles/${roleId}`)}>
+                     <ActionButton variant="outline" onClick={() => router.push(`/admin/settings/access/roles/${roleId}`)}>
                         Edit Role
                      </ActionButton>
-                     <ActionButton variant="outline" onClick={() => router.push('/admin/roles')}>
+                     <ActionButton variant="outline" onClick={() => router.push('/admin/settings/access')}>
                         Back to Roles
                      </ActionButton>
                   </div>
