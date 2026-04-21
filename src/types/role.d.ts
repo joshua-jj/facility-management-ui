@@ -5,6 +5,7 @@ export interface Role {
    name: string;
    description?: string;
    status: string | number;
+   preset: boolean;
    createdAt?: string;
    updatedAt?: string;
    createdBy?: string;
@@ -66,4 +67,12 @@ export interface AddPermissionsToRoleAction {
 export interface RemovePermissionsFromRoleAction {
    type: string;
    data: { roleId: number; permissionIds: number[] };
+}
+
+export interface ReplaceRolePermissionsAction {
+   type: string;
+   data: {
+      roleId: number;
+      permissionIds: number[];
+   };
 }
