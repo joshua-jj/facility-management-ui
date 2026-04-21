@@ -1,249 +1,235 @@
-import Layout from '@/components/Layout';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { format, parseISO } from 'date-fns';
-import { DataTable, Column, FilterDef } from '@/components/DataTable';
-import { exportToXlsx } from '@/utilities/exportXlsx';
-import PageHeader, { ActionButton } from '@/components/PageHeader';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { UnknownAction } from 'redux';
+import Layout from '@/components/Layout';
+import PrivateRoute from '@/components/PrivateRoute';
+import SettingsShell from '@/components/SettingsShell';
+import RolePreview from '@/components/Modals/RolePreview';
+import RoleEdit from '@/components/Modals/RoleEdit';
 import { RootState } from '@/redux/reducers';
 import { roleActions } from '@/actions/role.action';
-import { UnknownAction } from 'redux';
 import { Role } from '@/types/role';
-import PrivateRoute from '@/components/PrivateRoute';
-import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
-import { useRouter } from 'next/router';
-import { roleConstants } from '@/constants/role.constant';
-import { AppEmitter } from '@/controllers/EventEmitter';
-import SettingsShell from '@/components/SettingsShell';
-import AccessPanelTabs from '@/components/AccessPanelTabs';
 
-const PAGE_LIMIT = 10;
+const PAGE_SIZE = 10;
 
-const EDIT_ICON = (
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-   </svg>
-);
+/** Letter avatar — gold-tinted circle with the first letter of the role name */
+const LetterAvatar: FC<{ name: string }> = ({ name }) => {
+   const letter = (name?.trim()?.[0] ?? '?').toUpperCase();
+   return (
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#B28309]/15 text-[#B28309] text-xs font-bold">
+         {letter}
+      </span>
+   );
+};
 
-const USERS_ICON = (
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-   </svg>
-);
+const formatDate = (iso: string | undefined | null) => {
+   if (!iso) return '-';
+   try {
+      return new Date(iso).toLocaleDateString('en-US', {
+         month: 'short',
+         day: '2-digit',
+         year: 'numeric',
+      });
+   } catch {
+      return iso;
+   }
+};
 
-const DELETE_ICON = (
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-   </svg>
-);
-
-const Roles = () => {
+const RolesAndPermissions: FC = () => {
    const dispatch = useDispatch();
-   const router = useRouter();
-   const [searchQuery, setSearchQuery] = useState('');
-   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-   const [currentPage, setCurrentPage] = useState(1);
+   const allRoles = useSelector((s: RootState) => s.role.allRolesList) as Role[];
+   const loading = useSelector((s: RootState) => s.role.IsRequestingRoles) as boolean;
 
-   const { IsRequestingRoles, allRolesList, pagination } = useSelector(
-      (s: RootState) => s.role,
-   );
-   const { meta } = pagination;
-
-   const fetchRoles = useCallback((page: number) => {
-      dispatch(roleActions.getRoles({
-         page,
-         limit: PAGE_LIMIT,
-         search: searchQuery || undefined,
-         status: filterValues.status || undefined,
-      }) as unknown as UnknownAction);
-   }, [dispatch, searchQuery, filterValues]);
+   const [search, setSearch] = useState('');
+   const [page, setPage] = useState(1);
+   const [editingRoleId, setEditingRoleId] = useState<number | null>(null);
+   const [previewingRoleId, setPreviewingRoleId] = useState<number | null>(null);
+   const [isCreating, setIsCreating] = useState(false);
 
    useEffect(() => {
-      fetchRoles(currentPage);
-   }, [fetchRoles, currentPage]);
+      dispatch(roleActions.getRoles() as unknown as UnknownAction);
+   }, [dispatch]);
 
-   // Re-fetch current page after any mutation
-   useEffect(() => {
-      const events = [
-         roleConstants.CREATE_ROLE_SUCCESS,
-         roleConstants.UPDATE_ROLE_SUCCESS,
-         roleConstants.DELETE_ROLE_SUCCESS,
-      ];
-      const listeners = events.map((evt) =>
-         AppEmitter.addListener(evt, () => fetchRoles(currentPage)),
-      );
-      return () => listeners.forEach((l) => l.remove());
-   }, [currentPage, fetchRoles]);
+   const filteredRoles = useMemo(() => {
+      const list: Role[] = allRoles ?? [];
+      const q = search.trim().toLowerCase();
+      return q ? list.filter((r) => r.name?.toLowerCase().includes(q)) : list;
+   }, [allRoles, search]);
 
-   const handlePageChange = (page: number) => {
-      setCurrentPage(page);
+   const pagedRoles = useMemo(() => {
+      const start = (page - 1) * PAGE_SIZE;
+      return filteredRoles.slice(start, start + PAGE_SIZE);
+   }, [filteredRoles, page]);
+
+   const totalPages = Math.max(1, Math.ceil(filteredRoles.length / PAGE_SIZE));
+
+   const handleRefresh = () => {
+      dispatch(roleActions.getRoles() as unknown as UnknownAction);
    };
-
-   const handleSearch = (query: string) => {
-      setSearchQuery(query);
-      setCurrentPage(1);
-   };
-
-   const filteredRoles = useMemo(() => allRolesList ?? [], [allRolesList]);
-
-   const handleFilterChange = (key: string, value: string) => {
-      setFilterValues((prev) => ({ ...prev, [key]: value }));
-      setCurrentPage(1);
-   };
-
-   const filters: FilterDef[] = useMemo(
-      () => [
-         {
-            key: 'status',
-            label: 'Status',
-            options: [
-               { value: 'A', label: 'Active' },
-               { value: 'I', label: 'Inactive' },
-            ],
-         },
-      ],
-      [],
-   );
-
-   const handleExport = () => {
-      exportToXlsx('Roles', filteredRoles as unknown as Record<string, unknown>[], [
-         { key: 'name', header: 'Name' },
-         { key: 'description', header: 'Description' },
-         { key: 'createdBy', header: 'Created By' },
-         { key: 'createdAt', header: 'Created Date', width: 22, format: (v) => (v ? new Date(String(v)) : '') },
-         { key: 'status', header: 'Status' },
-      ]);
-   };
-
-   const handleDelete = (row: Role) => {
-      if (!window.confirm(`Deactivate role "${row.name}"?`)) return;
-      dispatch(roleActions.deleteRole(row.id) as unknown as UnknownAction);
-   };
-
-   const getActions = (row: Role): ActionMenuItem[] => [
-      {
-         label: 'Edit / Permissions',
-         icon: EDIT_ICON,
-         onClick: () => router.push(`/admin/settings/access/roles/${row.id}`),
-      },
-      {
-         label: 'View Users',
-         icon: USERS_ICON,
-         onClick: () => router.push(`/admin/settings/access/roles/${row.id}/users`),
-      },
-      {
-         label: 'Deactivate',
-         icon: DELETE_ICON,
-         onClick: () => handleDelete(row),
-         variant: 'danger',
-      },
-   ];
-
-   const columns: Column<Role>[] = [
-      {
-         key: 'name',
-         header: 'Name',
-         render: (_, row) => <span className="font-medium text-[#0F2552] dark:text-white/85">{row.name}</span>,
-      },
-      {
-         key: 'description',
-         header: 'Description',
-         render: (value) => <span>{String(value || '\u2014')}</span>,
-      },
-      {
-         key: 'createdBy',
-         header: 'Created By',
-         render: (value) => <span>{String(value || '\u2014')}</span>,
-      },
-      {
-         key: 'createdAt',
-         header: 'Created Date',
-         render: (value) => {
-            if (!value) return <span>{'\u2014'}</span>;
-            try {
-               return <span>{format(parseISO(String(value)), 'MMM d, yyyy')}</span>;
-            } catch {
-               return <span>{'\u2014'}</span>;
-            }
-         },
-      },
-      {
-         key: 'status',
-         header: 'Status',
-         render: (value) => {
-            const isActive =
-               String(value).toUpperCase() === 'A' || String(value).toUpperCase() === 'ACTIVE';
-            return (
-               <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                     isActive
-                        ? 'bg-green-50 text-green-700 dark:bg-green-500/15 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-500 dark:bg-white/8 dark:text-white/40'
-                  }`}
-               >
-                  {isActive ? 'Active' : 'Inactive'}
-               </span>
-            );
-         },
-      },
-      {
-         key: 'id',
-         header: '',
-         width: '50px',
-         align: 'center',
-         render: (_, row) => <ActionMenu items={getActions(row)} />,
-      },
-   ];
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
-         <Layout title="Roles">
+      <PrivateRoute>
+         <Layout title="Roles and Permissions">
             <SettingsShell active="access">
-               <AccessPanelTabs active="roles">
-                  <PageHeader
-                     title="Roles"
-                     subtitle={`${meta.totalItems} role${meta.totalItems !== 1 ? 's' : ''}`}
-                     action={
-                        <ActionButton variant="primary" onClick={() => router.push('/admin/settings/access/roles/new')}>
-                           + Create Role
-                        </ActionButton>
-                     }
-                  />
+               <div className="space-y-6">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                     <div>
+                        <h2 className="text-lg font-bold text-[#0F2552] dark:text-white/90">
+                           Roles and Permission
+                        </h2>
+                     </div>
+                     <div className="flex gap-2">
+                        <button
+                           onClick={handleRefresh}
+                           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#B28309] text-[#B28309] text-xs font-semibold hover:bg-[#B28309]/10 cursor-pointer"
+                        >
+                           ↻ Refresh
+                        </button>
+                        <button
+                           onClick={() => setIsCreating(true)}
+                           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#B28309] text-white text-xs font-semibold hover:bg-[#9a7208] cursor-pointer"
+                        >
+                           + Add Role and Permission
+                        </button>
+                     </div>
+                  </div>
 
-                  <DataTable
-                     columns={columns}
-                     data={filteredRoles}
-                     loading={IsRequestingRoles}
-                     onSearch={handleSearch}
-                     onExport={handleExport}
-                     onRefresh={() => fetchRoles(currentPage)}
-                     searchPlaceholder="Search roles..."
-                     filters={filters}
-                     filterValues={filterValues}
-                     onFilterChange={handleFilterChange}
-                     emptyTitle="No roles found"
-                     emptyDescription="Get started by creating your first role."
-                     pagination={{
-                        currentPage: meta.currentPage,
-                        totalItems: meta.totalItems,
-                        itemsPerPage: meta.itemsPerPage,
-                        totalPages: meta.totalPages,
-                     }}
-                     onPageChange={handlePageChange}
-                  />
-               </AccessPanelTabs>
+                  {/* Search */}
+                  <div className="relative">
+                     <input
+                        type="text"
+                        placeholder="Search roles..."
+                        value={search}
+                        onChange={(e) => {
+                           setSearch(e.target.value);
+                           setPage(1);
+                        }}
+                        className="w-full px-4 py-2.5 pl-10 rounded-lg bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
+                     />
+                     <span className="absolute left-3 top-3 text-gray-400">🔍</span>
+                  </div>
+
+                  {/* Table */}
+                  <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 overflow-hidden">
+                     <table className="w-full">
+                        <thead>
+                           <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5">
+                              <th className="px-6 py-3 text-left font-semibold">Role Name</th>
+                              <th className="px-6 py-3 text-left font-semibold">Users</th>
+                              <th className="px-6 py-3 text-left font-semibold">Created</th>
+                              <th className="px-6 py-3 text-right font-semibold">Actions</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {loading && (
+                              <tr>
+                                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                                    Loading…
+                                 </td>
+                              </tr>
+                           )}
+                           {!loading && pagedRoles.length === 0 && (
+                              <tr>
+                                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                                    No roles found.
+                                 </td>
+                              </tr>
+                           )}
+                           {!loading &&
+                              pagedRoles.map((role) => (
+                                 <tr
+                                    key={role.id}
+                                    className="border-b border-gray-100 dark:border-white/5 last:border-0"
+                                 >
+                                    <td className="px-6 py-4">
+                                       <div className="flex items-center gap-3">
+                                          <LetterAvatar name={role.name} />
+                                          <span className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
+                                             {role.name}
+                                          </span>
+                                          {role.preset && (
+                                             <span className="text-[0.6rem] uppercase font-bold px-2 py-0.5 rounded bg-[#B28309]/15 text-[#B28309]">
+                                                Preset
+                                             </span>
+                                          )}
+                                       </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-white/60">
+                                       {(role as { userCount?: number }).userCount ?? '-'}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-white/60">
+                                       {formatDate(role.createdAt)}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                       <button
+                                          onClick={() => setPreviewingRoleId(role.id)}
+                                          className="text-xs font-semibold text-[#B28309] hover:underline cursor-pointer mr-3"
+                                       >
+                                          Preview
+                                       </button>
+                                       <button
+                                          onClick={() => setEditingRoleId(role.id)}
+                                          className="text-xs font-semibold text-[#0F2552] dark:text-white/80 hover:underline cursor-pointer"
+                                       >
+                                          Edit
+                                       </button>
+                                    </td>
+                                 </tr>
+                              ))}
+                        </tbody>
+                     </table>
+                  </div>
+
+                  {/* Pagination */}
+                  {filteredRoles.length > PAGE_SIZE && (
+                     <div className="flex items-center justify-between text-xs text-gray-500 dark:text-white/60">
+                        <span>
+                           Showing {(page - 1) * PAGE_SIZE + 1} to{' '}
+                           {Math.min(page * PAGE_SIZE, filteredRoles.length)} of{' '}
+                           {filteredRoles.length} results
+                        </span>
+                        <div className="flex gap-1 items-center">
+                           <button
+                              onClick={() => setPage((p) => Math.max(1, p - 1))}
+                              disabled={page === 1}
+                              className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                           >
+                              ‹
+                           </button>
+                           <span className="px-3 py-1.5">
+                              Page {page} of {totalPages}
+                           </span>
+                           <button
+                              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                              disabled={page >= totalPages}
+                              className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                           >
+                              ›
+                           </button>
+                        </div>
+                     </div>
+                  )}
+               </div>
+
+               {/* Modals */}
+               <RoleEdit
+                  roleId={isCreating ? null : editingRoleId}
+                  isOpen={isCreating || editingRoleId != null}
+                  onClose={() => {
+                     setIsCreating(false);
+                     setEditingRoleId(null);
+                  }}
+               />
+               <RolePreview
+                  roleId={previewingRoleId}
+                  isOpen={previewingRoleId != null}
+                  onClose={() => setPreviewingRoleId(null)}
+               />
             </SettingsShell>
          </Layout>
       </PrivateRoute>
    );
 };
 
-export default Roles;
+export default RolesAndPermissions;
