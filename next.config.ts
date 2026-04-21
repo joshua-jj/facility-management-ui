@@ -48,6 +48,31 @@ const nextConfig: NextConfig = {
         destination: '/admin/settings/profile',
         permanent: true,
       },
+      {
+        source: '/admin/roles',
+        destination: '/admin/settings/access',
+        permanent: true,
+      },
+      {
+        source: '/admin/roles/new',
+        destination: '/admin/settings/access/roles/new',
+        permanent: true,
+      },
+      {
+        source: '/admin/roles/:id',
+        destination: '/admin/settings/access/roles/:id',
+        permanent: true,
+      },
+      {
+        source: '/admin/roles/:id/users',
+        destination: '/admin/settings/access/roles/:id/users',
+        permanent: true,
+      },
+      {
+        source: '/admin/permissions',
+        destination: '/admin/settings/access/permissions',
+        permanent: true,
+      },
     ];
   },
 };
