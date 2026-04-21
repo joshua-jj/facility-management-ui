@@ -8,6 +8,7 @@ import {
   MapPinIcon,
   ReportsIcon,
   RequestsIcon,
+  SettingsIcon,
   StoreIcon,
   UsersIcon,
 } from '@/components/Icons';
@@ -115,6 +116,21 @@ export const pageRoutes: PageRoute[] = [
     icon: <UsersIcon />,
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
     section: 'Platform',
+  },
+  {
+    id: 99,
+    label: 'settings',
+    link: '/admin/settings/profile',
+    icon: <SettingsIcon />,
+    allowedRoles: [
+      RoleId.SUPER_ADMIN,
+      RoleId.ADMIN,
+      RoleId.OFFICE,
+      RoleId.HOD,
+      RoleId.MEMBER,
+      RoleId.USER,
+    ],
+    section: 'account',
   },
 ];
 
