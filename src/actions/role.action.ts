@@ -1,5 +1,5 @@
 import { roleConstants } from '@/constants/role.constant';
-import { RoleForm, RoleUpdateForm } from '@/types/role';
+import { RoleForm, RoleUpdateForm, ReplaceRolePermissionsAction } from '@/types/role';
 
 export interface GetRolesAction {
    type: typeof roleConstants.GET_ROLES;
@@ -91,6 +91,11 @@ const removePermissionsFromRole = (data: { roleId: number; permissionIds: number
    data,
 });
 
+const replaceRolePermissions = (roleId: number, permissionIds: number[]): ReplaceRolePermissionsAction => ({
+   type: roleConstants.REPLACE_ROLE_PERMISSIONS,
+   data: { roleId, permissionIds },
+});
+
 export const roleActions = {
    getRoles,
    getRole,
@@ -101,4 +106,5 @@ export const roleActions = {
    getAssignedPermissions,
    addPermissionsToRole,
    removePermissionsFromRole,
+   replaceRolePermissions,
 };
