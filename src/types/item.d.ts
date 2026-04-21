@@ -61,7 +61,7 @@ export interface ItemForm {
   departmentId: number;
   fragile: boolean;
   trackingMode?: string;
-  // condition: string;
+  condition?: string;
 }
 
 export interface ItemUnitsForm {
