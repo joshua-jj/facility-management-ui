@@ -219,11 +219,11 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    const addMoreItem = () => {
       if (!formRef.current) return;
       const formData: ItemForm = formRef.current.getModel();
-      if (!nameInput.trim() || !formData.actualQuantity || !condition) {
+      if (!nameInput.trim() || !formData.actualQuantity || !condition || !storeId) {
          dispatch(
             appActions.setSnackBar({
                type: 'warning',
-               message: 'Please fill in item name, quantity and condition before adding another.',
+               message: 'Please fill in item name, quantity, condition and store before adding another.',
                variant: 'warning',
             }) as unknown as UnknownAction,
          );
@@ -500,11 +500,12 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                      <SelectInput
                         name="storeId"
                         label="Store"
-                        placeholder="Select store (optional)"
+                        placeholder="Select store"
                         options={storeOptions}
                         value={storeId}
                         onValueChange={(val) => setStoreId(val)}
                         searchable
+                        required
                      />
                   </div>
                )}
@@ -536,7 +537,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                      Cancel
                   </button>
                   <button
-                     disabled={!canSubmit || !nameInput.trim() || (!item?.id && !condition)}
+                     disabled={!canSubmit || !nameInput.trim() || (!item?.id && (!condition || !storeId))}
                      type="submit"
                      className="px-5 py-2 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                      style={{ background: 'var(--color-secondary)' }}
