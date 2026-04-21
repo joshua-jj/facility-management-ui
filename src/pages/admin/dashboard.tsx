@@ -313,13 +313,17 @@ const Dashboard = () => {
    );
 
    // ── Items-by-condition segmented bar ──
+   // "Not specified" is a system default for legacy rows — not a real user
+   // classification. Hide it so the chart only shows actionable buckets.
    const itemsByConditionSegments = useMemo(
       () =>
-         (dashboardStats?.itemsByCondition ?? []).map((s) => ({
-            label: s.condition,
-            value: s.count,
-            color: statusColor(s.condition),
-         })),
+         (dashboardStats?.itemsByCondition ?? [])
+            .filter((s) => s.condition !== 'Not specified')
+            .map((s) => ({
+               label: s.condition,
+               value: s.count,
+               color: statusColor(s.condition),
+            })),
       [dashboardStats],
    );
 

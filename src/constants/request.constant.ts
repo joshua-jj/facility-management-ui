@@ -47,4 +47,5 @@ export const requestConstants: RequestConstants = {
   RETURN_REQUEST_ITEMS: 'RETURN_REQUEST_ITEMS',
 
   REQUEST_URI: `${appConstants.BASE_URI}${request}`,
+  VERIFY_REQUEST_TOKEN_URI: `${appConstants.BASE_URI}${request}/verify-token`,
 };
