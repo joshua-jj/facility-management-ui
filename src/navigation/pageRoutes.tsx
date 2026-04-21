@@ -172,7 +172,7 @@ export const getPageNames = (link: string) => {
       return 'roles';
     case '/admin/permissions':
       return 'permissions';
-    case '/admin/account-settings':
+    case '/admin/settings/profile':
       return 'account settings';
     default:
       return '';
