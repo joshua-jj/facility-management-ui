@@ -5,7 +5,7 @@ import { authConstants, itemConstants, requestConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
    capitalizeFirstLetter,
    formatReadableDate,
@@ -32,7 +32,6 @@ const optionsFilter = [
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
    { value: 'Bad', label: 'Bad' },
-   { value: 'Not specified', label: 'Not specified' },
 ];
 
 interface RequestDetails {
@@ -172,9 +171,41 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       Record<number, string>
    >({});
 
-   // Per-item condition for release/return
-   const [releaseConditions, setReleaseConditions] = useState<Record<number, string>>({});
+   // Per-item return condition. Release condition is no longer captured:
+   // only Good items can enter the request workflow, so there's nothing
+   // to grade at release time.
    const [returnConditions, setReturnConditions] = useState<Record<number, string>>({});
+
+   // Verify the emailed magic-link token (if one is present in the URL).
+   // Auth is still the primary gate — a bad token just means the email
+   // receipt can't be proven, so we warn and let the already-authenticated
+   // admin proceed. Ref prevents re-running on every query change.
+   const verifiedRef = useRef(false);
+   useEffect(() => {
+      if (!router.isReady || verifiedRef.current) return;
+      const token = router.query.t;
+      if (!token || Array.isArray(token)) return;
+      verifiedRef.current = true;
+
+      axios
+         .post(requestConstants.VERIFY_REQUEST_TOKEN_URI, { token })
+         .then(() => {
+            // Strip the token from the URL so it isn't leaked via referer /
+            // browser history once verification has happened.
+            const rest = { ...router.query };
+            delete rest.t;
+            router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+         })
+         .catch(() => {
+            dispatch(
+               appActions.setSnackBar({
+                  type: 'warning',
+                  message: 'This emailed link has expired or is invalid. Your session is still active — you can continue.',
+                  variant: 'warning',
+               }) as unknown as UnknownAction,
+            );
+         });
+   }, [router.isReady, router.query, dispatch, router]);
 
 
    const fetchItemUnits = async (itemId: number) => {
@@ -292,13 +323,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
       const updatedItems = items.map((item) => {
          const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
-         const condition = releaseConditions[item.itemId] || 'Not specified';
-
-         let units: SelectedUnit[] = selectedUnits[item.itemId] || [];
-         // For serialized items with a global condition override, apply it to each unit
-         if (isSerialized && units.length > 0 && releaseConditions[item.itemId]) {
-            units = units.map((u) => ({ ...u, condition }));
-         }
+         const units: SelectedUnit[] = selectedUnits[item.itemId] || [];
 
          return {
             itemId: item.itemId,
@@ -678,7 +703,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                      {requestDetails?.audit?.items && requestDetails.audit.items.map((item, index) => {
                         const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
                         const selectedCount = selectedUnits[item.itemId]?.length ?? 0;
-                        const releaseCondition = releaseConditions[item.itemId] || '';
                         const returnCondition = returnConditions[item.itemId] || '';
                         // Qty is read-only when: serialized (count derived from units),
                         // or in return mode (full-return policy locks qty = quantityReleased).
@@ -750,22 +774,21 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                     )}
                                  </div>
 
-                                 {/* Condition dropdown — only for QUANTITY items; serialized items get per-unit condition below */}
-                                 {!isSerialized && (
+                                 {/* Condition dropdown — only on RETURN (member-collected) for quantity items.
+                                     Bad items can't enter requests, so asking for condition on release is
+                                     meaningless. On return the requester may be handing it back in bad
+                                     shape, so this is where the field matters. */}
+                                 {!isSerialized && isMemberCollected && (
                                     <div className="flex flex-col gap-1 min-w-[160px]">
                                        <label className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
                                           Condition
                                        </label>
                                        <SmallSelect
                                           options={conditionOptions}
-                                          value={isMemberAssigned ? releaseCondition : returnCondition}
+                                          value={returnCondition}
                                           placeholder="Select condition"
                                           onChange={(val) => {
-                                             if (isMemberAssigned) {
-                                                setReleaseConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
-                                             } else {
-                                                setReturnConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
-                                             }
+                                             setReturnConditions((prev) => ({ ...prev, [item.itemId]: val as string }));
                                           }}
                                        />
                                     </div>
@@ -810,11 +833,14 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                        </>
                                     )}
 
-                                    {/* Per-unit condition selector */}
+                                    {/* Selected-units list. On release (member-assigned) we just confirm
+                                        the chosen serials — no condition editor, since Bad units can't
+                                        be requested in the first place. On return (member-collected)
+                                        the assignee grades each unit Good / Bad. */}
                                     {(selectedUnits[item.itemId]?.length ?? 0) > 0 && (
                                        <div className="mt-2 space-y-1.5">
                                           <p className="text-[0.6rem] uppercase font-semibold tracking-wider" style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}>
-                                             {isMemberCollected ? 'Returning Units' : 'Unit Conditions'}
+                                             {isMemberCollected ? 'Returning Units' : 'Selected Units'}
                                           </p>
                                           {selectedUnits[item.itemId].map((unit, uIdx) => (
                                              <div
@@ -828,20 +854,22 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                                 <span className="text-xs font-mono flex-1 truncate" style={{ color: 'var(--text-primary)' }}>
                                                    {unit.serialNumber}
                                                 </span>
-                                                <div className="w-[120px] shrink-0">
-                                                   <SmallSelect
-                                                      options={conditionOptions}
-                                                      value={unit.condition || ''}
-                                                      placeholder="Condition"
-                                                      onChange={(val) => {
-                                                         setSelectedUnits((prev) => {
-                                                            const updated = [...(prev[item.itemId] || [])];
-                                                            updated[uIdx] = { ...updated[uIdx], condition: val as string };
-                                                            return { ...prev, [item.itemId]: updated };
-                                                         });
-                                                      }}
-                                                   />
-                                                </div>
+                                                {isMemberCollected && (
+                                                   <div className="w-[120px] shrink-0">
+                                                      <SmallSelect
+                                                         options={conditionOptions}
+                                                         value={unit.condition || ''}
+                                                         placeholder="Condition"
+                                                         onChange={(val) => {
+                                                            setSelectedUnits((prev) => {
+                                                               const updated = [...(prev[item.itemId] || [])];
+                                                               updated[uIdx] = { ...updated[uIdx], condition: val as string };
+                                                               return { ...prev, [item.itemId]: updated };
+                                                            });
+                                                         }}
+                                                      />
+                                                   </div>
+                                                )}
                                              </div>
                                           ))}
                                        </div>
