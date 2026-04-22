@@ -51,8 +51,21 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
       setIsModalOpen(false);
+      if (!item) {
+         setSelectedDeptId('');
+         setFragile('false');
+         setTrackingMode('Quantity');
+         setCondition('');
+         setStoreId('');
+         setItems([]);
+         setEditIndex(null);
+         setNameInput('');
+         setSelectedExistingItem(null);
+         setShowSuggestions(false);
+         formRef.current?.reset();
+      }
       if (onClose) onClose();
-   }, [onClose]);
+   }, [onClose, item]);
 
    useEffect(() => {
       if (allDepartmentsList?.length === 0) {

@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import Formsy from 'formsy-react';
@@ -46,6 +46,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
+   const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
 
    // controlled IDs for the three dropdowns
    const [meetingId, setMeetingId] = useState<string>('');
@@ -173,11 +174,28 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
 
    const hasValidationErrors = Object.values(validationErrors).some((v) => v);
 
+   const resetForm = useCallback(() => {
+      setMeetingId('');
+      setLocationId('');
+      setSelectedGeneratorId('');
+      setOnTime('');
+      setOffTime('');
+      setEngineStartHours('');
+      setEngineOffHours('');
+      setDieselLevelOn('');
+      setDieselLevelOff('');
+      setDieselUnit('litres');
+      setScheduleLastHour(null);
+      setScheduleNextHour(null);
+      formRef.current?.reset();
+   }, []);
+
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
       setIsModalOpen(false);
+      resetForm();
       if (onClose) onClose();
-   }, [onClose]);
+   }, [onClose, resetForm]);
 
    // Pre-populate in edit mode
    useEffect(() => {
@@ -277,11 +295,11 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    };
 
    useEffect(() => {
-      const listener = AppEmitter.addListener(generatorConstants.CREATE_GENERATOR_LOG_SUCCESS, (evt: Event) => {
-         if (evt as CustomEvent) setIsModalOpen(false);
+      const listener = AppEmitter.addListener(generatorConstants.CREATE_GENERATOR_LOG_SUCCESS, () => {
+         closeModal();
       });
-      const listener2 = AppEmitter.addListener(generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS, (evt: Event) => {
-         if (evt as CustomEvent) closeModal();
+      const listener2 = AppEmitter.addListener(generatorConstants.UPDATE_GENERATOR_LOG_SUCCESS, () => {
+         closeModal();
       });
       return () => {
          listener.remove();
@@ -305,6 +323,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
             width="sm:w-[54rem]"
          >
             <Formsy
+               ref={formRef}
                onValidSubmit={handleSubmit}
                onValid={() => setCanSubmit(true)}
                onInvalid={() => setCanSubmit(false)}

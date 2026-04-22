@@ -25,14 +25,24 @@ export interface ReportForm {
   complaintSubject: string;
   complaintDescription: string;
 }
+export interface ComplaintSummary {
+  id?: number;
+  complaintStatus?: string;
+  attendedTo?: boolean;
+  status?: string;
+}
+
 export interface Report {
   id: number;
-  complainerPhone: number;
+  complainerPhone: string;
   complainerName: string;
   createdBy: string;
+  updatedBy?: string;
   complainerEmail: string;
   complaintSubject: string;
   complaintDescription: string;
+  complaintDate?: string;
+  summary?: ComplaintSummary;
   createdAt: string;
   updatedAt: string;
   status: number | string;
