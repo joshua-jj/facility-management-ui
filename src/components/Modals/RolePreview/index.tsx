@@ -80,11 +80,10 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
                </button>
             </div>
 
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto min-h-0">
-               {selectedRole ? (
-                  <div className="p-6 space-y-6">
-                     {/* Role card */}
+            {selectedRole ? (
+               <>
+                  {/* Sticky role card */}
+                  <div className="px-6 pt-6 pb-4 shrink-0">
                      <div className="flex items-start gap-4 p-5 rounded-xl border border-white/15">
                         <div className="text-white/90 shrink-0 mt-1">
                            <ShieldIcon />
@@ -96,33 +95,37 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
                            </p>
                         </div>
                      </div>
+                  </div>
 
-                     {/* Hierarchical Permissions section */}
-                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                           <div className="flex items-center gap-2 text-white">
-                              <EyeIcon />
-                              <h4 className="font-bold">Hierarchical Permissions</h4>
-                           </div>
-                           {selectedRole.preset && (
-                              <span className="text-[0.65rem] text-white/50 uppercase tracking-[0.1em]">
-                                 SYSTEM PRESET
-                              </span>
-                           )}
+                  {/* Sticky section header */}
+                  <div className="px-6 pb-3 shrink-0">
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-white">
+                           <EyeIcon />
+                           <h4 className="font-bold">Hierarchical Permissions</h4>
                         </div>
-                        <PermissionGrid
-                           permissions={allPermissionsList ?? []}
-                           value={checkedIds}
-                           onChange={() => undefined}
-                           readOnly
-                           variant="preview"
-                        />
+                        {selectedRole.preset && (
+                           <span className="text-[0.65rem] text-white/50 uppercase tracking-[0.1em]">
+                              SYSTEM PRESET
+                           </span>
+                        )}
                      </div>
                   </div>
-               ) : (
-                  <div className="p-6 text-sm text-white/60">Loading…</div>
-               )}
-            </div>
+
+                  {/* Scrollable permissions list */}
+                  <div className="flex-1 overflow-y-auto min-h-0 px-6 pb-6">
+                     <PermissionGrid
+                        permissions={allPermissionsList ?? []}
+                        value={checkedIds}
+                        onChange={() => undefined}
+                        readOnly
+                        variant="preview"
+                     />
+                  </div>
+               </>
+            ) : (
+               <div className="flex-1 p-6 text-sm text-white/60">Loading…</div>
+            )}
          </div>
       </div>,
       document.body,
