@@ -7,7 +7,7 @@ import TextInput from '@/components/Inputs/TextInput';
 import HourMeterInput from '@/components/Inputs/HourMeterInput';
 import FuelLevelInput from '@/components/Inputs/FuelLevelInput';
 import ModalWrapper from '../ModalWrapper';
-import { GeneratorForm, GeneratorLog, Item } from '@/types';
+import { DieselUnit, GeneratorForm, GeneratorLog, Item } from '@/types';
 import { generatorActions, itemActions, meetingActions, meetingLocationActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
@@ -47,6 +47,65 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    const [meetingId, setMeetingId] = useState<string>('');
    const [locationId, setLocationId] = useState<string>('');
    const [selectedGeneratorId, setSelectedGeneratorId] = useState<string>('');
+
+   // Paired fields — tracked in local state so we can cross-validate.
+   const [onTime, setOnTime] = useState<string>(
+      generatorLog?.onTime ? formatDateTimeLocal(generatorLog.onTime) : '',
+   );
+   const [offTime, setOffTime] = useState<string>(
+      generatorLog?.offTime ? formatDateTimeLocal(generatorLog.offTime) : '',
+   );
+   const [engineStartHours, setEngineStartHours] = useState<string>(
+      generatorLog?.engineStartHours ?? '',
+   );
+   const [engineOffHours, setEngineOffHours] = useState<string>(
+      generatorLog?.engineOffHours ?? '',
+   );
+   const [dieselLevelOn, setDieselLevelOn] = useState<string>(
+      (generatorLog?.dieselLevelOn ?? '').toString(),
+   );
+   const [dieselLevelOff, setDieselLevelOff] = useState<string>(
+      (generatorLog?.dieselLevelOff ?? '').toString(),
+   );
+   const [dieselUnit, setDieselUnit] = useState<DieselUnit>(
+      (generatorLog?.dieselUnit as DieselUnit) ?? 'litres',
+   );
+
+   /** Cross-field validation — each entry is null when OK, string when bad */
+   const validationErrors = useMemo(() => {
+      const errs: Record<string, string | null> = {
+         offTime: null,
+         engineOffHours: null,
+         dieselLevelOn: null,
+         dieselLevelOff: null,
+      };
+      if (onTime && offTime) {
+         const on = new Date(onTime).getTime();
+         const off = new Date(offTime).getTime();
+         if (Number.isFinite(on) && Number.isFinite(off) && off < on) {
+            errs.offTime = 'Off Time must be on or after On Time.';
+         }
+      }
+      const eStart = engineStartHours ? Number(engineStartHours) : null;
+      const eOff = engineOffHours ? Number(engineOffHours) : null;
+      if (eStart != null && eOff != null && eOff < eStart) {
+         errs.engineOffHours = 'Engine Off must be ≥ Engine Start.';
+      }
+      const dOn = dieselLevelOn ? Number(dieselLevelOn) : null;
+      const dOff = dieselLevelOff ? Number(dieselLevelOff) : null;
+      if (dOn != null && dOff != null && dOff > dOn) {
+         errs.dieselLevelOff = 'Diesel Off must be ≤ Diesel On (fuel decreases).';
+      }
+      if (dieselUnit === 'percentage') {
+         if (dOn != null && (dOn < 0 || dOn > 100))
+            errs.dieselLevelOn = 'Must be between 0 and 100.';
+         if (dOff != null && (dOff < 0 || dOff > 100))
+            errs.dieselLevelOff = errs.dieselLevelOff ?? 'Must be between 0 and 100.';
+      }
+      return errs;
+   }, [onTime, offTime, engineStartHours, engineOffHours, dieselLevelOn, dieselLevelOff, dieselUnit]);
+
+   const hasValidationErrors = Object.values(validationErrors).some((v) => v);
 
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
@@ -141,6 +200,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
          generatorTypeId: generatorTypeId as number,
          meetingId: Number(meetingId),
          locationId: Number(locationId),
+         dieselUnit,
       } as GeneratorForm;
 
       if (generatorLog?.id) {
@@ -230,17 +290,106 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                {/* Timing row — On Time and Off Time side by side */}
                <p className="text-[0.55rem] uppercase font-semibold tracking-wider mb-0" style={{ color: 'var(--text-hint)' }}>Timing</p>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                  <DateInput name="onTime" label="On Time" placeholder="Select" value={formatDateTimeLocal(generatorLog?.onTime)} required mode="datetime" />
-                  <DateInput name="offTime" label="Off Time" placeholder="Select" value={formatDateTimeLocal(generatorLog?.offTime)} mode="datetime" />
+                  <div>
+                     <DateInput
+                        name="onTime"
+                        label="On Time"
+                        placeholder="Select"
+                        value={onTime}
+                        onValueChange={(val: string) => setOnTime(val)}
+                        required
+                        mode="datetime"
+                     />
+                  </div>
+                  <div>
+                     <DateInput
+                        name="offTime"
+                        label="Off Time"
+                        placeholder="Select"
+                        value={offTime}
+                        onValueChange={(val: string) => setOffTime(val)}
+                        mode="datetime"
+                     />
+                     {validationErrors.offTime && (
+                        <p className="text-red-500 text-xs -mt-1">{validationErrors.offTime}</p>
+                     )}
+                  </div>
                </div>
 
                {/* Engine & Fuel row */}
-               <p className="text-[0.55rem] uppercase font-semibold tracking-wider mb-0 mt-1" style={{ color: 'var(--text-hint)' }}>Engine &amp; Fuel</p>
+               <div className="flex items-center justify-between mt-1">
+                  <p className="text-[0.55rem] uppercase font-semibold tracking-wider mb-0" style={{ color: 'var(--text-hint)' }}>Engine &amp; Fuel</p>
+                  <div className="inline-flex rounded-md overflow-hidden text-[0.6rem] font-semibold" style={{ border: '1px solid var(--border-strong)' }}>
+                     <button
+                        type="button"
+                        onClick={() => setDieselUnit('litres')}
+                        className="px-2.5 py-1 transition-colors cursor-pointer"
+                        style={{
+                           background: dieselUnit === 'litres' ? 'var(--color-secondary)' : 'transparent',
+                           color: dieselUnit === 'litres' ? '#fff' : 'var(--text-secondary)',
+                        }}
+                     >
+                        Litres
+                     </button>
+                     <button
+                        type="button"
+                        onClick={() => setDieselUnit('percentage')}
+                        className="px-2.5 py-1 transition-colors cursor-pointer"
+                        style={{
+                           background: dieselUnit === 'percentage' ? 'var(--color-secondary)' : 'transparent',
+                           color: dieselUnit === 'percentage' ? '#fff' : 'var(--text-secondary)',
+                        }}
+                     >
+                        Percentage
+                     </button>
+                  </div>
+               </div>
                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3">
-                  <HourMeterInput name="engineStartHours" label="Eng. Start" placeholder="0000.0" value={generatorLog?.engineStartHours || ''} required />
-                  <HourMeterInput name="engineOffHours" label="Eng. Off" placeholder="0000.0" value={generatorLog?.engineOffHours || ''} />
-                  <FuelLevelInput name="dieselLevelOn" label="Diesel On" placeholder="0" value={(generatorLog?.dieselLevelOn ?? '').toString()} required />
-                  <FuelLevelInput name="dieselLevelOff" label="Diesel Off" placeholder="0" value={(generatorLog?.dieselLevelOff ?? '').toString()} />
+                  <HourMeterInput
+                     name="engineStartHours"
+                     label="Eng. Start"
+                     placeholder="0000.0"
+                     value={engineStartHours}
+                     onValueChange={(val: string) => setEngineStartHours(val)}
+                     required
+                  />
+                  <div>
+                     <HourMeterInput
+                        name="engineOffHours"
+                        label="Eng. Off"
+                        placeholder="0000.0"
+                        value={engineOffHours}
+                        onValueChange={(val: string) => setEngineOffHours(val)}
+                     />
+                     {validationErrors.engineOffHours && (
+                        <p className="text-red-500 text-xs -mt-1">{validationErrors.engineOffHours}</p>
+                     )}
+                  </div>
+                  <div>
+                     <FuelLevelInput
+                        name="dieselLevelOn"
+                        label={`Diesel On${dieselUnit === 'percentage' ? ' (%)' : ' (L)'}`}
+                        placeholder="0"
+                        value={dieselLevelOn}
+                        onValueChange={(val: string) => setDieselLevelOn(val)}
+                        required
+                     />
+                     {validationErrors.dieselLevelOn && (
+                        <p className="text-red-500 text-xs -mt-1">{validationErrors.dieselLevelOn}</p>
+                     )}
+                  </div>
+                  <div>
+                     <FuelLevelInput
+                        name="dieselLevelOff"
+                        label={`Diesel Off${dieselUnit === 'percentage' ? ' (%)' : ' (L)'}`}
+                        placeholder="0"
+                        value={dieselLevelOff}
+                        onValueChange={(val: string) => setDieselLevelOff(val)}
+                     />
+                     {validationErrors.dieselLevelOff && (
+                        <p className="text-red-500 text-xs -mt-1">{validationErrors.dieselLevelOff}</p>
+                     )}
+                  </div>
                </div>
 
                <div className="my-2" style={{ borderTop: '1px solid var(--border-default)' }} />
@@ -263,7 +412,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                      Cancel
                   </button>
                   <button
-                     disabled={!canSubmit}
+                     disabled={!canSubmit || hasValidationErrors}
                      type="submit"
                      className="px-5 py-2 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                      style={{ background: 'var(--color-secondary)' }}
