@@ -67,7 +67,7 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
 
    return createPortal(
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1000] p-4">
-         <div className="bg-[#0e0e1a] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10">
+         <div className="bg-[#0e0e1a] rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto border border-white/10">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                <h2 className="text-lg font-bold text-white">Role Preview</h2>
