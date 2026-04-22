@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import DateInput from '@/components/Inputs/DateInput';
+import TableSkeletonRow from '@/components/TableSkeletonRow';
 import { RootState } from '@/redux/reducers';
 import { auditLogActions } from '@/actions';
 import { AuditLogEvent } from '@/types';
@@ -228,13 +229,14 @@ const AuditLogs: FC = () => {
                            </tr>
                         </thead>
                         <tbody>
-                           {loading && (
-                              <tr>
-                                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
-                                    Loading…
-                                 </td>
-                              </tr>
-                           )}
+                           {loading &&
+                              Array.from({ length: 6 }).map((_, i) => (
+                                 <TableSkeletonRow
+                                    key={`sk-${i}`}
+                                    cols={4}
+                                    widths={['45%', '50%', '55%', '30%']}
+                                 />
+                              ))}
                            {!loading && items.length === 0 && (
                               <tr>
                                  <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">

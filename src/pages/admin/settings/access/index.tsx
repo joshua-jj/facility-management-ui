@@ -6,6 +6,7 @@ import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import RolePreview from '@/components/Modals/RolePreview';
 import RoleEdit from '@/components/Modals/RoleEdit';
+import TableSkeletonRow from '@/components/TableSkeletonRow';
 import { RootState } from '@/redux/reducers';
 import { roleActions } from '@/actions/role.action';
 import { Role } from '@/types/role';
@@ -138,13 +139,14 @@ const RolesAndPermissions: FC = () => {
                            </tr>
                         </thead>
                         <tbody>
-                           {loading && (
-                              <tr>
-                                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
-                                    Loading…
-                                 </td>
-                              </tr>
-                           )}
+                           {loading &&
+                              Array.from({ length: 6 }).map((_, i) => (
+                                 <TableSkeletonRow
+                                    key={`sk-${i}`}
+                                    cols={4}
+                                    widths={['60%', '25%', '35%', '40%']}
+                                 />
+                              ))}
                            {!loading && pagedRoles.length === 0 && (
                               <tr>
                                  <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
