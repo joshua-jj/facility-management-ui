@@ -181,35 +181,54 @@ const RolesAndPermissions: FC = () => {
                      </table>
                   </div>
 
-                  {/* Pagination */}
-                  {filteredRoles.length > PAGE_SIZE && (
-                     <div className="flex items-center justify-between text-xs text-gray-500 dark:text-white/60">
-                        <span>
-                           Showing {(page - 1) * PAGE_SIZE + 1} to{' '}
-                           {Math.min(page * PAGE_SIZE, filteredRoles.length)} of{' '}
-                           {filteredRoles.length} results
+                  {/* Pagination — always visible, matches prembly style */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-white/60">
+                     <span>
+                        Showing{' '}
+                        {filteredRoles.length === 0
+                           ? 0
+                           : (page - 1) * PAGE_SIZE + 1}{' '}
+                        to {Math.min(page * PAGE_SIZE, filteredRoles.length)} of{' '}
+                        {filteredRoles.length} results
+                     </span>
+                     <div className="flex gap-1 items-center">
+                        <button
+                           onClick={() => setPage(1)}
+                           disabled={page === 1}
+                           className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                           aria-label="First page"
+                        >
+                           «
+                        </button>
+                        <button
+                           onClick={() => setPage((p) => Math.max(1, p - 1))}
+                           disabled={page === 1}
+                           className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                           aria-label="Previous page"
+                        >
+                           ‹
+                        </button>
+                        <span className="px-3 py-1.5">
+                           Page {page} of {totalPages}
                         </span>
-                        <div className="flex gap-1 items-center">
-                           <button
-                              onClick={() => setPage((p) => Math.max(1, p - 1))}
-                              disabled={page === 1}
-                              className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                           >
-                              ‹
-                           </button>
-                           <span className="px-3 py-1.5">
-                              Page {page} of {totalPages}
-                           </span>
-                           <button
-                              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                              disabled={page >= totalPages}
-                              className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                           >
-                              ›
-                           </button>
-                        </div>
+                        <button
+                           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                           disabled={page >= totalPages}
+                           className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                           aria-label="Next page"
+                        >
+                           ›
+                        </button>
+                        <button
+                           onClick={() => setPage(totalPages)}
+                           disabled={page >= totalPages}
+                           className="px-3 py-1.5 rounded border border-gray-200 dark:border-white/10 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                           aria-label="Last page"
+                        >
+                           »
+                        </button>
                      </div>
-                  )}
+                  </div>
                </div>
 
                {/* Modals */}
