@@ -80,12 +80,7 @@ const PermissionGrid: React.FC<Props> = ({
       >
          <div className="flex items-center gap-3 text-white">
             <span className="text-white/30 text-sm">›</span>
-            <div>
-               <div className="font-bold text-sm">{m.label}</div>
-               <div className="text-[0.6rem] uppercase tracking-wider text-white/40 mt-0.5">
-                  {m.slug}
-               </div>
-            </div>
+            <div className="font-bold text-sm">{m.label}</div>
          </div>
          <div className="flex gap-2">
             {PERMISSION_ACTIONS.map((action: PermissionAction) => {
