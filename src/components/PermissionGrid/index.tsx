@@ -138,14 +138,9 @@ const PermissionGrid: React.FC<Props> = ({
                   className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 p-4"
                >
                   <div className="flex items-center justify-between mb-3">
-                     <div>
-                        <h3 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
-                           {m.label}
-                        </h3>
-                        <p className="text-[0.65rem] text-gray-400 dark:text-white/35 uppercase tracking-wider mt-0.5">
-                           {m.slug}
-                        </p>
-                     </div>
+                     <h3 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
+                        {m.label}
+                     </h3>
                      {!readOnly && (
                         <label className="inline-flex items-center gap-2 text-xs cursor-pointer">
                            <input

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Layout from '@/components/Layout';
@@ -37,34 +37,53 @@ const formatDate = (iso: string | undefined | null) => {
 
 const RolesAndPermissions: FC = () => {
    const dispatch = useDispatch();
-   const allRoles = useSelector((s: RootState) => s.role.allRolesList) as Role[];
+   const pagedRoles = useSelector((s: RootState) => s.role.allRolesList) as Role[];
+   const meta = useSelector((s: RootState) => s.role.pagination.meta);
    const loading = useSelector((s: RootState) => s.role.IsRequestingRoles) as boolean;
 
    const [search, setSearch] = useState('');
+   const [debouncedSearch, setDebouncedSearch] = useState('');
    const [page, setPage] = useState(1);
    const [editingRoleId, setEditingRoleId] = useState<number | null>(null);
    const [previewingRoleId, setPreviewingRoleId] = useState<number | null>(null);
    const [isCreating, setIsCreating] = useState(false);
 
+   /** Debounce search term so server isn't hit on every keystroke */
    useEffect(() => {
-      dispatch(roleActions.getRoles() as unknown as UnknownAction);
-   }, [dispatch]);
+      const id = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+      return () => clearTimeout(id);
+   }, [search]);
 
-   const filteredRoles = useMemo(() => {
-      const list: Role[] = allRoles ?? [];
-      const q = search.trim().toLowerCase();
-      return q ? list.filter((r) => r.name?.toLowerCase().includes(q)) : list;
-   }, [allRoles, search]);
+   /** Reset to page 1 whenever the search changes */
+   useEffect(() => {
+      setPage(1);
+   }, [debouncedSearch]);
 
-   const pagedRoles = useMemo(() => {
-      const start = (page - 1) * PAGE_SIZE;
-      return filteredRoles.slice(start, start + PAGE_SIZE);
-   }, [filteredRoles, page]);
+   /** Fetch whenever page or debounced search changes */
+   useEffect(() => {
+      dispatch(
+         roleActions.getRoles({
+            page,
+            limit: PAGE_SIZE,
+            search: debouncedSearch || undefined,
+         }) as unknown as UnknownAction,
+      );
+   }, [dispatch, page, debouncedSearch]);
 
-   const totalPages = Math.max(1, Math.ceil(filteredRoles.length / PAGE_SIZE));
+   const totalItems = meta?.totalItems ?? 0;
+   const totalPages = Math.max(1, meta?.totalPages ?? 1);
+   const currentPage = meta?.currentPage ?? page;
+   const rangeStart = totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+   const rangeEnd = Math.min(currentPage * PAGE_SIZE, totalItems);
 
    const handleRefresh = () => {
-      dispatch(roleActions.getRoles() as unknown as UnknownAction);
+      dispatch(
+         roleActions.getRoles({
+            page,
+            limit: PAGE_SIZE,
+            search: debouncedSearch || undefined,
+         }) as unknown as UnknownAction,
+      );
    };
 
    return (
@@ -101,10 +120,7 @@ const RolesAndPermissions: FC = () => {
                         type="text"
                         placeholder="Search roles..."
                         value={search}
-                        onChange={(e) => {
-                           setSearch(e.target.value);
-                           setPage(1);
-                        }}
+                        onChange={(e) => setSearch(e.target.value)}
                         className="w-full px-4 py-2.5 pl-10 rounded-lg bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
                      />
                      <span className="absolute left-3 top-3 text-gray-400">🔍</span>
@@ -181,15 +197,10 @@ const RolesAndPermissions: FC = () => {
                      </table>
                   </div>
 
-                  {/* Pagination — always visible, matches prembly style */}
+                  {/* Pagination — always visible, server-side meta */}
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-white/60">
                      <span>
-                        Showing{' '}
-                        {filteredRoles.length === 0
-                           ? 0
-                           : (page - 1) * PAGE_SIZE + 1}{' '}
-                        to {Math.min(page * PAGE_SIZE, filteredRoles.length)} of{' '}
-                        {filteredRoles.length} results
+                        Showing {rangeStart} to {rangeEnd} of {totalItems} results
                      </span>
                      <div className="flex gap-1 items-center">
                         <button
@@ -209,7 +220,7 @@ const RolesAndPermissions: FC = () => {
                            ‹
                         </button>
                         <span className="px-3 py-1.5">
-                           Page {page} of {totalPages}
+                           Page {currentPage} of {totalPages}
                         </span>
                         <button
                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
