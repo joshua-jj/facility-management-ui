@@ -24,6 +24,20 @@ const formatDate = (iso: string | undefined | null) => {
    }
 };
 
+/** Small inline icon — sun for light, moon for dark */
+const SunIcon: FC = () => (
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+   </svg>
+);
+
+const MoonIcon: FC = () => (
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+   </svg>
+);
+
 const Profile: FC = () => {
    const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
@@ -34,13 +48,13 @@ const Profile: FC = () => {
 
    const fullName = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
    const roleName =
-      typeof userDetails?.role === 'object'
+      (typeof userDetails?.role === 'object'
          ? (userDetails?.role as Record<string, string>)?.name
-         : (userDetails?.role ?? '—');
+         : userDetails?.role) || 'Not assigned';
    const departmentName =
       (allDepartmentsList ?? []).find(
          (d: { id: number; name: string }) => d.id === userDetails?.departmentId,
-      )?.name ?? '—';
+      )?.name ?? 'Not assigned';
    const memberSince = formatDate(
       (userDetails as { createdAt?: string })?.createdAt,
    );
@@ -58,35 +72,45 @@ const Profile: FC = () => {
          <Layout title="Profile Settings">
             <SettingsShell active="profile">
                <div className="space-y-6">
-                  {/* Profile header */}
-                  <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 shadow-sm p-6 flex items-center gap-5">
-                     <LetteredAvatar name={fullName} size={56} />
-                     <div>
-                        <h2 className="text-base font-bold text-[#0F2552] dark:text-white/90">
-                           {fullName || 'User'}
-                        </h2>
-                        <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">
-                           {userDetails?.email}
-                        </p>
-                        <span className="inline-block mt-1.5 text-[0.6rem] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full bg-[#B88C00]/10 text-[#B88C00]">
-                           {typeof userDetails?.role === 'object'
-                              ? (userDetails?.role as Record<string, string>)?.name
-                              : (userDetails?.role ?? 'User')}
-                        </span>
+                  {/* Hero card — identity + work context inline */}
+                  <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 shadow-sm overflow-hidden">
+                     <div className="p-6 flex items-start gap-5">
+                        <LetteredAvatar name={fullName || 'User'} size={72} />
+                        <div className="flex-1 min-w-0">
+                           <h2 className="text-xl font-bold text-[#0F2552] dark:text-white/90 truncate">
+                              {fullName || 'User'}
+                           </h2>
+                           <p className="text-sm text-gray-500 dark:text-white/50 mt-0.5 truncate">
+                              {userDetails?.email || '—'}
+                           </p>
+                           <div className="flex flex-wrap gap-2 mt-3">
+                              <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-full bg-[#B88C00]/15 text-[#B88C00]">
+                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" /></svg>
+                                 {roleName}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-500 dark:text-blue-300">
+                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M3 21V10l9-7 9 7v11h-6v-7h-6v7H3z" /></svg>
+                                 {departmentName}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-full bg-gray-500/15 text-gray-500 dark:text-white/60">
+                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                 Since {memberSince}
+                              </span>
+                           </div>
+                        </div>
                      </div>
                   </div>
 
-                  {/* Personal Information */}
+                  {/* Personal Information — editable fields (save wired in a future slice) */}
                   <Formsy className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 shadow-sm overflow-hidden">
                      <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
                         <h2 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
                            Personal Information
                         </h2>
                         <p className="text-[0.65rem] text-gray-400 dark:text-white/35 mt-0.5">
-                           Your basic profile details
+                           These details appear on your profile and in emails sent on your behalf
                         </p>
                      </div>
-
                      <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            <TextInput
@@ -120,45 +144,7 @@ const Profile: FC = () => {
                      </div>
                   </Formsy>
 
-                  {/* Work context */}
-                  <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 shadow-sm overflow-hidden">
-                     <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
-                        <h2 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
-                           Work Context
-                        </h2>
-                        <p className="text-[0.65rem] text-gray-400 dark:text-white/35 mt-0.5">
-                           Read-only details about your role in the organization
-                        </p>
-                     </div>
-                     <dl className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                        <div>
-                           <dt className="text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40">
-                              Role
-                           </dt>
-                           <dd className="text-sm font-semibold text-[#0F2552] dark:text-white/90 mt-1">
-                              {roleName}
-                           </dd>
-                        </div>
-                        <div>
-                           <dt className="text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40">
-                              Department
-                           </dt>
-                           <dd className="text-sm font-semibold text-[#0F2552] dark:text-white/90 mt-1">
-                              {departmentName}
-                           </dd>
-                        </div>
-                        <div>
-                           <dt className="text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40">
-                              Member since
-                           </dt>
-                           <dd className="text-sm font-semibold text-[#0F2552] dark:text-white/90 mt-1">
-                              {memberSince}
-                           </dd>
-                        </div>
-                     </dl>
-                  </div>
-
-                  {/* Preferences */}
+                  {/* Preferences — theme toggle */}
                   <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 shadow-sm overflow-hidden">
                      <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
                         <h2 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
@@ -169,40 +155,60 @@ const Profile: FC = () => {
                         </p>
                      </div>
                      <div className="p-6">
-                        <div className="flex items-center justify-between">
-                           <div>
-                              <div className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
-                                 Theme
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                           <button
+                              type="button"
+                              onClick={() => theme !== 'light' && toggleTheme()}
+                              className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                                 theme === 'light'
+                                    ? 'border-[#B28309] bg-[#B28309]/5'
+                                    : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                              }`}
+                           >
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                 theme === 'light' ? 'bg-[#B28309] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60'
+                              }`}>
+                                 <SunIcon />
                               </div>
-                              <div className="text-[0.65rem] text-gray-400 dark:text-white/40 mt-0.5">
-                                 Currently using{' '}
-                                 <span className="capitalize">{theme}</span> mode
+                              <div className="text-left flex-1">
+                                 <div className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
+                                    Light
+                                 </div>
+                                 <div className="text-[0.65rem] text-gray-400 dark:text-white/40 mt-0.5">
+                                    Bright and clear
+                                 </div>
                               </div>
-                           </div>
-                           <div className="inline-flex rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden">
-                              <button
-                                 type="button"
-                                 onClick={() => theme !== 'light' && toggleTheme()}
-                                 className={
-                                    theme === 'light'
-                                       ? 'px-4 py-2 text-xs font-semibold bg-[#B28309] text-white cursor-pointer'
-                                       : 'px-4 py-2 text-xs font-semibold text-[#0F2552]/70 dark:text-white/70 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
-                                 }
-                              >
-                                 Light
-                              </button>
-                              <button
-                                 type="button"
-                                 onClick={() => theme !== 'dark' && toggleTheme()}
-                                 className={
-                                    theme === 'dark'
-                                       ? 'px-4 py-2 text-xs font-semibold bg-[#B28309] text-white cursor-pointer'
-                                       : 'px-4 py-2 text-xs font-semibold text-[#0F2552]/70 dark:text-white/70 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
-                                 }
-                              >
-                                 Dark
-                              </button>
-                           </div>
+                              {theme === 'light' && (
+                                 <span className="text-[#B28309] text-lg">✓</span>
+                              )}
+                           </button>
+
+                           <button
+                              type="button"
+                              onClick={() => theme !== 'dark' && toggleTheme()}
+                              className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                                 theme === 'dark'
+                                    ? 'border-[#B28309] bg-[#B28309]/5'
+                                    : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                              }`}
+                           >
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                 theme === 'dark' ? 'bg-[#B28309] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60'
+                              }`}>
+                                 <MoonIcon />
+                              </div>
+                              <div className="text-left flex-1">
+                                 <div className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
+                                    Dark
+                                 </div>
+                                 <div className="text-[0.65rem] text-gray-400 dark:text-white/40 mt-0.5">
+                                    Easy on the eyes
+                                 </div>
+                              </div>
+                              {theme === 'dark' && (
+                                 <span className="text-[#B28309] text-lg">✓</span>
+                              )}
+                           </button>
                         </div>
                      </div>
                   </div>
