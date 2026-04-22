@@ -15,3 +15,4 @@ export * from './dashboard.action';
 export * from './maintenanceSchedule.action';
 export * from './meetingLocation.action';
 export * from './meeting.action';
+export * from './auditLog.action';

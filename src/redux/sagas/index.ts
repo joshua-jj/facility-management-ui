@@ -15,6 +15,7 @@ import maintenanceScheduleRootSaga from './maintenanceSchedule.saga';
 import meetingLocationRootSaga from './meetingLocation.saga';
 import meetingRootSaga from './meeting.saga';
 import permissionRootSaga from './permission.saga';
+import auditLogRootSaga from './auditLog.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -34,5 +35,6 @@ export default function* rootSaga() {
     meetingLocationRootSaga(),
     meetingRootSaga(),
     permissionRootSaga(),
+    auditLogRootSaga(),
   ]);
 }
