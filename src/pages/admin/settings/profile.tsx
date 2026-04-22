@@ -107,15 +107,18 @@ const Profile: FC = () => {
                            <div className="flex flex-wrap gap-2 mt-3">
                               <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-full bg-[#B88C00]/15 text-[#B88C00]">
                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" /></svg>
-                                 {roleName}
+                                 <span className="opacity-60">Role ·</span>
+                                 <span>{roleName}</span>
                               </span>
                               <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-500 dark:text-blue-300">
                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M3 21V10l9-7 9 7v11h-6v-7h-6v7H3z" /></svg>
-                                 {departmentName}
+                                 <span className="opacity-60">Dept ·</span>
+                                 <span>{departmentName}</span>
                               </span>
                               <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-full bg-gray-500/15 text-gray-500 dark:text-white/60">
                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                                 Since {memberSince}
+                                 <span className="opacity-60">Member since ·</span>
+                                 <span>{memberSince}</span>
                               </span>
                            </div>
                         </div>
