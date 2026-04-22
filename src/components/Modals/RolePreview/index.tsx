@@ -67,9 +67,9 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
 
    return createPortal(
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1000] p-4">
-         <div className="bg-[#0e0e1a] rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto border border-white/10">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+         <div className="bg-[#0e0e1a] rounded-2xl w-full max-w-2xl max-h-[80vh] border border-white/10 flex flex-col">
+            {/* Sticky header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                <h2 className="text-lg font-bold text-white">Role Preview</h2>
                <button
                   onClick={onClose}
@@ -80,46 +80,49 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
                </button>
             </div>
 
-            {selectedRole ? (
-               <div className="p-6 space-y-6">
-                  {/* Role card */}
-                  <div className="flex items-start gap-4 p-5 rounded-xl border border-white/15">
-                     <div className="text-white/90 shrink-0 mt-1">
-                        <ShieldIcon />
-                     </div>
-                     <div>
-                        <h3 className="text-xl font-bold text-white">{selectedRole.name}</h3>
-                        <p className="text-sm text-white/70 mt-1.5">
-                           {selectedRole.description ?? 'No description provided.'}
-                        </p>
-                     </div>
-                  </div>
-
-                  {/* Hierarchical Permissions section */}
-                  <div>
-                     <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2 text-white">
-                           <EyeIcon />
-                           <h4 className="font-bold">Hierarchical Permissions</h4>
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+               {selectedRole ? (
+                  <div className="p-6 space-y-6">
+                     {/* Role card */}
+                     <div className="flex items-start gap-4 p-5 rounded-xl border border-white/15">
+                        <div className="text-white/90 shrink-0 mt-1">
+                           <ShieldIcon />
                         </div>
-                        {selectedRole.preset && (
-                           <span className="text-[0.65rem] text-white/50 uppercase tracking-[0.1em]">
-                              SYSTEM PRESET
-                           </span>
-                        )}
+                        <div>
+                           <h3 className="text-xl font-bold text-white">{selectedRole.name}</h3>
+                           <p className="text-sm text-white/70 mt-1.5">
+                              {selectedRole.description ?? 'No description provided.'}
+                           </p>
+                        </div>
                      </div>
-                     <PermissionGrid
-                        permissions={allPermissionsList ?? []}
-                        value={checkedIds}
-                        onChange={() => undefined}
-                        readOnly
-                        variant="preview"
-                     />
+
+                     {/* Hierarchical Permissions section */}
+                     <div>
+                        <div className="flex items-center justify-between mb-4">
+                           <div className="flex items-center gap-2 text-white">
+                              <EyeIcon />
+                              <h4 className="font-bold">Hierarchical Permissions</h4>
+                           </div>
+                           {selectedRole.preset && (
+                              <span className="text-[0.65rem] text-white/50 uppercase tracking-[0.1em]">
+                                 SYSTEM PRESET
+                              </span>
+                           )}
+                        </div>
+                        <PermissionGrid
+                           permissions={allPermissionsList ?? []}
+                           value={checkedIds}
+                           onChange={() => undefined}
+                           readOnly
+                           variant="preview"
+                        />
+                     </div>
                   </div>
-               </div>
-            ) : (
-               <div className="p-6 text-sm text-white/60">Loading…</div>
-            )}
+               ) : (
+                  <div className="p-6 text-sm text-white/60">Loading…</div>
+               )}
+            </div>
          </div>
       </div>,
       document.body,
