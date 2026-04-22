@@ -1,7 +1,6 @@
 import { put, takeLatest, all } from 'typed-redux-saga';
 import { permissionConstants } from '@/constants/permission.constant';
 import { authenticatedRequest, handleSagaError } from '@/utilities/saga-helpers';
-import { SetSnackBarPayload } from '@/types';
 
 interface GetPermissionsAction {
    type: string;
