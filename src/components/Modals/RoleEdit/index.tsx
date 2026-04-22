@@ -161,6 +161,17 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
 
    const permissionIds = useMemo(() => Array.from(checkedIds), [checkedIds]);
 
+   const allPermissionIds = useMemo(
+      () => (permissions ?? []).map((p) => p.id),
+      [permissions],
+   );
+   const allSelected =
+      allPermissionIds.length > 0 && checkedIds.size === allPermissionIds.length;
+
+   const toggleSelectAll = (enableAll: boolean) => {
+      setCheckedIds(enableAll ? new Set(allPermissionIds) : new Set());
+   };
+
    const handleSubmit = () => {
       if (roleId == null) {
          // Phase 1: create the role; Phase 2 fires in AppEmitter listener above.
@@ -204,8 +215,8 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
                onInvalid={() => setCanSubmit(false)}
                className="flex-1 flex flex-col min-h-0"
             >
-               {/* Scrollable body */}
-               <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
+               {/* Pinned form fields + Permission Preview header */}
+               <div className="px-6 pt-6 pb-4 space-y-4 shrink-0">
                   <TextInput
                      name="name"
                      label="Role Name"
@@ -221,8 +232,8 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
                      value={description}
                      onValueChange={(val: string) => setDescription(val)}
                   />
-                  <div>
-                     <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between pt-1">
+                     <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
                            Permission Preview
                         </h4>
@@ -230,12 +241,25 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
                            ({permissions?.length ?? 0} modules loaded)
                         </span>
                      </div>
-                     <PermissionGrid
-                        permissions={permissions ?? []}
-                        value={checkedIds}
-                        onChange={setCheckedIds}
-                     />
+                     <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F2552] dark:text-white/80 cursor-pointer">
+                        <input
+                           type="checkbox"
+                           checked={allSelected}
+                           onChange={(e) => toggleSelectAll(e.target.checked)}
+                           className="accent-[#B28309]"
+                        />
+                        Select all
+                     </label>
                   </div>
+               </div>
+
+               {/* Scrollable grid — only the permission modules scroll */}
+               <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
+                  <PermissionGrid
+                     permissions={permissions ?? []}
+                     value={checkedIds}
+                     onChange={setCheckedIds}
+                  />
                </div>
 
                {/* Sticky footer */}

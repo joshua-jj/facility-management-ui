@@ -33,8 +33,6 @@ const PermissionGrid: React.FC<Props> = ({
       return map;
    }, [permissions]);
 
-   const allIds = useMemo(() => permissions.map((p) => p.id), [permissions]);
-
    const toggleOne = (permId: number) => {
       if (readOnly) return;
       const next = new Set(value);
@@ -53,11 +51,6 @@ const PermissionGrid: React.FC<Props> = ({
       onChange(next);
    };
 
-   const toggleAll = (enableAll: boolean) => {
-      if (readOnly) return;
-      onChange(enableAll ? new Set(allIds) : new Set());
-   };
-
    const isModuleFull = (module: string) =>
       PERMISSION_ACTIONS.every((a) => {
          const p = index.get(`${module}:${a}`);
@@ -69,8 +62,6 @@ const PermissionGrid: React.FC<Props> = ({
          const p = index.get(`${module}:${a}`);
          return p ? !value.has(p.id) : true;
       });
-
-   const allSelected = value.size === allIds.length && allIds.length > 0;
 
    /** Preview variant — prembly-style three-badge layout, no checkboxes */
    const renderPreviewRow = (m: (typeof RBAC_MODULES)[number]) => (
@@ -115,20 +106,6 @@ const PermissionGrid: React.FC<Props> = ({
 
    return (
       <div className="space-y-3">
-         {!readOnly && (
-            <div className="flex justify-end">
-               <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F2552] dark:text-white/80 cursor-pointer">
-                  <input
-                     type="checkbox"
-                     checked={allSelected}
-                     onChange={(e) => toggleAll(e.target.checked)}
-                     className="accent-[#B28309]"
-                  />
-                  Select all
-               </label>
-            </div>
-         )}
-
          {RBAC_MODULES.map((m) => {
             const moduleFull = isModuleFull(m.slug);
             const moduleEmpty = isModuleEmpty(m.slug);
