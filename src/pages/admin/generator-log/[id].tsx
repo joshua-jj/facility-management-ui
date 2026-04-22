@@ -19,15 +19,20 @@ interface GeneratorLogDetail {
    meetingLocation?: string;
    generatorType: string;
    onTime: string;
-   offTime: string;
-   engineStartHours: number;
-   engineOffHours: number;
-   dieselLevelOn: number;
-   dieselLevelOff: number;
+   offTime: string | null;
+   hoursUsed: number | null;
+   engineStartHours: string | null;
+   engineOffHours: string | null;
+   dieselLevelOn: string | null;
+   dieselLevelOff: string | null;
+   lastServiceHour: string | null;
+   nextServiceHour: string | null;
    dueForService: boolean;
+   oilFilterDueForReplacement: boolean;
+   lastOilFilterReplacement: string | null;
    faultDetected: boolean;
-   faultDescription: string;
-   remark: string;
+   faultDescription: string | null;
+   remark: string | null;
    createdBy: string;
    createdAt: string;
    status: string;
@@ -72,19 +77,28 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
       );
    }
 
-   const calculateHoursUsed = (): string => {
-      if (!log.onTime || !log.offTime) return '--';
-      try {
-         const on = new Date(log.onTime);
-         const off = new Date(log.offTime);
-         const diffMs = off.getTime() - on.getTime();
-         if (diffMs < 0) return '--';
-         const hours = Math.floor(diffMs / (1000 * 60 * 60));
-         const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-         return `${hours}h ${minutes}m`;
-      } catch {
-         return '--';
+   /**
+    * Hours-used comes pre-computed from the backend in seconds. Fall back to
+    * deriving it from onTime/offTime if the field is missing (older rows).
+    */
+   const formatHoursUsed = (): string => {
+      let totalSeconds: number | null = null;
+      if (typeof log.hoursUsed === 'number') {
+         totalSeconds = log.hoursUsed;
+      } else if (log.onTime && log.offTime) {
+         try {
+            const diffMs =
+               new Date(log.offTime).getTime() - new Date(log.onTime).getTime();
+            if (Number.isFinite(diffMs) && diffMs >= 0)
+               totalSeconds = Math.floor(diffMs / 1000);
+         } catch {
+            /* noop */
+         }
       }
+      if (totalSeconds == null || totalSeconds < 0) return '--';
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      return `${h}h ${m}m`;
    };
 
    return (
@@ -120,7 +134,7 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                   <DetailRow label="Meeting Name" value={log.meeting?.name ?? log.nameOfMeeting} />
                   <DetailRow label="Generator Type" value={log.generatorType} />
                   <DetailRow label="Location" value={log.location?.name ?? log.meetingLocation} />
-                  <DetailRow label="Hours Used" value={calculateHoursUsed()} />
+                  <DetailRow label="Hours Used" value={formatHoursUsed()} />
                </div>
             </DetailSection>
 
@@ -129,10 +143,26 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                <div className="grid grid-cols-1 sm:grid-cols-2">
                   <DetailRow label="On Time" value={log.onTime ? formatReadableDate(log.onTime) : undefined} />
                   <DetailRow label="Off Time" value={log.offTime ? formatReadableDate(log.offTime) : undefined} />
-                  <DetailRow label="Engine Start Hours" value={log.engineStartHours != null ? String(log.engineStartHours) : undefined} />
-                  <DetailRow label="Engine Off Hours" value={log.engineOffHours != null ? String(log.engineOffHours) : undefined} />
-                  <DetailRow label="Diesel Level On" value={log.dieselLevelOn != null ? String(log.dieselLevelOn) : undefined} />
-                  <DetailRow label="Diesel Level Off" value={log.dieselLevelOff != null ? String(log.dieselLevelOff) : undefined} />
+                  <DetailRow label="Engine Start Hours" value={log.engineStartHours ?? undefined} />
+                  <DetailRow label="Engine Off Hours" value={log.engineOffHours ?? undefined} />
+                  <DetailRow label="Diesel Level On" value={log.dieselLevelOn ?? undefined} />
+                  <DetailRow label="Diesel Level Off" value={log.dieselLevelOff ?? undefined} />
+               </div>
+            </DetailSection>
+
+            {/* Service schedule */}
+            <DetailSection title="Service Schedule">
+               <div className="grid grid-cols-1 sm:grid-cols-2">
+                  <DetailRow label="Last Service Hour" value={log.lastServiceHour ?? undefined} />
+                  <DetailRow label="Next Service Hour" value={log.nextServiceHour ?? undefined} />
+                  <DetailRow
+                     label="Oil Filter Due"
+                     value={<StatusChip status={log.oilFilterDueForReplacement ? 'yes' : 'no'} />}
+                  />
+                  <DetailRow
+                     label="Last Oil Filter Replacement"
+                     value={log.lastOilFilterReplacement ? formatReadableDate(log.lastOilFilterReplacement) : undefined}
+                  />
                </div>
             </DetailSection>
 
@@ -142,8 +172,8 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                   <DetailRow label="Due For Service" value={<StatusChip status={log.dueForService ? 'yes' : 'no'} />} />
                   <DetailRow label="Fault Detected" value={<StatusChip status={log.faultDetected ? 'yes' : 'no'} />} />
                </div>
-               <DetailRow label="Fault Description" value={log.faultDescription} />
-               <DetailRow label="Remark" value={log.remark} />
+               <DetailRow label="Fault Description" value={log.faultDescription ?? undefined} />
+               <DetailRow label="Remark" value={log.remark ?? undefined} />
             </DetailSection>
 
             {/* Audit Trail */}
