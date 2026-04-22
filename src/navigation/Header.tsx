@@ -135,7 +135,7 @@ const Header = () => {
                                  role="menuitem"
                                  onClick={() => {
                                     setProfileDropdown(false);
-                                    router.push('/admin/account-settings');
+                                    router.push('/admin/settings/profile');
                                  }}
                                  className="hover:bg-[var(--surface-low)] transition rounded-md text-xs text-[var(--text-primary)] px-3 py-2 cursor-pointer flex items-center gap-2"
                               >

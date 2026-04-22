@@ -22,6 +22,8 @@ export interface GeneratorConstants {
 
   GENERATOR_URI: string;
 }
+export type DieselUnit = 'litres' | 'percentage';
+
 export interface GeneratorForm {
   id?: number;
   meetingId: number;
@@ -30,9 +32,7 @@ export interface GeneratorForm {
   generatorType?: string;
   dieselLevelOn: number;
   dieselLevelOff: number;
-  // dueForService?: boolean;
-  // generatorCurrent?: number;
-  // personnelName: string;
+  dieselUnit?: DieselUnit;
   onTime: string;
   offTime: string;
   lastServiceHour: string;
@@ -58,6 +58,7 @@ export interface GeneratorLog {
   engineOffHours: string;
   dieselLevelOn: string;
   dieselLevelOff: string;
+  dieselUnit?: DieselUnit;
   lastServiceHour: string;
   nextServiceHour: string;
   personnelName: string;

@@ -35,6 +35,10 @@ const UpdateRole: React.FC<UpdateRoleModalProps> = ({ className, children, user,
       if (onClose) onClose();
    }, [onClose]);
 
+   useEffect(() => {
+      setSelectedRoleId(user?.role?.id ? String(user.role.id) : '');
+   }, [user?.role?.id]);
+
    const roleOptions = (allRolesList ?? []).map((r) => ({
       value: String(r.id),
       label: r.name,

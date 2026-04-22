@@ -43,41 +43,6 @@ const IsRequestingPermissions = (state: LoadingState = false, action: Action): L
    }
 };
 
-const IsCreatingPermission = (state: LoadingState = false, action: Action): LoadingState => {
-   switch (action.type) {
-      case permissionConstants.REQUEST_CREATE_PERMISSION:
-         return true;
-      case permissionConstants.CREATE_PERMISSION_SUCCESS:
-      case permissionConstants.CREATE_PERMISSION_FAILURE:
-         return false;
-      default:
-         return state;
-   }
-};
-
-const IsUpdatingPermission = (state: LoadingState = false, action: Action): LoadingState => {
-   switch (action.type) {
-      case permissionConstants.REQUEST_UPDATE_PERMISSION:
-         return true;
-      case permissionConstants.UPDATE_PERMISSION_SUCCESS:
-      case permissionConstants.UPDATE_PERMISSION_FAILURE:
-         return false;
-      default:
-         return state;
-   }
-};
-
-const IsDeletingPermission = (state: LoadingState = false, action: Action): LoadingState => {
-   switch (action.type) {
-      case permissionConstants.REQUEST_DELETE_PERMISSION:
-         return true;
-      case permissionConstants.DELETE_PERMISSION_SUCCESS:
-      case permissionConstants.DELETE_PERMISSION_FAILURE:
-         return false;
-      default:
-         return state;
-   }
-};
 
 const allPermissionsList = (state: PermissionsListState = [], action: Action): PermissionsListState => {
    switch (action.type) {
@@ -111,9 +76,6 @@ const pagination = (
 
 const rootReducer = combineReducers({
    IsRequestingPermissions,
-   IsCreatingPermission,
-   IsUpdatingPermission,
-   IsDeletingPermission,
    allPermissionsList,
    pagination,
 });
