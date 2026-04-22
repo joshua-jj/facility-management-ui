@@ -12,6 +12,7 @@ import PageHeader, { ActionButton } from '@/components/PageHeader';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddStore from '@/components/Modals/AddStore';
+import ListStatsStrip from '@/components/ListStatsStrip';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { exportToCsv } from '@/utilities/exportCsv';
@@ -215,13 +216,27 @@ const Stores = () => {
       },
    ];
 
+   const activeStoreCount = filteredStores.filter(
+      (s) => String(s.status).toUpperCase() === 'A' || String(s.status).toUpperCase() === 'ACTIVE',
+   ).length;
+   const inactiveStoreCount = filteredStores.length - activeStoreCount;
+
    return (
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Stores">
             <PageHeader
                title="Stores"
-               subtitle={`${meta.totalItems} store${meta.totalItems !== 1 ? 's' : ''}`}
+               subtitle="Manage facility stores and storage locations"
                action={<ActionButton onClick={() => setShowAddModal(true)}>Add Store</ActionButton>}
+            />
+
+            <ListStatsStrip
+               tiles={[
+                  { label: 'Total', value: meta.totalItems, hint: 'Stores' },
+                  { label: 'Active', value: activeStoreCount, accent: '#10B981', hint: 'On this page' },
+                  { label: 'Inactive', value: inactiveStoreCount, accent: '#EF4444', hint: 'On this page' },
+                  { label: 'Page', value: `${meta.currentPage} / ${Math.max(meta.totalPages, 1)}` },
+               ]}
             />
 
             <DataTable

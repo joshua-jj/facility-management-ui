@@ -17,7 +17,7 @@ const ROUTE_LABELS: Record<string, string> = {
    'generator-log': 'Generator Logs',
    reports: 'Reports',
    users: 'User Management',
-   'account-settings': 'Account Settings',
+   'settings': 'Settings',
 };
 
 function buildBreadcrumbs(pathname: string) {

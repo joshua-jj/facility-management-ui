@@ -81,6 +81,8 @@ export interface GeneratorStats {
    recentLogs: DashboardGeneratorLog[];
    hoursUsedTrend?: GeneratorTrendPoint[];
    faultFrequency?: GeneratorFaultPoint[];
+   /** Count of generator logs per period-date — powers the "Generator Usage" chart. */
+   usageCountTrend?: GeneratorFaultPoint[];
 }
 
 export interface ComplaintByStatus {

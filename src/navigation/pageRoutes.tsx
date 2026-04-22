@@ -8,6 +8,7 @@ import {
   MapPinIcon,
   ReportsIcon,
   RequestsIcon,
+  SettingsIcon,
   StoreIcon,
   UsersIcon,
 } from '@/components/Icons';
@@ -101,20 +102,19 @@ export const pageRoutes: PageRoute[] = [
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
   {
-    id: 13,
-    label: 'roles',
-    link: '/admin/roles',
-    icon: <UsersIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
-    section: 'Platform',
-  },
-  {
-    id: 14,
-    label: 'permissions',
-    link: '/admin/permissions',
-    icon: <UsersIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
-    section: 'Platform',
+    id: 99,
+    label: 'settings',
+    link: '/admin/settings/profile',
+    icon: <SettingsIcon />,
+    allowedRoles: [
+      RoleId.SUPER_ADMIN,
+      RoleId.ADMIN,
+      RoleId.OFFICE,
+      RoleId.HOD,
+      RoleId.MEMBER,
+      RoleId.USER,
+    ],
+    section: 'account',
   },
 ];
 
@@ -146,17 +146,15 @@ export const getPageNames = (link: string) => {
       return 'reports';
     case '/admin/users':
       return 'user management';
-    case '/admin/roles':
-      return 'roles';
-    case '/admin/roles/new':
-      return 'roles';
-    case '/admin/roles/[id]':
-      return 'roles';
-    case '/admin/roles/[id]/users':
-      return 'roles';
-    case '/admin/permissions':
-      return 'permissions';
-    case '/admin/account-settings':
+    case '/admin/settings/access':
+      return 'roles & permissions';
+    case '/admin/settings/access/roles/new':
+      return 'roles & permissions';
+    case '/admin/settings/access/roles/[id]':
+      return 'roles & permissions';
+    case '/admin/settings/access/roles/[id]/users':
+      return 'roles & permissions';
+    case '/admin/settings/profile':
       return 'account settings';
     default:
       return '';

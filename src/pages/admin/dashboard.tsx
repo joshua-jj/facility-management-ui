@@ -1,75 +1,169 @@
 import { appActions, dashboardActions, requestActions } from '@/actions';
-import {
-   DueReturnsIcon,
-   TotalItemsIcon,
-   TotalReportsIcon,
-   TotalRequestsIcon,
-} from '@/components/Icons';
 import Layout from '@/components/Layout';
-import { Column, Table } from '@/components/Table';
 import { RootState } from '@/redux/reducers';
-import { Request } from '@/types';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
-import LineChart from '@/components/LineChart';
-import Calendar from '@/components/Calendar';
 import PrivateRoute from '@/components/PrivateRoute';
 import { RoleId } from '@/constants/roles.constant';
-import AnimatedNumber from '@/components/AnimatedNumber';
-import { PhoneDisplay } from '@/components/FormatValue';
 import { dashboardConstants, authConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { exportToCsv } from '@/utilities/exportCsv';
 import axios from 'axios';
 import Sparkline from '@/components/dashboard/Sparkline';
-import SegmentedBar from '@/components/dashboard/SegmentedBar';
-import CalendarHeatmap from '@/components/dashboard/CalendarHeatmap';
-import TopNList from '@/components/dashboard/TopNList';
+import {
+   BarChart,
+   Bar,
+   XAxis,
+   YAxis,
+   CartesianGrid,
+   Tooltip,
+   Legend,
+   ResponsiveContainer,
+   AreaChart,
+   Area,
+} from 'recharts';
 
-/* ── Premium design tokens ── */
-const CARD =
-   'premium-card rounded-2xl bg-white/80 dark:bg-white/[0.035] backdrop-blur-sm border border-[rgba(15,37,82,0.06)] dark:border-white/[0.06] transition-all duration-300';
-const PANEL =
-   'premium-panel rounded-2xl border border-[rgba(15,37,82,0.06)] dark:border-white/[0.06] bg-white/80 dark:bg-white/[0.035] backdrop-blur-sm transition-all duration-300';
-const VIEW_ALL =
-   'rounded-full px-3.5 py-1.5 border border-[#E4E5E7] dark:border-white/10 text-[#848A95] dark:text-white/50 text-[0.65rem] font-semibold uppercase tracking-wider hover:bg-[#B28309]/5 hover:border-[#B28309]/30 hover:text-[#B28309] dark:hover:bg-[#D4A84B]/10 dark:hover:border-[#D4A84B]/30 dark:hover:text-[#D4A84B] transition-all duration-200 press-effect';
-const SECTION_TITLE =
-   'text-[0.65rem] font-bold uppercase tracking-[0.12em] flex items-center gap-2';
-
-/* ── Status colors ── */
-const STATUS_COLORS: Record<string, string> = {
-   pending: '#F59E0B',
-   approved: '#10B981',
-   resolved: '#10B981',
-   good: '#10B981',
-   completed: '#3B82F6',
-   declined: '#EF4444',
-   fault: '#EF4444',
-   bad: '#EF4444',
-   'pending verification': 'var(--color-secondary)',
-   other: 'var(--color-secondary)',
+/* ── Card shell — muted surface, subtle border, rounded ── */
+const CARD = 'rounded-2xl p-5 md:p-6 transition-colors';
+const CARD_STYLE: React.CSSProperties = {
+   background: 'var(--surface-low, rgba(255,255,255,0.02))',
+   border: '1px solid var(--border-default)',
 };
 
-function statusColor(label: string): string {
-   return STATUS_COLORS[label.toLowerCase()] ?? 'var(--color-secondary)';
-}
+/* ── Small pill label in caps tracking-wider with a tiny diamond glyph ── */
+const SECTION_PILL_STYLE: React.CSSProperties = {
+   background: 'var(--surface-medium)',
+   color: 'var(--text-hint)',
+   border: '1px solid var(--border-default)',
+};
+
+const Diamond = () => (
+   <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden>
+      <rect x="0.7" y="0.7" width="5.6" height="5.6" transform="rotate(45 3.5 3.5)" stroke="currentColor" strokeWidth="1" />
+   </svg>
+);
+
+const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+   <span
+      className="inline-flex items-center gap-1.5 text-[0.55rem] uppercase tracking-widest font-semibold px-2.5 py-1.5 rounded-md"
+      style={SECTION_PILL_STYLE}
+   >
+      <Diamond />
+      {children}
+   </span>
+);
+
+const formatMonthLabel = (raw: string) => {
+   try {
+      if (raw.length === 10) return format(parseISO(raw), 'MMM');
+      return format(parseISO(`${raw}-01`), 'MMM');
+   } catch {
+      return raw;
+   }
+};
+
+/** Format an API date label given the current trend period:
+ *  - week/month: show day + month ("Apr 8")
+ *  - year/6months: show month only ("Apr 26")
+ */
+const formatTrendLabel = (raw: string, period: 'week' | 'month' | 'year'): string => {
+   try {
+      const daily = raw.length === 10;
+      if (period === 'year') {
+         return format(daily ? parseISO(raw) : parseISO(`${raw}-01`), 'MMM yy');
+      }
+      if (daily) return format(parseISO(raw), 'MMM d');
+      return format(parseISO(`${raw}-01`), 'MMM');
+   } catch {
+      return raw;
+   }
+};
+
+const fmtNumber = (n: number | string | undefined) =>
+   (Number(n ?? 0) || 0).toLocaleString('en-US');
+
+/* ── Skeleton shapes ── */
+const SkeletonBar: React.FC<{ width?: string; height?: string; className?: string }> = ({
+   width = '60%',
+   height = '14px',
+   className = '',
+}) => (
+   <div
+      className={`rounded animate-pulse ${className}`}
+      style={{
+         width,
+         height,
+         background: 'var(--surface-medium)',
+      }}
+   />
+);
+
+const SkeletonCard: React.FC<{ height?: string }> = ({ height = 'auto' }) => (
+   <div className="rounded-2xl p-5 md:p-6" style={{ ...CARD_STYLE, minHeight: height }}>
+      <SkeletonBar width="30%" height="10px" />
+      <div className="mt-5 space-y-3">
+         <SkeletonBar width="40%" height="28px" />
+         <SkeletonBar width="60%" height="10px" />
+      </div>
+      <div className="mt-6">
+         <SkeletonBar width="100%" height="80px" />
+      </div>
+   </div>
+);
+
+const DashboardSkeleton: React.FC = () => (
+   <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
+         <SkeletonCard height="220px" />
+         <SkeletonCard height="220px" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
+         <SkeletonCard height="240px" />
+         <SkeletonCard height="240px" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
+         <SkeletonCard height="220px" />
+         <SkeletonCard height="220px" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
+         <SkeletonCard height="280px" />
+         <SkeletonCard height="280px" />
+      </div>
+      <div className="rounded-2xl p-5 md:p-6" style={CARD_STYLE}>
+         <SkeletonBar width="20%" height="10px" />
+         <div className="mt-5" style={{ height: 320 }}>
+            <SkeletonBar width="100%" height="100%" />
+         </div>
+      </div>
+   </>
+);
+
+type TrendPeriod = 'week' | 'month' | 'year';
+
+const PERIOD_OPTIONS: { value: TrendPeriod; label: string }[] = [
+   { value: 'week', label: 'Week' },
+   { value: 'month', label: 'Month' },
+   { value: 'year', label: 'Year' },
+];
 
 const Dashboard = () => {
    const dispatch = useDispatch();
    const [isExportingReport, setIsExportingReport] = useState(false);
-   const [trendPeriod, setTrendPeriod] = useState<string>('6months');
+   const [period, setPeriod] = useState<TrendPeriod>('month');
    const { userDetails } = useSelector((s: RootState) => s.user);
-   const { IsRequestingRequests, allRequestsList } = useSelector((s: RootState) => s.request);
-   const { IsFetchingDashboardStats, dashboardStats, dashboardAnalytics } = useSelector(
-      (s: RootState) => s.dashboard,
-   );
+   const { dashboardStats, dashboardAnalytics, IsFetchingDashboardStats } =
+      useSelector((s: RootState) => s.dashboard);
+
+   const isLoading = IsFetchingDashboardStats && !dashboardStats;
 
    useEffect(() => {
       dispatch(dashboardActions.getDashboardStats() as unknown as UnknownAction);
-      dispatch(dashboardActions.getDashboardAnalytics() as unknown as UnknownAction);
+      dispatch(
+         dashboardActions.getDashboardAnalytics(period) as unknown as UnknownAction,
+      );
 
       if (userDetails?.roleId === RoleId.HOD) {
          dispatch(
@@ -86,15 +180,7 @@ const Dashboard = () => {
       } else {
          dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
       }
-   }, [dispatch, userDetails]);
-
-   const handlePeriodChange = useCallback(
-      (period: string) => {
-         setTrendPeriod(period);
-         dispatch(dashboardActions.getDashboardAnalytics(period) as unknown as UnknownAction);
-      },
-      [dispatch],
-   );
+   }, [dispatch, userDetails, period]);
 
    const handleExportDailyReport = useCallback(async () => {
       setIsExportingReport(true);
@@ -241,839 +327,708 @@ const Dashboard = () => {
       return 'Good evening';
    }, []);
 
-   // ── Map sparkline API shape (count) → component shape (value) ──
+   /* ── Sparkline for Total Requests card ── */
    const requestsSparkline = useMemo(
-      () => (dashboardAnalytics?.requestsSparkline ?? []).map((p) => ({ date: p.date, value: p.count })),
+      () =>
+         (dashboardAnalytics?.requestsSparkline ?? []).map((p) => ({
+            date: p.date,
+            value: p.count,
+         })),
       [dashboardAnalytics],
    );
+
+   /* ── Items sparkline for week-over-week delta ── */
    const itemsSparkline = useMemo(
-      () => (dashboardAnalytics?.itemsSparkline ?? []).map((p) => ({ date: p.date, value: p.count })),
-      [dashboardAnalytics],
-   );
-   const reportsSparkline = useMemo(
-      () => (dashboardAnalytics?.reportsSparkline ?? []).map((p) => ({ date: p.date, value: p.count })),
-      [dashboardAnalytics],
-   );
-   const usersSparkline = useMemo(
-      () => (dashboardAnalytics?.usersSparkline ?? []).map((p) => ({ date: p.date, value: p.count })),
-      [dashboardAnalytics],
-   );
-
-   // ── Generator trend sparklines ──
-   const generatorHoursTrend = useMemo(
       () =>
-         (dashboardAnalytics?.generatorStats?.hoursUsedTrend ?? []).map((p) => ({
-            month: p.date,
-            count: String(p.hours),
-         })),
-      [dashboardAnalytics],
-   );
-   const generatorFaultTrend = useMemo(
-      () =>
-         (dashboardAnalytics?.generatorStats?.faultFrequency ?? []).map((p) => ({
-            month: p.date,
-            count: String(p.count),
+         (dashboardAnalytics?.itemsSparkline ?? []).map((p) => ({
+            date: p.date,
+            value: p.count,
          })),
       [dashboardAnalytics],
    );
 
-   // ── Maintenance cost trend ──
-   const maintenanceTrend = useMemo(() => {
-      const data = dashboardAnalytics?.maintenanceCostTrend;
-      if (!data || data.length === 0) return undefined;
-      return data.map((d) => ({ month: d.month, count: d.totalCost ?? '0' }));
-   }, [dashboardAnalytics]);
+   /* ── Approved / Declined % pills ── */
+   const requestRatePills = useMemo(() => {
+      const list = dashboardStats?.requestsByStatus ?? [];
+      const total = list.reduce((sum, s) => sum + (s.count || 0), 0) || 1;
+      const find = (label: string) =>
+         list.find((s) => s.status.toLowerCase() === label)?.count ?? 0;
+      return {
+         approved: ((find('approved') / total) * 100).toFixed(1),
+         declined: ((find('declined') / total) * 100).toFixed(1),
+      };
+   }, [dashboardStats]);
 
-   // ── Calendar events from upcoming schedules ──
-   const calendarEvents = useMemo(() => {
-      const schedules = dashboardAnalytics?.upcomingSchedules ?? [];
-      return schedules.map((s) => ({
-         id: String(s.id),
-         date: format(parseISO(s.scheduledDate), 'yyyy-MM-dd'),
-         title: s.title,
-         description: s.description,
+   /* ── Items this-week delta ── */
+   const itemsWoW = useMemo(() => {
+      if (itemsSparkline.length < 2) return null;
+      const first = itemsSparkline[0].value;
+      const last = itemsSparkline[itemsSparkline.length - 1].value;
+      if (!first) return null;
+      const pct = ((last - first) / Math.abs(first)) * 100;
+      return { pct, up: pct >= 0 };
+   }, [itemsSparkline]);
+
+   /* ── Usage-trend stats derived from 14-day requests sparkline ── */
+   const requestUsageStats = useMemo(() => {
+      const data = requestsSparkline;
+      if (data.length === 0) return { avg: 0, peak: 0, change: 0 };
+      const total = data.reduce((s, d) => s + d.value, 0);
+      const avg = total / data.length;
+      const peak = Math.max(...data.map((d) => d.value));
+      const first = data[0].value;
+      const last = data[data.length - 1].value;
+      const change = first ? ((last - first) / Math.abs(first)) * 100 : 0;
+      return { avg: Math.round(avg), peak, change: Math.round(change * 10) / 10 };
+   }, [requestsSparkline]);
+
+   /* ── Top requested items (top 5) ── */
+   const topItems = useMemo(
+      () => (dashboardAnalytics?.topRequestedItems ?? []).slice(0, 5),
+      [dashboardAnalytics],
+   );
+
+   /* ── Next upcoming schedule ── */
+   const nextSchedule = useMemo(
+      () => (dashboardAnalytics?.upcomingSchedules ?? [])[0],
+      [dashboardAnalytics],
+   );
+
+   /* ── Recent maintenance logs (top 3) ── */
+   const recentMaintenance = useMemo(
+      () => (dashboardAnalytics?.recentMaintenanceLogs ?? []).slice(0, 3),
+      [dashboardAnalytics],
+   );
+
+   /* ── Monthly requests bar-chart series ── */
+   const requestTrendData = useMemo(
+      () =>
+         (dashboardAnalytics?.requestTrend ?? []).map((t) => ({
+            month: formatMonthLabel(t.month),
+            Requests: t.count,
+         })),
+      [dashboardAnalytics],
+   );
+
+   /* ── Generator usage line-chart series — count of generator logs per period ── */
+   const generatorTrendData = useMemo(() => {
+      const countTrend = dashboardAnalytics?.generatorStats?.usageCountTrend;
+      if (countTrend && countTrend.length > 0) {
+         return countTrend.map((p) => ({
+            date: p.date,
+            label: formatTrendLabel(p.date, period),
+            value: p.count,
+         }));
+      }
+      /* Fallback: hours trend (legacy, while backend deploys) */
+      return (dashboardAnalytics?.generatorStats?.hoursUsedTrend ?? []).map((p) => ({
+         date: p.date,
+         label: formatTrendLabel(p.date, period),
+         value: p.hours,
       }));
-   }, [dashboardAnalytics]);
+   }, [dashboardAnalytics, period]);
 
-   // ── Generator recent logs for display ──
-   const recentGeneratorLogs = useMemo(
-      () => dashboardAnalytics?.generatorStats?.recentLogs ?? [],
-      [dashboardAnalytics],
-   );
+   const generatorTrendChange = useMemo(() => {
+      if (generatorTrendData.length < 2) return null;
+      const first = generatorTrendData[0].value;
+      const last = generatorTrendData[generatorTrendData.length - 1].value;
+      if (!first) return null;
+      const pct = ((last - first) / Math.abs(first)) * 100;
+      return { pct, up: pct >= 0 };
+   }, [generatorTrendData]);
 
-   // ── Requests-by-status segmented bar ──
-   const requestsByStatusSegments = useMemo(
+   /* ── Items line-chart data ── */
+   const itemsLineData = useMemo(
       () =>
-         (dashboardStats?.requestsByStatus ?? []).map((s) => ({
-            label: s.status,
-            value: s.count,
-            color: statusColor(s.status),
+         itemsSparkline.map((p) => ({
+            date: p.date,
+            label: formatTrendLabel(p.date, period),
+            value: p.value,
          })),
-      [dashboardStats],
+      [itemsSparkline, period],
    );
-
-   // ── Items-by-condition segmented bar ──
-   // "Not specified" is a system default for legacy rows — not a real user
-   // classification. Hide it so the chart only shows actionable buckets.
-   const itemsByConditionSegments = useMemo(
-      () =>
-         (dashboardStats?.itemsByCondition ?? [])
-            .filter((s) => s.condition !== 'Not specified')
-            .map((s) => ({
-               label: s.condition,
-               value: s.count,
-               color: statusColor(s.condition),
-            })),
-      [dashboardStats],
-   );
-
-   // ── Complaints-by-status segmented bar ──
-   const complaintsByStatusSegments = useMemo(
-      () =>
-         (dashboardAnalytics?.complaintsByStatus ?? []).map((s) => ({
-            label: s.status,
-            value: s.count,
-            color: statusColor(s.status),
-         })),
-      [dashboardAnalytics],
-   );
-
-   // ── Item availability segmented bar ──
-   const itemAvailabilitySegments = useMemo(
-      () => [
-         {
-            label: 'Available',
-            value: dashboardAnalytics?.itemAvailability?.available ?? 0,
-            color: '#10B981',
-         },
-         {
-            label: 'Unavailable',
-            value: dashboardAnalytics?.itemAvailability?.unavailable ?? 0,
-            color: '#EF4444',
-         },
-      ],
-      [dashboardAnalytics],
-   );
-
-   // ── Top-N rows ──
-   const topDeptRows = useMemo(
-      () =>
-         (dashboardAnalytics?.topDepartmentsByRequests ?? []).map((d) => ({
-            label: d.departmentName,
-            value: d.count,
-         })),
-      [dashboardAnalytics],
-   );
-   const topItemRows = useMemo(
-      () =>
-         (dashboardAnalytics?.topRequestedItems ?? []).map((d) => ({
-            label: d.itemName,
-            value: d.count,
-         })),
-      [dashboardAnalytics],
-   );
-   const topArtisanRows = useMemo(
-      () =>
-         (dashboardAnalytics?.topArtisansByCost ?? []).map((d) => ({
-            label: d.artisanName,
-            value: d.totalCost,
-            subLabel: `${d.logCount} log${d.logCount !== 1 ? 's' : ''}`,
-         })),
-      [dashboardAnalytics],
-   );
-
-   // ── Request volume heatmap ──
-   const heatmapData = useMemo(
-      () => dashboardAnalytics?.requestVolumeHeatmap ?? [],
-      [dashboardAnalytics],
-   );
-
-   const columns: Column<Request>[] = [
-      { key: 'createdBy', header: 'CHURCH/MINISTRY NAME' },
-      { key: 'requesterHodEmail', header: 'EMAIL ADDRESS' },
-      {
-         key: 'requesterHodPhone',
-         header: 'PHONE NUMBER',
-         render: (value: unknown, row: Request) => (
-            <PhoneDisplay value={String(value || row.requesterPhone || '')} />
-         ),
-      },
-      {
-         key: 'dateOfReturn',
-         header: 'RETURN DATE',
-         render: (value: string | number) => {
-            try {
-               return <span>{format(parseISO(String(value)), 'yyyy-MM-dd')}</span>;
-            } catch {
-               return <span>-</span>;
-            }
-         },
-      },
-   ];
-
-   const isLoading = IsRequestingRequests || IsFetchingDashboardStats;
 
    return (
       <PrivateRoute>
          <Layout title="Dashboard">
-            {/* ── Welcome banner ── */}
-            <div className="animate-page-enter mb-6 md:mb-8">
-               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-                  <div>
-                     <h1
-                        className="text-xl md:text-2xl font-bold tracking-tight"
-                        style={{ color: 'var(--text-primary)' }}
-                     >
-                        {greeting}, {userDetails?.firstName ?? 'Admin'}
-                     </h1>
-                     <p className="text-xs md:text-sm mt-1" style={{ color: 'var(--text-hint)' }}>
-                        Here&apos;s what&apos;s happening across your facilities today
-                     </p>
-                  </div>
-                  <div className="flex items-center gap-2 self-start sm:self-end">
-                     <button
-                        onClick={handleExportDailyReport}
-                        disabled={isExportingReport}
-                        className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-[#0F2552]/15 dark:border-[#6B8FCC]/20 text-[#0F2552] dark:text-[#6B8FCC] bg-[#0F2552]/5 dark:bg-[#6B8FCC]/10 hover:bg-[#0F2552]/10 dark:hover:bg-[#6B8FCC]/20 press-effect"
-                     >
-                        {isExportingReport ? (
-                           <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                           <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                           >
-                              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                              <polyline points="7 10 12 15 17 10" />
-                              <line x1="12" y1="15" x2="12" y2="3" />
-                           </svg>
-                        )}
-                        Daily Report
-                     </button>
-                     <span className="text-[0.65rem] font-medium px-3 py-1.5 rounded-full bg-[#B28309]/8 dark:bg-[#D4A84B]/12 text-[#B28309] dark:text-[#D4A84B] border border-[#B28309]/15 dark:border-[#D4A84B]/20">
-                        {format(new Date(), 'EEEE, MMMM d, yyyy')}
-                     </span>
-                  </div>
+            {/* Greeting bar */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+               <div>
+                  <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                     {greeting}, {userDetails?.firstName ?? 'Admin'}
+                  </h1>
+                  <p className="text-xs md:text-sm mt-1" style={{ color: 'var(--text-hint)' }}>
+                     At-a-glance view of requests, items and activity across your facilities
+                  </p>
                </div>
-               <div className="mt-4 h-px bg-gradient-to-r from-[#B28309]/30 via-[#0F2552]/10 to-transparent dark:from-[#D4A84B]/25 dark:via-[#6B8FCC]/10 dark:to-transparent" />
+               <div className="flex flex-wrap items-center gap-2 self-start sm:self-end">
+                  <button
+                     onClick={handleExportDailyReport}
+                     disabled={isExportingReport}
+                     className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                     style={{
+                        border: '1px solid var(--border-strong)',
+                        color: 'var(--text-secondary)',
+                        background: 'var(--surface-medium)',
+                     }}
+                  >
+                     {isExportingReport ? (
+                        <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                     ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                           <polyline points="7 10 12 15 17 10" />
+                           <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                     )}
+                     Daily Report
+                  </button>
+                  <span
+                     className="text-[0.65rem] font-semibold px-3 py-1.5 rounded-full uppercase tracking-wider"
+                     style={{
+                        background: 'var(--surface-medium)',
+                        border: '1px solid var(--border-default)',
+                        color: 'var(--text-hint)',
+                     }}
+                  >
+                     {format(new Date(), 'EEEE, MMMM d, yyyy')}
+                  </span>
+               </div>
             </div>
 
-            {/* ── A. KPI strip — 4 cards with sparklines ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-5">
+            {isLoading && <DashboardSkeleton />}
+
+            {!isLoading && (
+            <>
+            {/* Row 1: Total Requests · Upcoming */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
                {/* Total Requests */}
-               <div
-                  className={`animate-stat-pop hover-lift relative overflow-hidden p-4 md:p-5 ${CARD}`}
-                  style={{ animationDelay: '0s' }}
-               >
-                  <div className="flex items-center gap-3 mb-3">
-                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#0F2552]/8 dark:bg-[#6B8FCC]/15">
-                        <TotalRequestsIcon />
-                     </div>
-                     <span
-                        className="uppercase text-[0.6rem] font-semibold tracking-wider"
-                        style={{ color: 'var(--text-hint)' }}
-                     >
-                        Total Requests
-                     </span>
-                  </div>
-                  <h2
-                     className="text-2xl md:text-3xl font-bold tabular-nums tracking-tight mb-3"
-                     style={{ color: 'var(--text-primary)' }}
-                  >
-                     <AnimatedNumber value={dashboardStats?.totalRequests ?? 0} delay={100} />
-                  </h2>
-                  <Sparkline
-                     data={requestsSparkline}
-                     color="#6B8FCC"
-                     height={36}
-                     showDelta
-                     className="w-full"
-                  />
-               </div>
-
-               {/* Total Items */}
-               <div
-                  className={`animate-stat-pop hover-lift relative overflow-hidden p-4 md:p-5 ${CARD}`}
-                  style={{ animationDelay: '0.08s' }}
-               >
-                  <div className="flex items-center gap-3 mb-3">
-                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#B28309]/8 dark:bg-[#D4A84B]/15">
-                        <TotalItemsIcon />
-                     </div>
-                     <span
-                        className="uppercase text-[0.6rem] font-semibold tracking-wider"
-                        style={{ color: 'var(--text-hint)' }}
-                     >
-                        Total Items
-                     </span>
-                  </div>
-                  <h2
-                     className="text-2xl md:text-3xl font-bold tabular-nums tracking-tight mb-3"
-                     style={{ color: 'var(--text-primary)' }}
-                  >
-                     <AnimatedNumber value={dashboardStats?.totalItems ?? 0} delay={180} />
-                  </h2>
-                  <Sparkline
-                     data={itemsSparkline}
-                     color="#D4A84B"
-                     height={36}
-                     showDelta
-                     className="w-full"
-                  />
-               </div>
-
-               {/* Total Reports */}
-               <div
-                  className={`animate-stat-pop hover-lift relative overflow-hidden p-4 md:p-5 ${CARD}`}
-                  style={{ animationDelay: '0.16s' }}
-               >
-                  <div className="flex items-center gap-3 mb-3">
-                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#ef4444]/8 dark:bg-[#ef4444]/15">
-                        <TotalReportsIcon />
-                     </div>
-                     <span
-                        className="uppercase text-[0.6rem] font-semibold tracking-wider"
-                        style={{ color: 'var(--text-hint)' }}
-                     >
-                        Total Reports
-                     </span>
-                  </div>
-                  <h2
-                     className="text-2xl md:text-3xl font-bold tabular-nums tracking-tight mb-3"
-                     style={{ color: 'var(--text-primary)' }}
-                  >
-                     <AnimatedNumber value={dashboardStats?.totalReports ?? 0} delay={260} />
-                  </h2>
-                  <Sparkline
-                     data={reportsSparkline}
-                     color="#EF4444"
-                     height={36}
-                     showDelta
-                     className="w-full"
-                  />
-               </div>
-
-               {/* Total Users */}
-               <div
-                  className={`animate-stat-pop hover-lift relative overflow-hidden p-4 md:p-5 ${CARD}`}
-                  style={{ animationDelay: '0.24s' }}
-               >
-                  <div className="flex items-center gap-3 mb-3">
-                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#22c55e]/8 dark:bg-[#22c55e]/15">
-                        <DueReturnsIcon />
-                     </div>
-                     <span
-                        className="uppercase text-[0.6rem] font-semibold tracking-wider"
-                        style={{ color: 'var(--text-hint)' }}
-                     >
-                        Total Users
-                     </span>
-                  </div>
-                  <h2
-                     className="text-2xl md:text-3xl font-bold tabular-nums tracking-tight mb-3"
-                     style={{ color: 'var(--text-primary)' }}
-                  >
-                     <AnimatedNumber value={dashboardAnalytics?.totalUsers ?? 0} delay={340} />
-                  </h2>
-                  <Sparkline
-                     data={usersSparkline}
-                     color="#22c55e"
-                     height={36}
-                     showDelta
-                     className="w-full"
-                  />
-               </div>
-            </div>
-
-            {/* ── B. Distribution panel — 4 segmented bars ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-5">
-               {/* Requests by status */}
-               <div className={`animate-stat-pop p-5 ${PANEL} overflow-hidden`}>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#6B8FCC] via-[#6B8FCC]/30 to-transparent" />
-                  <h2 className={`${SECTION_TITLE} mb-1`} style={{ color: 'var(--text-primary)' }}>
-                     <span className="w-1.5 h-1.5 rounded-full bg-[#6B8FCC] inline-block" />
-                     Requests by Status
-                  </h2>
-                  <p className="text-[0.6rem] mb-4 font-medium" style={{ color: 'var(--text-hint)' }}>
-                     Request lifecycle breakdown
-                  </p>
-                  <SegmentedBar segments={requestsByStatusSegments} showLegend showPercent />
-               </div>
-
-               {/* Items by condition */}
-               <div className={`animate-stat-pop p-5 ${PANEL} overflow-hidden`}>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#22c55e] via-[#22c55e]/30 to-transparent" />
-                  <h2 className={`${SECTION_TITLE} mb-1`} style={{ color: 'var(--text-primary)' }}>
-                     <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] inline-block" />
-                     Items by Condition
-                  </h2>
-                  <p className="text-[0.6rem] mb-4 font-medium" style={{ color: 'var(--text-hint)' }}>
-                     Inventory health overview
-                  </p>
-                  <SegmentedBar segments={itemsByConditionSegments} showLegend showPercent />
-               </div>
-
-               {/* Complaints by status */}
-               <div className={`animate-stat-pop p-5 ${PANEL} overflow-hidden`}>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#D4A84B] via-[#D4A84B]/30 to-transparent" />
-                  <h2 className={`${SECTION_TITLE} mb-1`} style={{ color: 'var(--text-primary)' }}>
-                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4A84B] inline-block" />
-                     Complaints by Status
-                  </h2>
-                  <p className="text-[0.6rem] mb-4 font-medium" style={{ color: 'var(--text-hint)' }}>
-                     Resolution breakdown
-                  </p>
-                  <SegmentedBar segments={complaintsByStatusSegments} showLegend showPercent />
-               </div>
-
-               {/* Item availability */}
-               <div className={`animate-stat-pop p-5 ${PANEL} overflow-hidden`}>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#10B981] via-[#10B981]/30 to-transparent" />
-                  <h2 className={`${SECTION_TITLE} mb-1`} style={{ color: 'var(--text-primary)' }}>
-                     <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] inline-block" />
-                     Item Availability
-                  </h2>
-                  <p className="text-[0.6rem] mb-4 font-medium" style={{ color: 'var(--text-hint)' }}>
-                     Available vs. unavailable units
-                  </p>
-                  <SegmentedBar segments={itemAvailabilitySegments} showLegend showPercent />
-               </div>
-            </div>
-
-            {/* ── C. Top-N leaderboards ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-5 mb-5">
-               <div className={`p-5 ${PANEL} overflow-hidden`}>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#6B8FCC] via-[#6B8FCC]/30 to-transparent" />
-                  <TopNList
-                     title="Top Departments by Requests"
-                     rows={topDeptRows}
-                     barColor="#6B8FCC"
-                  />
-               </div>
-               <div className={`p-5 ${PANEL} overflow-hidden`}>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#D4A84B] via-[#D4A84B]/30 to-transparent" />
-                  <TopNList
-                     title="Most Requested Items"
-                     rows={topItemRows}
-                     barColor="#D4A84B"
-                  />
-               </div>
-               <div className={`p-5 ${PANEL} overflow-hidden`}>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#10B981] via-[#10B981]/30 to-transparent" />
-                  <TopNList
-                     title="Top Artisans by Cost"
-                     rows={topArtisanRows}
-                     barColor="#10B981"
-                     valueFormat={(v) =>
-                        `\u20a6${v.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                     }
-                  />
-               </div>
-            </div>
-
-            {/* ── D. Trend panel ── */}
-            <div className={`animate-chart-delay-1 ${PANEL} mb-5 overflow-hidden`}>
-               <div className="h-[2px] bg-gradient-to-r from-[#B88C00] via-[#D4A84B] to-[#B88C00]/20" />
-               <div className="px-6 pt-5 pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                     <h2 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#B88C00] inline-block" />
-                        Trends
-                     </h2>
-                     <p className="text-[0.65rem] mt-1" style={{ color: 'var(--text-hint)' }}>
-                        Request volume &amp; maintenance cost over time
-                     </p>
-                  </div>
-                  <div className="flex items-center gap-1 self-start">
-                     {[
-                        { key: 'week', label: 'Week' },
-                        { key: 'month', label: 'Month' },
-                        { key: '6months', label: '6 Months' },
-                        { key: 'year', label: 'Year' },
-                     ].map((p) => (
-                        <button
-                           key={p.key}
-                           onClick={() => handlePeriodChange(p.key)}
-                           className={`text-[0.6rem] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
-                              trendPeriod === p.key
-                                 ? 'bg-[#B88C00] text-white border-[#B88C00] shadow-sm'
-                                 : 'bg-transparent text-[#B88C00] border-[#B88C00]/15 hover:bg-[#B88C00]/8'
-                           }`}
-                        >
-                           {p.label}
-                        </button>
-                     ))}
-                  </div>
-               </div>
-
-               {/* Request trend + Maintenance cost — 2 cols */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-x divide-[rgba(15,37,82,0.06)] dark:divide-white/[0.06]">
-                  <div className="px-6 pt-4 pb-6">
-                     <p
-                        className="text-[0.6rem] font-semibold uppercase tracking-wider mb-3"
-                        style={{ color: 'var(--text-hint)' }}
-                     >
-                        Request Volume
-                     </p>
-                     <div style={{ height: 220 }} className="min-h-[14rem]">
-                        <LineChart
-                           data={dashboardAnalytics?.requestTrend}
-                           label="Requests"
-                           color="#B88C00"
-                        />
-                     </div>
-                  </div>
-                  <div className="px-6 pt-4 pb-6">
-                     <p
-                        className="text-[0.6rem] font-semibold uppercase tracking-wider mb-3"
-                        style={{ color: 'var(--text-hint)' }}
-                     >
-                        Maintenance Cost (NGN)
-                     </p>
-                     <div style={{ height: 220 }} className="min-h-[14rem]">
-                        <LineChart data={maintenanceTrend} label="Cost (NGN)" color="#0F2552" />
-                     </div>
-                  </div>
-               </div>
-
-               {/* Generator trends — 2 cols below */}
-               {(generatorHoursTrend.length > 0 || generatorFaultTrend.length > 0) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-x divide-[rgba(15,37,82,0.06)] dark:divide-white/[0.06] border-t border-[rgba(15,37,82,0.06)] dark:border-white/[0.06]">
-                     <div className="px-6 pt-4 pb-6">
-                        <p
-                           className="text-[0.6rem] font-semibold uppercase tracking-wider mb-3"
-                           style={{ color: 'var(--text-hint)' }}
-                        >
-                           Generator Hours Used
-                        </p>
-                        <div style={{ height: 180 }} className="min-h-[11rem]">
-                           <LineChart
-                              data={generatorHoursTrend}
-                              label="Hours"
-                              color="#D4A84B"
-                           />
-                        </div>
-                     </div>
-                     <div className="px-6 pt-4 pb-6">
-                        <p
-                           className="text-[0.6rem] font-semibold uppercase tracking-wider mb-3"
-                           style={{ color: 'var(--text-hint)' }}
-                        >
-                           Generator Fault Frequency
-                        </p>
-                        <div style={{ height: 180 }} className="min-h-[11rem]">
-                           <LineChart
-                              data={generatorFaultTrend}
-                              label="Faults"
-                              color="#EF4444"
-                           />
-                        </div>
-                     </div>
-                  </div>
-               )}
-            </div>
-
-            {/* ── E. Request Activity Heatmap (12 months, full width) ── */}
-            <div className={`${PANEL} mb-5 overflow-hidden`}>
-               <div className="h-[2px] bg-gradient-to-r from-[#B28309] via-[#B28309]/40 to-transparent" />
-               <div className="px-6 pt-5 pb-2 flex items-center justify-between">
-                  <div>
-                     <h2 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#B28309] inline-block" />
-                        Request Activity — Last 12 Months
-                     </h2>
-                     <p className="text-[0.65rem] mt-1 font-medium" style={{ color: 'var(--text-hint)' }}>
-                        Daily request volume heat map — color intensity = request count
-                     </p>
-                  </div>
-               </div>
-               <div className="px-6 pb-8 pt-3 overflow-x-auto">
-                  <CalendarHeatmap data={heatmapData} cellSize={16} gap={4} />
-               </div>
-            </div>
-
-            {/* ── F. Recent activity section ── */}
-
-            {/* Requests table + Generator usage */}
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-5 mb-5">
-               <div className="lg:col-span-7 p-0">
-                  <div className={`animate-card-delay-3 ${PANEL} overflow-hidden`}>
-                     <div className="h-[2px] bg-gradient-to-r from-[#0F2552] dark:from-[#6B8FCC] via-[#0F2552]/30 dark:via-[#6B8FCC]/30 to-transparent" />
-                     <div className="px-5 py-5 flex items-center justify-between">
-                        <h1 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
-                           <span className="w-1.5 h-1.5 rounded-full bg-[#0F2552] dark:bg-[#6B8FCC] inline-block" />
-                           Recent Requests
-                        </h1>
-                        <Link href="/admin/requests" className={VIEW_ALL}>
-                           View All
-                        </Link>
-                     </div>
-                     <Table
-                        data={allRequestsList?.slice(0, 5)}
-                        loading={isLoading}
-                        columns={columns}
-                     />
-                  </div>
-               </div>
-               <div className="lg:col-span-3">
-                  <div className={`animate-chart-delay-3 p-5 ${PANEL} overflow-hidden`}>
-                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#B88C00] via-[#B88C00]/40 to-transparent" />
-                     <div className="mb-5">
-                        <h2 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
-                           <span className="w-1.5 h-1.5 rounded-full bg-[#B88C00] inline-block" />
-                           Generator Usage
+               <div className={CARD} style={CARD_STYLE}>
+                  <SectionLabel>Total Requests</SectionLabel>
+                  <div className="mt-5 flex items-start gap-6">
+                     <div className="flex-1 min-w-0">
+                        <h2 className="text-4xl md:text-5xl font-bold tabular-nums tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                           {fmtNumber(dashboardStats?.totalRequests)}
                         </h2>
-                        <p className="text-[0.6rem] mt-1 font-medium" style={{ color: 'var(--text-hint)' }}>
-                           Recent logs
+                        <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+                           Total Requests
                         </p>
                      </div>
-                     <div className="space-y-2 max-h-[180px] overflow-y-auto premium-scrollbar">
-                        {recentGeneratorLogs.length > 0 ? (
-                           recentGeneratorLogs.map((log) => {
-                              const hours = Math.round((log.hoursUsed ?? 0) / 3600);
-                              const maxHours = Math.max(
-                                 ...recentGeneratorLogs.map((l) => Math.round((l.hoursUsed ?? 0) / 3600)),
-                                 1,
-                              );
-                              const pct = Math.min((hours / maxHours) * 100, 100);
-                              return (
-                                 <div key={log.id} className="group">
-                                    <div className="flex items-center justify-between mb-1">
-                                       <span
-                                          className="text-[0.65rem] font-semibold truncate max-w-[60%]"
-                                          style={{ color: 'var(--text-primary)' }}
-                                       >
-                                          {log.nameOfMeeting || log.generatorType}
-                                       </span>
-                                       <div className="flex items-center gap-1.5">
-                                          {log.faultDetected && (
-                                             <span className="text-[0.5rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/15">
-                                                Fault
-                                             </span>
-                                          )}
-                                          <span
-                                             className="text-[0.65rem] font-bold tabular-nums"
-                                             style={{ color: log.faultDetected ? '#ef4444' : '#B88C00' }}
-                                          >
-                                             {hours.toLocaleString()}h
-                                          </span>
-                                       </div>
-                                    </div>
-                                    <div
-                                       className="h-2 rounded-full overflow-hidden"
-                                       style={{ background: 'var(--surface-medium)' }}
-                                    >
-                                       <div
-                                          className="h-full rounded-full transition-all duration-500"
-                                          style={{
-                                             width: `${pct}%`,
-                                             background: log.faultDetected
-                                                ? 'linear-gradient(90deg, #ef4444, #f87171)'
-                                                : 'linear-gradient(90deg, #B88C00, #D4A84B)',
-                                          }}
-                                       />
-                                    </div>
-                                 </div>
-                              );
-                           })
-                        ) : (
-                           <div className="flex items-center justify-center h-full py-8">
-                              <p className="text-xs font-medium" style={{ color: 'var(--text-hint)' }}>
-                                 No recent logs
-                              </p>
-                           </div>
-                        )}
+                     <div className="flex-1 max-w-[60%]">
+                        <Sparkline data={requestsSparkline} color="#6B8FCC" height={56} showDelta={false} className="w-full" />
                      </div>
-                     {dashboardAnalytics?.generatorStats && (
-                        <div className="mt-5 grid grid-cols-3 gap-2.5">
-                           <div className="p-3 bg-gray-50/80 dark:bg-white/[0.03] rounded-xl text-center border border-transparent dark:border-white/[0.04]">
-                              <span className="block text-[0.55rem] uppercase font-bold tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                                 Logs
-                              </span>
-                              <span className="text-sm font-bold tabular-nums text-[#0F2552] dark:text-white/85">
-                                 <AnimatedNumber
-                                    value={dashboardAnalytics.generatorStats.totalLogs}
-                                    delay={600}
-                                 />
-                              </span>
+                  </div>
+                  <div className="mt-6 flex items-center gap-6">
+                     <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: '#10B981' }} />
+                        <div>
+                           <div className="text-base font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                              {requestRatePills.approved}%
                            </div>
-                           <div className="p-3 bg-[#B88C00]/5 dark:bg-[#B88C00]/10 rounded-xl text-center border border-[#B88C00]/10 dark:border-[#B88C00]/15">
-                              <span className="block text-[0.55rem] uppercase font-bold tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                                 Avg Hrs
-                              </span>
-                              <span className="text-sm font-bold tabular-nums text-[#B88C00]">
-                                 <AnimatedNumber
-                                    value={Math.round(dashboardAnalytics.generatorStats.avgHours / 3600)}
-                                    delay={700}
-                                    suffix="h"
-                                 />
-                              </span>
+                           <div className="text-[0.65rem]" style={{ color: 'var(--text-hint)' }}>Approved Rate</div>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: '#EF4444' }} />
+                        <div>
+                           <div className="text-base font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                              {requestRatePills.declined}%
                            </div>
-                           <div className="p-3 bg-red-50/80 dark:bg-red-500/10 rounded-xl text-center border border-red-200/30 dark:border-red-500/15">
-                              <span className="block text-[0.55rem] uppercase font-bold tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                                 Faults
+                           <div className="text-[0.65rem]" style={{ color: 'var(--text-hint)' }}>Declined Rate</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               {/* Upcoming Schedule */}
+               <div className={CARD} style={CARD_STYLE}>
+                  <SectionLabel>Upcoming Schedule</SectionLabel>
+                  {nextSchedule ? (
+                     <div
+                        className="mt-5 rounded-xl p-4 relative"
+                        style={{ border: '1px solid var(--border-default)', background: 'var(--surface-medium)' }}
+                     >
+                        <span
+                           className="absolute top-3 right-3 text-[0.6rem] font-semibold px-2 py-0.5 rounded-md"
+                           style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)' }}
+                        >
+                           Upcoming
+                        </span>
+                        <h3 className="font-semibold text-sm pr-16" style={{ color: 'var(--text-primary)' }}>
+                           {nextSchedule.title}
+                        </h3>
+                        <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                           {nextSchedule.description}
+                        </p>
+                        <p className="text-[0.65rem] mt-3" style={{ color: 'var(--text-hint)' }}>
+                           {format(parseISO(nextSchedule.scheduledDate), 'd MMM')}
+                        </p>
+                     </div>
+                  ) : (
+                     <p className="mt-8 text-sm" style={{ color: 'var(--text-hint)' }}>
+                        No upcoming schedules.
+                     </p>
+                  )}
+               </div>
+            </div>
+
+            {/* Row 2: Most Requested · Total Items */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
+               {/* Most Requested Items */}
+               <div className={CARD} style={CARD_STYLE}>
+                  <div className="flex items-start justify-between">
+                     <SectionLabel>Most Requested Items</SectionLabel>
+                     <span className="text-[0.6rem]" style={{ color: 'var(--text-hint)' }}>
+                        Top 5
+                     </span>
+                  </div>
+                  <h3 className="mt-5 font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+                     Your most requested items
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+                     Here are your top 5 most requested items this period
+                  </p>
+                  <ul className="mt-4 space-y-2.5">
+                     {topItems.length === 0 && (
+                        <li className="text-xs" style={{ color: 'var(--text-hint)' }}>No data yet.</li>
+                     )}
+                     {topItems.map((it, idx) => (
+                        <li key={it.itemId} className="flex items-center justify-between text-sm">
+                           <span className="flex items-center gap-2 min-w-0">
+                              <span
+                                 className="text-[0.65rem] font-bold tabular-nums w-5 text-center"
+                                 style={{ color: 'var(--text-hint)' }}
+                              >
+                                 {idx + 1}
                               </span>
-                              <span className="text-sm font-bold tabular-nums text-red-500">
-                                 <AnimatedNumber
-                                    value={dashboardAnalytics.generatorStats.faultCount}
-                                    delay={800}
-                                 />
+                              <span className="truncate" style={{ color: 'var(--text-primary)' }}>
+                                 {it.itemName}
                               </span>
+                           </span>
+                           <span className="tabular-nums text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                              {fmtNumber(it.count)}
+                           </span>
+                        </li>
+                     ))}
+                  </ul>
+               </div>
+
+               {/* Total Items in Stock */}
+               <div className={CARD} style={CARD_STYLE}>
+                  <div className="flex items-start justify-between">
+                     <SectionLabel>Total Items</SectionLabel>
+                     <Link
+                        href="/admin/items"
+                        className="text-[0.65rem] font-semibold underline underline-offset-2"
+                        style={{ color: 'var(--text-hint)' }}
+                     >
+                        View All
+                     </Link>
+                  </div>
+                  <h3 className="mt-5 font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+                     Total Item Count
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+                     Here is an overview of your stock
+                  </p>
+                  <div className="mt-6 flex items-end gap-8">
+                     <div>
+                        <div className="text-4xl md:text-5xl font-bold tabular-nums tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                           {fmtNumber(dashboardStats?.totalItems)}
+                        </div>
+                        <div className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>Items</div>
+                     </div>
+                     {itemsWoW && (
+                        <div>
+                           <div
+                              className="text-2xl font-bold tabular-nums"
+                              style={{ color: itemsWoW.up ? '#10B981' : '#EF4444' }}
+                           >
+                              {itemsWoW.up ? '+' : ''}{itemsWoW.pct.toFixed(1)}%
                            </div>
+                           <div className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>compared to last week</div>
                         </div>
                      )}
                   </div>
                </div>
             </div>
 
-            {/* Calendar + Upcoming schedules + Recent maintenance */}
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-5 mb-5">
-               <div className="lg:col-span-4">
-                  <div className={`animate-card-delay-5 p-5 ${PANEL} min-h-[22rem] overflow-hidden`}>
-                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#B28309] via-[#B28309]/30 to-transparent" />
-                     <div className="mb-4">
-                        <h2 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
-                           <span className="w-1.5 h-1.5 rounded-full bg-[#B28309] inline-block" />
-                           Maintenance Schedule
-                        </h2>
-                     </div>
-                     <Calendar events={calendarEvents} />
+            {/* Row 3: Recent Maintenance · Request Trends */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
+               {/* Recent Maintenance */}
+               <div className={CARD} style={CARD_STYLE}>
+                  <div className="flex items-start justify-between">
+                     <SectionLabel>Recent Activity</SectionLabel>
+                     <Link
+                        href="/admin/maintenance-log"
+                        className="text-[0.65rem] font-semibold underline underline-offset-2"
+                        style={{ color: 'var(--text-hint)' }}
+                     >
+                        View Logs
+                     </Link>
                   </div>
-               </div>
-               <div className="lg:col-span-3">
-                  <div className={`animate-card-delay-5 p-5 ${PANEL} min-h-[22rem] overflow-hidden`}>
-                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#D4A84B] via-[#D4A84B]/30 to-transparent" />
-                     <h2 className={`${SECTION_TITLE} mb-4`} style={{ color: 'var(--text-primary)' }}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4A84B] inline-block" />
-                        Upcoming Schedules
-                     </h2>
-                     <div className="space-y-2.5 max-h-[18rem] overflow-y-auto premium-scrollbar">
-                        {(dashboardAnalytics?.upcomingSchedules ?? []).length > 0 ? (
-                           dashboardAnalytics?.upcomingSchedules.map((s) => (
-                              <div
-                                 key={s.id}
-                                 className="p-3.5 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border-l-[3px] border-[#B28309] hover:bg-gray-100/80 dark:hover:bg-white/[0.05] transition-colors"
-                              >
-                                 <p className="text-xs font-semibold truncate">{s.title}</p>
-                                 <p
-                                    className="text-[0.6rem] mt-1 font-medium"
-                                    style={{ color: 'var(--text-hint)' }}
-                                 >
-                                    {format(parseISO(s.scheduledDate), 'MMM d, yyyy')}
+                  <div className="mt-5 space-y-3">
+                     {recentMaintenance.length === 0 && (
+                        <p className="text-xs" style={{ color: 'var(--text-hint)' }}>No recent activity yet.</p>
+                     )}
+                     {recentMaintenance.map((m) => (
+                        <div
+                           key={m.id}
+                           className="flex items-start gap-3 pb-3"
+                           style={{ borderBottom: '1px solid var(--border-default)' }}
+                        >
+                           <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: '#10B981' }} />
+                           <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                 <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                                    {m.artisanName}
                                  </p>
+                                 <span className="text-[0.65rem] tabular-nums shrink-0" style={{ color: 'var(--text-hint)' }}>
+                                    {format(parseISO(m.maintenanceDate), 'd MMM')}
+                                 </span>
                               </div>
-                           ))
-                        ) : (
-                           <div className="flex flex-col items-center justify-center py-10">
-                              <div className="w-10 h-10 rounded-full bg-[#B28309]/8 dark:bg-[#D4A84B]/10 flex items-center justify-center mb-3">
-                                 <span className="text-[#B28309] dark:text-[#D4A84B] text-lg">--</span>
-                              </div>
-                              <p className="text-xs font-medium" style={{ color: 'var(--text-hint)' }}>
-                                 No upcoming schedules
+                              <p className="text-xs line-clamp-1 mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                                 {m.description}
+                              </p>
+                              <p className="text-[0.65rem] mt-1 tabular-nums" style={{ color: 'var(--text-hint)' }}>
+                                 NGN {fmtNumber(m.costOfMaintenance)}
                               </p>
                            </div>
-                        )}
-                     </div>
+                        </div>
+                     ))}
                   </div>
                </div>
-               <div className="lg:col-span-3">
-                  <div className={`animate-card-delay-6 p-5 ${PANEL} min-h-[22rem] overflow-hidden`}>
-                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#6B8FCC] via-[#6B8FCC]/30 to-transparent" />
-                     <h2 className={`${SECTION_TITLE} mb-4`} style={{ color: 'var(--text-primary)' }}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#6B8FCC] inline-block" />
-                        Recent Maintenance
-                     </h2>
-                     <div className="space-y-2.5 max-h-[18rem] overflow-y-auto premium-scrollbar">
-                        {(dashboardAnalytics?.recentMaintenanceLogs ?? []).length > 0 ? (
-                           dashboardAnalytics?.recentMaintenanceLogs.map((log) => (
-                              <div
-                                 key={log.id}
-                                 className="p-3.5 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] hover:bg-gray-100/80 dark:hover:bg-white/[0.05] transition-colors"
-                              >
-                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-semibold truncate max-w-[60%]">
-                                       {log.artisanName}
-                                    </p>
-                                    <span className="text-[0.6rem] font-bold text-[#B28309] dark:text-[#D4A84B] tabular-nums">
-                                       NGN {Number(log.costOfMaintenance).toLocaleString()}
-                                    </span>
-                                 </div>
-                                 <p
-                                    className="text-[0.6rem] mt-1 truncate"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                 >
-                                    {log.description}
-                                 </p>
-                                 <p
-                                    className="text-[0.55rem] mt-1 font-medium"
-                                    style={{ color: 'var(--text-hint)' }}
-                                 >
-                                    {format(parseISO(log.maintenanceDate), 'MMM d, yyyy')}
-                                 </p>
-                              </div>
-                           ))
-                        ) : (
-                           <div className="flex flex-col items-center justify-center py-10">
-                              <div className="w-10 h-10 rounded-full bg-[#6B8FCC]/8 dark:bg-[#6B8FCC]/10 flex items-center justify-center mb-3">
-                                 <span className="text-[#6B8FCC] text-lg">--</span>
-                              </div>
-                              <p className="text-xs font-medium" style={{ color: 'var(--text-hint)' }}>
-                                 No maintenance logs
-                              </p>
+
+               {/* Usage Trends — Avg/Peak/Change */}
+               <div className={CARD} style={CARD_STYLE}>
+                  <div className="flex items-start justify-between">
+                     <SectionLabel>Request Trends</SectionLabel>
+                     <span
+                        className="text-[0.6rem] font-semibold px-2 py-1 rounded-md"
+                        style={{ background: 'var(--surface-medium)', color: 'var(--text-hint)', border: '1px solid var(--border-default)' }}
+                     >
+                        Last 14 Days
+                     </span>
+                  </div>
+                  <p className="mt-5 text-sm" style={{ color: 'var(--text-primary)' }}>
+                     High-level view of request momentum
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+                     How request activity has moved over the last two weeks
+                  </p>
+                  <div className="mt-8 grid grid-cols-3 gap-2">
+                     {[
+                        { label: 'Avg / Day', value: fmtNumber(requestUsageStats.avg) },
+                        { label: 'Peak', value: fmtNumber(requestUsageStats.peak) },
+                        {
+                           label: 'Change',
+                           value: `${requestUsageStats.change >= 0 ? '+' : ''}${requestUsageStats.change}%`,
+                           accent: requestUsageStats.change >= 0 ? '#10B981' : '#EF4444',
+                        },
+                     ].map((stat) => (
+                        <div
+                           key={stat.label}
+                           className="rounded-xl py-3 px-2 text-center"
+                           style={{ border: '1px solid var(--border-default)' }}
+                        >
+                           <div
+                              className="text-xl md:text-2xl font-bold tabular-nums"
+                              style={{ color: stat.accent ?? 'var(--text-primary)' }}
+                           >
+                              {stat.value}
                            </div>
-                        )}
-                     </div>
+                           <div className="text-[0.6rem] mt-1 uppercase tracking-wider" style={{ color: 'var(--text-hint)' }}>
+                              {stat.label}
+                           </div>
+                        </div>
+                     ))}
                   </div>
                </div>
             </div>
 
-            {/* Reports table + Due returns table */}
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-5">
-               <div className="lg:col-span-5 p-0">
-                  <div className={`animate-card-delay-5 ${PANEL} overflow-hidden`}>
-                     <div className="h-[2px] bg-gradient-to-r from-[#3b82f6] via-[#3b82f6]/30 to-transparent" />
-                     <div className="px-5 py-5 flex items-center justify-between">
-                        <h1 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
-                           <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] inline-block" />
-                           Reports
-                        </h1>
-                        <Link href="/admin/reports" className={VIEW_ALL}>
-                           View All
-                        </Link>
-                     </div>
-                     <Table
-                        data={allRequestsList?.slice(0, 5)}
-                        loading={IsRequestingRequests}
-                        columns={columns}
-                     />
+            {/* Trends header — period selector scoped to charts below */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3 mt-2">
+               <div>
+                  <h2
+                     className="text-sm font-bold uppercase tracking-wider"
+                     style={{ color: 'var(--text-secondary)' }}
+                  >
+                     Trends
+                  </h2>
+                  <p className="text-[0.7rem] mt-0.5" style={{ color: 'var(--text-hint)' }}>
+                     Charts below respond to the selected period
+                  </p>
+               </div>
+               <div
+                  role="tablist"
+                  aria-label="Trend period"
+                  className="inline-flex rounded-full overflow-hidden"
+                  style={{ border: '1px solid var(--border-strong)' }}
+               >
+                  {PERIOD_OPTIONS.map((p) => {
+                     const active = period === p.value;
+                     return (
+                        <button
+                           key={p.value}
+                           role="tab"
+                           aria-selected={active}
+                           onClick={() => setPeriod(p.value)}
+                           className="px-3.5 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                           style={{
+                              background: active
+                                 ? 'var(--color-secondary)'
+                                 : 'transparent',
+                              color: active ? '#fff' : 'var(--text-secondary)',
+                           }}
+                        >
+                           {p.label}
+                        </button>
+                     );
+                  })}
+               </div>
+            </div>
+
+            {/* Row 4: Items trend · Generator usage — line charts with % delta */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
+               {/* Items Trend */}
+               <div className={CARD} style={CARD_STYLE}>
+                  <div className="flex items-start justify-between">
+                     <SectionLabel>Items Trend</SectionLabel>
+                     {itemsWoW && (
+                        <span
+                           className="text-[0.65rem] font-semibold px-2 py-0.5 rounded-md tabular-nums"
+                           style={{
+                              background: itemsWoW.up ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                              color: itemsWoW.up ? '#10B981' : '#EF4444',
+                              border: `1px solid ${itemsWoW.up ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                           }}
+                        >
+                           {itemsWoW.up ? '▲' : '▼'} {itemsWoW.up ? '+' : ''}{itemsWoW.pct.toFixed(1)}%
+                        </span>
+                     )}
+                  </div>
+                  <h3 className="mt-5 font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+                     Stock movement
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+                     Total items logged across the last 14 days
+                  </p>
+                  <div className="mt-5 w-full" style={{ height: 220 }}>
+                     {itemsLineData.length === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                           <p className="text-xs" style={{ color: 'var(--text-hint)' }}>No item data yet.</p>
+                        </div>
+                     ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                           <AreaChart data={itemsLineData} margin={{ top: 10, right: 15, bottom: 30, left: 10 }}>
+                              <defs>
+                                 <linearGradient id="itemsGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#D4A84B" stopOpacity={0.35} />
+                                    <stop offset="100%" stopColor="#D4A84B" stopOpacity={0} />
+                                 </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="4 4" stroke="var(--border-default)" vertical={false} />
+                              <XAxis
+                                 dataKey="label"
+                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
+                                 axisLine={{ stroke: 'var(--border-default)' }}
+                                 tickLine={false}
+                                 interval="preserveStartEnd"
+                                 minTickGap={30}
+                                 label={{
+                                    value: 'Date',
+                                    position: 'insideBottom',
+                                    offset: -15,
+                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600 },
+                                 }}
+                              />
+                              <YAxis
+                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
+                                 axisLine={{ stroke: 'var(--border-default)' }}
+                                 tickLine={false}
+                                 width={44}
+                                 allowDecimals={false}
+                                 label={{
+                                    value: 'Items',
+                                    angle: -90,
+                                    position: 'insideLeft',
+                                    offset: 5,
+                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600, textAnchor: 'middle' },
+                                 }}
+                              />
+                              <Tooltip
+                                 contentStyle={{
+                                    background: 'var(--surface-medium)',
+                                    border: '1px solid var(--border-default)',
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                 }}
+                                 cursor={{ stroke: 'var(--border-strong)' }}
+                              />
+                              <Area
+                                 type="monotone"
+                                 dataKey="value"
+                                 stroke="#D4A84B"
+                                 strokeWidth={2}
+                                 fill="url(#itemsGradient)"
+                                 name="Items"
+                              />
+                           </AreaChart>
+                        </ResponsiveContainer>
+                     )}
                   </div>
                </div>
-               <div className="lg:col-span-5 p-0">
-                  <div className={`animate-card-delay-6 ${PANEL} overflow-hidden`}>
-                     <div className="h-[2px] bg-gradient-to-r from-[#ef4444] via-[#ef4444]/30 to-transparent" />
-                     <div className="px-5 py-5 flex items-center justify-between">
-                        <h1 className={SECTION_TITLE} style={{ color: 'var(--text-primary)' }}>
-                           <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444] inline-block" />
-                           Due Returns
-                        </h1>
-                        <Link href="/admin/dashboard" className={VIEW_ALL}>
-                           View All
-                        </Link>
-                     </div>
-                     <Table
-                        data={allRequestsList?.slice(0, 5)}
-                        loading={IsRequestingRequests}
-                        columns={columns}
-                     />
+
+               {/* Generator Usage */}
+               <div className={CARD} style={CARD_STYLE}>
+                  <div className="flex items-start justify-between">
+                     <SectionLabel>Generator Usage</SectionLabel>
+                     {generatorTrendChange && (
+                        <span
+                           className="text-[0.65rem] font-semibold px-2 py-0.5 rounded-md tabular-nums"
+                           style={{
+                              background: generatorTrendChange.up ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                              color: generatorTrendChange.up ? '#10B981' : '#EF4444',
+                              border: `1px solid ${generatorTrendChange.up ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                           }}
+                        >
+                           {generatorTrendChange.up ? '▲' : '▼'} {generatorTrendChange.up ? '+' : ''}{generatorTrendChange.pct.toFixed(1)}%
+                        </span>
+                     )}
+                  </div>
+                  <h3 className="mt-5 font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+                     Generator logs filed
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+                     How often generator items were logged across the selected period
+                  </p>
+                  <div className="mt-5 w-full" style={{ height: 220 }}>
+                     {generatorTrendData.length === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                           <p className="text-xs" style={{ color: 'var(--text-hint)' }}>No generator data yet.</p>
+                        </div>
+                     ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                           <AreaChart data={generatorTrendData} margin={{ top: 10, right: 15, bottom: 30, left: 10 }}>
+                              <defs>
+                                 <linearGradient id="genGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#6B8FCC" stopOpacity={0.35} />
+                                    <stop offset="100%" stopColor="#6B8FCC" stopOpacity={0} />
+                                 </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="4 4" stroke="var(--border-default)" vertical={false} />
+                              <XAxis
+                                 dataKey="label"
+                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
+                                 axisLine={{ stroke: 'var(--border-default)' }}
+                                 tickLine={false}
+                                 interval="preserveStartEnd"
+                                 minTickGap={30}
+                                 label={{
+                                    value: 'Date',
+                                    position: 'insideBottom',
+                                    offset: -15,
+                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600 },
+                                 }}
+                              />
+                              <YAxis
+                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
+                                 axisLine={{ stroke: 'var(--border-default)' }}
+                                 tickLine={false}
+                                 width={44}
+                                 allowDecimals={false}
+                                 label={{
+                                    value: 'Uses',
+                                    angle: -90,
+                                    position: 'insideLeft',
+                                    offset: 5,
+                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600, textAnchor: 'middle' },
+                                 }}
+                              />
+                              <Tooltip
+                                 contentStyle={{
+                                    background: 'var(--surface-medium)',
+                                    border: '1px solid var(--border-default)',
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                 }}
+                                 cursor={{ stroke: 'var(--border-strong)' }}
+                              />
+                              <Area
+                                 type="monotone"
+                                 dataKey="value"
+                                 stroke="#6B8FCC"
+                                 strokeWidth={2}
+                                 fill="url(#genGradient)"
+                                 name="Uses"
+                              />
+                           </AreaChart>
+                        </ResponsiveContainer>
+                     )}
                   </div>
                </div>
             </div>
+
+            {/* Full-width Requests-over-time bar chart */}
+            <div className={CARD} style={CARD_STYLE}>
+               <SectionLabel>Requests</SectionLabel>
+               <div className="mt-5 w-full" style={{ height: 320 }}>
+                  {requestTrendData.length === 0 ? (
+                     <div className="h-full flex items-center justify-center">
+                        <p className="text-xs" style={{ color: 'var(--text-hint)' }}>No request data available yet.</p>
+                     </div>
+                  ) : (
+                     <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={requestTrendData} margin={{ top: 10, right: 15, bottom: 45, left: 15 }}>
+                           <CartesianGrid strokeDasharray="4 4" stroke="var(--border-default)" vertical={false} />
+                           <XAxis
+                              dataKey="month"
+                              tick={{ fill: 'var(--text-hint)', fontSize: 11 }}
+                              axisLine={{ stroke: 'var(--border-default)' }}
+                              tickLine={false}
+                              interval="preserveStartEnd"
+                              minTickGap={30}
+                              label={{
+                                 value: 'Period',
+                                 position: 'insideBottom',
+                                 offset: -15,
+                                 style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600 },
+                              }}
+                           />
+                           <YAxis
+                              tick={{ fill: 'var(--text-hint)', fontSize: 11 }}
+                              axisLine={{ stroke: 'var(--border-default)' }}
+                              tickLine={false}
+                              allowDecimals={false}
+                              label={{
+                                 value: 'Requests',
+                                 angle: -90,
+                                 position: 'insideLeft',
+                                 offset: 5,
+                                 style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600, textAnchor: 'middle' },
+                              }}
+                           />
+                           <Tooltip
+                              contentStyle={{
+                                 background: 'var(--surface-medium)',
+                                 border: '1px solid var(--border-default)',
+                                 borderRadius: 8,
+                                 fontSize: 12,
+                              }}
+                              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                           />
+                           <Legend
+                              iconType="square"
+                              wrapperStyle={{ fontSize: 12, color: 'var(--text-secondary)', paddingTop: 10 }}
+                           />
+                           <Bar dataKey="Requests" fill="#10B981" radius={[4, 4, 0, 0]} barSize={18} />
+                        </BarChart>
+                     </ResponsiveContainer>
+                  )}
+               </div>
+            </div>
+            </>
+            )}
          </Layout>
       </PrivateRoute>
    );

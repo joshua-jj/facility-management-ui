@@ -1,35 +1,34 @@
+import { PermissionAction } from '@/constants/rbac-modules.constant';
+
 export interface Permission {
    id: number;
-   name: string;
-   description?: string;
-   status?: string;
-   createdBy?: string;
-   createdAt?: string;
-   updatedAt?: string;
+   module: string;
+   action: PermissionAction;
+   description: string | null;
+   status: string;
+   createdBy: string | null;
+   createdAt: string;
+   updatedAt: string;
 }
 
-export interface PermissionForm {
-   name: string;
-   description?: string;
+export interface PermissionState {
+   permissions: Permission[];
+   availablePermissions: Permission[];
+   assignedPermissions: Permission[];
+   loading: boolean;
+   error: string | null;
+   success: boolean;
+   message: string | null;
 }
 
-export interface PermissionUpdateForm {
-   id: number;
-   name: string;
-   description?: string;
-}
-
-export interface CreatePermissionAction {
+export interface PermissionReduxAction {
    type: string;
-   data: PermissionForm;
-}
-
-export interface UpdatePermissionAction {
-   type: string;
-   data: PermissionUpdateForm;
-}
-
-export interface DeletePermissionAction {
-   type: string;
-   id: number;
+   permissions?: Permission[];
+   availablePermissions?: Permission[];
+   assignedPermissions?: Permission[];
+   roleId?: number;
+   message?: string;
+   error?: string;
+   loading?: boolean;
+   success?: boolean;
 }

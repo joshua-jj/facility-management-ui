@@ -21,6 +21,7 @@ import { authConstants, reportConstants } from '@/constants';
 import axios from 'axios';
 
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 
 const Reports = () => {
    const dispatch = useDispatch();
@@ -127,12 +128,29 @@ const Reports = () => {
          icon: VIEW_ICON,
          onClick: () => router.push(`/admin/reports/${row.id}`),
       },
+      {
+         label: 'Edit',
+         icon: EDIT_ICON,
+         onClick: () => router.push(`/admin/reports/${row.id}?edit=1`),
+      },
    ];
 
    const columns: Column<Report>[] = [
-      { key: 'complainerName', header: 'Complainer Name' },
+      {
+         key: 'complainerName',
+         header: 'Complainer',
+         render: (_value, row) => (
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+               {row.complainerName || '\u2014'}
+            </span>
+         ),
+      },
       { key: 'complaintSubject', header: 'Subject' },
-      { key: 'complainerEmail', header: 'Email' },
+      {
+         key: 'complainerEmail',
+         header: 'Email',
+         render: (value) => <span>{String(value ?? '\u2014')}</span>,
+      },
       {
          key: 'complainerPhone',
          header: 'Phone',
@@ -140,35 +158,32 @@ const Reports = () => {
       },
       {
          key: 'createdAt',
-         header: 'Date',
+         header: 'Submitted',
          render: (value) => (
-            <span>{value ? format(parseISO(String(value)), 'MMM d, yyyy') : '--'}</span>
+            <span>{value ? format(parseISO(String(value)), 'MMM d, yyyy') : '\u2014'}</span>
          ),
       },
       {
-         key: 'status',
+         key: 'summary',
          header: 'Status',
-         render: (value) => {
-            const statusStr = value ? String(value) : 'Pending';
-            return <StatusChip status={statusStr} />;
-         },
+         render: (_value, row) => (
+            <StatusChip status={row.summary?.complaintStatus || 'Pending'} />
+         ),
       },
       {
-         key: 'createdBy',
-         header: 'Created By',
-      },
-      {
-         key: 'updatedBy',
-         header: 'Modified By',
-         render: (value) => <span>{String(value || '\u2014')}</span>,
+         key: 'summary',
+         header: 'Attended',
+         render: (_value, row) => (
+            <StatusChip status={row.summary?.attendedTo ? 'Yes' : 'No'} />
+         ),
       },
       {
          key: 'updatedAt',
-         header: 'Modified At',
+         header: 'Last Updated',
          render: (value) => {
-            if (!value) return <span>{'\u2014'}</span>;
+            if (!value) return <span style={{ color: 'var(--text-hint)' }}>{'\u2014'}</span>;
             try { return <span>{format(parseISO(String(value)), 'MMM d, yyyy')}</span>; }
-            catch { return <span>{'\u2014'}</span>; }
+            catch { return <span style={{ color: 'var(--text-hint)' }}>{'\u2014'}</span>; }
          },
       },
       {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 import TextArea from '@/components/Inputs/TextArea';
@@ -25,23 +25,25 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [canSubmit, setCanSubmit] = useState(false);
    const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+   const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
 
    const openModal = () => setIsModalOpen(true);
-   const closeModal = () => setIsModalOpen(false);
+   const closeModal = useCallback(() => {
+      setIsModalOpen(false);
+      formRef.current?.reset();
+   }, []);
 
    const handleSubmit = (data: ReportForm) => {
       dispatch(reportActions.sendReport(data) as unknown as UnknownAction);
    };
 
    useEffect(() => {
-      const listener = AppEmitter.addListener(reportConstants.SEND_REPORT_SUCCESS, (evt: Event) => {
-         if (evt as CustomEvent) {
-            setIsModalOpen(false);
-            setIsSuccessOpen(true);
-         }
+      const listener = AppEmitter.addListener(reportConstants.SEND_REPORT_SUCCESS, () => {
+         closeModal();
+         setIsSuccessOpen(true);
       });
       return () => listener.remove();
-   }, []);
+   }, [closeModal]);
 
    return (
       <>
@@ -57,6 +59,7 @@ const Report: React.FC<ReportProps> = ({ className, children }) => {
             width="sm:w-[36rem]"
          >
             <Formsy
+               ref={formRef}
                onValidSubmit={handleSubmit}
                onValid={() => setCanSubmit(true)}
                onInvalid={() => setCanSubmit(false)}

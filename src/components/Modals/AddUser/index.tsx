@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 import PhoneInput from '@/components/Inputs/PhoneInput';
@@ -30,12 +30,20 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedRoleId, setSelectedRoleId] = useState('');
    const [selectedDeptId, setSelectedDeptId] = useState('');
+   const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
+
+   const resetForm = useCallback(() => {
+      setSelectedRoleId('');
+      setSelectedDeptId('');
+      formRef.current?.reset();
+   }, []);
 
    const openModal = () => setIsModalOpen(true);
-   const closeModal = () => {
+   const closeModal = useCallback(() => {
       setIsModalOpen(false);
+      resetForm();
       if (onClose) onClose();
-   };
+   }, [onClose, resetForm]);
 
    const roleOptions = (allRolesList ?? []).map((r) => ({ value: String(r.id), label: r.name }));
    const deptOptions = (allDepartmentsList ?? []).map((d) => ({ value: String(d.id), label: d.name }));
@@ -50,11 +58,11 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
    };
 
    useEffect(() => {
-      const listener = AppEmitter.addListener(userConstants.CREATE_USER_SUCCESS, (evt: Event) => {
-         if (evt as CustomEvent) setIsModalOpen(false);
+      const listener = AppEmitter.addListener(userConstants.CREATE_USER_SUCCESS, () => {
+         closeModal();
       });
       return () => listener.remove();
-   }, []);
+   }, [closeModal]);
 
    return (
       <>
@@ -70,6 +78,7 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
             width="sm:w-[36rem]"
          >
             <Formsy
+               ref={formRef}
                onValidSubmit={handleSubmit}
                onValid={() => setCanSubmit(true)}
                onInvalid={() => setCanSubmit(false)}

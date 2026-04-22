@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 import CurrencyInput from '@/components/Inputs/CurrencyInput';
@@ -40,12 +40,17 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    const [selectedItemId, setSelectedItemId] = useState<string>(
       maintenanceData?.servicedItem ? String(maintenanceData.servicedItem) : '',
    );
+   const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
 
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
       setIsModalOpen(false);
+      if (!maintenanceData) {
+         setSelectedItemId('');
+         formRef.current?.reset();
+      }
       if (onClose) onClose();
-   }, [onClose]);
+   }, [onClose, maintenanceData]);
 
    useEffect(() => {
       dispatch(itemActions.getDepartmentItems({ departmentId: 1 }) as unknown as UnknownAction);
@@ -68,14 +73,12 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    useEffect(() => {
       const listener = AppEmitter.addListener(
          maintenanceConstants.CREATE_MAINTENANCE_LOG_SUCCESS,
-         (evt: Event) => {
-            if (evt as CustomEvent) {
-               setIsModalOpen(false);
-            }
+         () => {
+            closeModal();
          },
       );
       return () => listener.remove();
-   }, []);
+   }, [closeModal]);
 
    const isOpen = open || isModalOpen;
 
@@ -93,6 +96,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
             width="sm:w-[36rem]"
          >
             <Formsy
+               ref={formRef}
                onValidSubmit={handleSubmit}
                onValid={() => setCanSubmit(true)}
                onInvalid={() => setCanSubmit(false)}

@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Formsy from 'formsy-react';
 import TextInput from '@/components/Inputs/TextInput';
 import ModalWrapper from '../ModalWrapper';
@@ -23,10 +23,12 @@ const AddStore: React.FC<AddItemModalProps> = ({ className, children, store, ope
    const { IsCreatingStore } = useSelector((state: RootState) => state.store);
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
+   const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
 
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
       setIsModalOpen(false);
+      formRef.current?.reset();
       if (onClose) onClose();
    }, [onClose]);
 
@@ -40,17 +42,16 @@ const AddStore: React.FC<AddItemModalProps> = ({ className, children, store, ope
    };
 
    useEffect(() => {
-      const listener = AppEmitter.addListener(storeConstants.CREATE_STORE_SUCCESS, (evt: Event) => {
-         if (evt as CustomEvent) setIsModalOpen(false);
+      const listener = AppEmitter.addListener(storeConstants.CREATE_STORE_SUCCESS, () => {
+         closeModal();
       });
-      return () => listener.remove();
-   }, []);
-
-   useEffect(() => {
-      const listener2 = AppEmitter.addListener(storeConstants.UPDATE_STORE_SUCCESS, (evt: Event) => {
-         if (evt as CustomEvent) closeModal();
+      const listener2 = AppEmitter.addListener(storeConstants.UPDATE_STORE_SUCCESS, () => {
+         closeModal();
       });
-      return () => listener2.remove();
+      return () => {
+         listener.remove();
+         listener2.remove();
+      };
    }, [closeModal]);
 
    return (
@@ -67,6 +68,7 @@ const AddStore: React.FC<AddItemModalProps> = ({ className, children, store, ope
             width="sm:w-[28rem]"
          >
             <Formsy
+               ref={formRef}
                onValidSubmit={handleSubmit}
                onValid={() => setCanSubmit(true)}
                onInvalid={() => setCanSubmit(false)}
