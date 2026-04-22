@@ -1,4 +1,6 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
+import axios from 'axios';
+import Cookies from 'js-cookie';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
@@ -10,6 +12,7 @@ import { RootState } from '@/redux/reducers';
 import LetteredAvatar from '@/components/LetteredAvatar';
 import { departmentActions } from '@/actions';
 import { useTheme } from '@/hooks/useTheme';
+import { userConstants } from '@/constants';
 
 const formatDate = (iso: string | undefined | null) => {
    if (!iso) return '—';
@@ -55,9 +58,10 @@ const Profile: FC = () => {
       (allDepartmentsList ?? []).find(
          (d: { id: number; name: string }) => d.id === userDetails?.departmentId,
       )?.name ?? 'Not assigned';
-   const memberSince = formatDate(
-      (userDetails as { createdAt?: string })?.createdAt,
+   const [memberSinceIso, setMemberSinceIso] = useState<string | null>(
+      (userDetails as { createdAt?: string })?.createdAt ?? null,
    );
+   const memberSince = formatDate(memberSinceIso);
 
    useEffect(() => {
       if (!allDepartmentsList || allDepartmentsList.length === 0) {
@@ -66,6 +70,23 @@ const Profile: FC = () => {
          );
       }
    }, [dispatch, allDepartmentsList]);
+
+   /** Fetch the full user record to get createdAt — login payload doesn't include it */
+   useEffect(() => {
+      const uid = userDetails?.id;
+      if (!uid || memberSinceIso) return;
+      const token = Cookies.get('authToken');
+      if (!token) return;
+      axios
+         .get(`${userConstants.USER_URI}/detail/${uid}`, {
+            headers: { Authorization: `Bearer ${token}` },
+         })
+         .then((resp) => {
+            const createdAt = resp?.data?.data?.createdAt;
+            if (createdAt) setMemberSinceIso(createdAt);
+         })
+         .catch(() => undefined);
+   }, [userDetails?.id, memberSinceIso]);
 
    return (
       <PrivateRoute>
