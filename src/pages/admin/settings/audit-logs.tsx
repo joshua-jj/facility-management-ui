@@ -1,14 +1,16 @@
 import React, { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
+import Formsy from 'formsy-react';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
+import DateInput from '@/components/Inputs/DateInput';
 import { RootState } from '@/redux/reducers';
 import { auditLogActions } from '@/actions';
 import { AuditLogEvent } from '@/types';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const ENTITY_TYPES = ['Request', 'Item', 'Complaint'] as const;
 const ACTIONS = [
@@ -134,88 +136,85 @@ const AuditLogs: FC = () => {
                   </div>
 
                   {/* Filter bar */}
-                  <div className="grid grid-cols-1 md:grid-cols-6 gap-3 bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 p-4">
-                     <div className="md:col-span-2">
-                        <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                           Search
-                        </label>
-                        <input
-                           type="text"
-                           placeholder="Search actor, action, entity…"
-                           value={q}
-                           onChange={(e) => setQ(e.target.value)}
-                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
-                        />
+                  <Formsy className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 p-4">
+                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                        <div className="md:col-span-2">
+                           <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
+                              Search
+                           </label>
+                           <input
+                              type="text"
+                              placeholder="Search actor, action, entity…"
+                              value={q}
+                              onChange={(e) => setQ(e.target.value)}
+                              className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
+                              Actor
+                           </label>
+                           <input
+                              type="text"
+                              placeholder="User name"
+                              value={actor}
+                              onChange={(e) => setActor(e.target.value)}
+                              className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
+                              Entity
+                           </label>
+                           <select
+                              value={entityType}
+                              onChange={(e) => setEntityType(e.target.value)}
+                              className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
+                           >
+                              <option value="">All</option>
+                              {ENTITY_TYPES.map((t) => (
+                                 <option key={t} value={t}>
+                                    {t}
+                                 </option>
+                              ))}
+                           </select>
+                        </div>
+                        <div>
+                           <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
+                              Action
+                           </label>
+                           <select
+                              value={action}
+                              onChange={(e) => setAction(e.target.value)}
+                              className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
+                           >
+                              <option value="">All</option>
+                              {ACTIONS.map((a) => (
+                                 <option key={a} value={a}>
+                                    {a}
+                                 </option>
+                              ))}
+                           </select>
+                        </div>
                      </div>
-                     <div>
-                        <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                           Actor
-                        </label>
-                        <input
-                           type="text"
-                           placeholder="User name"
-                           value={actor}
-                           onChange={(e) => setActor(e.target.value)}
-                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
-                        />
-                     </div>
-                     <div>
-                        <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                           Entity
-                        </label>
-                        <select
-                           value={entityType}
-                           onChange={(e) => setEntityType(e.target.value)}
-                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
-                        >
-                           <option value="">All</option>
-                           {ENTITY_TYPES.map((t) => (
-                              <option key={t} value={t}>
-                                 {t}
-                              </option>
-                           ))}
-                        </select>
-                     </div>
-                     <div>
-                        <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                           Action
-                        </label>
-                        <select
-                           value={action}
-                           onChange={(e) => setAction(e.target.value)}
-                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
-                        >
-                           <option value="">All</option>
-                           {ACTIONS.map((a) => (
-                              <option key={a} value={a}>
-                                 {a}
-                              </option>
-                           ))}
-                        </select>
-                     </div>
-                     <div>
-                        <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                           From
-                        </label>
-                        <input
-                           type="date"
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                        <DateInput
+                           name="from"
+                           label="From"
+                           placeholder="Select start date"
                            value={from}
-                           onChange={(e) => setFrom(e.target.value)}
-                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
+                           onValueChange={(val: string) => setFrom(val)}
                         />
-                     </div>
-                     <div>
-                        <label className="block text-[0.6rem] uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1">
-                           To
-                        </label>
-                        <input
-                           type="date"
+                        <DateInput
+                           name="to"
+                           label="To"
+                           placeholder="Select end date"
                            value={to}
-                           onChange={(e) => setTo(e.target.value)}
-                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-white/10 bg-transparent text-sm text-[#0F2552] dark:text-white/90 focus:outline-none focus:border-[#B28309]"
+                           onValueChange={(val: string) => setTo(val)}
+                           minDate={from || undefined}
                         />
                      </div>
-                  </div>
+                  </Formsy>
 
                   {/* Table */}
                   <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 overflow-hidden">
