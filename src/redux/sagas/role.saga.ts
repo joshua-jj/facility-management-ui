@@ -15,6 +15,7 @@ import {
    AddPermissionsToRoleAction,
    RemovePermissionsFromRoleAction,
 } from '@/actions/role.action';
+import { ReplaceRolePermissionsAction } from '@/types';
 
 function* getRoles({ data }: GetRolesAction) {
    yield put({ type: roleConstants.REQUEST_GET_ROLES });
@@ -322,6 +323,38 @@ function* removePermissionsFromRoleWatcher() {
    yield takeLatest(roleConstants.REMOVE_PERMISSIONS_FROM_ROLE, removePermissionsFromRole);
 }
 
+function* replaceRolePermissions({ data }: ReplaceRolePermissionsAction) {
+   try {
+      const { roleId, permissionIds } = data;
+      const uri = `${roleConstants.ROLE_URI}/${roleId}/permissions`;
+
+      const jsonResponse = yield* authenticatedRequest(uri, {
+         method: 'PATCH',
+         body: JSON.stringify({ permissionIds }),
+      });
+      if (!jsonResponse) return;
+
+      yield put({
+         type: roleConstants.REPLACE_ROLE_PERMISSIONS_SUCCESS,
+         message: (jsonResponse?.message as string) ?? 'Role permissions updated',
+         role: jsonResponse?.data,
+      });
+
+      const payload: SetSnackBarPayload = {
+         type: 'success',
+         message: (jsonResponse?.message as string) ?? 'Role permissions updated successfully',
+         variant: 'success',
+      };
+      yield put(appActions.setSnackBar(payload));
+   } catch (error: unknown) {
+      yield* handleSagaError(error, roleConstants.REPLACE_ROLE_PERMISSIONS_ERROR);
+   }
+}
+
+function* replaceRolePermissionsWatcher() {
+   yield takeLatest(roleConstants.REPLACE_ROLE_PERMISSIONS, replaceRolePermissions);
+}
+
 export default function* rootSaga() {
    yield all([
       getRolesWatcher(),
@@ -333,5 +366,6 @@ export default function* rootSaga() {
       getAssignedPermissionsWatcher(),
       addPermissionsToRoleWatcher(),
       removePermissionsFromRoleWatcher(),
+      replaceRolePermissionsWatcher(),
    ]);
 }

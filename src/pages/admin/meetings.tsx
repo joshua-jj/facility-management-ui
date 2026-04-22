@@ -11,6 +11,7 @@ import { meetingLocationActions } from '@/actions/meetingLocation.action';
 import { UnknownAction } from 'redux';
 import { Meeting } from '@/types/meeting';
 import AddMeeting from '@/components/Modals/AddMeeting';
+import ListStatsStrip from '@/components/ListStatsStrip';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
@@ -19,6 +20,13 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 
 const PAGE_LIMIT = 10;
 
+const VIEW_ICON = (
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+   </svg>
+);
+
 const EDIT_ICON = (
    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -26,12 +34,10 @@ const EDIT_ICON = (
    </svg>
 );
 
-const DELETE_ICON = (
+const DEACTIVATE_ICON = (
    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      <circle cx="12" cy="12" r="10" />
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
    </svg>
 );
 
@@ -146,21 +152,31 @@ const Meetings = () => {
       setEditTarget(null);
    };
 
-   const handleDelete = (row: Meeting) => {
-      if (!window.confirm(`Delete meeting "${row.name}"? This cannot be undone.`)) return;
+   const handleDeactivate = (row: Meeting) => {
+      if (!window.confirm(`Deactivate meeting "${row.name}"? It will be moved to inactive status.`)) return;
       dispatch(meetingActions.deleteMeeting(row.id) as unknown as UnknownAction);
    };
 
+   const openView = (row: Meeting) => {
+      setEditTarget(row);
+      setModalOpen(true);
+   };
+
    const getActions = (row: Meeting): ActionMenuItem[] => [
+      {
+         label: 'View',
+         icon: VIEW_ICON,
+         onClick: () => openView(row),
+      },
       {
          label: 'Edit',
          icon: EDIT_ICON,
          onClick: () => openEdit(row),
       },
       {
-         label: 'Delete',
-         icon: DELETE_ICON,
-         onClick: () => handleDelete(row),
+         label: 'Deactivate',
+         icon: DEACTIVATE_ICON,
+         onClick: () => handleDeactivate(row),
          variant: 'danger',
       },
    ];
@@ -221,17 +237,33 @@ const Meetings = () => {
       },
    ];
 
+   const activeMeetingCount = filteredMeetings.filter(
+      (m) => String(m.status).toUpperCase() === 'A' || String(m.status).toUpperCase() === 'ACTIVE',
+   ).length;
+   const uniqueLocationCount = new Set(
+      filteredMeetings.map((m) => m.location?.id).filter(Boolean),
+   ).size;
+
    return (
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Meetings">
             <PageHeader
                title="Meetings"
-               subtitle={`${meta.totalItems} meeting${meta.totalItems !== 1 ? 's' : ''}`}
+               subtitle="Manage scheduled meetings across facility locations"
                action={
                   <ActionButton variant="primary" onClick={openCreate}>
                      + Add Meeting
                   </ActionButton>
                }
+            />
+
+            <ListStatsStrip
+               tiles={[
+                  { label: 'Total', value: meta.totalItems, hint: 'Meetings' },
+                  { label: 'Active', value: activeMeetingCount, accent: '#10B981', hint: 'On this page' },
+                  { label: 'Locations', value: uniqueLocationCount, hint: 'Unique on this page' },
+                  { label: 'Page', value: `${meta.currentPage} / ${Math.max(meta.totalPages, 1)}` },
+               ]}
             />
 
             <DataTable

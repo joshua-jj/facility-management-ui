@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
+import ListStatsStrip from '@/components/ListStatsStrip';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { RootState } from '@/redux/reducers';
@@ -244,17 +245,31 @@ const Departments = () => {
       },
    ];
 
+   const activeCount = filteredDepartments.filter(
+      (d) => String(d.status).toUpperCase() === 'A' || String(d.status).toUpperCase() === 'ACTIVE',
+   ).length;
+   const hodCount = filteredDepartments.filter((d) => !!d.hodName).length;
+
    return (
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Departments">
             <PageHeader
                title="Departments"
-               subtitle={`${meta.totalItems} department${meta.totalItems !== 1 ? 's' : ''}`}
+               subtitle="Manage facility departments and their heads"
                action={
                   <AddDepartment className="text-start w-full cursor-pointer">
                      <ActionButton variant="primary">+ Add Department</ActionButton>
                   </AddDepartment>
                }
+            />
+
+            <ListStatsStrip
+               tiles={[
+                  { label: 'Total', value: meta.totalItems, hint: 'Departments' },
+                  { label: 'Active', value: activeCount, accent: '#10B981', hint: 'On this page' },
+                  { label: 'With HOD', value: hodCount, hint: 'Heads assigned' },
+                  { label: 'Page', value: `${meta.currentPage} / ${Math.max(meta.totalPages, 1)}` },
+               ]}
             />
 
             <DataTable

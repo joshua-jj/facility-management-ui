@@ -128,6 +128,18 @@ const IsRemovingPermissions = (state: LoadingState = false, action: Action): Loa
    }
 };
 
+const IsReplacingPermissions = (state: LoadingState = false, action: Action): LoadingState => {
+   switch (action.type) {
+      case roleConstants.REPLACE_ROLE_PERMISSIONS:
+         return true;
+      case roleConstants.REPLACE_ROLE_PERMISSIONS_SUCCESS:
+      case roleConstants.REPLACE_ROLE_PERMISSIONS_ERROR:
+         return false;
+      default:
+         return state;
+   }
+};
+
 const allRolesList = (state: RolesListState = [], action: Action): RolesListState => {
    switch (action.type) {
       case roleConstants.GET_ROLES_SUCCESS: {
@@ -139,6 +151,10 @@ const allRolesList = (state: RolesListState = [], action: Action): RolesListStat
          }
          return incoming;
       }
+      case roleConstants.REPLACE_ROLE_PERMISSIONS_SUCCESS: {
+         if (!action.role) return state;
+         return state.map((r: Role) => (r.id === action.role.id ? action.role : r));
+      }
       default:
          return state;
    }
@@ -148,6 +164,9 @@ const selectedRole = (state: Role | null = null, action: Action): Role | null =>
    switch (action.type) {
       case roleConstants.GET_ROLE_SUCCESS:
          return action.role ?? null;
+      case roleConstants.REPLACE_ROLE_PERMISSIONS_SUCCESS:
+         if (!action.role) return state;
+         return state?.id === action.role.id ? action.role : state;
       default:
          return state;
    }
@@ -192,12 +211,14 @@ const error = (state: string | null = null, action: Action): string | null => {
       case roleConstants.CREATE_ROLE_FAILURE:
       case roleConstants.UPDATE_ROLE_FAILURE:
       case roleConstants.DELETE_ROLE_FAILURE:
+      case roleConstants.REPLACE_ROLE_PERMISSIONS_ERROR:
          return action.error ?? null;
       case roleConstants.GET_ROLES_SUCCESS:
       case roleConstants.GET_ROLE_SUCCESS:
       case roleConstants.CREATE_ROLE_SUCCESS:
       case roleConstants.UPDATE_ROLE_SUCCESS:
       case roleConstants.DELETE_ROLE_SUCCESS:
+      case roleConstants.REPLACE_ROLE_PERMISSIONS_SUCCESS:
          return null;
       default:
          return state;
@@ -213,6 +234,7 @@ const rootReducer = combineReducers({
    IsFetchingAssignedPermissions,
    IsAddingPermissions,
    IsRemovingPermissions,
+   IsReplacingPermissions,
    allRolesList,
    selectedRole,
    availablePermissions,
