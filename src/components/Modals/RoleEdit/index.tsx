@@ -1,4 +1,5 @@
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Formsy from 'formsy-react';
@@ -178,9 +179,10 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
    };
 
    if (!isOpen) return null;
+   if (typeof document === 'undefined') return null; // SSR guard
 
-   return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+   return createPortal(
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1000] p-4">
          <div className="bg-white dark:bg-[#0e0e1a] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-white/10">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
                <h2 className="text-base font-bold text-[#0F2552] dark:text-white/90">
@@ -255,7 +257,8 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
                </div>
             </Formsy>
          </div>
-      </div>
+      </div>,
+      document.body,
    );
 };
 

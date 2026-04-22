@@ -1,4 +1,5 @@
 import React, { FC, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
@@ -62,9 +63,10 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
    }, [selectedRole]);
 
    if (!isOpen) return null;
+   if (typeof document === 'undefined') return null; // SSR guard
 
-   return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+   return createPortal(
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1000] p-4">
          <div className="bg-[#0e0e1a] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
@@ -119,7 +121,8 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
                <div className="p-6 text-sm text-white/60">Loading…</div>
             )}
          </div>
-      </div>
+      </div>,
+      document.body,
    );
 };
 
