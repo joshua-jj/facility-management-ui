@@ -1,4 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+import Cookies from 'js-cookie';
 import Formsy from 'formsy-react';
 import DateInput from '@/components/Inputs/DateInput';
 import SelectInput from '@/components/Inputs/SelectInput';
@@ -16,6 +18,8 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 import { generatorConstants } from '@/constants';
 import { format, parseISO } from 'date-fns';
 import { Meeting } from '@/types/meeting';
+
+const SERVICE_THRESHOLD_HOURS = 48;
 
 interface AddItemModalProps {
    children?: ReactNode;
@@ -70,6 +74,68 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    const [dieselUnit, setDieselUnit] = useState<DieselUnit>(
       (generatorLog?.dieselUnit as DieselUnit) ?? 'litres',
    );
+
+   // Auto-filled service schedule for the selected generator (read-only).
+   const [scheduleLastHour, setScheduleLastHour] = useState<number | null>(null);
+   const [scheduleNextHour, setScheduleNextHour] = useState<number | null>(null);
+
+   /** Fetch the service schedule when a generator is selected (create mode)
+    *  or on mount in edit mode. Auto-populates the read-only last/next fields. */
+   useEffect(() => {
+      const gid = generatorLog?.generatorTypeId
+         ? Number(generatorLog.generatorTypeId)
+         : selectedGeneratorId
+           ? Number(selectedGeneratorId)
+           : null;
+      if (!gid) {
+         setScheduleLastHour(null);
+         setScheduleNextHour(null);
+         return;
+      }
+      const token = Cookies.get('authToken');
+      if (!token) return;
+      let cancelled = false;
+      axios
+         .get(`${generatorConstants.GENERATOR_URI}/schedule/${gid}`, {
+            headers: { Authorization: `Bearer ${token}` },
+         })
+         .then((resp) => {
+            if (cancelled) return;
+            const data = resp?.data?.data;
+            setScheduleLastHour(
+               data?.lastServiceHour != null
+                  ? Number(data.lastServiceHour)
+                  : null,
+            );
+            setScheduleNextHour(
+               data?.nextServiceHour != null
+                  ? Number(data.nextServiceHour)
+                  : null,
+            );
+         })
+         .catch(() => {
+            if (!cancelled) {
+               setScheduleLastHour(null);
+               setScheduleNextHour(null);
+            }
+         });
+      return () => {
+         cancelled = true;
+      };
+   }, [selectedGeneratorId, generatorLog?.generatorTypeId]);
+
+   /** Remaining engine hours until the scheduled service window. Negative = overdue. */
+   const remainingHoursUntilService = useMemo((): number | null => {
+      if (scheduleNextHour == null) return null;
+      const eOff = engineOffHours ? Number(engineOffHours) : null;
+      if (eOff == null || !Number.isFinite(eOff)) return null;
+      return scheduleNextHour - eOff;
+   }, [scheduleNextHour, engineOffHours]);
+
+   /** True if this generator is within the service window — form is disabled. */
+   const isServiceOverdue =
+      remainingHoursUntilService != null &&
+      remainingHoursUntilService <= SERVICE_THRESHOLD_HOURS;
 
    /** Cross-field validation — each entry is null when OK, string when bad */
    const validationErrors = useMemo(() => {
@@ -394,12 +460,55 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
 
                <div className="my-2" style={{ borderTop: '1px solid var(--border-default)' }} />
 
-               {/* Bottom row — Service + Remark side by side */}
+               {/* Service schedule — read-only, auto-filled from DB */}
+               <p className="text-[0.55rem] uppercase font-semibold tracking-wider mb-0 mt-1" style={{ color: 'var(--text-hint)' }}>Service Schedule</p>
                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4">
-                  <DateInput name="lastServiceHour" label="Last Service" placeholder="Select date" value={formatDateTimeLocal(generatorLog?.lastServiceHour)} mode="datetime" />
-                  <DateInput name="nextServiceHour" label="Next Service" placeholder="Select date" value={formatDateTimeLocal(generatorLog?.nextServiceHour)} mode="datetime" />
+                  <div className="my-3">
+                     <label className="block md:text-sm text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>Last Service Hour</label>
+                     <div
+                        className="w-full px-3 py-2.5 rounded-lg text-sm"
+                        style={{
+                           background: 'var(--surface-medium)',
+                           border: '1px solid var(--border-strong)',
+                           color: scheduleLastHour != null ? 'var(--text-primary)' : 'var(--text-hint)',
+                        }}
+                     >
+                        {scheduleLastHour != null ? `${scheduleLastHour.toFixed(1)} hrs` : '— auto-filled'}
+                     </div>
+                  </div>
+                  <div className="my-3">
+                     <label className="block md:text-sm text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>Next Service Hour</label>
+                     <div
+                        className="w-full px-3 py-2.5 rounded-lg text-sm"
+                        style={{
+                           background: 'var(--surface-medium)',
+                           border: '1px solid var(--border-strong)',
+                           color: scheduleNextHour != null ? 'var(--text-primary)' : 'var(--text-hint)',
+                        }}
+                     >
+                        {scheduleNextHour != null ? `${scheduleNextHour.toFixed(1)} hrs` : '— auto-filled'}
+                     </div>
+                  </div>
                   <TextArea type="text" name="remark" label="Remark" placeholder="Notes" value={generatorLog?.remark || ''} required rows={2} />
                </div>
+
+               {/* Overdue banner + form disable */}
+               {isServiceOverdue && (
+                  <div
+                     role="alert"
+                     className="mt-3 px-4 py-3 rounded-lg border-2 font-semibold text-sm"
+                     style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        color: 'rgb(239, 68, 68)',
+                     }}
+                  >
+                     This generator is within {SERVICE_THRESHOLD_HOURS} engine hours of its scheduled service.
+                     <div className="font-normal text-xs mt-1 opacity-80">
+                        No new log can be filled till this generator is serviced. Facility HOD and Super Admins have been notified and will advance the service schedule once serviced.
+                     </div>
+                  </div>
+               )}
 
                {/* Submit */}
                <div className="flex justify-end pt-3 mt-1" style={{ borderTop: '1px solid var(--border-default)' }}>
@@ -412,7 +521,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                      Cancel
                   </button>
                   <button
-                     disabled={!canSubmit || hasValidationErrors}
+                     disabled={!canSubmit || hasValidationErrors || isServiceOverdue}
                      type="submit"
                      className="px-5 py-2 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                      style={{ background: 'var(--color-secondary)' }}
