@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { capitalizeFirstLetter, formatReadableDate, getObjectFromStorage } from '@/utilities/helpers';
 import { formatNumber } from '@/components/FormatValue';
-import { itemActions, storeActions } from '@/actions';
+import { appActions, itemActions, storeActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -16,6 +16,7 @@ import StatusChip from '@/components/StatusChip';
 import { DetailRow, DetailSection } from '@/components/DetailField';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import { AppEmitter } from '@/controllers/EventEmitter';
+import { generatorConstants } from '@/constants';
 
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
@@ -97,6 +98,88 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
    const [initialStores, setInitialStores] = useState(
       itemDetail?.itemUnits?.map((u) => String(u.store?.id) || '') || [],
    );
+
+   /* ── Generator-only: service schedule editor ── */
+   const isGenerator = (itemDetail?.name ?? '').toLowerCase().includes('generator');
+   const [lastServiceHour, setLastServiceHour] = useState<string>('');
+   const [nextServiceHour, setNextServiceHour] = useState<string>('');
+   const [initialLastServiceHour, setInitialLastServiceHour] = useState<string>('');
+   const [initialNextServiceHour, setInitialNextServiceHour] = useState<string>('');
+   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
+   const fetchSchedule = useCallback(async () => {
+      if (!isGenerator || !id) return;
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         const resp = await axios.get(
+            `${generatorConstants.GENERATOR_URI}/schedule/${id}`,
+            {
+               headers: {
+                  Accept: 'application/json',
+                  Authorization: user?.token ? `Bearer ${user.token}` : '',
+               },
+            },
+         );
+         const data = resp?.data?.data;
+         const last = data?.lastServiceHour != null ? String(data.lastServiceHour) : '';
+         const next = data?.nextServiceHour != null ? String(data.nextServiceHour) : '';
+         setLastServiceHour(last);
+         setNextServiceHour(next);
+         setInitialLastServiceHour(last);
+         setInitialNextServiceHour(next);
+      } catch {
+         /* noop — no schedule yet is fine */
+      }
+   }, [id, isGenerator]);
+
+   useEffect(() => {
+      fetchSchedule();
+   }, [fetchSchedule]);
+
+   const handleSaveSchedule = async () => {
+      if (!id) return;
+      setIsSavingSchedule(true);
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         const body: Record<string, number | null> = {
+            lastServiceHour: lastServiceHour === '' ? null : Number(lastServiceHour),
+            nextServiceHour: nextServiceHour === '' ? null : Number(nextServiceHour),
+         };
+         await axios.patch(
+            `${generatorConstants.GENERATOR_URI}/schedule/${id}`,
+            body,
+            {
+               headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: user?.token ? `Bearer ${user.token}` : '',
+               },
+            },
+         );
+         setInitialLastServiceHour(lastServiceHour);
+         setInitialNextServiceHour(nextServiceHour);
+         dispatch(
+            appActions.setSnackBar({
+               type: 'success',
+               message: 'Service schedule updated.',
+               variant: 'success',
+            }) as unknown as UnknownAction,
+         );
+      } catch {
+         dispatch(
+            appActions.setSnackBar({
+               type: 'error',
+               message: 'Failed to save service schedule.',
+               variant: 'error',
+            }) as unknown as UnknownAction,
+         );
+      } finally {
+         setIsSavingSchedule(false);
+      }
+   };
+
+   const scheduleChanged =
+      lastServiceHour !== initialLastServiceHour ||
+      nextServiceHour !== initialNextServiceHour;
 
    const arraysEqual = <T,>(a: T[], b: T[]) => a.length === b.length && a.every((v, i) => v === b[i]);
    const isUpdateDisabled = arraysEqual(selectedConditions, initialConditions) && arraysEqual(selectedStores, initialStores);
@@ -215,6 +298,78 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                   </div>
                </div>
             </div>
+
+            {/* ── Service Schedule (generators only) ── */}
+            {isGenerator && (
+               <DetailSection
+                  title="Service Schedule"
+                  action={
+                     <ActionButton
+                        variant="primary"
+                        onClick={handleSaveSchedule}
+                        disabled={!scheduleChanged || isSavingSchedule}
+                     >
+                        {isSavingSchedule ? (
+                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                           'Save Schedule'
+                        )}
+                     </ActionButton>
+                  }
+               >
+                  <div className="px-5 py-4">
+                     <p className="text-xs mb-4" style={{ color: 'var(--text-hint)' }}>
+                        Set this generator&apos;s current engine-hour readings. The Generator Log form will auto-fill these values.
+                     </p>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+                        <div>
+                           <label
+                              className="block text-[0.6rem] uppercase tracking-wider font-semibold mb-1.5"
+                              style={{ color: 'var(--text-hint)' }}
+                           >
+                              Last Service Hour
+                           </label>
+                           <input
+                              type="number"
+                              inputMode="decimal"
+                              step="0.1"
+                              value={lastServiceHour}
+                              onChange={(e) => setLastServiceHour(e.target.value)}
+                              placeholder="e.g. 1200"
+                              className="w-full px-3 py-2.5 rounded-lg text-sm tabular-nums"
+                              style={{
+                                 background: 'var(--surface-medium)',
+                                 border: '1px solid var(--border-strong)',
+                                 color: 'var(--text-primary)',
+                              }}
+                           />
+                        </div>
+                        <div>
+                           <label
+                              className="block text-[0.6rem] uppercase tracking-wider font-semibold mb-1.5"
+                              style={{ color: 'var(--text-hint)' }}
+                           >
+                              Next Service Hour
+                           </label>
+                           <input
+                              type="number"
+                              inputMode="decimal"
+                              step="0.1"
+                              value={nextServiceHour}
+                              onChange={(e) => setNextServiceHour(e.target.value)}
+                              placeholder="e.g. 1400"
+                              className="w-full px-3 py-2.5 rounded-lg text-sm tabular-nums"
+                              style={{
+                                 background: 'var(--surface-medium)',
+                                 border: '1px solid var(--border-strong)',
+                                 color: 'var(--text-primary)',
+                              }}
+                           />
+                        </div>
+                     </div>
+                  </div>
+               </DetailSection>
+            )}
 
             {/* ── Overview section ── */}
             <DetailSection title="Overview">

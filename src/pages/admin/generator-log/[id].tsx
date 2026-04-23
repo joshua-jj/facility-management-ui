@@ -24,6 +24,7 @@ interface GeneratorLogDetail {
    engineOffHours: string | null;
    dieselLevelOn: string | null;
    dieselLevelOff: string | null;
+   dieselUnit?: 'litres' | 'percentage' | null;
    lastServiceHour: string | null;
    nextServiceHour: string | null;
    dueForService: boolean;
@@ -202,6 +203,8 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
    const dieselOff = asNum(log.dieselLevelOff);
    const dieselConsumed =
       dieselOn != null && dieselOff != null ? dieselOn - dieselOff : null;
+   const dieselUnitLabel = log.dieselUnit === 'percentage' ? '%' : 'L';
+   const dieselUnitFull = log.dieselUnit === 'percentage' ? 'Percentage' : 'Litres';
 
    const nextService = asNum(log.nextServiceHour);
    const hoursUntilService =
@@ -290,15 +293,15 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                      }
                   />
                   <KpiTile
-                     label="Diesel Consumed"
+                     label={`Diesel Consumed (${dieselUnitFull})`}
                      value={
                         dieselConsumed != null
-                           ? `${dieselConsumed.toFixed(0)}`
+                           ? `${dieselConsumed.toFixed(0)} ${dieselUnitLabel}`
                            : '—'
                      }
                      hint={
                         dieselOn != null && dieselOff != null
-                           ? `${dieselOn} → ${dieselOff}`
+                           ? `${dieselOn} → ${dieselOff} ${dieselUnitLabel}`
                            : 'No reading'
                      }
                   />
@@ -422,13 +425,13 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                            mono
                         />
                         <Field
-                           label="Diesel Level On"
-                           value={log.dieselLevelOn}
+                           label={`Diesel Level On (${dieselUnitLabel})`}
+                           value={log.dieselLevelOn != null ? `${log.dieselLevelOn} ${dieselUnitLabel}` : undefined}
                            mono
                         />
                         <Field
-                           label="Diesel Level Off"
-                           value={log.dieselLevelOff}
+                           label={`Diesel Level Off (${dieselUnitLabel})`}
+                           value={log.dieselLevelOff != null ? `${log.dieselLevelOff} ${dieselUnitLabel}` : undefined}
                            mono
                         />
                      </div>
