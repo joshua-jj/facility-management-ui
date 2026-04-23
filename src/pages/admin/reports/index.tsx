@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { UnknownAction } from 'redux';
@@ -19,9 +19,9 @@ import { getObjectFromStorage } from '@/utilities/helpers';
 import { PhoneDisplay } from '@/components/FormatValue';
 import { authConstants, reportConstants } from '@/constants';
 import axios from 'axios';
+import { AppEmitter } from '@/controllers/EventEmitter';
 
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 
 const Reports = () => {
    const dispatch = useDispatch();
@@ -34,7 +34,7 @@ const Reports = () => {
    const { IsRequestingReports, allReportsList, pagination } = useSelector((s: RootState) => s.report);
    const meta = pagination?.meta ?? null;
 
-   useEffect(() => {
+   const fetchReports = useCallback(() => {
       dispatch(reportActions.getReports({
          page: currentPage,
          limit: 10,
@@ -45,6 +45,20 @@ const Reports = () => {
             : undefined,
       }) as unknown as UnknownAction);
    }, [dispatch, currentPage, searchQuery, filterValues]);
+
+   useEffect(() => {
+      fetchReports();
+   }, [fetchReports]);
+
+   // Re-fetch when any complaint is resolved or assigned on the detail page,
+   // so the Status column in this list reflects the new state.
+   useEffect(() => {
+      const listener = AppEmitter.addListener(
+         reportConstants.UPDATE_REPORT_SUCCESS,
+         () => fetchReports(),
+      );
+      return () => listener.remove();
+   }, [fetchReports]);
 
    const handleSearch = (query: string) => {
       setSearchQuery(query);
@@ -127,11 +141,6 @@ const Reports = () => {
          label: 'View',
          icon: VIEW_ICON,
          onClick: () => router.push(`/admin/reports/${row.id}`),
-      },
-      {
-         label: 'Edit',
-         icon: EDIT_ICON,
-         onClick: () => router.push(`/admin/reports/${row.id}?edit=1`),
       },
    ];
 

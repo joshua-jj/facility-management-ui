@@ -60,7 +60,16 @@ const IncidenceLogsPage = () => {
    const { IsRequestingIncidenceLogs, allIncidenceLogsList, pagination } = useSelector(
       (s: RootState) => s.incidenceLog,
    );
+   const { userDetails } = useSelector((s: RootState) => s.user);
    const { meta } = pagination;
+
+   const currentUserFullName = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
+   const isCreator = (row: IncidenceLog) => {
+      if (row.reportedByUserId && userDetails?.id) {
+         return row.reportedByUserId === userDetails.id;
+      }
+      return !!currentUserFullName && row.createdBy === currentUserFullName;
+   };
 
    const fetchLogs = useCallback(
       (page = 1) => {
@@ -101,24 +110,29 @@ const IncidenceLogsPage = () => {
       setModalOpen(true);
    };
 
-   const getActions = (row: IncidenceLog): ActionMenuItem[] => [
-      {
-         label: 'View',
-         icon: VIEW_ICON,
-         onClick: () => router.push(`/admin/incidence-log/${row.id}`),
-      },
-      {
-         label: 'Edit',
-         icon: EDIT_ICON,
-         onClick: () => openEdit(row),
-      },
-      {
+   const getActions = (row: IncidenceLog): ActionMenuItem[] => {
+      const actions: ActionMenuItem[] = [
+         {
+            label: 'View',
+            icon: VIEW_ICON,
+            onClick: () => router.push(`/admin/incidence-log/${row.id}`),
+         },
+      ];
+      if (isCreator(row)) {
+         actions.push({
+            label: 'Edit',
+            icon: EDIT_ICON,
+            onClick: () => openEdit(row),
+         });
+      }
+      actions.push({
          label: 'Deactivate',
          icon: DEACTIVATE_ICON,
          onClick: () => handleDeactivate(row),
          variant: 'danger',
-      },
-   ];
+      });
+      return actions;
+   };
 
    const columns: Column<IncidenceLog>[] = [
       {

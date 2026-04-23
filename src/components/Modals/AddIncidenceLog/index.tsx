@@ -1,4 +1,6 @@
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import axios from 'axios';
+import Cookies from 'js-cookie';
 import Formsy from 'formsy-react';
 import DateInput from '@/components/Inputs/DateInput';
 import SelectInput from '@/components/Inputs/SelectInput';
@@ -13,9 +15,18 @@ import {
    incidenceLogActions,
    meetingLocationActions,
 } from '@/actions';
-import { incidenceLogConstants } from '@/constants';
+import { incidenceLogConstants, userConstants } from '@/constants';
 import type { IncidenceLog, IncidenceLogForm } from '@/types/incidenceLog';
 import { format, parseISO } from 'date-fns';
+
+const FACILITY_DEPARTMENT_NAME = 'Facility';
+
+interface FacilityMember {
+   id: number;
+   firstName: string;
+   lastName: string;
+   email?: string;
+}
 
 interface Props {
    children?: ReactNode;
@@ -68,6 +79,10 @@ const AddIncidenceLog: React.FC<Props> = ({
    const [actionsTaken, setActionsTaken] = useState<string[]>(
       incidenceLog?.actionsTaken?.length ? [...incidenceLog.actionsTaken] : [''],
    );
+   const [reportedByUserId, setReportedByUserId] = useState<string>(
+      incidenceLog?.reportedByUserId ? String(incidenceLog.reportedByUserId) : '',
+   );
+   const [facilityMembers, setFacilityMembers] = useState<FacilityMember[]>([]);
 
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
@@ -79,6 +94,7 @@ const AddIncidenceLog: React.FC<Props> = ({
          setIncidents(['']);
          setConclusions(['']);
          setActionsTaken(['']);
+         setReportedByUserId('');
          formRef.current?.reset();
       }
       if (onClose) onClose();
@@ -88,6 +104,53 @@ const AddIncidenceLog: React.FC<Props> = ({
       dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
       dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
    }, [dispatch]);
+
+   /**
+    * Load everyone in the Facility department (members + HOD) so the Reported
+    * By dropdown can bind the report to a real user ID. We fetch once per
+    * modal open — cheap call, and the list is small in practice.
+    */
+   useEffect(() => {
+      if (!isModalOpen && !open) return;
+      const facility = (allDepartmentsList ?? []).find(
+         (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
+      );
+      if (!facility?.id) return;
+      const token = Cookies.get('authToken');
+      if (!token) return;
+      let cancelled = false;
+      axios
+         .get(`${userConstants.USER_URI}?departmentId=${facility.id}&limit=1000`, {
+            headers: { Authorization: `Bearer ${token}` },
+         })
+         .then((resp) => {
+            if (cancelled) return;
+            const items = resp?.data?.data?.items ?? resp?.data?.data ?? [];
+            setFacilityMembers(items as FacilityMember[]);
+         })
+         .catch(() => {
+            if (!cancelled) setFacilityMembers([]);
+         });
+      return () => {
+         cancelled = true;
+      };
+   }, [allDepartmentsList, isModalOpen, open]);
+
+   const reportedByOptions = useMemo(
+      () =>
+         (facilityMembers ?? []).map((m) => ({
+            value: String(m.id),
+            label: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || m.email || `User #${m.id}`,
+         })),
+      [facilityMembers],
+   );
+
+   const reportedByNameFromId = useMemo(() => {
+      const found = (facilityMembers ?? []).find(
+         (m) => String(m.id) === reportedByUserId,
+      );
+      return found ? `${found.firstName ?? ''} ${found.lastName ?? ''}`.trim() : '';
+   }, [facilityMembers, reportedByUserId]);
 
    useEffect(() => {
       const l1 = AppEmitter.addListener(incidenceLogConstants.CREATE_INCIDENCE_LOG_SUCCESS, () => closeModal());
@@ -107,7 +170,10 @@ const AddIncidenceLog: React.FC<Props> = ({
       label: l.name,
    }));
 
-   const handleSubmit = (data: { reportedBy: string }) => {
+   const handleSubmit = () => {
+      const reportedByName = incidenceLog
+         ? incidenceLog.reportedBy
+         : reportedByNameFromId;
       const payload: IncidenceLogForm = {
          id: incidenceLog?.id,
          incidenceDate: new Date(incidenceDate).toISOString(),
@@ -116,7 +182,12 @@ const AddIncidenceLog: React.FC<Props> = ({
          incidents: incidents.map((s) => s.trim()).filter(Boolean),
          conclusions: conclusions.map((s) => s.trim()).filter(Boolean),
          actionsTaken: actionsTaken.map((s) => s.trim()).filter(Boolean),
-         reportedBy: data.reportedBy,
+         reportedBy: reportedByName,
+         reportedByUserId: incidenceLog
+            ? (incidenceLog.reportedByUserId ?? undefined)
+            : reportedByUserId
+               ? Number(reportedByUserId)
+               : undefined,
       };
       if (incidenceLog?.id) {
          dispatch(incidenceLogActions.updateIncidenceLog(payload) as unknown as UnknownAction);
@@ -211,14 +282,26 @@ const AddIncidenceLog: React.FC<Props> = ({
 
                <div className="my-2" style={{ borderTop: '1px solid var(--border-default)' }} />
 
-               <TextInput
-                  type="text"
-                  name="reportedBy"
-                  label="Reported By"
-                  placeholder="Full name of the member filing the report"
-                  value={incidenceLog?.reportedBy ?? ''}
-                  required
-               />
+               {incidenceLog ? (
+                  <TextInput
+                     type="text"
+                     name="reportedBy"
+                     label="Reported By"
+                     placeholder="Reported by"
+                     value={incidenceLog.reportedBy ?? ''}
+                     disabled
+                  />
+               ) : (
+                  <SelectInput
+                     name="reportedByUserId"
+                     label="Reported By"
+                     placeholder="Select the member filing the report"
+                     options={reportedByOptions}
+                     value={reportedByUserId}
+                     onValueChange={(v) => setReportedByUserId(v)}
+                     required
+                  />
+               )}
 
                {/* Footer */}
                <div className="flex justify-end pt-3 mt-2" style={{ borderTop: '1px solid var(--border-default)' }}>
@@ -236,6 +319,7 @@ const AddIncidenceLog: React.FC<Props> = ({
                         !departmentId ||
                         !locationId ||
                         !incidenceDate ||
+                        (!incidenceLog && !reportedByUserId) ||
                         incidents.filter((s) => s.trim()).length === 0 ||
                         conclusions.filter((s) => s.trim()).length === 0 ||
                         actionsTaken.filter((s) => s.trim()).length === 0

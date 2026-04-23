@@ -144,16 +144,30 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    /** Cross-field validation — each entry is null when OK, string when bad */
    const validationErrors = useMemo(() => {
       const errs: Record<string, string | null> = {
+         onTime: null,
          offTime: null,
          engineOffHours: null,
          dieselLevelOn: null,
          dieselLevelOff: null,
       };
+      const nowTs = Date.now();
+      if (onTime) {
+         const on = new Date(onTime).getTime();
+         if (Number.isFinite(on) && on > nowTs) {
+            errs.onTime = 'On Time cannot be in the future.';
+         }
+      }
+      if (offTime) {
+         const off = new Date(offTime).getTime();
+         if (Number.isFinite(off) && off > nowTs) {
+            errs.offTime = 'Off Time cannot be in the future.';
+         }
+      }
       if (onTime && offTime) {
          const on = new Date(onTime).getTime();
          const off = new Date(offTime).getTime();
          if (Number.isFinite(on) && Number.isFinite(off) && off < on) {
-            errs.offTime = 'Off Time must be the same as or after On Time.';
+            errs.offTime = errs.offTime ?? 'Off Time must be the same as or after On Time.';
          }
       }
       const eStart = engineStartHours ? Number(engineStartHours) : null;
@@ -389,6 +403,9 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                         mode="datetime"
                         maxDate={todayIso()}
                      />
+                     {validationErrors.onTime && (
+                        <p className="text-red-500 text-xs -mt-1">{validationErrors.onTime}</p>
+                     )}
                   </div>
                   <div>
                      <DateInput

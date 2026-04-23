@@ -74,7 +74,16 @@ const DateInput: React.FC<DateInputProps> = (props) => {
       placeholder,
       errorMessage,
       isPristine,
+      minDate,
+      maxDate,
    } = props;
+
+   const isDayOutOfRange = (year: number, month: number, day: number): boolean => {
+      const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      if (maxDate && iso > maxDate) return true;
+      if (minDate && iso < minDate) return true;
+      return false;
+   };
 
    const [open, setOpen] = useState(false);
    const [viewYear, setViewYear] = useState(dayjs().year());
@@ -126,6 +135,7 @@ const DateInput: React.FC<DateInputProps> = (props) => {
    );
 
    const handleDayClick = (day: number) => {
+      if (isDayOutOfRange(viewYear, viewMonth, day)) return;
       const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       commitValue(dateStr);
       if (mode === 'date') setOpen(false);
@@ -159,6 +169,7 @@ const DateInput: React.FC<DateInputProps> = (props) => {
 
    const handleToday = () => {
       const now = dayjs();
+      if (isDayOutOfRange(now.year(), now.month(), now.date())) return;
       setViewYear(now.year());
       setViewMonth(now.month());
       handleDayClick(now.date());
@@ -262,24 +273,29 @@ const DateInput: React.FC<DateInputProps> = (props) => {
                      const day = i + 1;
                      const isToday = today.year() === viewYear && today.month() === viewMonth && today.date() === day;
                      const isSelected = selectedDay && selectedDay.year() === viewYear && selectedDay.month() === viewMonth && selectedDay.date() === day;
+                     const outOfRange = isDayOutOfRange(viewYear, viewMonth, day);
 
                      return (
                         <button
                            key={day}
                            type="button"
                            onClick={() => handleDayClick(day)}
-                           className="flex items-center justify-center w-8 h-8 mx-auto rounded-full text-xs font-medium transition-all cursor-pointer"
+                           disabled={outOfRange}
+                           className={`flex items-center justify-center w-8 h-8 mx-auto rounded-full text-xs font-medium transition-all ${
+                              outOfRange ? 'cursor-not-allowed' : 'cursor-pointer'
+                           }`}
                            style={{
                               background: isSelected
                                  ? 'var(--color-secondary)'
-                                 : isToday
+                                 : isToday && !outOfRange
                                    ? 'var(--surface-medium)'
                                    : 'transparent',
-                              color: isSelected
-                                 ? '#ffffff'
-                                 : isToday
-                                   ? 'var(--text-primary)'
+                              color: outOfRange
+                                 ? 'var(--text-hint)'
+                                 : isSelected
+                                   ? '#ffffff'
                                    : 'var(--text-primary)',
+                              opacity: outOfRange ? 0.35 : 1,
                               fontWeight: isToday || isSelected ? 700 : 400,
                            }}
                         >

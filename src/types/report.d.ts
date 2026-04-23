@@ -11,6 +11,8 @@ export interface ReportConstants {
   SEARCH_REPORT_SUCCESS: string;
   SEARCH_REPORT_ERROR: string;
 
+  UPDATE_REPORT_SUCCESS: string;
+
   SEND_REPORT: string;
   GET_REPORTS: string;
   SEARCH_REPORT: string;
