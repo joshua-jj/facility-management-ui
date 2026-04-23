@@ -197,8 +197,8 @@ const Reports = () => {
 
    return (
       <PrivateRoute allowedRoles={ALL_DATA_ROLES}>
-         <Layout title="Reports">
-            <PageHeader title="Reports" subtitle="View and manage complaint reports" />
+         <Layout title="Complaints">
+            <PageHeader title="Complaints" subtitle="View and manage complaints submitted through the facility" />
 
             <DataTable
                columns={columns}

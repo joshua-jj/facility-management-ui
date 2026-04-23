@@ -118,6 +118,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                      placeholder="Select date"
                      value={maintenanceData?.maintenanceDate || ''}
                      mode="date"
+                     maxDate={new Date().toISOString().split('T')[0]}
                   />
                </div>
 
