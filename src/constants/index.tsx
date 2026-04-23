@@ -13,3 +13,4 @@ export * from './user.constant';
 export * from './dashboard.constant';
 export * from './maintenanceSchedule.constant';
 export * from './meetingLocation.constant';
+export * from './incidenceLog.constant';

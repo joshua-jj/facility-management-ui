@@ -18,6 +18,7 @@ import meetingRootReducer from './meeting.reducer';
 import permissionRootReducer from './permission.reducer';
 import auditLogRootReducer from './auditLog.reducer';
 import securityRootReducer from './security.reducer';
+import incidenceLogRootReducer from './incidenceLog.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
@@ -39,6 +40,7 @@ const rootReducer = combineReducers({
   permission: permissionRootReducer,
   auditLog: auditLogRootReducer,
   security: securityRootReducer,
+  incidenceLog: incidenceLogRootReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
