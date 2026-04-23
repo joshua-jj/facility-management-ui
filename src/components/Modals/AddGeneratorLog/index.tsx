@@ -21,6 +21,9 @@ import { Meeting } from '@/types/meeting';
 
 const SERVICE_THRESHOLD_HOURS = 48;
 
+/** Prevents future-dated entries — today's date in ISO (yyyy-MM-dd). */
+const todayIso = () => new Date().toISOString().split('T')[0];
+
 interface AddItemModalProps {
    children?: ReactNode;
    className: string;
@@ -150,18 +153,18 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
          const on = new Date(onTime).getTime();
          const off = new Date(offTime).getTime();
          if (Number.isFinite(on) && Number.isFinite(off) && off < on) {
-            errs.offTime = 'Off Time must be on or after On Time.';
+            errs.offTime = 'Off Time must be the same as or after On Time.';
          }
       }
       const eStart = engineStartHours ? Number(engineStartHours) : null;
       const eOff = engineOffHours ? Number(engineOffHours) : null;
       if (eStart != null && eOff != null && eOff < eStart) {
-         errs.engineOffHours = 'Engine Off must be ≥ Engine Start.';
+         errs.engineOffHours = 'Engine Off must be the same as or greater than Engine Start.';
       }
       const dOn = dieselLevelOn ? Number(dieselLevelOn) : null;
       const dOff = dieselLevelOff ? Number(dieselLevelOff) : null;
       if (dOn != null && dOff != null && dOff > dOn) {
-         errs.dieselLevelOff = 'Diesel Off must be ≤ Diesel On (fuel decreases).';
+         errs.dieselLevelOff = 'Diesel Off must be the same as or less than Diesel On (fuel decreases as the engine runs).';
       }
       if (dieselUnit === 'percentage') {
          if (dOn != null && (dOn < 0 || dOn > 100))
@@ -384,6 +387,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                         onValueChange={(val: string) => setOnTime(val)}
                         required
                         mode="datetime"
+                        maxDate={todayIso()}
                      />
                   </div>
                   <div>
@@ -394,6 +398,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                         value={offTime}
                         onValueChange={(val: string) => setOffTime(val)}
                         mode="datetime"
+                        maxDate={todayIso()}
                      />
                      {validationErrors.offTime && (
                         <p className="text-red-500 text-xs -mt-1">{validationErrors.offTime}</p>

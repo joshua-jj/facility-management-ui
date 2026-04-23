@@ -162,8 +162,24 @@ const GeneratorLogs = () => {
             { key: 'hoursUsed', header: 'Hours Used' },
             { key: 'engineStartHours', header: 'Engine Start Hours' },
             { key: 'engineOffHours', header: 'Engine Off Hours' },
-            { key: 'dieselLevelOn', header: 'Diesel Level On' },
-            { key: 'dieselLevelOff', header: 'Diesel Level Off' },
+            {
+               key: 'dieselLevelOn',
+               header: 'Diesel Level On',
+               format: (v, row) => {
+                  if (v == null || v === '') return '';
+                  const unit = (row as { dieselUnit?: string }).dieselUnit === 'percentage' ? '%' : 'Litres';
+                  return `${v} ${unit}`;
+               },
+            },
+            {
+               key: 'dieselLevelOff',
+               header: 'Diesel Level Off',
+               format: (v, row) => {
+                  if (v == null || v === '') return '';
+                  const unit = (row as { dieselUnit?: string }).dieselUnit === 'percentage' ? '%' : 'Litres';
+                  return `${v} ${unit}`;
+               },
+            },
             { key: 'lastServiceHour', header: 'Last Service Hour' },
             { key: 'nextServiceHour', header: 'Next Service Hour' },
             { key: 'dueForService', header: 'Due For Service', format: (v) => (v ? 'Yes' : 'No') },
