@@ -40,13 +40,27 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    const [selectedItemId, setSelectedItemId] = useState<string>(
       maintenanceData?.servicedItem ? String(maintenanceData.servicedItem) : '',
    );
+   const [maintenanceDate, setMaintenanceDate] = useState<string>(
+      maintenanceData?.maintenanceDate || '',
+   );
    const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
+
+   const dateError = (() => {
+      if (!maintenanceDate) return null;
+      const picked = new Date(maintenanceDate).getTime();
+      if (!Number.isFinite(picked)) return null;
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      if (picked > endOfToday.getTime()) return 'Maintenance Date cannot be in the future.';
+      return null;
+   })();
 
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
       setIsModalOpen(false);
       if (!maintenanceData) {
          setSelectedItemId('');
+         setMaintenanceDate('');
          formRef.current?.reset();
       }
       if (onClose) onClose();
@@ -64,6 +78,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
 
    const handleSubmit = (data: MaintenanceForm) => {
       data.servicedItem = selectedItemId;
+      data.maintenanceDate = maintenanceDate;
       data.costOfMaintenance = Number(data.costOfMaintenance);
       data.signature = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
 
@@ -112,14 +127,21 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                      onValueChange={(val) => setSelectedItemId(val)}
                      required
                   />
-                  <DateInput
-                     name="maintenanceDate"
-                     label="Maintenance Date"
-                     placeholder="Select date"
-                     value={maintenanceData?.maintenanceDate || ''}
-                     mode="date"
-                     maxDate={new Date().toISOString().split('T')[0]}
-                  />
+                  <div>
+                     <DateInput
+                        name="maintenanceDate"
+                        label="Maintenance Date"
+                        placeholder="Select date"
+                        value={maintenanceDate}
+                        onValueChange={(val: string) => setMaintenanceDate(val)}
+                        required
+                        mode="date"
+                        maxDate={new Date().toISOString().split('T')[0]}
+                     />
+                     {dateError && (
+                        <p className="text-red-500 text-xs -mt-1">{dateError}</p>
+                     )}
+                  </div>
                </div>
 
                {/* Row 2 — Cost */}
@@ -174,7 +196,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                      Cancel
                   </button>
                   <button
-                     disabled={!canSubmit}
+                     disabled={!canSubmit || !!dateError}
                      type="submit"
                      className="px-5 py-2.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                      style={{ background: 'var(--color-secondary)' }}
