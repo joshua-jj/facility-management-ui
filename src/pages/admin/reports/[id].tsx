@@ -106,10 +106,10 @@ const initials = (name: string) =>
 const ReportDetailPage: NextPage<ReportDetailProps> = ({ report }) => {
    if (!report) {
       return (
-         <Layout title="Report Details">
+         <Layout title="Complaint Details">
             <div className="flex items-center justify-center h-64">
                <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
-                  Report not found.
+                  Complaint not found.
                </p>
             </div>
          </Layout>
@@ -127,16 +127,16 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report }) => {
         : '#EF4444';
 
    return (
-      <Layout title="Report Details">
+      <Layout title="Complaint Details">
          <div className="max-w-6xl mx-auto space-y-5">
-            <PageHeader title="Report Details" subtitle={`Report #${report.id}`} />
+            <PageHeader title="Complaint Details" subtitle={`Complaint #${report.id}`} />
 
             {/* ── Hero card ── */}
             <div className="rounded-2xl p-6 md:p-7" style={CARD_STYLE}>
                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
                   <div className="min-w-0 flex-1">
                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <SectionLabel>Report · #{report.id}</SectionLabel>
+                        <SectionLabel>Complaint · #{report.id}</SectionLabel>
                         <SectionLabel accent={statusAccent}>{complaintStatus}</SectionLabel>
                         {isAttended && <SectionLabel accent="#10B981">Attended</SectionLabel>}
                      </div>

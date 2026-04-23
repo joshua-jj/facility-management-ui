@@ -88,8 +88,15 @@ export const pageRoutes: PageRoute[] = [
     allowedRoles: ADMIN_ROLES,
   },
   {
+    id: 11,
+    label: 'incidence logs',
+    link: '/admin/incidence-log',
+    icon: <ReportsIcon />,
+    allowedRoles: ADMIN_ROLES,
+  },
+  {
     id: 9,
-    label: 'reports',
+    label: 'complaints',
     link: '/admin/reports',
     icon: <ReportsIcon />,
     allowedRoles: ADMIN_ROLES,
