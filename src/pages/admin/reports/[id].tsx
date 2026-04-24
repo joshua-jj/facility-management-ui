@@ -383,18 +383,15 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
    }, [dispatch, allDepartmentsList]);
 
    /**
-    * Assignee pool = every user whose departmentId === Facility.id. Per the
-    * data model, a user's department is a required assignment at user
-    * creation, so this cleanly maps to "Facility team members". If the HOD
-    * user isn't in the Facility dept (as is the case with the seeded HOD
-    * who sits under Super Admin), we also fetch them by department.hodEmail
-    * and prepend to the list.
+    * Assignee pool = every user with role=MEMBER on the app, plus the
+    * Facility HOD (resolved by Facility department hodEmail). This matches
+    * the product rule that any member of the Facility team can be assigned
+    * a complaint — users aren't strictly scoped to departments on the app.
     *
     * We fetch regardless of canAssign because other viewers still need the
     * list to resolve the assignee's display name in the timeline + audit.
     */
    useEffect(() => {
-      if (!facilityDepartment?.id) return;
       let cancelled = false;
       (async () => {
          try {
@@ -407,7 +404,7 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
             const requests: Promise<{ items: FacilityMember[] }>[] = [
                axios
                   .get(
-                     `${userConstants.USER_URI}?departmentId=${facilityDepartment.id}&limit=1000`,
+                     `${userConstants.USER_URI}?roleId=${RoleId.MEMBER}&limit=1000`,
                      { headers },
                   )
                   .then((r) => ({
@@ -454,7 +451,7 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
       return () => {
          cancelled = true;
       };
-   }, [facilityDepartment, facilityHodEmail]);
+   }, [facilityHodEmail]);
 
    const refetchReport = useCallback(async () => {
       if (!report?.id) return;
