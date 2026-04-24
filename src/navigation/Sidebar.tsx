@@ -4,11 +4,14 @@ import { createPortal } from 'react-dom';
 import { pageRoutes } from './pageRoutes';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import type { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 import Image from 'next/image';
-import { RoleIdValue } from '@/constants/roles.constant';
+import { RoleId, RoleIdValue } from '@/constants/roles.constant';
 import { useTheme } from '@/hooks/useTheme';
+import { usePermissions } from '@/hooks/usePermissions';
+import { departmentActions } from '@/actions';
 import { motion } from 'framer-motion';
 import LetterAvatar from '@/components/LetteredAvatar';
 
@@ -63,9 +66,23 @@ const ChevronRight = () => (
 
 const Sidebar = () => {
    const router = useRouter();
+   const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   const { isBackOffice, isFacilityTeam } = usePermissions();
    const { theme } = useTheme();
    const isDark = theme === 'dark';
+
+   // Sidebar is the first thing rendered for authenticated users, so it's
+   // a safe place to ensure the department list is loaded — the Facility
+   // gate in `filteredRoutes` below depends on it.
+   useEffect(() => {
+      if (!allDepartmentsList || allDepartmentsList.length === 0) {
+         dispatch(
+            departmentActions.getAllDepartments({ page: 1, limit: 200 }) as unknown as UnknownAction,
+         );
+      }
+   }, [dispatch, allDepartmentsList]);
 
    const [collapsed, setCollapsed] = useState(() => {
       if (typeof window !== 'undefined') {
@@ -111,8 +128,19 @@ const Sidebar = () => {
    );
 
    const filteredRoutes = pageRoutes.filter((route) => {
-      if (!route.allowedRoles) return true;
-      return route.allowedRoles.includes(userDetails?.roleId as RoleIdValue);
+      if (route.allowedRoles && !route.allowedRoles.includes(userDetails?.roleId as RoleIdValue)) {
+         return false;
+      }
+      // Facility-scoped routes stay visible for Super Admin / Admin, and
+      // for HOD / MEMBER only when they belong to the Facility department.
+      if (route.requiresFacilityTeam) {
+         const isScopedRole =
+            userDetails?.roleId === RoleId.HOD || userDetails?.roleId === RoleId.MEMBER;
+         if (isScopedRole && !isFacilityTeam && !isBackOffice) {
+            return false;
+         }
+      }
+      return true;
    });
 
    const fullName =

@@ -21,6 +21,12 @@ export interface PageRoute {
   icon: React.ReactNode;
   allowedRoles: readonly number[];
   section?: string;
+  /**
+   * When true, non-backoffice roles (HOD / MEMBER) are only shown this
+   * route if they belong to the Facility department. Super Admin and
+   * Admin always see Facility-scoped routes because they own the app.
+   */
+  requiresFacilityTeam?: boolean;
 }
 
 /**
@@ -88,6 +94,7 @@ export const pageRoutes: PageRoute[] = [
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER],
+    requiresFacilityTeam: true,
   },
   {
     id: 8,
