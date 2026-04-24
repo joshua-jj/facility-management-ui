@@ -23,6 +23,7 @@ import { getObjectFromStorage } from '@/utilities/helpers';
 import { NumberDisplay } from '@/components/FormatValue';
 import { authConstants, itemConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
+import { usePermissions } from '@/hooks/usePermissions';
 import axios from 'axios';
 import { format, parseISO } from 'date-fns';
 
@@ -35,6 +36,7 @@ const DEPARTMENT_SCOPED_ROLES: RoleIdValue[] = [RoleId.HOD, RoleId.MEMBER];
 const Items = () => {
    const router = useRouter();
    const dispatch = useDispatch();
+   const { isBackOffice } = usePermissions();
 
    const [showAddModal, setShowAddModal] = useState(false);
    const [editItemData, setEditItemData] = useState<Item | null>(null);
@@ -279,25 +281,34 @@ const Items = () => {
    }, []);
 
    const getActions = useCallback(
-      (row: Item): ActionMenuItem[] => [
-         {
-            label: 'View',
-            icon: VIEW_ICON,
-            onClick: () => handleView(row),
-         },
-         {
-            label: 'Edit',
-            icon: EDIT_ICON,
-            onClick: () => handleEdit(row),
-         },
-         {
-            label: 'Delete',
-            icon: DELETE_ICON,
-            onClick: () => handleDelete(row),
-            variant: 'danger',
-         },
-      ],
-      [handleView, handleEdit, handleDelete],
+      (row: Item): ActionMenuItem[] => {
+         const actions: ActionMenuItem[] = [
+            {
+               label: 'View',
+               icon: VIEW_ICON,
+               onClick: () => handleView(row),
+            },
+         ];
+         // Per spec: only SUPER_ADMIN and ADMIN can edit or delete items.
+         // HOD is view-only (list already filtered to their dept server-side).
+         if (isBackOffice) {
+            actions.push(
+               {
+                  label: 'Edit',
+                  icon: EDIT_ICON,
+                  onClick: () => handleEdit(row),
+               },
+               {
+                  label: 'Delete',
+                  icon: DELETE_ICON,
+                  onClick: () => handleDelete(row),
+                  variant: 'danger',
+               },
+            );
+         }
+         return actions;
+      },
+      [handleView, handleEdit, handleDelete, isBackOffice],
    );
 
    // ── Columns ──
@@ -392,6 +403,7 @@ const Items = () => {
             <PageHeader
                subtitle={`Manage your inventory items${isDepartmentScoped ? ' for your department' : ''}`}
                action={
+                  isBackOffice ? (
                   <ActionButton
                      variant="primary"
                      onClick={() => setShowAddModal(true)}
@@ -403,6 +415,7 @@ const Items = () => {
                   >
                      Add Item
                   </ActionButton>
+                  ) : null
                }
             />
 

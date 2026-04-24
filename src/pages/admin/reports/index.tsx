@@ -12,7 +12,8 @@ import PageHeader from '@/components/PageHeader';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
-import { ALL_DATA_ROLES } from '@/constants/roles.constant';
+import { RoleId } from '@/constants/roles.constant';
+import { usePermissions } from '@/hooks/usePermissions';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
@@ -22,10 +23,12 @@ import axios from 'axios';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
 
 const Reports = () => {
    const dispatch = useDispatch();
    const router = useRouter();
+   const { isBackOffice } = usePermissions();
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
@@ -136,13 +139,58 @@ const Reports = () => {
    // Server-side filtered — data returned directly from the API
    const filteredReports = useMemo(() => allReportsList ?? [], [allReportsList]);
 
-   const getActions = (row: Report): ActionMenuItem[] => [
-      {
-         label: 'View',
-         icon: VIEW_ICON,
-         onClick: () => router.push(`/admin/reports/${row.id}`),
-      },
-   ];
+   const handleDelete = async (row: Report) => {
+      if (!window.confirm(`Deactivate complaint #${row.id}?`)) return;
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         await axios.patch(
+            `${reportConstants.REPORT_URI}/deactivate`,
+            { ids: [row.id] },
+            {
+               headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: user?.token ? `Bearer ${user.token}` : '',
+               },
+            },
+         );
+         dispatch(
+            appActions.setSnackBar({
+               type: 'success',
+               message: 'Complaint deactivated.',
+               variant: 'success',
+            }) as unknown as UnknownAction,
+         );
+         fetchReports();
+      } catch {
+         dispatch(
+            appActions.setSnackBar({
+               type: 'error',
+               message: 'Failed to deactivate complaint.',
+               variant: 'error',
+            }) as unknown as UnknownAction,
+         );
+      }
+   };
+
+   const getActions = (row: Report): ActionMenuItem[] => {
+      const actions: ActionMenuItem[] = [
+         {
+            label: 'View',
+            icon: VIEW_ICON,
+            onClick: () => router.push(`/admin/reports/${row.id}`),
+         },
+      ];
+      // Per spec: only SUPER_ADMIN / ADMIN may delete complaints.
+      if (isBackOffice) {
+         actions.push({
+            label: 'Delete',
+            icon: DELETE_ICON,
+            onClick: () => handleDelete(row),
+            variant: 'danger',
+         });
+      }
+      return actions;
+   };
 
    const columns: Column<Report>[] = [
       {
@@ -205,7 +253,7 @@ const Reports = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={ALL_DATA_ROLES}>
+      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER]}>
          <Layout title="Complaints">
             <PageHeader subtitle="View and manage complaints submitted through the facility" />
 

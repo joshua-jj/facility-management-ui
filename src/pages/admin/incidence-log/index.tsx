@@ -15,10 +15,8 @@ import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddIncidenceLog from '@/components/Modals/AddIncidenceLog';
 import ListStatsStrip from '@/components/ListStatsStrip';
-import { ADMIN_ROLES, RoleId } from '@/constants/roles.constant';
-import { departmentActions } from '@/actions';
-
-const FACILITY_DEPARTMENT_NAME = 'Facility';
+import { RoleId } from '@/constants/roles.constant';
+import { usePermissions } from '@/hooks/usePermissions';
 import { incidenceLogConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -63,38 +61,12 @@ const IncidenceLogsPage = () => {
    const { IsRequestingIncidenceLogs, allIncidenceLogsList, pagination } = useSelector(
       (s: RootState) => s.incidenceLog,
    );
-   const { userDetails } = useSelector((s: RootState) => s.user);
-   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { meta } = pagination;
+   const { isBackOffice, isMember, isHod, userId } = usePermissions();
 
-   useEffect(() => {
-      if (!allDepartmentsList || allDepartmentsList.length === 0) {
-         dispatch(
-            departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction,
-         );
-      }
-   }, [dispatch, allDepartmentsList]);
-
-   const facilityDepartment = (allDepartmentsList ?? []).find(
-      (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
-   );
-   const isSuperAdmin = userDetails?.roleId === RoleId.SUPER_ADMIN;
-   const isFacilityHod =
-      userDetails?.roleId === RoleId.HOD &&
-      ((!!facilityDepartment?.hodEmail &&
-         !!userDetails?.email &&
-         userDetails.email.toLowerCase() === facilityDepartment.hodEmail.toLowerCase()) ||
-         (!!facilityDepartment?.id &&
-            userDetails?.departmentId === facilityDepartment.id));
-   const canDeactivate = isSuperAdmin || isFacilityHod;
-
-   const currentUserFullName = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
-   const isCreator = (row: IncidenceLog) => {
-      if (row.reportedByUserId && userDetails?.id) {
-         return row.reportedByUserId === userDetails.id;
-      }
-      return !!currentUserFullName && row.createdBy === currentUserFullName;
-   };
+   // Per spec: only the member who FILED the report may edit it.
+   const isReporter = (row: IncidenceLog) =>
+      !!userId && row.reportedByUserId === userId;
 
    const fetchLogs = useCallback(
       (page = 1) => {
@@ -143,21 +115,26 @@ const IncidenceLogsPage = () => {
             onClick: () => router.push(`/admin/incidence-log/${row.id}`),
          },
       ];
-      if (isCreator(row)) {
+      // Edit reserved for the member who filed the report; HOD is strictly
+      // view-only and SUPER_ADMIN / ADMIN don't edit incident reports per spec.
+      if (isMember && isReporter(row)) {
          actions.push({
             label: 'Edit',
             icon: EDIT_ICON,
             onClick: () => openEdit(row),
          });
       }
-      if (canDeactivate) {
+      // Delete is reserved for SUPER_ADMIN / ADMIN.
+      if (isBackOffice) {
          actions.push({
-            label: 'Deactivate',
+            label: 'Delete',
             icon: DEACTIVATE_ICON,
             onClick: () => handleDeactivate(row),
             variant: 'danger',
          });
       }
+      // Silence lint for unused flag; kept for readability.
+      void isHod;
       return actions;
    };
 
@@ -225,14 +202,16 @@ const IncidenceLogsPage = () => {
    ).size;
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER]}>
          <Layout title="Incidence Logs">
             <PageHeader
                subtitle="Facility incident reports — each report emails the focus department HOD and senior leadership"
                action={
-                  <AddIncidenceLog className="text-start w-full cursor-pointer">
-                     <ActionButton variant="primary">+ New Report</ActionButton>
-                  </AddIncidenceLog>
+                  isHod ? null : (
+                     <AddIncidenceLog className="text-start w-full cursor-pointer">
+                        <ActionButton variant="primary">+ New Report</ActionButton>
+                     </AddIncidenceLog>
+                  )
                }
             />
 
