@@ -8,36 +8,55 @@ const ROUTE_LABELS: Record<string, string> = {
    admin: 'Admin',
    dashboard: 'Dashboard',
    requests: 'Requests',
-   request: 'Request Detail',
+   request: 'Request',
    items: 'Items',
-   item: 'Item Detail',
+   item: 'Item',
    store: 'Stores',
    departments: 'Departments',
+   meetings: 'Meetings',
+   'meeting-locations': 'Meeting Locations',
    'maintenance-log': 'Maintenance Logs',
    'generator-log': 'Generator Logs',
-   reports: 'Reports',
+   'incidence-log': 'Incidence Log',
+   reports: 'Complaints',
    users: 'User Management',
-   'settings': 'Settings',
+   settings: 'Settings',
 };
 
-function buildBreadcrumbs(pathname: string) {
+interface Crumb {
+   label: string;
+   href: string;
+   clickable: boolean;
+}
+
+function buildBreadcrumbs(pathname: string): Crumb[] {
    const segments = pathname.split('/').filter(Boolean);
-   const crumbs: { label: string; href: string }[] = [];
+   const crumbs: Crumb[] = [];
 
    let path = '';
    for (let i = 0; i < segments.length; i++) {
       const seg = segments[i];
       path += `/${seg}`;
 
-      // Skip dynamic [id] segments in the URL but label them
-      if (seg.startsWith('[') || /^\d+$/.test(seg)) {
-         // Replace the previous crumb label to be the parent + keep detail label
-         crumbs.push({ label: `#${seg.replace(/[\[\]]/g, '')}`, href: path });
+      const isDynamicId = seg.startsWith('[') || /^\d+$/.test(seg);
+      if (isDynamicId) {
+         // Inject a non-clickable "Details" step so the breadcrumb reads
+         // Admin > <Section> > Details > #<id>. This marks the current view
+         // as a detail page without requiring each page to pass it manually.
+         const parentPath = path.slice(0, path.lastIndexOf('/')) || '/';
+         crumbs.push({ label: 'Details', href: parentPath, clickable: false });
+         crumbs.push({
+            label: `#${seg.replace(/[[\]]/g, '')}`,
+            href: path,
+            clickable: true,
+         });
          continue;
       }
 
-      const label = ROUTE_LABELS[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' ');
-      crumbs.push({ label, href: path });
+      const label =
+         ROUTE_LABELS[seg] ??
+         seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' ');
+      crumbs.push({ label, href: path, clickable: true });
    }
 
    return crumbs;
@@ -54,13 +73,12 @@ const Breadcrumbs: React.FC = () => {
       let href = crumb.href;
       let label = crumb.label;
 
-      // Replace [id] in href with actual query param
       if (router.query.id && href.includes('[id]')) {
          href = href.replace('[id]', String(router.query.id));
          label = `#${router.query.id}`;
       }
 
-      return { label, href };
+      return { ...crumb, href, label };
    });
 
    if (actualCrumbs.length <= 1) return null;
@@ -71,14 +89,22 @@ const Breadcrumbs: React.FC = () => {
             {actualCrumbs.map((crumb, i) => {
                const isLast = i === actualCrumbs.length - 1;
                return (
-                  <li key={crumb.href} className="flex items-center gap-1.5">
+                  <li key={`${crumb.href}-${i}`} className="flex items-center gap-1.5">
                      {i > 0 && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-300 dark:text-white/15">
                            <polyline points="9 18 15 12 9 6" />
                         </svg>
                      )}
-                     {isLast ? (
-                        <span className="font-medium text-[#0F2552] dark:text-white/70">{crumb.label}</span>
+                     {isLast || !crumb.clickable ? (
+                        <span
+                           className={
+                              isLast
+                                 ? 'font-medium text-[#0F2552] dark:text-white/70'
+                                 : 'text-gray-400 dark:text-white/35'
+                           }
+                        >
+                           {crumb.label}
+                        </span>
                      ) : (
                         <Link
                            href={crumb.href}
@@ -98,22 +124,44 @@ const Breadcrumbs: React.FC = () => {
 // ── PageHeader ──
 
 interface PageHeaderProps {
-   title: string;
+   title?: string;
    subtitle?: string;
    action?: React.ReactNode;
    className?: string;
    showBreadcrumbs?: boolean;
 }
 
-const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, action, className = '', showBreadcrumbs = true }) => {
+/**
+ * Detail pages use breadcrumbs + action only (no title/subtitle), so this
+ * component lays out the header in two rows: breadcrumb + action on the top
+ * row, then an optional title/subtitle row beneath. When no title is passed
+ * (typical for detail pages), only the breadcrumb/action row is rendered.
+ */
+const PageHeader: React.FC<PageHeaderProps> = ({
+   title,
+   subtitle,
+   action,
+   className = '',
+   showBreadcrumbs = true,
+}) => {
    return (
       <div className={`mb-6 ${className}`}>
-         {showBreadcrumbs && <Breadcrumbs />}
          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-               <h1 className="text-lg font-bold text-[#0F2552] dark:text-white/90 capitalize">{title}</h1>
+            <div className="min-w-0 flex-1">
+               {showBreadcrumbs && <Breadcrumbs />}
+               {title && (
+                  <h1 className="text-lg font-bold text-[#0F2552] dark:text-white/90 capitalize">
+                     {title}
+                  </h1>
+               )}
                {subtitle && (
-                  <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">{subtitle}</p>
+                  <p
+                     className={`text-xs text-gray-400 dark:text-white/40 ${
+                        title ? 'mt-0.5' : 'mt-1'
+                     }`}
+                  >
+                     {subtitle}
+                  </p>
                )}
             </div>
             {action && <div className="flex items-center gap-2 shrink-0">{action}</div>}

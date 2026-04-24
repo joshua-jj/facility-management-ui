@@ -137,8 +137,6 @@ const DepartmentDetailPage: NextPage<DepartmentDetailProps> = ({ department }) =
       <Layout title="Department Details">
          <div className="max-w-6xl mx-auto space-y-5">
             <PageHeader
-               title="Department Details"
-               subtitle={`Department #${department.id}`}
                action={
                   <ActionButton variant="outline" onClick={() => router.back()}>
                      Back

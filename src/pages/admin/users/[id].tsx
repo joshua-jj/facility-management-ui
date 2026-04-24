@@ -74,7 +74,7 @@ const UserDetailPage: NextPage<UserDetailProps> = ({ user }) => {
    return (
       <Layout title="User Details">
          <div className="max-w-4xl mx-auto space-y-5">
-            <PageHeader title="User Details" />
+            <PageHeader />
 
             {/* Header card */}
             <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/8 shadow-sm p-5 sm:p-6">

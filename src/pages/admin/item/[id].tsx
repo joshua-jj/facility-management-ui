@@ -281,7 +281,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
    return (
       <Layout title="Item Details">
          <div className="max-w-5xl mx-auto space-y-5">
-            <PageHeader title="Item Details" showBreadcrumbs />
+            <PageHeader />
             {/* ── Back button ── */}
             <button
                onClick={() => router.back()}

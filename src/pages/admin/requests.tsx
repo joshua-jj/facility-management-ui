@@ -285,7 +285,7 @@ const Requests = () => {
       <PrivateRoute>
          <Layout title="Requests">
             <div className="space-y-6">
-               <PageHeader title="Requests" />
+               <PageHeader />
 
                <div
                   className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200

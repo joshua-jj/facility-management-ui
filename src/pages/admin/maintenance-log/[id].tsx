@@ -126,7 +126,7 @@ const MaintenanceLogDetailPage: NextPage<MaintenanceLogDetailProps> = ({ log }) 
    return (
       <Layout title="Maintenance Log Details">
          <div className="max-w-6xl mx-auto space-y-5">
-            <PageHeader title="Maintenance Log Details" subtitle={`Log #${log.id}`} />
+            <PageHeader />
 
             {/* Hero card with cost as prominent metric */}
             <div className="rounded-2xl p-6 md:p-7" style={CARD_STYLE}>
