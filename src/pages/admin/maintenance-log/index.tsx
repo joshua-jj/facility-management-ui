@@ -13,7 +13,8 @@ import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
+import { RoleId } from '@/constants/roles.constant';
+import { usePermissions } from '@/hooks/usePermissions';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { CurrencyDisplay, PhoneDisplay } from '@/components/FormatValue';
 import { exportToCsv } from '@/utilities/exportCsv';
@@ -77,6 +78,7 @@ const filters: FilterDef[] = [
 
 const MaintenanceLogs = () => {
    const dispatch = useDispatch();
+   const { isBackOffice, isHod, isMember, isAuthor } = usePermissions();
    const router = useRouter();
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
@@ -182,18 +184,26 @@ const MaintenanceLogs = () => {
       }
    };
 
-   const getActions = (row: MaintenanceLog): ActionMenuItem[] => [
-      {
-         label: 'View',
-         icon: VIEW_ICON,
-         onClick: () => router.push(`/admin/maintenance-log/${row.id}`),
-      },
-      {
-         label: 'Edit',
-         icon: EDIT_ICON,
-         onClick: () => handleUpdate(row),
-      },
-   ];
+   const getActions = (row: MaintenanceLog): ActionMenuItem[] => {
+      const actions: ActionMenuItem[] = [
+         {
+            label: 'View',
+            icon: VIEW_ICON,
+            onClick: () => router.push(`/admin/maintenance-log/${row.id}`),
+         },
+      ];
+      // Per spec: SUPER_ADMIN / ADMIN can always edit. MEMBER can only edit
+      // logs they created. HOD is strictly view-only.
+      const canEdit = isBackOffice || (isMember && isAuthor(row as unknown as { createdBy?: string }));
+      if (canEdit) {
+         actions.push({
+            label: 'Edit',
+            icon: EDIT_ICON,
+            onClick: () => handleUpdate(row),
+         });
+      }
+      return actions;
+   };
 
    const columns: Column<MaintenanceLog>[] = [
       {
@@ -252,11 +262,15 @@ const MaintenanceLogs = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER]}>
          <Layout title="Maintenance Logs">
             <PageHeader
                subtitle="Track facility maintenance activities"
-               action={<ActionButton onClick={() => setShowAddModal(true)}>Add Log</ActionButton>}
+               action={
+                  isHod ? null : (
+                     <ActionButton onClick={() => setShowAddModal(true)}>Add Log</ActionButton>
+                  )
+               }
             />
 
             <DataTable

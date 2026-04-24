@@ -13,7 +13,8 @@ import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
+import { RoleId } from '@/constants/roles.constant';
+import { usePermissions } from '@/hooks/usePermissions';
 import { exportToXlsx } from '@/utilities/exportXlsx';
 import ExportModal from '@/components/ExportModal';
 import { generatorConstants } from '@/constants';
@@ -52,6 +53,7 @@ const VIEW_ICON = (
 const GeneratorLogs = () => {
    const dispatch = useDispatch();
    const router = useRouter();
+   const { isBackOffice, isMember, isAuthor } = usePermissions();
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
    const [editData, setEditData] = useState<GeneratorLog | null>(null);
@@ -224,18 +226,28 @@ const GeneratorLogs = () => {
       }
    };
 
-   const getActions = (row: GeneratorLog): ActionMenuItem[] => [
-      {
-         label: 'View',
-         icon: VIEW_ICON,
-         onClick: () => router.push(`/admin/generator-log/${row.id}`),
-      },
-      {
-         label: 'Edit',
-         icon: EDIT_ICON,
-         onClick: () => handleUpdate(row),
-      },
-   ];
+   const getActions = (row: GeneratorLog): ActionMenuItem[] => {
+      const actions: ActionMenuItem[] = [
+         {
+            label: 'View',
+            icon: VIEW_ICON,
+            onClick: () => router.push(`/admin/generator-log/${row.id}`),
+         },
+      ];
+      // Per spec: SUPER_ADMIN / ADMIN can view + delete only (no edit).
+      // MEMBER may edit only logs they created.
+      const canEdit = isMember && isAuthor(row as unknown as { createdBy?: string });
+      if (canEdit) {
+         actions.push({
+            label: 'Edit',
+            icon: EDIT_ICON,
+            onClick: () => handleUpdate(row),
+         });
+      }
+      // Acknowledge lint unused when backoffice has no inline edit action.
+      void isBackOffice;
+      return actions;
+   };
 
    const meetingOptions = useMemo(
       () => (allMeetingsList ?? []).map((m) => ({ value: String(m.id), label: m.name })),
@@ -367,7 +379,7 @@ const GeneratorLogs = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER]}>
          <Layout title="Generator Logs">
             <PageHeader
                subtitle="Track generator usage and faults"

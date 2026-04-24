@@ -12,7 +12,7 @@ import {
   StoreIcon,
   UsersIcon,
 } from '@/components/Icons';
-import { RoleId, ALL_DATA_ROLES } from '@/constants/roles.constant';
+import { RoleId } from '@/constants/roles.constant';
 
 export interface PageRoute {
   id: number;
@@ -21,22 +21,24 @@ export interface PageRoute {
   icon: React.ReactNode;
   allowedRoles: readonly number[];
   section?: string;
-  /**
-   * Restrict visibility so a user with roleId=HOD only sees the route if they
-   * are HOD of the Facility department specifically. Super Admins and Members
-   * (when present in allowedRoles) bypass this check — it only gates the HOD
-   * role. Requires the Sidebar to have loaded the department list.
-   */
-  facilityHodOnly?: boolean;
 }
 
+/**
+ * Sidebar visibility per the Roles & Permissions spec:
+ * - SUPER_ADMIN + ADMIN: see everything
+ * - HOD: Requests, Items, Maintenance Logs, Incidence Logs
+ *        (filtered to their department on the server)
+ * - MEMBER: Requests, Maintenance Logs, Generator Logs, Incidence Logs,
+ *           Complaints (filtered to me/my assignments on the server)
+ * - OFFICE / USER: only account settings
+ */
 export const pageRoutes: PageRoute[] = [
   {
     id: 1,
     label: 'dashboard',
     link: '/admin/dashboard',
     icon: <DashboardIcon />,
-    allowedRoles: ALL_DATA_ROLES,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
   },
   {
     id: 2,
@@ -50,7 +52,7 @@ export const pageRoutes: PageRoute[] = [
     label: 'items',
     link: '/admin/items',
     icon: <ItemsIcon />,
-    allowedRoles: ALL_DATA_ROLES,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD],
   },
   {
     id: 4,
@@ -85,32 +87,28 @@ export const pageRoutes: PageRoute[] = [
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
-    facilityHodOnly: true,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER],
   },
   {
     id: 8,
     label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
-    facilityHodOnly: true,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER],
   },
   {
     id: 11,
     label: 'incidence logs',
     link: '/admin/incidence-log',
     icon: <ReportsIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
-    facilityHodOnly: true,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER],
   },
   {
     id: 9,
     label: 'complaints',
     link: '/admin/reports',
     icon: <ReportsIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
-    facilityHodOnly: true,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER],
   },
   {
     id: 10,
