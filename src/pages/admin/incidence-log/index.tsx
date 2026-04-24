@@ -15,7 +15,10 @@ import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddIncidenceLog from '@/components/Modals/AddIncidenceLog';
 import ListStatsStrip from '@/components/ListStatsStrip';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
+import { ADMIN_ROLES, RoleId } from '@/constants/roles.constant';
+import { departmentActions } from '@/actions';
+
+const FACILITY_DEPARTMENT_NAME = 'Facility';
 import { incidenceLogConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -61,7 +64,29 @@ const IncidenceLogsPage = () => {
       (s: RootState) => s.incidenceLog,
    );
    const { userDetails } = useSelector((s: RootState) => s.user);
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { meta } = pagination;
+
+   useEffect(() => {
+      if (!allDepartmentsList || allDepartmentsList.length === 0) {
+         dispatch(
+            departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction,
+         );
+      }
+   }, [dispatch, allDepartmentsList]);
+
+   const facilityDepartment = (allDepartmentsList ?? []).find(
+      (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
+   );
+   const isSuperAdmin = userDetails?.roleId === RoleId.SUPER_ADMIN;
+   const isFacilityHod =
+      userDetails?.roleId === RoleId.HOD &&
+      ((!!facilityDepartment?.hodEmail &&
+         !!userDetails?.email &&
+         userDetails.email.toLowerCase() === facilityDepartment.hodEmail.toLowerCase()) ||
+         (!!facilityDepartment?.id &&
+            userDetails?.departmentId === facilityDepartment.id));
+   const canDeactivate = isSuperAdmin || isFacilityHod;
 
    const currentUserFullName = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
    const isCreator = (row: IncidenceLog) => {
@@ -125,12 +150,14 @@ const IncidenceLogsPage = () => {
             onClick: () => openEdit(row),
          });
       }
-      actions.push({
-         label: 'Deactivate',
-         icon: DEACTIVATE_ICON,
-         onClick: () => handleDeactivate(row),
-         variant: 'danger',
-      });
+      if (canDeactivate) {
+         actions.push({
+            label: 'Deactivate',
+            icon: DEACTIVATE_ICON,
+            onClick: () => handleDeactivate(row),
+            variant: 'danger',
+         });
+      }
       return actions;
    };
 
@@ -201,7 +228,6 @@ const IncidenceLogsPage = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Incidence Logs">
             <PageHeader
-               title="Incidence Logs"
                subtitle="Facility incident reports — each report emails the focus department HOD and senior leadership"
                action={
                   <AddIncidenceLog className="text-start w-full cursor-pointer">

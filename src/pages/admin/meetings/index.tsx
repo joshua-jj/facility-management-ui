@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import { exportToXlsx } from '@/utilities/exportXlsx';
@@ -43,6 +44,7 @@ const DEACTIVATE_ICON = (
 
 const Meetings = () => {
    const dispatch = useDispatch();
+   const router = useRouter();
    const [searchQuery, setSearchQuery] = useState('');
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [modalOpen, setModalOpen] = useState(false);
@@ -158,8 +160,7 @@ const Meetings = () => {
    };
 
    const openView = (row: Meeting) => {
-      setEditTarget(row);
-      setModalOpen(true);
+      router.push(`/admin/meetings/${row.id}`);
    };
 
    const getActions = (row: Meeting): ActionMenuItem[] => [
@@ -248,7 +249,6 @@ const Meetings = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Meetings">
             <PageHeader
-               title="Meetings"
                subtitle="Manage scheduled meetings across facility locations"
                action={
                   <ActionButton variant="primary" onClick={openCreate}>

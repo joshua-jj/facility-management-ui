@@ -223,7 +223,7 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
    return (
       <Layout title="Generator Log Details">
          <div className="max-w-6xl mx-auto space-y-5">
-            <PageHeader title="Generator Log Details" subtitle={`Log #${log.id}`} />
+            <PageHeader />
 
             {/* ── Hero card ── */}
             <div className="rounded-2xl p-6 md:p-7" style={CARD_STYLE}>

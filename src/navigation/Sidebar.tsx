@@ -1,15 +1,20 @@
 import Link from 'next/link';
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { pageRoutes } from './pageRoutes';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 import Image from 'next/image';
-import { RoleIdValue } from '@/constants/roles.constant';
+import { RoleId, RoleIdValue } from '@/constants/roles.constant';
+import { departmentActions } from '@/actions';
 import { useTheme } from '@/hooks/useTheme';
 import { motion } from 'framer-motion';
 import LetterAvatar from '@/components/LetteredAvatar';
+
+const FACILITY_DEPARTMENT_NAME = 'Facility';
 
 const SIDEBAR_KEY = 'egfm-sidebar-collapsed';
 
@@ -62,9 +67,39 @@ const ChevronRight = () => (
 
 const Sidebar = () => {
    const router = useRouter();
+   const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { theme } = useTheme();
    const isDark = theme === 'dark';
+
+   // Fetch departments once so we can resolve Facility for route gating.
+   useEffect(() => {
+      if (!allDepartmentsList || allDepartmentsList.length === 0) {
+         dispatch(
+            departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction,
+         );
+      }
+   }, [dispatch, allDepartmentsList]);
+
+   const facilityDepartment = (allDepartmentsList ?? []).find(
+      (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
+   );
+   const facilityHodEmail = facilityDepartment?.hodEmail ?? null;
+
+   /**
+    * For a route marked facilityHodOnly, a user with roleId=HOD must also be
+    * the Facility HOD (email match on department.hodEmail, or departmentId
+    * === Facility.id). Super Admin and Member bypass this gate — it only
+    * restricts the HOD role to the Facility HOD specifically.
+    */
+   const isFacilityHod =
+      userDetails?.roleId === RoleId.HOD &&
+      ((!!facilityHodEmail &&
+         !!userDetails?.email &&
+         userDetails.email.toLowerCase() === facilityHodEmail.toLowerCase()) ||
+         (!!facilityDepartment?.id &&
+            userDetails?.departmentId === facilityDepartment.id));
 
    const [collapsed, setCollapsed] = useState(() => {
       if (typeof window !== 'undefined') {
@@ -72,6 +107,31 @@ const Sidebar = () => {
       }
       return false;
    });
+
+   // Portal-based tooltip for the collapsed state. Rendering via a portal to
+   // <body> lets the tooltip escape the sidebar's overflow clipping, which is
+   // unavoidable due to the scrolling <nav>. Position is taken from the
+   // hovered element's bounding rect on mouse enter.
+   const [tooltip, setTooltip] = useState<{
+      label: string;
+      top: number;
+      left: number;
+   } | null>(null);
+   const [mounted, setMounted] = useState(false);
+   useEffect(() => {
+      setMounted(true);
+   }, []);
+
+   const showTooltip = (e: React.MouseEvent<HTMLElement> | React.FocusEvent<HTMLElement>, label: string) => {
+      if (!collapsed) return;
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      setTooltip({
+         label,
+         top: rect.top + rect.height / 2,
+         left: rect.right + 12,
+      });
+   };
+   const hideTooltip = () => setTooltip(null);
 
    useEffect(() => {
       localStorage.setItem(SIDEBAR_KEY, String(collapsed));
@@ -84,9 +144,18 @@ const Sidebar = () => {
       [router?.pathname],
    );
 
-   const filteredRoutes = pageRoutes.filter((route) =>
-      route.allowedRoles ? route.allowedRoles.includes(userDetails?.roleId as RoleIdValue) : true,
-   );
+   const filteredRoutes = pageRoutes.filter((route) => {
+      // Basic role check
+      if (route.allowedRoles && !route.allowedRoles.includes(userDetails?.roleId as RoleIdValue)) {
+         return false;
+      }
+      // Facility-HOD-only gate: HODs of other departments must not see these
+      // routes. SUPER_ADMIN and MEMBER pass through untouched.
+      if (route.facilityHodOnly && userDetails?.roleId === RoleId.HOD && !isFacilityHod) {
+         return false;
+      }
+      return true;
+   });
 
    const fullName =
       userDetails?.firstName || userDetails?.lastName
@@ -175,6 +244,11 @@ const Sidebar = () => {
                         <motion.li variants={itemVariants} className="mb-1">
                            <Link
                               href={pageRoute?.link}
+                              aria-label={pageRoute?.label}
+                              onMouseEnter={(e) => showTooltip(e, pageRoute?.label)}
+                              onMouseLeave={hideTooltip}
+                              onFocus={(e) => showTooltip(e, pageRoute?.label)}
+                              onBlur={hideTooltip}
                               className={classNames(
                                  'group relative flex items-center rounded-md transition-all duration-200',
                                  collapsed ? 'justify-center py-3 px-0' : 'gap-x-3 py-2.5 px-3',
@@ -226,10 +300,7 @@ const Sidebar = () => {
                                  </span>
                               )}
 
-                              {/* Tooltip for collapsed mode */}
-                              {collapsed && (
-                                 <span className="sidebar-tooltip">{pageRoute?.label}</span>
-                              )}
+                              {/* Collapsed-state tooltip is portal-rendered to body */}
                            </Link>
                         </motion.li>
                      </React.Fragment>
@@ -321,6 +392,47 @@ const Sidebar = () => {
                </svg>
             </button>
          </div>
+
+         {/* Portal-rendered tooltip — visible only when the sidebar is
+             collapsed and an item is hovered/focused. Rendered to <body>
+             so the sidebar's overflow clipping doesn't hide it. */}
+         {mounted && collapsed && tooltip &&
+            createPortal(
+               <div
+                  role="tooltip"
+                  style={{
+                     position: 'fixed',
+                     top: tooltip.top,
+                     left: tooltip.left,
+                     transform: 'translateY(-50%)',
+                     background: '#1a1a2e',
+                     color: '#fff',
+                     fontSize: '0.75rem',
+                     fontWeight: 500,
+                     padding: '6px 10px',
+                     borderRadius: 6,
+                     whiteSpace: 'nowrap',
+                     textTransform: 'capitalize',
+                     zIndex: 9999,
+                     pointerEvents: 'none',
+                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  }}
+               >
+                  <span
+                     aria-hidden="true"
+                     style={{
+                        position: 'absolute',
+                        right: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        border: '5px solid transparent',
+                        borderRightColor: '#1a1a2e',
+                     }}
+                  />
+                  {tooltip.label}
+               </div>,
+               document.body,
+            )}
       </div>
    );
 };
