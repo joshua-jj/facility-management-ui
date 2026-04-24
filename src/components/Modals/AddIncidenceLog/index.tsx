@@ -16,6 +16,7 @@ import {
    meetingLocationActions,
 } from '@/actions';
 import { incidenceLogConstants, userConstants } from '@/constants';
+import { RoleId } from '@/constants/roles.constant';
 import type { IncidenceLog, IncidenceLogForm } from '@/types/incidenceLog';
 import { format, parseISO } from 'date-fns';
 
@@ -106,31 +107,68 @@ const AddIncidenceLog: React.FC<Props> = ({
    }, [dispatch]);
 
    /**
-    * Load everyone in the Facility department (members + HOD) so the Reported
-    * By dropdown can bind the report to a real user ID. We fetch once per
-    * modal open — cheap call, and the list is small in practice.
+    * Load the "Reported By" pool — all MEMBER-role users on the app plus the
+    * Facility HOD (resolved by Facility department hodEmail). Any Facility
+    * member should be able to file an incidence report, so we don't filter
+    * strictly by departmentId here.
     */
    useEffect(() => {
       if (!isModalOpen && !open) return;
+      const token = Cookies.get('authToken');
+      if (!token) return;
       const facility = (allDepartmentsList ?? []).find(
          (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
       );
-      if (!facility?.id) return;
-      const token = Cookies.get('authToken');
-      if (!token) return;
+      const facilityHodEmail = facility?.hodEmail ?? null;
       let cancelled = false;
-      axios
-         .get(`${userConstants.USER_URI}?departmentId=${facility.id}&limit=1000`, {
-            headers: { Authorization: `Bearer ${token}` },
-         })
-         .then((resp) => {
-            if (cancelled) return;
-            const items = resp?.data?.data?.items ?? resp?.data?.data ?? [];
-            setFacilityMembers(items as FacilityMember[]);
-         })
-         .catch(() => {
-            if (!cancelled) setFacilityMembers([]);
-         });
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const requests: Promise<{ items: FacilityMember[] }>[] = [
+         axios
+            .get(
+               `${userConstants.USER_URI}?roleId=${RoleId.MEMBER}&limit=1000`,
+               { headers },
+            )
+            .then((r) => ({
+               items:
+                  (r?.data?.data?.items ?? r?.data?.data ?? []) as FacilityMember[],
+            }))
+            .catch(() => ({ items: [] })),
+      ];
+      if (facilityHodEmail) {
+         requests.push(
+            axios
+               .get(
+                  `${userConstants.USER_URI}/details/${encodeURIComponent(
+                     facilityHodEmail,
+                  )}`,
+                  { headers },
+               )
+               .then((r) => {
+                  const hod = r?.data?.data as FacilityMember | undefined;
+                  return { items: hod ? [hod] : [] };
+               })
+               .catch(() => ({ items: [] })),
+         );
+      }
+
+      (async () => {
+         const results = await Promise.all(requests);
+         if (cancelled) return;
+         // Merge + dedupe by id; surface the Facility HOD first.
+         const seen = new Set<number>();
+         const merged: FacilityMember[] = [];
+         results
+            .flatMap((r) => r.items)
+            .reverse()
+            .forEach((m) => {
+               if (!m?.id || seen.has(m.id)) return;
+               seen.add(m.id);
+               merged.push(m);
+            });
+         setFacilityMembers(merged);
+      })();
+
       return () => {
          cancelled = true;
       };
