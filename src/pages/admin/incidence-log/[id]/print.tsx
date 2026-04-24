@@ -37,10 +37,43 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
  */
 const PrintPage: NextPage<Props> = ({ log }) => {
    useEffect(() => {
-      const t = setTimeout(() => {
-         if (log) window.print();
-      }, 300);
-      return () => clearTimeout(t);
+      if (!log) return;
+      let cancelled = false;
+      const triggerPrint = () => {
+         if (!cancelled) window.print();
+      };
+
+      // Wait for every image on the page (e.g. the logo) to finish decoding
+      // before opening the dialog — otherwise the PDF can render blank spots.
+      const images = Array.from(document.images);
+      if (images.length === 0 || images.every((img) => img.complete)) {
+         const t = setTimeout(triggerPrint, 300);
+         return () => {
+            cancelled = true;
+            clearTimeout(t);
+         };
+      }
+
+      let pending = images.filter((img) => !img.complete).length;
+      const onDone = () => {
+         pending -= 1;
+         if (pending <= 0) triggerPrint();
+      };
+      images.forEach((img) => {
+         if (!img.complete) {
+            img.addEventListener('load', onDone);
+            img.addEventListener('error', onDone);
+         }
+      });
+      const fallback = setTimeout(triggerPrint, 2500);
+      return () => {
+         cancelled = true;
+         clearTimeout(fallback);
+         images.forEach((img) => {
+            img.removeEventListener('load', onDone);
+            img.removeEventListener('error', onDone);
+         });
+      };
    }, [log]);
 
    if (!log) {

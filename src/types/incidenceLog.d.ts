@@ -34,6 +34,7 @@ export interface IncidenceLogForm {
    conclusions: string[];
    actionsTaken: string[];
    reportedBy: string;
+   reportedByUserId?: number;
 }
 
 export interface IncidenceLog {
@@ -45,6 +46,7 @@ export interface IncidenceLog {
    conclusions: string[];
    actionsTaken: string[];
    reportedBy: string;
+   reportedByUserId?: number | null;
    createdAt: string;
    createdBy: string;
    updatedAt?: string;
