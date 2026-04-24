@@ -32,7 +32,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
 }) => {
    const dispatch = useDispatch();
    const { IsCreatingMaintenanceLog } = useSelector((s: RootState) => s.maintenance);
-   const { departmentItemsList } = useSelector((s: RootState) => s.item);
+   const { allItemsList } = useSelector((s: RootState) => s.item);
    const { userDetails } = useSelector((s: RootState) => s.user);
 
    const [canSubmit, setCanSubmit] = useState(false);
@@ -67,11 +67,11 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    }, [onClose, maintenanceData]);
 
    useEffect(() => {
-      dispatch(itemActions.getDepartmentItems({ departmentId: 1 }) as unknown as UnknownAction);
+      dispatch(itemActions.getAllItems({ page: 1, limit: 1000 }) as unknown as UnknownAction);
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
 
-   const itemOptions = (departmentItemsList ?? []).map((item) => ({
+   const itemOptions = (allItemsList ?? []).map((item) => ({
       value: String(item.id),
       label: item.name,
    }));

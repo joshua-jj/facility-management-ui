@@ -78,7 +78,8 @@ const filters: FilterDef[] = [
 
 const MaintenanceLogs = () => {
    const dispatch = useDispatch();
-   const { isBackOffice, isHod, isMember, isAuthor } = usePermissions();
+   const { isBackOffice, isHod, isMember, isAuthor, isFacilityTeam } = usePermissions();
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const router = useRouter();
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
@@ -102,6 +103,20 @@ const MaintenanceLogs = () => {
          ...dateParams,
       };
    }, []);
+
+   // Maintenance logs are Facility-team territory. Super Admin / Admin
+   // always have access; HOD / MEMBER are only allowed in when they
+   // belong to the Facility department. Wait for the department list
+   // to load before redirecting so we don't bounce the page on a
+   // transient empty state.
+   const departmentsLoaded = (allDepartmentsList?.length ?? 0) > 0;
+   const isScopedRole = isHod || isMember;
+   const blockedFromFacilityPage = isScopedRole && departmentsLoaded && !isFacilityTeam;
+   useEffect(() => {
+      if (blockedFromFacilityPage) {
+         router.replace('/admin/dashboard');
+      }
+   }, [blockedFromFacilityPage, router]);
 
    useEffect(() => {
       dispatch(maintenanceActions.getMaintenanceLogs() as unknown as UnknownAction);
@@ -260,6 +275,12 @@ const MaintenanceLogs = () => {
          render: (_value, row) => <ActionMenu items={getActions(row)} />,
       },
    ];
+
+   if (blockedFromFacilityPage) {
+      // Redirect is in-flight from the effect above; render nothing to
+      // avoid a flash of the data table for a user who shouldn't see it.
+      return null;
+   }
 
    return (
       <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER]}>
