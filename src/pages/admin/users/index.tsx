@@ -299,7 +299,6 @@ const Users = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Users">
             <PageHeader
-               title="User Management"
                subtitle={`${meta?.totalItems ?? 0} total users`}
                action={
                   <ActionButton variant="primary" onClick={() => setShowAddUserModal(true)}>

@@ -254,7 +254,6 @@ const Departments = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Departments">
             <PageHeader
-               title="Departments"
                subtitle="Manage facility departments and their heads"
                action={
                   <AddDepartment className="text-start w-full cursor-pointer">

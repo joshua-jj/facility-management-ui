@@ -390,7 +390,6 @@ const Items = () => {
       <PrivateRoute>
          <Layout title="Items">
             <PageHeader
-               title="Items"
                subtitle={`Manage your inventory items${isDepartmentScoped ? ' for your department' : ''}`}
                action={
                   <ActionButton

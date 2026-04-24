@@ -39,6 +39,18 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Print preview pages are intentionally embedded in a same-origin
+      // iframe by the detail page, so they need SAMEORIGIN instead of the
+      // blanket DENY above. Declared after the general rule so this key
+      // overrides it on this route.
+      {
+        source: '/admin/:section*/print',
+        headers: [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }],
+      },
+      {
+        source: '/admin/:section*/:id/print',
+        headers: [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }],
+      },
     ];
   },
   async redirects() {

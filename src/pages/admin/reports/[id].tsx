@@ -350,8 +350,8 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
       [allDepartmentsList],
    );
 
-   // Super Admin + Facility HOD (email match or roleId=HOD inside Facility) can
-   // assign. Resolve is also available to any Facility member.
+   // Assignment privileges: Super Admin + Facility HOD (matched by Facility
+   // department's hodEmail primary, or roleId=HOD+dept=Facility as fallback).
    const facilityHodEmail = facilityDepartment?.hodEmail;
    const isSuperAdmin = userDetails?.roleId === RoleId.SUPER_ADMIN;
    const isFacilityMember =
@@ -362,7 +362,17 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
          userDetails.email.toLowerCase() === facilityHodEmail.toLowerCase()) ||
       (isFacilityMember && userDetails?.roleId === RoleId.HOD);
    const canAssign = isFacilityHod || isSuperAdmin;
-   const canResolve = isFacilityHod || isFacilityMember || isSuperAdmin;
+
+   // Resolve privileges: ONLY the user to whom this complaint is currently
+   // assigned can mark it resolved. Not HOD, not Super Admin, not other
+   // Facility members — only the assignee.
+   const assignedToMe =
+      !!report?.summary?.assignedToUserId &&
+      !!userDetails?.id &&
+      report.summary.assignedToUserId === userDetails.id;
+   const canResolve = assignedToMe;
+
+   const isAssigned = !!report?.summary?.assignedToUserId;
 
    useEffect(() => {
       if (!allDepartmentsList || allDepartmentsList.length === 0) {
@@ -372,24 +382,71 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
       }
    }, [dispatch, allDepartmentsList]);
 
+   /**
+    * Assignee pool = every user whose departmentId === Facility.id. Per the
+    * data model, a user's department is a required assignment at user
+    * creation, so this cleanly maps to "Facility team members". If the HOD
+    * user isn't in the Facility dept (as is the case with the seeded HOD
+    * who sits under Super Admin), we also fetch them by department.hodEmail
+    * and prepend to the list.
+    *
+    * We fetch regardless of canAssign because other viewers still need the
+    * list to resolve the assignee's display name in the timeline + audit.
+    */
    useEffect(() => {
-      if (!canAssign || !facilityDepartment?.id) return;
+      if (!facilityDepartment?.id) return;
       let cancelled = false;
       (async () => {
          try {
             const user = await getObjectFromStorage(authConstants.USER_KEY);
-            const resp = await axios.get(
-               `${userConstants.USER_URI}?departmentId=${facilityDepartment.id}&limit=1000`,
-               {
-                  headers: {
-                     Accept: 'application/json',
-                     Authorization: user?.token ? `Bearer ${user.token}` : '',
-                  },
-               },
-            );
+            const headers = {
+               Accept: 'application/json',
+               Authorization: user?.token ? `Bearer ${user.token}` : '',
+            };
+
+            const requests: Promise<{ items: FacilityMember[] }>[] = [
+               axios
+                  .get(
+                     `${userConstants.USER_URI}?departmentId=${facilityDepartment.id}&limit=1000`,
+                     { headers },
+                  )
+                  .then((r) => ({
+                     items:
+                        (r?.data?.data?.items ?? r?.data?.data ?? []) as FacilityMember[],
+                  }))
+                  .catch(() => ({ items: [] })),
+            ];
+            if (facilityHodEmail) {
+               requests.push(
+                  axios
+                     .get(
+                        `${userConstants.USER_URI}/details/${encodeURIComponent(
+                           facilityHodEmail,
+                        )}`,
+                        { headers },
+                     )
+                     .then((r) => {
+                        const hod = r?.data?.data as FacilityMember | undefined;
+                        return { items: hod ? [hod] : [] };
+                     })
+                     .catch(() => ({ items: [] })),
+               );
+            }
+
+            const results = await Promise.all(requests);
             if (cancelled) return;
-            const items = resp?.data?.data?.items ?? resp?.data?.data ?? [];
-            setFacilityMembers(items as FacilityMember[]);
+
+            const seen = new Set<number>();
+            const merged: FacilityMember[] = [];
+            results
+               .flatMap((r) => r.items)
+               .reverse()
+               .forEach((m) => {
+                  if (!m?.id || seen.has(m.id)) return;
+                  seen.add(m.id);
+                  merged.push(m);
+               });
+            setFacilityMembers(merged);
          } catch {
             if (!cancelled) setFacilityMembers([]);
          }
@@ -397,7 +454,7 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
       return () => {
          cancelled = true;
       };
-   }, [facilityDepartment, canAssign]);
+   }, [facilityDepartment, facilityHodEmail]);
 
    const refetchReport = useCallback(async () => {
       if (!report?.id) return;
@@ -508,17 +565,20 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
 
    const complaintStatus = report.summary?.complaintStatus ?? 'Pending';
    const isResolved = complaintStatus === 'Resolved' || complaintStatus === 'Closed';
-   const isAssigned = complaintStatus === 'Assigned';
    const statusAccent = STATUS_COLOR[complaintStatus] ?? '#EF4444';
 
+   const assignedMember = (() => {
+      const id = report.summary?.assignedToUserId;
+      if (!id) return null;
+      return facilityMembers.find((m) => m.id === id) ?? null;
+   })();
    const assignedName = (() => {
       const id = report.summary?.assignedToUserId;
       if (!id) return null;
-      const found = facilityMembers.find((m) => m.id === id);
-      if (found) {
+      if (assignedMember) {
          return (
-            `${found.firstName ?? ''} ${found.lastName ?? ''}`.trim() ||
-            found.email ||
+            `${assignedMember.firstName ?? ''} ${assignedMember.lastName ?? ''}`.trim() ||
+            assignedMember.email ||
             `User #${id}`
          );
       }
@@ -562,25 +622,10 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
       <Layout title="Complaint Details">
          <div className="max-w-6xl mx-auto space-y-5">
             <PageHeader
-               title="Complaint Details"
-               subtitle={`Complaint #${report.id}`}
                action={
-                  <div className="flex gap-2">
-                     <ActionButton variant="outline" onClick={() => router.back()}>
-                        Back
-                     </ActionButton>
-                     {canResolve && !isResolved && (
-                        <button
-                           type="button"
-                           onClick={() => setShowResolveConfirm(true)}
-                           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer"
-                           style={{ background: '#10B981' }}
-                        >
-                           <span>{CheckIcon}</span>
-                           Resolve Complaint
-                        </button>
-                     )}
-                  </div>
+                  <ActionButton variant="outline" onClick={() => router.back()}>
+                     Back
+                  </ActionButton>
                }
             />
 
@@ -695,64 +740,131 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
                      </div>
                   </div>
 
-                  {/* Assign (HOD + Super Admin) */}
+                  {/* Assign card — HOD + Super Admin only. Once the complaint
+                      has been assigned, the form is replaced by a read-only
+                      summary of the current assignee. */}
                   {canAssign && !isResolved && (
                      <div className="rounded-2xl p-5 md:p-6" style={CARD_STYLE}>
-                        <div className="flex items-start justify-between gap-3">
-                           <div>
-                              <SectionLabel accent="#F59E0B">Assign Complaint</SectionLabel>
+                        <SectionLabel accent="#F59E0B">Assign Complaint</SectionLabel>
+
+                        {isAssigned ? (
+                           <div
+                              className="mt-4 flex items-center gap-4 rounded-xl p-4"
+                              style={{
+                                 background: 'var(--surface-medium)',
+                                 border: '1px solid var(--border-default)',
+                              }}
+                              aria-disabled="true"
+                           >
+                              <div
+                                 className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold tracking-wider shrink-0"
+                                 style={{
+                                    background:
+                                       'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+                                    color: '#ffffff',
+                                 }}
+                              >
+                                 {assignedName
+                                    ? assignedName
+                                         .split(/\s+/)
+                                         .map((s) => s[0])
+                                         .filter(Boolean)
+                                         .slice(0, 2)
+                                         .join('')
+                                         .toUpperCase()
+                                    : '—'}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                 <div
+                                    className="text-[0.6rem] uppercase tracking-widest font-semibold"
+                                    style={{ color: 'var(--text-hint)' }}
+                                 >
+                                    Assigned to
+                                 </div>
+                                 <div
+                                    className="text-sm font-semibold truncate mt-0.5"
+                                    style={{ color: 'var(--text-primary)' }}
+                                 >
+                                    {assignedName ?? `User #${report.summary?.assignedToUserId}`}
+                                 </div>
+                                 {assignedMember?.email && (
+                                    <div
+                                       className="text-xs mt-0.5 truncate"
+                                       style={{ color: 'var(--text-hint)' }}
+                                    >
+                                       {assignedMember.email}
+                                    </div>
+                                 )}
+                                 {report.summary?.assignedAt && (
+                                    <div
+                                       className="text-xs mt-0.5"
+                                       style={{ color: 'var(--text-hint)' }}
+                                    >
+                                       Assigned on{' '}
+                                       {formatReadableDate(report.summary.assignedAt)}
+                                    </div>
+                                 )}
+                              </div>
+                              <span
+                                 className="text-[0.55rem] font-semibold uppercase tracking-widest px-2 py-1 rounded-md shrink-0"
+                                 style={{
+                                    color: '#F59E0B',
+                                    background: 'rgba(245,158,11,0.12)',
+                                    border: '1px solid rgba(245,158,11,0.35)',
+                                 }}
+                              >
+                                 Locked
+                              </span>
+                           </div>
+                        ) : (
+                           <>
                               <p
                                  className="text-xs mt-2 max-w-md"
                                  style={{ color: 'var(--text-hint)' }}
                               >
-                                 Assign this complaint to a Facility member (or yourself).
-                                 The assignee will be emailed a link to resolve it.
+                                 Assign this complaint to a Facility team member (or
+                                 yourself). The assignee will be emailed a link and is
+                                 the only person who can mark it resolved.
                               </p>
-                           </div>
-                           {report.summary?.assignedToUserId && (
-                              <span className="text-[0.65rem] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-hint)' }}>
-                                 Currently: {assignedName ?? `User #${report.summary.assignedToUserId}`}
-                              </span>
-                           )}
-                        </div>
-
-                        <div className="mt-4 flex items-start gap-2">
-                           <div className="flex-1">
-                              <ComboBox
-                                 value={assigneeId}
-                                 onChange={(v) => setAssigneeId(v)}
-                                 options={facilityMembers.map((m) => ({
-                                    value: String(m.id),
-                                    label:
-                                       `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() ||
-                                       m.email ||
-                                       `User #${m.id}`,
-                                 }))}
-                                 placeholder={
-                                    facilityMembers.length === 0
-                                       ? 'Loading Facility members…'
-                                       : 'Select a Facility member…'
-                                 }
-                                 searchable
-                              />
-                           </div>
-                           <button
-                              type="button"
-                              onClick={handleAssign}
-                              disabled={!assigneeId || isSaving === 'assign'}
-                              className="shrink-0 px-4 h-[42px] rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                              style={{ background: 'var(--color-secondary)' }}
-                           >
-                              {isSaving === 'assign' ? (
-                                 <span className="flex items-center gap-2">
-                                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Assigning…
-                                 </span>
-                              ) : (
-                                 'Assign'
-                              )}
-                           </button>
-                        </div>
+                              <div className="mt-4 flex items-start gap-2">
+                                 <div className="flex-1">
+                                    <ComboBox
+                                       value={assigneeId}
+                                       onChange={(v) => setAssigneeId(v)}
+                                       options={facilityMembers.map((m) => ({
+                                          value: String(m.id),
+                                          label:
+                                             `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() ||
+                                             m.email ||
+                                             `User #${m.id}`,
+                                       }))}
+                                       placeholder={
+                                          facilityMembers.length === 0
+                                             ? 'Loading Facility team…'
+                                             : 'Select a Facility team member…'
+                                       }
+                                       searchable
+                                    />
+                                 </div>
+                                 <button
+                                    type="button"
+                                    onClick={handleAssign}
+                                    disabled={!assigneeId || isSaving === 'assign'}
+                                    className="shrink-0 px-4 h-[42px] rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    style={{ background: 'var(--color-secondary)' }}
+                                 >
+                                    {isSaving === 'assign' ? (
+                                       <span className="flex items-center gap-2">
+                                          <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                          Assigning…
+                                       </span>
+                                    ) : (
+                                       'Assign'
+                                    )}
+                                 </button>
+                              </div>
+                           </>
+                        )}
                      </div>
                   )}
                </div>

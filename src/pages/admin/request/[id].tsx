@@ -543,7 +543,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    return (
       <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
          <div className="md:col-span-10 md:col-start-2 space-y-6">
-            <PageHeader title="Request Details" showBreadcrumbs />
+            <PageHeader />
             {/* Back button */}
             <button
                onClick={() => router.back()}
