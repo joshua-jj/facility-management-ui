@@ -122,7 +122,7 @@ const Sidebar = () => {
       setMounted(true);
    }, []);
 
-   const showTooltip = (e: React.MouseEvent<HTMLElement>, label: string) => {
+   const showTooltip = (e: React.MouseEvent<HTMLElement> | React.FocusEvent<HTMLElement>, label: string) => {
       if (!collapsed) return;
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       setTooltip({
