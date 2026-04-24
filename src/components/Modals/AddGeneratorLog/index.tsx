@@ -146,6 +146,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       const errs: Record<string, string | null> = {
          onTime: null,
          offTime: null,
+         engineStartHours: null,
          engineOffHours: null,
          dieselLevelOn: null,
          dieselLevelOff: null,
@@ -172,6 +173,12 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       }
       const eStart = engineStartHours ? Number(engineStartHours) : null;
       const eOff = engineOffHours ? Number(engineOffHours) : null;
+      // Engine Start must not regress past the generator's last serviced
+      // hour — the hour meter only goes up, so a reading below the last
+      // service value means the reading is wrong or was mis-entered.
+      if (eStart != null && scheduleLastHour != null && eStart < scheduleLastHour) {
+         errs.engineStartHours = `Engine Start must be at least the Last Service Hour (${scheduleLastHour.toFixed(1)} hrs).`;
+      }
       if (eStart != null && eOff != null && eOff < eStart) {
          errs.engineOffHours = 'Engine Off must be the same as or greater than Engine Start.';
       }
@@ -187,7 +194,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
             errs.dieselLevelOff = errs.dieselLevelOff ?? 'Must be between 0 and 100.';
       }
       return errs;
-   }, [onTime, offTime, engineStartHours, engineOffHours, dieselLevelOn, dieselLevelOff, dieselUnit]);
+   }, [onTime, offTime, engineStartHours, engineOffHours, dieselLevelOn, dieselLevelOff, dieselUnit, scheduleLastHour]);
 
    const hasValidationErrors = Object.values(validationErrors).some((v) => v);
 
@@ -452,14 +459,19 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                   </div>
                </div>
                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3">
-                  <HourMeterInput
-                     name="engineStartHours"
-                     label="Eng. Start"
-                     placeholder="0000.0"
-                     value={engineStartHours}
-                     onValueChange={(val: string) => setEngineStartHours(val)}
-                     required
-                  />
+                  <div>
+                     <HourMeterInput
+                        name="engineStartHours"
+                        label="Eng. Start"
+                        placeholder="0000.0"
+                        value={engineStartHours}
+                        onValueChange={(val: string) => setEngineStartHours(val)}
+                        required
+                     />
+                     {validationErrors.engineStartHours && (
+                        <p className="text-red-500 text-xs -mt-1">{validationErrors.engineStartHours}</p>
+                     )}
+                  </div>
                   <div>
                      <HourMeterInput
                         name="engineOffHours"
