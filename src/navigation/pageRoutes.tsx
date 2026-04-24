@@ -12,7 +12,7 @@ import {
   StoreIcon,
   UsersIcon,
 } from '@/components/Icons';
-import { RoleId, ALL_DATA_ROLES, ADMIN_ROLES } from '@/constants/roles.constant';
+import { RoleId, ALL_DATA_ROLES } from '@/constants/roles.constant';
 
 export interface PageRoute {
   id: number;
@@ -21,6 +21,13 @@ export interface PageRoute {
   icon: React.ReactNode;
   allowedRoles: readonly number[];
   section?: string;
+  /**
+   * Restrict visibility so a user with roleId=HOD only sees the route if they
+   * are HOD of the Facility department specifically. Super Admins and Members
+   * (when present in allowedRoles) bypass this check — it only gates the HOD
+   * role. Requires the Sidebar to have loaded the department list.
+   */
+  facilityHodOnly?: boolean;
 }
 
 export const pageRoutes: PageRoute[] = [
@@ -78,28 +85,32 @@ export const pageRoutes: PageRoute[] = [
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
-    allowedRoles: ADMIN_ROLES,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
+    facilityHodOnly: true,
   },
   {
     id: 8,
     label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
-    allowedRoles: ADMIN_ROLES,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
+    facilityHodOnly: true,
   },
   {
     id: 11,
     label: 'incidence logs',
     link: '/admin/incidence-log',
     icon: <ReportsIcon />,
-    allowedRoles: ADMIN_ROLES,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
+    facilityHodOnly: true,
   },
   {
     id: 9,
     label: 'complaints',
     link: '/admin/reports',
     icon: <ReportsIcon />,
-    allowedRoles: ADMIN_ROLES,
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.HOD, RoleId.MEMBER],
+    facilityHodOnly: true,
   },
   {
     id: 10,

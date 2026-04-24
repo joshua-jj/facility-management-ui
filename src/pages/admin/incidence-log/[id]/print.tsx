@@ -38,13 +38,18 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 const PrintPage: NextPage<Props> = ({ log }) => {
    useEffect(() => {
       if (!log) return;
+
+      // When the page is embedded in an iframe (the Generate PDF modal),
+      // the parent decides when to trigger print after it has observed the
+      // iframe's load event. Skipping auto-print avoids double dialogs
+      // and the "prints the whole parent window" quirk in some browsers.
+      if (typeof window !== 'undefined' && window.self !== window.top) return;
+
       let cancelled = false;
       const triggerPrint = () => {
          if (!cancelled) window.print();
       };
 
-      // Wait for every image on the page (e.g. the logo) to finish decoding
-      // before opening the dialog — otherwise the PDF can render blank spots.
       const images = Array.from(document.images);
       if (images.length === 0 || images.every((img) => img.complete)) {
          const t = setTimeout(triggerPrint, 300);
