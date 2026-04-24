@@ -4,17 +4,13 @@ import { createPortal } from 'react-dom';
 import { pageRoutes } from './pageRoutes';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
-import { useDispatch, useSelector } from 'react-redux';
-import { UnknownAction } from 'redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import Image from 'next/image';
-import { RoleId, RoleIdValue } from '@/constants/roles.constant';
-import { departmentActions } from '@/actions';
+import { RoleIdValue } from '@/constants/roles.constant';
 import { useTheme } from '@/hooks/useTheme';
 import { motion } from 'framer-motion';
 import LetterAvatar from '@/components/LetteredAvatar';
-
-const FACILITY_DEPARTMENT_NAME = 'Facility';
 
 const SIDEBAR_KEY = 'egfm-sidebar-collapsed';
 
@@ -67,39 +63,9 @@ const ChevronRight = () => (
 
 const Sidebar = () => {
    const router = useRouter();
-   const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
-   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { theme } = useTheme();
    const isDark = theme === 'dark';
-
-   // Fetch departments once so we can resolve Facility for route gating.
-   useEffect(() => {
-      if (!allDepartmentsList || allDepartmentsList.length === 0) {
-         dispatch(
-            departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction,
-         );
-      }
-   }, [dispatch, allDepartmentsList]);
-
-   const facilityDepartment = (allDepartmentsList ?? []).find(
-      (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
-   );
-   const facilityHodEmail = facilityDepartment?.hodEmail ?? null;
-
-   /**
-    * For a route marked facilityHodOnly, a user with roleId=HOD must also be
-    * the Facility HOD (email match on department.hodEmail, or departmentId
-    * === Facility.id). Super Admin and Member bypass this gate — it only
-    * restricts the HOD role to the Facility HOD specifically.
-    */
-   const isFacilityHod =
-      userDetails?.roleId === RoleId.HOD &&
-      ((!!facilityHodEmail &&
-         !!userDetails?.email &&
-         userDetails.email.toLowerCase() === facilityHodEmail.toLowerCase()) ||
-         (!!facilityDepartment?.id &&
-            userDetails?.departmentId === facilityDepartment.id));
 
    const [collapsed, setCollapsed] = useState(() => {
       if (typeof window !== 'undefined') {
@@ -122,7 +88,7 @@ const Sidebar = () => {
       setMounted(true);
    }, []);
 
-   const showTooltip = (e: React.MouseEvent<HTMLElement> | React.FocusEvent<HTMLElement>, label: string) => {
+   const showTooltip = (e: React.MouseEvent<HTMLElement>, label: string) => {
       if (!collapsed) return;
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       setTooltip({
@@ -145,16 +111,8 @@ const Sidebar = () => {
    );
 
    const filteredRoutes = pageRoutes.filter((route) => {
-      // Basic role check
-      if (route.allowedRoles && !route.allowedRoles.includes(userDetails?.roleId as RoleIdValue)) {
-         return false;
-      }
-      // Facility-HOD-only gate: HODs of other departments must not see these
-      // routes. SUPER_ADMIN and MEMBER pass through untouched.
-      if (route.facilityHodOnly && userDetails?.roleId === RoleId.HOD && !isFacilityHod) {
-         return false;
-      }
-      return true;
+      if (!route.allowedRoles) return true;
+      return route.allowedRoles.includes(userDetails?.roleId as RoleIdValue);
    });
 
    const fullName =

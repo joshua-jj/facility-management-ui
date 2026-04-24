@@ -16,6 +16,7 @@ import UpdateRole from '@/components/Modals/UpdateRole';
 import UserStatusModal from '@/components/Modals/UserStatus';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
+import { usePermissions } from '@/hooks/usePermissions';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
@@ -39,6 +40,7 @@ const VIEW_ICON = (
 
 const Users = () => {
    const dispatch = useDispatch();
+   const { isSuperAdmin } = usePermissions();
    const router = useRouter();
    const [showAddUserModal, setShowAddUserModal] = useState(false);
    const [showEditUserModal, setShowEditUserModal] = useState(false);
@@ -163,29 +165,38 @@ const Users = () => {
       }
    };
 
-   const getActions = (row: User): ActionMenuItem[] => [
-      {
-         label: 'View',
-         icon: VIEW_ICON,
-         onClick: () => router.push(`/admin/users/${row.id}`),
-      },
-      {
-         label: 'Edit',
-         icon: EDIT_ICON,
-         onClick: () => handleUpdate(row),
-      },
-      {
-         label: 'Change Role',
-         icon: ROLE_ICON,
-         onClick: () => handleRole(row),
-      },
-      {
-         label: row.status === 'A' ? 'Deactivate' : 'Activate',
-         icon: TOGGLE_ICON,
-         onClick: () => handleUserStatus(row),
-         variant: row.status === 'A' ? 'danger' : 'default',
-      },
-   ];
+   const getActions = (row: User): ActionMenuItem[] => {
+      const actions: ActionMenuItem[] = [
+         {
+            label: 'View',
+            icon: VIEW_ICON,
+            onClick: () => router.push(`/admin/users/${row.id}`),
+         },
+      ];
+      // Per spec: ADMIN on Users Management is strictly view-only. Only
+      // SUPER_ADMIN may edit, change role, or activate/deactivate users.
+      if (isSuperAdmin) {
+         actions.push(
+            {
+               label: 'Edit',
+               icon: EDIT_ICON,
+               onClick: () => handleUpdate(row),
+            },
+            {
+               label: 'Change Role',
+               icon: ROLE_ICON,
+               onClick: () => handleRole(row),
+            },
+            {
+               label: row.status === 'A' ? 'Deactivate' : 'Activate',
+               icon: TOGGLE_ICON,
+               onClick: () => handleUserStatus(row),
+               variant: row.status === 'A' ? 'danger' : 'default',
+            },
+         );
+      }
+      return actions;
+   };
 
    const filters: FilterDef[] = useMemo(
       () => [
@@ -301,9 +312,11 @@ const Users = () => {
             <PageHeader
                subtitle={`${meta?.totalItems ?? 0} total users`}
                action={
-                  <ActionButton variant="primary" onClick={() => setShowAddUserModal(true)}>
-                     + Add User
-                  </ActionButton>
+                  isSuperAdmin ? (
+                     <ActionButton variant="primary" onClick={() => setShowAddUserModal(true)}>
+                        + Add User
+                     </ActionButton>
+                  ) : null
                }
             />
 
