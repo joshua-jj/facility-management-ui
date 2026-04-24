@@ -138,6 +138,24 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
 
    const handleSaveSchedule = async () => {
       if (!id) return;
+      const lastNum = Number(lastServiceHour);
+      const nextNum = Number(nextServiceHour);
+      if (
+         lastServiceHour !== '' &&
+         nextServiceHour !== '' &&
+         Number.isFinite(lastNum) &&
+         Number.isFinite(nextNum) &&
+         nextNum <= lastNum
+      ) {
+         dispatch(
+            appActions.setSnackBar({
+               type: 'error',
+               message: 'Next Service Hour must be greater than Last Service Hour.',
+               variant: 'error',
+            }) as unknown as UnknownAction,
+         );
+         return;
+      }
       setIsSavingSchedule(true);
       try {
          const user = await getObjectFromStorage(authConstants.USER_KEY);
@@ -180,6 +198,15 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
    const scheduleChanged =
       lastServiceHour !== initialLastServiceHour ||
       nextServiceHour !== initialNextServiceHour;
+
+   const scheduleError = (() => {
+      if (lastServiceHour === '' || nextServiceHour === '') return null;
+      const last = Number(lastServiceHour);
+      const next = Number(nextServiceHour);
+      if (!Number.isFinite(last) || !Number.isFinite(next)) return null;
+      if (next <= last) return 'Next Service Hour must be greater than Last Service Hour.';
+      return null;
+   })();
 
    const arraysEqual = <T,>(a: T[], b: T[]) => a.length === b.length && a.every((v, i) => v === b[i]);
    const isUpdateDisabled = arraysEqual(selectedConditions, initialConditions) && arraysEqual(selectedStores, initialStores);
@@ -307,7 +334,7 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                      <ActionButton
                         variant="primary"
                         onClick={handleSaveSchedule}
-                        disabled={!scheduleChanged || isSavingSchedule}
+                        disabled={!scheduleChanged || isSavingSchedule || !!scheduleError}
                      >
                         {isSavingSchedule ? (
                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -361,12 +388,17 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                               className="w-full px-3 py-2.5 rounded-lg text-sm tabular-nums"
                               style={{
                                  background: 'var(--surface-medium)',
-                                 border: '1px solid var(--border-strong)',
+                                 border: scheduleError
+                                    ? '1.5px solid #ef4444'
+                                    : '1px solid var(--border-strong)',
                                  color: 'var(--text-primary)',
                               }}
                            />
                         </div>
                      </div>
+                     {scheduleError && (
+                        <p className="text-red-500 text-xs mt-2">{scheduleError}</p>
+                     )}
                   </div>
                </DetailSection>
             )}
