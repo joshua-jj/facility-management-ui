@@ -18,6 +18,7 @@ import permissionRootSaga from './permission.saga';
 import auditLogRootSaga from './auditLog.saga';
 import securityRootSaga from './security.saga';
 import incidenceLogRootSaga from './incidenceLog.saga';
+import notificationSaga from './notification.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -40,5 +41,6 @@ export default function* rootSaga() {
     auditLogRootSaga(),
     securityRootSaga(),
     incidenceLogRootSaga(),
+    notificationSaga(),
   ]);
 }
