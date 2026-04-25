@@ -131,12 +131,13 @@ const Sidebar = () => {
       if (route.allowedRoles && !route.allowedRoles.includes(userDetails?.roleId as RoleIdValue)) {
          return false;
       }
-      // Facility-scoped routes stay visible for Super Admin / Admin, and
-      // for HOD / MEMBER only when they belong to the Facility department.
+      // Facility-scoped routes stay visible for Super Admin / Admin and
+      // for every Member (Members see all logs regardless of department per
+      // spec). HODs are gated: only the Facility HOD passes through. This
+      // is what keeps Generator Logs out of e.g. the Electrical HOD's nav.
       if (route.requiresFacilityTeam) {
-         const isScopedRole =
-            userDetails?.roleId === RoleId.HOD || userDetails?.roleId === RoleId.MEMBER;
-         if (isScopedRole && !isFacilityTeam && !isBackOffice) {
+         const isHod = userDetails?.roleId === RoleId.HOD;
+         if (isHod && !isFacilityTeam && !isBackOffice) {
             return false;
          }
       }

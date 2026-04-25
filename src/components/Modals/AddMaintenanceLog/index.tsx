@@ -126,6 +126,10 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                      value={selectedItemId}
                      onValueChange={(val) => setSelectedItemId(val)}
                      required
+                     // Locked on update — the log is already mapped to this item
+                     // and the recipient HOD has already been notified. Changing it
+                     // would orphan the prior notification and double-notify on save.
+                     disabled={!!maintenanceData}
                   />
                   <div>
                      <DateInput
