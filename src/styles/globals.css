@@ -14,8 +14,8 @@
  */
 :root {
   /* Background & Surface */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: #fafafa;
+  --foreground: #0F2552;
   --surface-paper: #ffffff;
   --surface-subtle: rgba(15, 37, 82, 0.03);
   --surface-low: #f9fafb;
@@ -47,12 +47,12 @@
   --header-bg: #ffffff;
   --header-border: #E1E3E7;
   --header-shadow: 0px 16px 32px 0px rgba(189, 189, 189, 0.25);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);                       /* white = --surface-paper */
+  --card-foreground: oklch(0.275 0.05 260);   /* brand navy */
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --popover-foreground: oklch(0.275 0.05 260);
+  --primary: oklch(0.275 0.05 260);           /* brand navy #0F2552 */
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -80,8 +80,8 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: #0e0e1a;
+  --foreground: #ededed;
   --surface-paper: #1a1a2e;
   --surface-subtle: rgba(255, 255, 255, 0.04);
   --surface-low: rgba(255, 255, 255, 0.03);
@@ -108,11 +108,11 @@
   --header-bg: #1a1a2e;
   --header-border: rgba(255, 255, 255, 0.1);
   --header-shadow: none;
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  --card: oklch(0.215 0.02 280);             /* matches --surface-paper dark */
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.215 0.02 280);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.65 0.08 260);           /* dark brand primary #6B8FCC-ish */
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
