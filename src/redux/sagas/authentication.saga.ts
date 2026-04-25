@@ -1,6 +1,7 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { authConstants } from '@/constants';
 import { appActions } from '@/actions';
+import { notificationConstants } from '@/constants/notification.constant';
 import {
   checkStatus,
   parseResponse,
@@ -69,6 +70,9 @@ function* login({ data }: LoginAction) {
         type: authConstants.LOGIN_SUCCESS,
         user: jsonResponse?.data.user,
       });
+
+      yield put({ type: notificationConstants.CONNECT_NOTIFICATION_STREAM });
+      yield put({ type: notificationConstants.GET_NOTIFICATION_SUMMARY });
 
       AppEmitter.emit(authConstants.LOGIN_SUCCESS, jsonResponse);
     }
@@ -167,6 +171,7 @@ function* changePassword({ data }: ChangePasswordAction) {
 function* logout() {
   yield put({ type: authConstants.LOGGING_OUT });
   try {
+    yield put({ type: notificationConstants.DISCONNECT_NOTIFICATION_STREAM });
     yield call(clearObjectFromStorage, authConstants.USER_KEY);
 
     Cookies.remove('authToken', { domain: COOKIE_DOMAIN, path: '/' });
