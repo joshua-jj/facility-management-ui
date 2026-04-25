@@ -22,6 +22,7 @@ const Header = () => {
    const dispatch = useDispatch();
    const authRoutes = useIsAuthRoute();
    const { userDetails } = useSelector((s: RootState) => s.user);
+   const unreadCount = useSelector((s: RootState) => s.notification?.unreadCount ?? 0);
    const { theme, toggleTheme, mounted } = useTheme();
    const isDark = theme === 'dark';
    const [profileDropdown, setProfileDropdown] = useState(false);
@@ -91,7 +92,9 @@ const Header = () => {
                         >
                            <BellIcon />
                            {/* Red dot indicator */}
-                           <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />
+                           {unreadCount > 0 && (
+                              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />
+                           )}
                         </button>
 
                         {bellDropdown && (
