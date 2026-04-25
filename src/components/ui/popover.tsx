@@ -19,11 +19,17 @@ function PopoverContent({
 }) {
    return (
       <PopoverPrimitive.Portal>
-         <PopoverPrimitive.Positioner side={side} align={align} sideOffset={sideOffset}>
+         {/* z-index must clear the sticky Header (z-[5001]) so the popover renders above it. */}
+         <PopoverPrimitive.Positioner
+            side={side}
+            align={align}
+            sideOffset={sideOffset}
+            className="z-[5100]"
+         >
             <PopoverPrimitive.Popup
                data-slot="popover-content"
                className={cn(
-                  'bg-popover text-popover-foreground data-[ending-style]:animate-out data-[starting-style]:animate-in data-[ending-style]:fade-out-0 data-[starting-style]:fade-in-0 data-[ending-style]:zoom-out-95 data-[starting-style]:zoom-in-95 z-50 w-72 rounded-lg border p-4 shadow-md outline-none',
+                  'bg-popover text-popover-foreground data-[ending-style]:animate-out data-[starting-style]:animate-in data-[ending-style]:fade-out-0 data-[starting-style]:fade-in-0 data-[ending-style]:zoom-out-95 data-[starting-style]:zoom-in-95 w-72 rounded-lg border p-4 shadow-md outline-none',
                   className,
                )}
                {...props}
