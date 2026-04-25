@@ -816,4 +816,14 @@ body {
   html {
     @apply font-sans;
   }
+  /* Form elements don't inherit font-family by default — without this,
+     buttons / inputs inside the notifications panel render in the browser
+     default sans (Helvetica/Arial) instead of Inter. */
+  button,
+  input,
+  select,
+  textarea,
+  optgroup {
+    font-family: inherit;
+  }
 }
