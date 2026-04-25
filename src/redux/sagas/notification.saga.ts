@@ -1,4 +1,6 @@
-import { all, put, takeLatest, takeEvery } from 'typed-redux-saga';
+/// <reference lib="dom" />
+import { all, put, takeLatest, takeEvery, take, call, cancelled, fork, race } from 'typed-redux-saga';
+import { eventChannel, END, EventChannel } from 'redux-saga';
 import { notificationConstants } from '@/constants/notification.constant';
 import type { NotificationListQuery, NotificationListResponse } from '@/types/notification';
 import { authenticatedRequest, handleSagaError } from '@/utilities/saga-helpers';
@@ -71,11 +73,114 @@ function* markAllReadWorker() {
    }
 }
 
+// ─── SSE helpers ────────────────────────────────────────────────────────────
+
+interface StreamEvent {
+   kind: 'open' | 'message' | 'error';
+   payload?: any;
+}
+
+function createStreamChannel(ticket: string): EventChannel<StreamEvent> {
+   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? '';
+   const url = `${baseUrl}${notificationConstants.NOTIFICATION_STREAM_URI}?ticket=${encodeURIComponent(ticket)}`;
+   return eventChannel<StreamEvent>((emit) => {
+      const source = new EventSource(url);
+      source.onopen = () => emit({ kind: 'open' });
+      source.addEventListener('notification', (ev: MessageEvent) => {
+         try {
+            const data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
+            emit({ kind: 'message', payload: data });
+         } catch {
+            /* malformed payload — drop */
+         }
+      });
+      source.addEventListener('ping', () => {
+         // keep-alive — nothing to dispatch
+      });
+      source.onerror = () => {
+         emit({ kind: 'error' });
+         try { source.close(); } catch { /* noop */ }
+         emit(END);
+      };
+      return () => {
+         try { source.close(); } catch { /* noop */ }
+      };
+   });
+}
+
+function* fetchTicket(): Generator<any, string | null, any> {
+   try {
+      const resp: any = yield call(
+         authenticatedRequest as any,
+         notificationConstants.NOTIFICATION_STREAM_TICKET_URI,
+         { method: 'POST' },
+      );
+      if (!resp) return null;
+      return (resp?.data?.ticket as string) ?? null;
+   } catch {
+      return null;
+   }
+}
+
+function* runStreamOnce(ticket: string) {
+   const channel: EventChannel<StreamEvent> = yield call(createStreamChannel, ticket);
+   try {
+      while (true) {
+         const ev: StreamEvent = yield take(channel as any);
+         if (ev.kind === 'open') {
+            yield put({ type: notificationConstants.NOTIFICATION_STREAM_OPENED });
+         } else if (ev.kind === 'message') {
+            yield put({ type: notificationConstants.NOTIFICATION_RECEIVED, data: ev.payload });
+         } else if (ev.kind === 'error') {
+            break;
+         }
+      }
+   } finally {
+      yield put({ type: notificationConstants.NOTIFICATION_STREAM_CLOSED });
+      if ((yield cancelled()) as boolean) {
+         try { channel.close(); } catch { /* noop */ }
+      }
+   }
+}
+
+const BACKOFF_STEPS_MS = [1000, 2000, 4000, 8000, 16000, 30000];
+
+function* streamWorker() {
+   let attempt = 0;
+   while (true) {
+      const ticket: string | null = yield call(fetchTicket as any);
+      if (!ticket) {
+         const delay = BACKOFF_STEPS_MS[Math.min(attempt, BACKOFF_STEPS_MS.length - 1)];
+         yield call(() => new Promise<void>((r) => setTimeout(r, delay + Math.floor(Math.random() * 250))));
+         attempt += 1;
+         continue;
+      }
+      attempt = 0;
+      yield call(runStreamOnce, ticket);
+      const delay = BACKOFF_STEPS_MS[Math.min(attempt, BACKOFF_STEPS_MS.length - 1)];
+      yield call(() => new Promise<void>((r) => setTimeout(r, delay + Math.floor(Math.random() * 250))));
+      attempt += 1;
+   }
+}
+
+function* connectStreamWatcher() {
+   while (true) {
+      yield take(notificationConstants.CONNECT_NOTIFICATION_STREAM);
+      yield race({
+         task: call(streamWorker),
+         cancel: take(notificationConstants.DISCONNECT_NOTIFICATION_STREAM),
+      });
+   }
+}
+
+// ─── Root saga ───────────────────────────────────────────────────────────────
+
 export default function* notificationSaga() {
    yield* all([
       takeLatest(notificationConstants.GET_NOTIFICATIONS, getNotificationsWorker),
       takeLatest(notificationConstants.GET_NOTIFICATION_SUMMARY, getNotificationSummaryWorker),
       takeEvery(notificationConstants.MARK_NOTIFICATION_READ, markNotificationReadWorker),
       takeLatest(notificationConstants.MARK_ALL_NOTIFICATIONS_READ, markAllReadWorker),
+      fork(connectStreamWatcher),
    ]);
 }
