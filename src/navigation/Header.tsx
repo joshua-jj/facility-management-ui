@@ -1,5 +1,5 @@
 import { authActions } from '@/actions';
-import { BellIcon } from '@/components/Icons';
+import { NotificationBell } from '@/components/NotificationBell';
 import LetteredAvatar from '@/components/LetteredAvatar';
 import { RootState } from '@/redux/reducers';
 import { useRouter } from 'next/router';
@@ -25,10 +25,8 @@ const Header = () => {
    const { theme, toggleTheme, mounted } = useTheme();
    const isDark = theme === 'dark';
    const [profileDropdown, setProfileDropdown] = useState(false);
-   const [bellDropdown, setBellDropdown] = useState(false);
 
    const profileRef = useRef<HTMLDivElement>(null);
-   const bellRef = useRef<HTMLDivElement>(null);
 
    const handleLogout = () => {
       router.push('/login');
@@ -40,9 +38,6 @@ const Header = () => {
       const handleMouseDown = (e: MouseEvent) => {
          if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
             setProfileDropdown(false);
-         }
-         if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
-            setBellDropdown(false);
          }
       };
       document.addEventListener('mousedown', handleMouseDown);
@@ -83,34 +78,7 @@ const Header = () => {
                   {/* Right: actions */}
                   <div className="flex items-center gap-3">
                      {/* Notification bell */}
-                     <div className="relative" ref={bellRef}>
-                        <button
-                           onClick={() => setBellDropdown((prev) => !prev)}
-                           className="relative flex items-center justify-center h-9 w-9 rounded-lg border border-[var(--border-default)] bg-[var(--surface-paper)] hover:bg-[var(--surface-low)] text-[var(--text-secondary)] transition-colors cursor-pointer"
-                           aria-label="Notifications"
-                        >
-                           <BellIcon />
-                           {/* Red dot indicator */}
-                           <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />
-                        </button>
-
-                        {bellDropdown && (
-                           <div
-                              role="menu"
-                              className="absolute right-0 mt-1 w-72 bg-[var(--surface-paper)] shadow-[var(--shadow-sm)] border border-[var(--border-default)] rounded-lg animate-dropdown-enter z-10 overflow-hidden"
-                           >
-                              <div className="px-4 py-3 border-b border-[var(--border-default)]">
-                                 <span className="text-sm font-semibold text-[var(--text-primary)]">Notifications</span>
-                              </div>
-                              <div className="flex items-center justify-center py-6">
-                                 <span className="text-xs text-[var(--text-hint)]">No new notifications</span>
-                              </div>
-                              <div className="px-4 py-2 border-t border-[var(--border-default)]">
-                                 <span className="text-xs text-[var(--text-hint)] cursor-not-allowed select-none">View all</span>
-                              </div>
-                           </div>
-                        )}
-                     </div>
+                     <NotificationBell />
 
                      {/* Avatar / profile dropdown */}
                      <div className="relative" ref={profileRef}>
