@@ -6,6 +6,7 @@ import {
   CreateMaintenanceLogAction,
   GetMaintenanceLogsAction,
   SearchMaintenanceLogAction,
+  UpdateMaintenanceLogAction,
 } from '@/actions';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import {
@@ -76,6 +77,45 @@ function* createMaintenanceLog({ data }: CreateMaintenanceLogAction) {
   }
 }
 
+function* updateMaintenanceLog({ data }: UpdateMaintenanceLogAction) {
+  yield put({ type: maintenanceConstants.REQUEST_UPDATE_MAINTENANCE_LOG });
+
+  try {
+    if (!data?.id) return;
+    const { id, ...rest } = data;
+    const logUri = `${maintenanceConstants.MAINTENANCE_URI}/update/${id}`;
+
+    const jsonResponse = yield* authenticatedRequest(logUri, {
+      method: 'PATCH',
+      body: JSON.stringify(rest),
+    });
+    if (!jsonResponse) return;
+
+    yield put({
+      type: maintenanceConstants.UPDATE_MAINTENANCE_LOG_SUCCESS,
+      log: jsonResponse?.data,
+    });
+
+    // The modal listens for CREATE_*_SUCCESS to know when to close. Reuse
+    // that signal on update too so the modal closes on either path.
+    AppEmitter.emit(
+      maintenanceConstants.CREATE_MAINTENANCE_LOG_SUCCESS,
+      jsonResponse,
+    );
+
+    const payload: SetSnackBarPayload = {
+      type: 'success',
+      message:
+        (jsonResponse?.message as string) ?? 'Maintenance log updated successfully',
+      variant: 'success',
+    };
+
+    yield put(appActions.setSnackBar(payload));
+  } catch (error: unknown) {
+    yield* handleSagaError(error, maintenanceConstants.UPDATE_MAINTENANCE_LOG_ERROR);
+  }
+}
+
 function* searchMaintenanceLog({ data }: SearchMaintenanceLogAction) {
   yield put({ type: maintenanceConstants.REQUEST_SEARCH_MAINTENANCE_LOG });
 
@@ -108,6 +148,13 @@ function* createMaintenanceLogWatcher() {
   );
 }
 
+function* updateMaintenanceLogWatcher() {
+  yield takeLatest(
+    maintenanceConstants.UPDATE_MAINTENANCE_LOG,
+    updateMaintenanceLog,
+  );
+}
+
 function* searchMaintenanceLogWatcher() {
   yield takeLatest(
     maintenanceConstants.SEARCH_MAINTENANCE_LOG,
@@ -119,6 +166,7 @@ export default function* rootSaga() {
   yield all([
     getMaintenanceLogsWatcher(),
     createMaintenanceLogWatcher(),
+    updateMaintenanceLogWatcher(),
     searchMaintenanceLogWatcher(),
   ]);
 }

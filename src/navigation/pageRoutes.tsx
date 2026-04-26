@@ -93,15 +93,21 @@ export const pageRoutes: PageRoute[] = [
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
+    // Per spec: every HOD sees Maintenance Logs (read-only on their own
+    // department's items). Facility HOD/Members see all. The list-endpoint
+    // auto-scope handles per-department filtering for non-Facility HODs.
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER],
-    requiresFacilityTeam: true,
   },
   {
     id: 8,
     label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
-    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER],
+    // Generator logs are Facility-only. Members see them everywhere.
+    // HODs only see them if they're the Facility HOD — `requiresFacilityTeam`
+    // gates that in the Sidebar filter.
+    allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER],
+    requiresFacilityTeam: true,
   },
   {
     id: 11,
