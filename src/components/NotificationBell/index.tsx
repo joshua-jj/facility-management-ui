@@ -54,7 +54,7 @@ export const NotificationBell: React.FC = () => {
    return (
       <Popover open={open} onOpenChange={handleOpenChange}>
          <PopoverTrigger
-            render={(props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+            render={(props) => (
                <button
                   {...props}
                   className="relative flex items-center justify-center h-9 w-9 rounded-lg border border-[var(--border-default)] bg-[var(--surface-paper)] hover:bg-[var(--surface-low)] text-[var(--text-secondary)] transition-colors cursor-pointer"
