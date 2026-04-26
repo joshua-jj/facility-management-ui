@@ -18,6 +18,11 @@ export interface CreateMaintenanceLogAction {
   data: MaintenanceForm;
 }
 
+export interface UpdateMaintenanceLogAction {
+  type: typeof maintenanceConstants.UPDATE_MAINTENANCE_LOG;
+  data: MaintenanceForm & { id: number };
+}
+
 export interface SearchMaintenanceLogAction {
   type: typeof maintenanceConstants.SEARCH_MAINTENANCE_LOG;
   data: { text: string };
@@ -35,6 +40,13 @@ const createMaintenanceLog = (
   data,
 });
 
+const updateMaintenanceLog = (
+  data: MaintenanceForm & { id: number }
+): UpdateMaintenanceLogAction => ({
+  type: maintenanceConstants.UPDATE_MAINTENANCE_LOG,
+  data,
+});
+
 const searchMaintenanceLog = (data: {
   text: string;
 }): SearchMaintenanceLogAction => ({
@@ -45,5 +57,6 @@ const searchMaintenanceLog = (data: {
 export const maintenanceActions = {
   getMaintenanceLogs,
   createMaintenanceLog,
+  updateMaintenanceLog,
   searchMaintenanceLog,
 };

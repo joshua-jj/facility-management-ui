@@ -87,7 +87,7 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
             </div>
 
             {/* Body */}
-            <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 5rem)' }}>{children}</div>
+            <div className="px-6 py-5 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(90vh - 5rem)' }}>{children}</div>
          </div>
       </FullscreenModal>
    );
