@@ -82,7 +82,16 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
       data.costOfMaintenance = Number(data.costOfMaintenance);
       data.signature = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
 
-      dispatch(maintenanceActions.createMaintenanceLog(data) as unknown as UnknownAction);
+      if (maintenanceData?.id) {
+         dispatch(
+            maintenanceActions.updateMaintenanceLog({
+               ...data,
+               id: maintenanceData.id,
+            }) as unknown as UnknownAction,
+         );
+      } else {
+         dispatch(maintenanceActions.createMaintenanceLog(data) as unknown as UnknownAction);
+      }
    };
 
    useEffect(() => {
@@ -118,15 +127,32 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
             >
                {/* Row 1 — Item & Date */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                  <SelectInput
-                     name="servicedItem"
-                     label="Item to be Serviced"
-                     placeholder="Select an item"
-                     options={itemOptions}
-                     value={selectedItemId}
-                     onValueChange={(val) => setSelectedItemId(val)}
-                     required
-                  />
+                  {maintenanceData ? (
+                     // Locked on update — the log is already mapped to this
+                     // item and the recipient HOD has already been notified.
+                     // Show a read-only field so users can see what they're
+                     // editing without any affordance suggesting they can change it.
+                     <div className="mb-4">
+                        <label className="block text-xs uppercase tracking-wide text-[var(--text-secondary)] mb-1">
+                           Item to be Serviced
+                        </label>
+                        <div className="px-3 py-2 rounded-md border border-[var(--border-default)] bg-[var(--surface-low)] text-sm text-[var(--text-primary)]">
+                           {itemOptions.find((o) => o.value === selectedItemId)?.label
+                              ?? maintenanceData?.serviceItemName
+                              ?? '—'}
+                        </div>
+                     </div>
+                  ) : (
+                     <SelectInput
+                        name="servicedItem"
+                        label="Item to be Serviced"
+                        placeholder="Select an item"
+                        options={itemOptions}
+                        value={selectedItemId}
+                        onValueChange={(val) => setSelectedItemId(val)}
+                        required
+                     />
+                  )}
                   <div>
                      <DateInput
                         name="maintenanceDate"

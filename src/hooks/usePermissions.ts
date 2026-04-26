@@ -38,7 +38,12 @@ export const usePermissions = () => {
    const facilityDepartmentId = useMemo<number | null>(() => {
       const list = allDepartmentsList as Array<{ id: number; name?: string }> | undefined;
       if (!list || list.length === 0) return null;
-      const match = list.find((d) => (d?.name ?? '').trim().toLowerCase() === 'facility');
+      // Match leniently — backend canonical name is "Facility" but we
+      // also accept "Facility Maintenance", "Facilities", etc. The first
+      // department whose name starts with "facility" wins.
+      const match = list.find((d) =>
+         (d?.name ?? '').trim().toLowerCase().startsWith('facility'),
+      );
       return match ? match.id : null;
    }, [allDepartmentsList]);
 
