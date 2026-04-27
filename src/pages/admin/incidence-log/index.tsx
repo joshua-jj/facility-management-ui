@@ -157,17 +157,6 @@ const IncidenceLogsPage = () => {
          ),
       },
       {
-         key: 'incidenceDate',
-         header: 'Date',
-         render: (v) => {
-            try {
-               return <span>{format(parseISO(String(v)), 'MMM d, yyyy')}</span>;
-            } catch {
-               return <span>—</span>;
-            }
-         },
-      },
-      {
          key: 'department',
          header: 'Department',
          render: (_, row) => <span>{row.department?.name ?? '—'}</span>,
@@ -188,8 +177,34 @@ const IncidenceLogsPage = () => {
          render: (v) => <StatusChip status={String(v ?? 'A')} />,
       },
       {
+         key: 'incidenceDate',
+         header: 'Date',
+         render: (v) => {
+            try {
+               return <span>{format(parseISO(String(v)), 'MMM d, yyyy')}</span>;
+            } catch {
+               return <span>—</span>;
+            }
+         },
+      },
+      {
+         key: 'createdBy',
+         header: 'Created By',
+         render: (v) => <span>{v ? String(v) : '—'}</span>,
+      },
+      {
+         key: 'updatedBy',
+         header: 'Modified By',
+         render: (_, row) =>
+            row.updatedBy && row.updatedBy !== row.createdBy ? (
+               <span>{row.updatedBy}</span>
+            ) : (
+               <span style={{ color: 'var(--text-hint)' }}>—</span>
+            ),
+      },
+      {
          key: 'id',
-         header: '',
+         header: 'Action',
          width: '50px',
          align: 'center',
          render: (_, row) => <ActionMenu items={getActions(row)} />,
