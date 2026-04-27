@@ -35,8 +35,18 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ items, className = '' }) => {
          const spaceBelow = window.innerHeight - rect.bottom;
          const menuHeight = visibleItems.length * 38 + 16;
 
+         // The menu has min-w 160px; right-anchoring at the button can push
+         // its left edge off-screen on narrow phones. Cap `right` so the
+         // menu's left edge stays within the viewport (with an 8px gutter).
+         const MENU_MIN_WIDTH = 160;
+         const GUTTER = 8;
+         const maxRight = Math.max(
+            0,
+            window.innerWidth - MENU_MIN_WIDTH - GUTTER,
+         );
+         const desiredRight = window.innerWidth - rect.right;
          const pos: typeof position = {
-            right: window.innerWidth - rect.right,
+            right: Math.min(Math.max(0, desiredRight), maxRight),
          };
 
          if (spaceBelow < menuHeight && rect.top > menuHeight) {

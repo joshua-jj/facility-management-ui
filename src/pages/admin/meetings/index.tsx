@@ -15,6 +15,7 @@ import AddMeeting from '@/components/Modals/AddMeeting';
 import ListStatsStrip from '@/components/ListStatsStrip';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { meetingConstants } from '@/constants/meeting.constant';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -50,6 +51,7 @@ const Meetings = () => {
    const [modalOpen, setModalOpen] = useState(false);
    const [editTarget, setEditTarget] = useState<Meeting | null>(null);
    const [currentPage, setCurrentPage] = useState(1);
+   const [pendingDeactivate, setPendingDeactivate] = useState<Meeting | null>(null);
 
    const { IsRequestingMeetings, allMeetingsList, pagination } = useSelector(
       (s: RootState) => s.meeting,
@@ -155,8 +157,15 @@ const Meetings = () => {
    };
 
    const handleDeactivate = (row: Meeting) => {
-      if (!window.confirm(`Deactivate meeting "${row.name}"? It will be moved to inactive status.`)) return;
-      dispatch(meetingActions.deleteMeeting(row.id) as unknown as UnknownAction);
+      setPendingDeactivate(row);
+   };
+
+   const confirmDeactivate = () => {
+      if (!pendingDeactivate) return;
+      dispatch(
+         meetingActions.deleteMeeting(pendingDeactivate.id) as unknown as UnknownAction,
+      );
+      setPendingDeactivate(null);
    };
 
    const openView = (row: Meeting) => {
@@ -289,6 +298,20 @@ const Meetings = () => {
             />
 
             <AddMeeting open={modalOpen} onClose={closeModal} initialData={editTarget} />
+
+            <ConfirmDialog
+               open={pendingDeactivate !== null}
+               onClose={() => setPendingDeactivate(null)}
+               onConfirm={confirmDeactivate}
+               title={
+                  pendingDeactivate
+                     ? `Deactivate meeting "${pendingDeactivate.name}"?`
+                     : ''
+               }
+               description="It will be moved to inactive status. You can reactivate it later."
+               confirmLabel="Deactivate"
+               tone="danger"
+            />
          </Layout>
       </PrivateRoute>
    );

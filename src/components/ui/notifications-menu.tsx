@@ -117,7 +117,7 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
    const assignedInList = items.filter((n) => n.assignedToMe).length;
 
    return (
-      <Card className="flex w-full max-w-[420px] flex-col gap-4 p-4 shadow-none">
+      <Card className="flex w-full max-w-[min(calc(100vw-1rem),420px)] flex-col gap-4 p-4 shadow-none">
          <CardHeader className="p-0">
             <div className="flex items-center justify-between">
                <h3 className="text-base leading-none font-semibold tracking-[-0.006em]">

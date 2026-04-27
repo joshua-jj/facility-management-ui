@@ -12,6 +12,7 @@ import PageHeader from '@/components/PageHeader';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { RoleId } from '@/constants/roles.constant';
 import { usePermissions } from '@/hooks/usePermissions';
 import { exportToCsv } from '@/utilities/exportCsv';
@@ -34,6 +35,8 @@ const Reports = () => {
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [searchQuery, setSearchQuery] = useState('');
    const [currentPage, setCurrentPage] = useState(1);
+   const [pendingDelete, setPendingDelete] = useState<Report | null>(null);
+   const [isDeleting, setIsDeleting] = useState(false);
    const { IsRequestingReports, allReportsList, pagination } = useSelector((s: RootState) => s.report);
    const meta = pagination?.meta ?? null;
 
@@ -139,13 +142,18 @@ const Reports = () => {
    // Server-side filtered — data returned directly from the API
    const filteredReports = useMemo(() => allReportsList ?? [], [allReportsList]);
 
-   const handleDelete = async (row: Report) => {
-      if (!window.confirm(`Deactivate complaint #${row.id}?`)) return;
+   const handleDelete = (row: Report) => {
+      setPendingDelete(row);
+   };
+
+   const confirmDelete = async () => {
+      if (!pendingDelete) return;
+      setIsDeleting(true);
       try {
          const user = await getObjectFromStorage(authConstants.USER_KEY);
          await axios.patch(
             `${reportConstants.REPORT_URI}/deactivate`,
-            { ids: [row.id] },
+            { ids: [pendingDelete.id] },
             {
                headers: {
                   'Content-Type': 'application/json',
@@ -169,6 +177,9 @@ const Reports = () => {
                variant: 'error',
             }) as unknown as UnknownAction,
          );
+      } finally {
+         setIsDeleting(false);
+         setPendingDelete(null);
       }
    };
 
@@ -280,6 +291,28 @@ const Reports = () => {
                onExport={handleExport}
                loading={isExporting}
                title="Export Reports"
+            />
+
+            <ConfirmDialog
+               open={pendingDelete !== null}
+               onClose={() => setPendingDelete(null)}
+               onConfirm={confirmDelete}
+               title={
+                  pendingDelete
+                     ? `Deactivate complaint from ${
+                          pendingDelete.complainerName?.trim() ||
+                          `#${pendingDelete.id}`
+                       }?`
+                     : ''
+               }
+               description={
+                  pendingDelete?.complaintSubject
+                     ? `Subject: "${pendingDelete.complaintSubject}". The complaint will be moved to inactive status — you can reactivate it later from the filters.`
+                     : 'The complaint will be moved to inactive status. You can reactivate it later from the filters.'
+               }
+               confirmLabel="Deactivate"
+               tone="danger"
+               loading={isDeleting}
             />
          </Layout>
       </PrivateRoute>
