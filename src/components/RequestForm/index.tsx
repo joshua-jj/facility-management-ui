@@ -172,16 +172,17 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       );
     }
     if (currentStep === 2) {
-      // Validate more information step. Return date must be on or after
-      // the collection date — picking a return that lands earlier is a
-      // user error we surface inline; gate progression on it as a backstop.
+      // Validate more information step. Both dates must be in the future
+      // (or today), and the return must be on or after the collection.
+      // The form surfaces violations inline; this is the backstop.
       const { location, returnDate, dateOfCollection } = formData.moreInformation;
-      if (!location || !returnDate) return false;
-      if (dateOfCollection) {
-        const c = new Date(dateOfCollection).getTime();
-        const r = new Date(returnDate).getTime();
-        if (Number.isFinite(c) && Number.isFinite(r) && r < c) return false;
-      }
+      if (!location || !returnDate || !dateOfCollection) return false;
+      const startOfToday = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+      const c = new Date(dateOfCollection).getTime();
+      const r = new Date(returnDate).getTime();
+      if (!Number.isFinite(c) || !Number.isFinite(r)) return false;
+      if (c < startOfToday || r < startOfToday) return false;
+      if (r < c) return false;
       return true;
     }
     return true;
@@ -256,11 +257,19 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
 
   const canSubmit = () => {
     const { items, requestDetails, moreInformation } = formData;
+    const startOfToday = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+    const c = moreInformation.dateOfCollection
+      ? new Date(moreInformation.dateOfCollection).getTime()
+      : NaN;
+    const r = moreInformation.returnDate
+      ? new Date(moreInformation.returnDate).getTime()
+      : NaN;
     const datesOk =
-      moreInformation.dateOfCollection &&
-      moreInformation.returnDate &&
-      new Date(moreInformation.returnDate).getTime() >=
-        new Date(moreInformation.dateOfCollection).getTime();
+      Number.isFinite(c) &&
+      Number.isFinite(r) &&
+      c >= startOfToday &&
+      r >= startOfToday &&
+      r >= c;
     return (
       items.every(
         (item) =>
