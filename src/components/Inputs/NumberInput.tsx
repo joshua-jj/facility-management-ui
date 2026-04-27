@@ -86,6 +86,10 @@ const NumberInput: React.FC<NumberInputProps> = (props) => {
       if (props.value !== undefined && props.value !== null && props.value !== '') {
          const raw = stripCommas(String(props.value));
          setDisplayValue(formatWithCommas(raw, allowDecimal));
+         // Register the prefilled value with Formsy. Without this, edit-mode
+         // forms boot with the input visually populated but Formsy's internal
+         // state empty — required validation fails and the submit stays disabled.
+         props.setValue(raw);
       }
    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
