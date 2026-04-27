@@ -299,7 +299,7 @@ const Users = () => {
       },
       {
          key: 'actions',
-         header: '',
+         header: 'Action',
          align: 'center',
          width: '50px',
          render: (_, row) => <ActionMenu items={getActions(row)} />,

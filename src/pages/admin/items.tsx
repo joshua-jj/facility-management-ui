@@ -386,7 +386,7 @@ const Items = () => {
          },
          {
             key: 'actions',
-            header: '',
+            header: 'Action',
             align: 'center' as const,
             width: '50px',
             render: (_: unknown, row: Item) => <ActionMenu items={getActions(row)} />,

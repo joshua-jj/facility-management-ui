@@ -108,14 +108,11 @@ function createStreamChannel(ticket: string): EventChannel<StreamEvent> {
    });
 }
 
-function* fetchTicket() {
+function* fetchTicket(): Generator<unknown, string | null, unknown> {
    try {
-      const resp = yield* authenticatedRequest(
-         notificationConstants.NOTIFICATION_STREAM_TICKET_URI,
-         { method: 'POST' },
-      );
+      const resp = yield* authenticatedRequest(notificationConstants.NOTIFICATION_STREAM_TICKET_URI, { method: 'POST' });
       if (!resp) return null;
-      return ((resp.data as { ticket?: string } | null)?.ticket) ?? null;
+      return ((resp?.data as { ticket?: string })?.ticket) ?? null;
    } catch {
       return null;
    }
@@ -147,7 +144,7 @@ const BACKOFF_STEPS_MS = [1000, 2000, 4000, 8000, 16000, 30000];
 function* streamWorker() {
    let attempt = 0;
    while (true) {
-      const ticket = yield* fetchTicket();
+      const ticket: string | null = yield* fetchTicket();
       if (!ticket) {
          const delay = BACKOFF_STEPS_MS[Math.min(attempt, BACKOFF_STEPS_MS.length - 1)];
          yield call(() => new Promise<void>((r) => setTimeout(r, delay + Math.floor(Math.random() * 250))));
