@@ -1,7 +1,11 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import TextInput from '../Inputs/TextInput';
 import PhoneInput from '../Inputs/PhoneInput';
+import SelectInput from '../Inputs/SelectInput';
 import Formsy from 'formsy-react';
+import { RootState } from '@/redux/reducers';
+import { Department } from '@/types';
 
 interface RequestDetailsProps {
    data: {
@@ -9,12 +13,14 @@ interface RequestDetailsProps {
       requesterName: string;
       email: string;
       contactNumber: string;
+      ownDepartmentId: string;
    };
    setData: (data: {
       ministryName: string;
       requesterName: string;
       email: string;
       contactNumber: string;
+      ownDepartmentId: string;
    }) => void;
    isWorkerRoute: boolean;
    setIsFormValid: (isValid: boolean) => void;
@@ -26,6 +32,13 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
    isWorkerRoute,
    setIsFormValid,
 }) => {
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+
+   const departmentOptions = (allDepartmentsList ?? []).map((d: Department) => ({
+      value: String(d.id),
+      label: d.name,
+   }));
+
    const handleChange = (currentValues: {
       ministry_name?: string;
       requester_name?: string;
@@ -33,6 +46,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
       contact_number?: string;
    }) => {
       setData({
+         ...data,
          ministryName: isWorkerRoute ? 'EGFM' : currentValues.ministry_name || data.ministryName,
          requesterName: currentValues.requester_name || data.requesterName,
          email: currentValues.email || data.email,
@@ -83,6 +97,18 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
             defaultCountry="NG"
             outputFormat="local"
             required
+         />
+         <SelectInput
+            name="own_department_id"
+            label="Your Department"
+            placeholder="Select your department"
+            options={departmentOptions}
+            value={data.ownDepartmentId}
+            onValueChange={(val) =>
+               setData({ ...data, ownDepartmentId: val })
+            }
+            required
+            searchable
          />
       </Formsy>
    );

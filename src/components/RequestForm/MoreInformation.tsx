@@ -34,6 +34,17 @@ const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
       });
    };
 
+   // Surface a return-before-collection mistake immediately. The form root's
+   // canSubmit/canProceedStep guards block submission, but a visible message
+   // here tells the user *why* the button is disabled.
+   const dateOrderError = (() => {
+      if (!data.dateOfCollection || !data.returnDate) return null;
+      const c = new Date(data.dateOfCollection).getTime();
+      const r = new Date(data.returnDate).getTime();
+      if (!Number.isFinite(c) || !Number.isFinite(r)) return null;
+      return r < c ? 'Return Date must be on or after the Collection Date.' : null;
+   })();
+
    return (
       <Formsy onChange={handleChange}>
          <TextInput
@@ -52,13 +63,19 @@ const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
                value={data.dateOfCollection}
                mode="date"
             />
-            <DateInput
-               name="return_date"
-               label="Return Date"
-               placeholder="Select return date"
-               value={data.returnDate}
-               mode="date"
-            />
+            <div>
+               <DateInput
+                  name="return_date"
+                  label="Return Date"
+                  placeholder="Select return date"
+                  value={data.returnDate}
+                  minDate={data.dateOfCollection || undefined}
+                  mode="date"
+               />
+               {dateOrderError && (
+                  <p className="text-red-500 text-xs -mt-1">{dateOrderError}</p>
+               )}
+            </div>
          </div>
          <TextArea
             type="text"

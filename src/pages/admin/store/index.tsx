@@ -14,6 +14,7 @@ import PrivateRoute from '@/components/PrivateRoute';
 import AddStore from '@/components/Modals/AddStore';
 import ListStatsStrip from '@/components/ListStatsStrip';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
@@ -45,6 +46,7 @@ const Stores = () => {
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [searchQuery, setSearchQuery] = useState('');
    const [currentPage, setCurrentPage] = useState(1);
+   const [pendingDeactivate, setPendingDeactivate] = useState<Store | null>(null);
 
    const { IsRequestingStores, allStoresList, pagination } = useSelector((s: RootState) => s.store);
    const { meta } = pagination;
@@ -149,11 +151,18 @@ const Stores = () => {
    const handleToggleStatus = (store: Store) => {
       const isActive = String(store.status).toUpperCase() === 'A' || String(store.status).toUpperCase() === 'ACTIVE';
       if (isActive) {
-         if (!window.confirm(`Deactivate store "${store.name}"? It will no longer be available for item assignments.`)) return;
-         dispatch(storeActions.deactivateStore({ ids: [store.id] }) as unknown as UnknownAction);
+         setPendingDeactivate(store);
       } else {
          dispatch(storeActions.activateStore({ ids: [store.id] }) as unknown as UnknownAction);
       }
+   };
+
+   const confirmDeactivate = () => {
+      if (!pendingDeactivate) return;
+      dispatch(
+         storeActions.deactivateStore({ ids: [pendingDeactivate.id] }) as unknown as UnknownAction,
+      );
+      setPendingDeactivate(null);
    };
 
    const getActions = (row: Store): ActionMenuItem[] => {
@@ -283,6 +292,20 @@ const Stores = () => {
                onExport={handleExport}
                loading={isExporting}
                title="Export Stores"
+            />
+
+            <ConfirmDialog
+               open={pendingDeactivate !== null}
+               onClose={() => setPendingDeactivate(null)}
+               onConfirm={confirmDeactivate}
+               title={
+                  pendingDeactivate
+                     ? `Deactivate store "${pendingDeactivate.name}"?`
+                     : ''
+               }
+               description="It will no longer be available for item assignments. You can reactivate it later."
+               confirmLabel="Deactivate"
+               tone="danger"
             />
          </Layout>
       </PrivateRoute>

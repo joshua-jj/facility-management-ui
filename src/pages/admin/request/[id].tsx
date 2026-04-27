@@ -177,9 +177,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const [returnConditions, setReturnConditions] = useState<Record<number, string>>({});
 
    // Verify the emailed magic-link token (if one is present in the URL).
-   // Auth is still the primary gate — a bad token just means the email
-   // receipt can't be proven, so we warn and let the already-authenticated
-   // admin proceed. Ref prevents re-running on every query change.
+   // PrivateRoute is the primary gate — anyone reaching this page is already
+   // a session-authenticated admin, so a stale token adds no risk. We strip
+   // the token from the URL either way so it doesn't leak via referer /
+   // history. Failures are logged for diagnostics but no longer surface as
+   // a toast — the contradictory "expired … but session is active" message
+   // confused users with no actionable next step.
    const verifiedRef = useRef(false);
    useEffect(() => {
       if (!router.isReady || verifiedRef.current) return;
@@ -187,25 +190,20 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       if (!token || Array.isArray(token)) return;
       verifiedRef.current = true;
 
+      const stripToken = () => {
+         const rest = { ...router.query };
+         delete rest.t;
+         router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+      };
+
       axios
          .post(requestConstants.VERIFY_REQUEST_TOKEN_URI, { token })
-         .then(() => {
-            // Strip the token from the URL so it isn't leaked via referer /
-            // browser history once verification has happened.
-            const rest = { ...router.query };
-            delete rest.t;
-            router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+         .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.warn('Request link token verification failed', err);
          })
-         .catch(() => {
-            dispatch(
-               appActions.setSnackBar({
-                  type: 'warning',
-                  message: 'This emailed link has expired or is invalid. Your session is still active — you can continue.',
-                  variant: 'warning',
-               }) as unknown as UnknownAction,
-            );
-         });
-   }, [router.isReady, router.query, dispatch, router]);
+         .finally(stripToken);
+   }, [router.isReady, router.query, router]);
 
 
    const fetchItemUnits = async (itemId: number) => {
