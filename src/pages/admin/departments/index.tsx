@@ -13,6 +13,7 @@ import { Department } from '@/types';
 import AddDepartment from '@/components/Modals/AddDepartment';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
@@ -61,6 +62,7 @@ const Departments = () => {
    const [currentPage, setCurrentPage] = useState(1);
    const [editDepartment, setEditDepartment] = useState<Department | null>(null);
    const [showEditModal, setShowEditModal] = useState(false);
+   const [pendingDeactivate, setPendingDeactivate] = useState<Department | null>(null);
 
    const { IsRequestingDepartments, allDepartmentsList, pagination } = useSelector((s: RootState) => s.department);
    const { meta } = pagination;
@@ -171,11 +173,18 @@ const Departments = () => {
    const handleToggleStatus = (row: Department) => {
       const isActive = String(row.status).toUpperCase() === 'A' || String(row.status).toUpperCase() === 'ACTIVE';
       if (isActive) {
-         if (!window.confirm(`Deactivate department "${row.name}"? It will no longer be available for assignments.`)) return;
-         dispatch(departmentActions.deactivateDepartment(row.id) as unknown as UnknownAction);
+         setPendingDeactivate(row);
       } else {
          dispatch(departmentActions.activateDepartment(row.id) as unknown as UnknownAction);
       }
+   };
+
+   const confirmDeactivate = () => {
+      if (!pendingDeactivate) return;
+      dispatch(
+         departmentActions.deactivateDepartment(pendingDeactivate.id) as unknown as UnknownAction,
+      );
+      setPendingDeactivate(null);
    };
 
    const getActions = (row: Department): ActionMenuItem[] => {
@@ -299,6 +308,20 @@ const Departments = () => {
                onExport={handleExport}
                loading={isExporting}
                title="Export Departments"
+            />
+
+            <ConfirmDialog
+               open={pendingDeactivate !== null}
+               onClose={() => setPendingDeactivate(null)}
+               onConfirm={confirmDeactivate}
+               title={
+                  pendingDeactivate
+                     ? `Deactivate department "${pendingDeactivate.name}"?`
+                     : ''
+               }
+               description="It will no longer be available for assignments. You can reactivate it later."
+               confirmLabel="Deactivate"
+               tone="danger"
             />
 
             {editDepartment && (

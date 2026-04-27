@@ -11,6 +11,7 @@ import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddIncidenceLog from '@/components/Modals/AddIncidenceLog';
@@ -57,6 +58,7 @@ const IncidenceLogsPage = () => {
    const [modalOpen, setModalOpen] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [currentPage, setCurrentPage] = useState(1);
+   const [pendingDeactivate, setPendingDeactivate] = useState<IncidenceLog | null>(null);
 
    const { IsRequestingIncidenceLogs, allIncidenceLogsList, pagination } = useSelector(
       (s: RootState) => s.incidenceLog,
@@ -98,8 +100,15 @@ const IncidenceLogsPage = () => {
    }, [fetchLogs, currentPage]);
 
    const handleDeactivate = (row: IncidenceLog) => {
-      if (!window.confirm(`Deactivate incidence report #${row.id}?`)) return;
-      dispatch(incidenceLogActions.deleteIncidenceLog(row.id) as unknown as UnknownAction);
+      setPendingDeactivate(row);
+   };
+
+   const confirmDeactivate = () => {
+      if (!pendingDeactivate) return;
+      dispatch(
+         incidenceLogActions.deleteIncidenceLog(pendingDeactivate.id) as unknown as UnknownAction,
+      );
+      setPendingDeactivate(null);
    };
 
    const openEdit = (row: IncidenceLog) => {
@@ -258,6 +267,20 @@ const IncidenceLogsPage = () => {
                   }}
                />
             )}
+
+            <ConfirmDialog
+               open={pendingDeactivate !== null}
+               onClose={() => setPendingDeactivate(null)}
+               onConfirm={confirmDeactivate}
+               title={
+                  pendingDeactivate
+                     ? `Deactivate incidence report #${pendingDeactivate.id}?`
+                     : ''
+               }
+               description="The report will be moved to inactive status."
+               confirmLabel="Deactivate"
+               tone="danger"
+            />
          </Layout>
       </PrivateRoute>
    );
