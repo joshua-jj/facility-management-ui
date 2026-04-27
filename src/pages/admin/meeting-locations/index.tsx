@@ -216,7 +216,7 @@ const MeetingLocations = () => {
       },
       {
          key: 'id',
-         header: '',
+         header: 'Action',
          width: '50px',
          align: 'center',
          render: (_, row) => <ActionMenu items={getActions(row)} />,
