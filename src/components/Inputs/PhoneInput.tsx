@@ -92,10 +92,21 @@ const PhoneInput: React.FC<PhoneInputProps> = (props) => {
    const [search, setSearch] = useState('');
    const wrapperRef = useRef<HTMLDivElement>(null);
 
-   // Init from props
+   // Init from props. Round-tripped values can carry the country dial
+   // digits as a leading prefix (e.g., 'raw' output writes '234 818 ...'
+   // for NG). Strip the dial digits and any leading 0 (local-format
+   // prefix) so we end up with a clean national subscriber number that
+   // formatPhone can render against the country's mask.
    useEffect(() => {
       if (props.value) {
-         const raw = stripFormat(String(props.value));
+         let raw = stripFormat(String(props.value));
+         const dialDigits = country.dial.replace('+', '');
+         if (dialDigits && raw.startsWith(dialDigits)) {
+            raw = raw.slice(dialDigits.length);
+         }
+         if (raw.startsWith('0')) {
+            raw = raw.slice(1);
+         }
          setDisplayValue(formatPhone(raw, country));
       }
    }, []); // eslint-disable-line react-hooks/exhaustive-deps

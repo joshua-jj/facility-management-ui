@@ -15,6 +15,7 @@ const LandingPage: FC = () => {
           link="/request/egfm-worker"
           icon={<ProfileIcon />}
           filledIcon={<ProfileBoldIcon />}
+          delayIndex={1}
         />
         <IdentityCard
           title="Church/Ministry"
@@ -22,6 +23,7 @@ const LandingPage: FC = () => {
           icon={<HomeIcon />}
           filledIcon={<HomeBoldIcon />}
           disabled
+          delayIndex={2}
         />
       </div>
     </Layout>
