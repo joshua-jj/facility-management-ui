@@ -39,8 +39,18 @@ const ActionDropDown = (props: Props) => {
       const spaceBelow = window.innerHeight - buttonRect.bottom;
       const dropdownHeight = 150; // approximate max height of dropdown
 
+      // Right-anchoring at the button can push the menu's left edge
+      // off-screen on narrow phones. Cap `right` so the menu (min-w 120)
+      // stays within the viewport with an 8px gutter.
+      const DROPDOWN_MIN_WIDTH = 120;
+      const GUTTER = 8;
+      const maxRight = Math.max(
+        0,
+        window.innerWidth - DROPDOWN_MIN_WIDTH - GUTTER,
+      );
+      const desiredRight = window.innerWidth - buttonRect.right;
       const newPosition: DropdownPosition = {
-        right: window.innerWidth - buttonRect.right,
+        right: Math.min(Math.max(0, desiredRight), maxRight),
       };
 
       if (spaceBelow < dropdownHeight) {

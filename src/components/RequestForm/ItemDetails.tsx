@@ -88,11 +88,16 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ items, department, setItems, 
 
    return (
       <div>
-         {/* Department select */}
+         {/* Department select — focus department, i.e. the dept fulfilling
+              this request and whose HOD approves it. Distinct from the
+              requester's own department captured on the next step. */}
          <div ref={activeDropdown === 'department' ? dropdownRef : undefined} className="mb-5 relative">
             <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-               Department*
+               Focus Department*
             </label>
+            <p className="text-[0.65rem] -mt-1 mb-1.5" style={{ color: 'var(--text-hint)' }}>
+               Department that fulfills this request
+            </p>
             <button
                type="button"
                onClick={() => toggleDropdown('department')}

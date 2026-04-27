@@ -21,6 +21,7 @@ interface FormData {
     requesterName: string;
     email: string;
     contactNumber: string;
+    ownDepartmentId: string;
   };
   moreInformation: {
     location: string;
@@ -39,6 +40,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
 
   const dispatch = useDispatch();
   const { IsCreatingRequest } = useSelector((s: RootState) => s.request);
+  const { userDetails } = useSelector((s: RootState) => s.user);
   const [currentStep, setCurrentStep] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [department, setDepartment] = useState<Department | null>(null);
@@ -61,6 +63,7 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       requesterName: '',
       email: '',
       contactNumber: '',
+      ownDepartmentId: '',
     },
     moreInformation: {
       location: '',
@@ -69,6 +72,26 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       description: '',
     },
   });
+
+  // Default the requester's own department to the logged-in user's
+  // department once that's available. Only fires if the user hasn't
+  // already typed a value, so we don't clobber an explicit choice.
+  useEffect(() => {
+    const userDeptId = userDetails?.departmentId;
+    if (
+      userDeptId != null &&
+      !formData.requestDetails.ownDepartmentId
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        requestDetails: {
+          ...prev.requestDetails,
+          ownDepartmentId: String(userDeptId),
+        },
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userDetails?.departmentId]);
 
   useEffect(() => {
     dispatch(departmentActions.getUnpaginatedDepartments() as unknown as UnknownAction);
@@ -104,6 +127,9 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
             requesterName: '',
             email: '',
             contactNumber: '',
+            ownDepartmentId: userDetails?.departmentId
+              ? String(userDetails.departmentId)
+              : '',
           },
           moreInformation: {
             location: '',
@@ -134,20 +160,29 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
     }
     if (currentStep === 1) {
       // Validate requester details step
-      const { ministryName, requesterName, email, contactNumber } =
+      const { ministryName, requesterName, email, contactNumber, ownDepartmentId } =
         formData.requestDetails;
       // If isWorkerRoute, ministryName may not be required
       return (
         (isWorkerRoute || ministryName) &&
         requesterName &&
         email &&
-        contactNumber
+        contactNumber &&
+        ownDepartmentId
       );
     }
     if (currentStep === 2) {
-      // Validate more information step
-      const { location, returnDate } = formData.moreInformation;
-      return location && returnDate;
+      // Validate more information step. Return date must be on or after
+      // the collection date — picking a return that lands earlier is a
+      // user error we surface inline; gate progression on it as a backstop.
+      const { location, returnDate, dateOfCollection } = formData.moreInformation;
+      if (!location || !returnDate) return false;
+      if (dateOfCollection) {
+        const c = new Date(dateOfCollection).getTime();
+        const r = new Date(returnDate).getTime();
+        if (Number.isFinite(c) && Number.isFinite(r) && r < c) return false;
+      }
+      return true;
     }
     return true;
   };
@@ -195,6 +230,9 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       isMinistry: isWorkerRoute ? true : false,
       ministryName: formData.requestDetails.ministryName,
       requesterDepartmentId: department?.id,
+      requesterOwnDepartmentId: formData.requestDetails.ownDepartmentId
+        ? Number(formData.requestDetails.ownDepartmentId)
+        : undefined,
       locationOfUse: formData.moreInformation.location,
       // durationOfUse: '1 week',
       // durationOfUse: formData.moreInformation.returnDate,
@@ -218,6 +256,11 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
 
   const canSubmit = () => {
     const { items, requestDetails, moreInformation } = formData;
+    const datesOk =
+      moreInformation.dateOfCollection &&
+      moreInformation.returnDate &&
+      new Date(moreInformation.returnDate).getTime() >=
+        new Date(moreInformation.dateOfCollection).getTime();
     return (
       items.every(
         (item) =>
@@ -227,9 +270,9 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
       requestDetails.requesterName &&
       requestDetails.email &&
       requestDetails.contactNumber &&
+      requestDetails.ownDepartmentId &&
       moreInformation.location &&
-      moreInformation.dateOfCollection &&
-      moreInformation.returnDate
+      datesOk
     );
   };
 

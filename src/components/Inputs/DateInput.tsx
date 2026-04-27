@@ -237,7 +237,10 @@ const DateInput: React.FC<DateInputProps> = (props) => {
                   border: '1px solid var(--border-default)',
                   boxShadow: 'var(--shadow-lg)',
                   width: mode === 'datetime' ? 320 : 280,
-                  maxHeight: 'min(26rem, calc(100vh - 8rem))',
+                  // dvh (dynamic viewport height) tracks iOS Safari's
+                  // collapsing URL bar; vh would clip the picker as the
+                  // chrome animates in/out.
+                  maxHeight: 'min(26rem, calc(100dvh - 8rem))',
                }}
             >
                {/* Month/Year header */}

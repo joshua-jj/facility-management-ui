@@ -14,6 +14,7 @@ import AddMeetingLocation from '@/components/Modals/AddMeetingLocation';
 import ListStatsStrip from '@/components/ListStatsStrip';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { meetingLocationConstants } from '@/constants/meetingLocation.constant';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -49,6 +50,7 @@ const MeetingLocations = () => {
    const [modalOpen, setModalOpen] = useState(false);
    const [editTarget, setEditTarget] = useState<MeetingLocation | null>(null);
    const [currentPage, setCurrentPage] = useState(1);
+   const [pendingDeactivate, setPendingDeactivate] = useState<MeetingLocation | null>(null);
 
    const { IsRequestingMeetingLocations, allMeetingLocationsList, pagination } = useSelector(
       (s: RootState) => s.meetingLocation,
@@ -136,8 +138,15 @@ const MeetingLocations = () => {
    };
 
    const handleDeactivate = (row: MeetingLocation) => {
-      if (!window.confirm(`Deactivate meeting location "${row.name}"? It will be moved to inactive status.`)) return;
-      dispatch(meetingLocationActions.deleteMeetingLocation(row.id) as unknown as UnknownAction);
+      setPendingDeactivate(row);
+   };
+
+   const confirmDeactivate = () => {
+      if (!pendingDeactivate) return;
+      dispatch(
+         meetingLocationActions.deleteMeetingLocation(pendingDeactivate.id) as unknown as UnknownAction,
+      );
+      setPendingDeactivate(null);
    };
 
    const openView = (row: MeetingLocation) => {
@@ -263,6 +272,20 @@ const MeetingLocations = () => {
             />
 
             <AddMeetingLocation open={modalOpen} onClose={closeModal} initialData={editTarget} />
+
+            <ConfirmDialog
+               open={pendingDeactivate !== null}
+               onClose={() => setPendingDeactivate(null)}
+               onConfirm={confirmDeactivate}
+               title={
+                  pendingDeactivate
+                     ? `Deactivate meeting location "${pendingDeactivate.name}"?`
+                     : ''
+               }
+               description="It will be moved to inactive status. You can reactivate it later."
+               confirmLabel="Deactivate"
+               tone="danger"
+            />
          </Layout>
       </PrivateRoute>
    );
