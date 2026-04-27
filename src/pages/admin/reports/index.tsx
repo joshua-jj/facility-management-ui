@@ -256,7 +256,7 @@ const Reports = () => {
       },
       {
          key: 'id',
-         header: '',
+         header: 'Action',
          width: '50px',
          align: 'center',
          render: (_value, row) => <ActionMenu items={getActions(row)} />,

@@ -34,6 +34,11 @@ interface ItemDetails {
       id: number;
       condition: string;
       serialNumber: string;
+      // True when the unit is out with a requester (request status
+      // COLLECTED, not yet COMPLETED). The condition + store dropdowns
+      // are locked while this is true — we don't know the unit's real
+      // condition until it physically returns.
+      leased?: boolean;
       store: {
          id: number;
          name: string;
@@ -260,11 +265,21 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
    };
 
    const handleUpdateItem = () => {
-      const updatedItemUnits = currentItem.itemUnits.map((unit, index) => {
-         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-         const { serialNumber, store, ...rest } = unit;
-         return { ...rest, condition: selectedConditions[index], storeId: Number(selectedStores[index]) };
-      });
+      // Skip leased units — their condition/store are not editable while
+      // they're physically out with a requester. Including them in the
+      // payload would let a stray click overwrite their state.
+      const updatedItemUnits = currentItem.itemUnits
+         .map((unit, index) => {
+            if (unit.leased) return null;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { serialNumber, store, leased, ...rest } = unit;
+            return {
+               ...rest,
+               condition: selectedConditions[index],
+               storeId: Number(selectedStores[index]),
+            };
+         })
+         .filter((u): u is NonNullable<typeof u> => u !== null);
       dispatch(itemActions.updateItem({ itemId: id as string, itemUnits: updatedItemUnits }) as unknown as UnknownAction);
    };
 
@@ -458,29 +473,56 @@ const ItemViewPage: NextPage<ItemDetailsProps> = ({ itemDetail }) => {
                                     }`}
                                  >
                                     <td className="px-4 py-3 text-sm font-mono text-[#0F2552] dark:text-white/75">
-                                       {unit.serialNumber}
+                                       <div className="flex items-center gap-2 flex-wrap">
+                                          <span>{unit.serialNumber}</span>
+                                          {unit.leased && (
+                                             <span
+                                                className="text-[0.6rem] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded-full"
+                                                style={{
+                                                   background: 'rgba(178,131,9,0.12)',
+                                                   color: '#b28309',
+                                                   border: '1px solid rgba(178,131,9,0.35)',
+                                                }}
+                                                title="This unit is currently with a requester. Condition cannot be edited until it is returned."
+                                             >
+                                                Out with requester
+                                             </span>
+                                          )}
+                                       </div>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-400 dark:text-white/40">
                                        #{unit.id}
                                     </td>
                                     <td className="px-4 py-3">
-                                       <SmallSelect
-                                          value={selectedConditions[index]}
-                                          options={conditionOptions}
-                                          placeholder="Select condition"
-                                          onChange={(value) => handleConditionChange(index, value as string)}
-                                       />
+                                       {unit.leased ? (
+                                          <span className="text-sm text-gray-500 dark:text-white/45 italic">
+                                             {selectedConditions[index] || '—'}
+                                          </span>
+                                       ) : (
+                                          <SmallSelect
+                                             value={selectedConditions[index]}
+                                             options={conditionOptions}
+                                             placeholder="Select condition"
+                                             onChange={(value) => handleConditionChange(index, value as string)}
+                                          />
+                                       )}
                                     </td>
                                     <td className="px-4 py-3">
-                                       <SmallSelect
-                                          value={selectedStores[index]}
-                                          options={allStoresList.map((store) => ({
-                                             value: String(store.id),
-                                             label: store.name,
-                                          }))}
-                                          placeholder="Select store"
-                                          onChange={(value) => handleStoreChange(index, String(value))}
-                                       />
+                                       {unit.leased ? (
+                                          <span className="text-sm text-gray-500 dark:text-white/45 italic">
+                                             {allStoresList.find((s) => String(s.id) === selectedStores[index])?.name || '—'}
+                                          </span>
+                                       ) : (
+                                          <SmallSelect
+                                             value={selectedStores[index]}
+                                             options={allStoresList.map((store) => ({
+                                                value: String(store.id),
+                                                label: store.name,
+                                             }))}
+                                             placeholder="Select store"
+                                             onChange={(value) => handleStoreChange(index, String(value))}
+                                          />
+                                       )}
                                     </td>
                                  </tr>
                               ))}

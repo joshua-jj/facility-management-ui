@@ -91,7 +91,10 @@ const CurrencyInput: React.FC<CurrencyInputProps> = (props) => {
    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
    const rawNumber = parseFloat(stripCommas(displayValue)) || 0;
-   const wordsText = rawNumber > 0 ? `${numberToWords(rawNumber)} ${currencyInfo.label}${rawNumber !== 1 ? 's' : ''}` : '';
+   // Currency names are invariant in the plural — 'Twenty Thousand Naira',
+   // not 'Nairas'. Drop the auto-pluralization here.
+   const wordsText =
+      rawNumber > 0 ? `${numberToWords(rawNumber)} ${currencyInfo.label}` : '';
 
    const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
