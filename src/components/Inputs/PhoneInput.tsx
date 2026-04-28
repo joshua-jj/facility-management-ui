@@ -97,6 +97,11 @@ const PhoneInput: React.FC<PhoneInputProps> = (props) => {
    // for NG). Strip the dial digits and any leading 0 (local-format
    // prefix) so we end up with a clean national subscriber number that
    // formatPhone can render against the country's mask.
+   //
+   // Also call setValue with the round-tripped output so Formsy registers
+   // the prefilled value — without this, edit-mode forms boot with the
+   // input visually populated but Formsy's internal state empty, and the
+   // submit handler sees the field as untouched.
    useEffect(() => {
       if (props.value) {
          let raw = stripFormat(String(props.value));

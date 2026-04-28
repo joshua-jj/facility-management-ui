@@ -82,8 +82,10 @@ const CurrencyInput: React.FC<CurrencyInputProps> = (props) => {
 
    const currencyInfo = CURRENCIES.find((c) => c.code === currency) ?? CURRENCIES[0];
 
-   // Initialize from props.value. Without calling setValue here, Formsy
-   // boots the field as "empty" and edits to a prefilled cost silently fail to save.
+   // Initialize from props.value. Same gotcha as NumberInput — without
+   // calling setValue here, Formsy boots the field as "empty" and the
+   // form never registers a value change unless the user re-types from
+   // scratch. That made edits to a prefilled cost silently fail to save.
    useEffect(() => {
       if (props.value) {
          const cleaned = stripCommas(String(props.value));

@@ -108,11 +108,14 @@ function createStreamChannel(ticket: string): EventChannel<StreamEvent> {
    });
 }
 
-function* fetchTicket(): Generator<unknown, string | null, unknown> {
+function* fetchTicket() {
    try {
-      const resp = yield* authenticatedRequest(notificationConstants.NOTIFICATION_STREAM_TICKET_URI, { method: 'POST' });
+      const resp = yield* authenticatedRequest(
+         notificationConstants.NOTIFICATION_STREAM_TICKET_URI,
+         { method: 'POST' },
+      );
       if (!resp) return null;
-      return ((resp?.data as { ticket?: string })?.ticket) ?? null;
+      return (resp.data as { ticket?: string })?.ticket ?? null;
    } catch {
       return null;
    }
@@ -122,7 +125,7 @@ function* runStreamOnce(ticket: string) {
    const channel: EventChannel<StreamEvent> = yield call(createStreamChannel, ticket);
    try {
       while (true) {
-         const ev: StreamEvent = yield take(channel);
+         const ev: StreamEvent = yield take(channel as EventChannel<StreamEvent>);
          if (ev.kind === 'open') {
             yield put({ type: notificationConstants.NOTIFICATION_STREAM_OPENED });
          } else if (ev.kind === 'message') {
