@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import Header from '@/navigation/Header';
 import Sidebar from '@/navigation/Sidebar';
 import { useIsAuthRoute } from '@/hooks';
@@ -16,6 +16,7 @@ const Layout: React.FC<LayoutProps> = ({ children, className, title }) => {
    const router = useRouter();
    const pathname = router.pathname;
    const authRoutes = useIsAuthRoute();
+   const [mobileOpen, setMobileOpen] = useState(false);
 
    return (
       <>
@@ -37,9 +38,9 @@ const Layout: React.FC<LayoutProps> = ({ children, className, title }) => {
                   <meta name="viewport" content="width=device-width, initial-scale=1" />
                   <link rel="icon" href="/favicon.ico" />
                </Head>
-               <Sidebar />
+               <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
                <div className="flex-1 overflow-y-auto min-w-0">
-                  <Header />
+                  <Header onMobileMenuToggle={() => setMobileOpen((prev) => !prev)} />
                   <main
                      className={`text-[#0F2552] dark:text-white/90 p-2 md:p-4 lg:p-8 pb-20 animate-page-enter transition-colors duration-300 ${className}`}
                   >
