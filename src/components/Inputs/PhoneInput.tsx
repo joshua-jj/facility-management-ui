@@ -108,6 +108,7 @@ const PhoneInput: React.FC<PhoneInputProps> = (props) => {
             raw = raw.slice(1);
          }
          setDisplayValue(formatPhone(raw, country));
+         props.setValue(buildOutput(raw, country));
       }
    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
