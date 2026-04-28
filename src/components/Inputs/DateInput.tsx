@@ -92,7 +92,10 @@ const DateInput: React.FC<DateInputProps> = (props) => {
    const [timeValue, setTimeValue] = useState('12:00');
    const wrapperRef = useRef<HTMLDivElement>(null);
 
-   // Initialize from props
+   // Initialize from props. Also calls setValue so Formsy registers the
+   // prefilled value at mount — without this, an edit-mode form that
+   // pre-populates a date field would still report the field as empty
+   // to Formsy, blocking save until the user re-picks the date.
    useEffect(() => {
       if (props.value) {
          const d = dayjs(props.value);
@@ -103,6 +106,7 @@ const DateInput: React.FC<DateInputProps> = (props) => {
             if (mode === 'datetime') {
                setTimeValue(d.format('HH:mm'));
             }
+            props.setValue(props.value);
          }
       }
    }, []); // eslint-disable-line react-hooks/exhaustive-deps
