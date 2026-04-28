@@ -93,8 +93,9 @@ const DateInput: React.FC<DateInputProps> = (props) => {
    const wrapperRef = useRef<HTMLDivElement>(null);
 
    // Initialize from props. Also calls setValue so Formsy registers the
-   // prefilled value — without this, edit-mode forms boot with the field
-   // visually populated but Formsy's state empty, blocking save.
+   // prefilled value at mount — without this, an edit-mode form that
+   // pre-populates a date field would still report the field as empty
+   // to Formsy, blocking save until the user re-picks the date.
    useEffect(() => {
       if (props.value) {
          const d = dayjs(props.value);

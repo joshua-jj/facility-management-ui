@@ -16,7 +16,11 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { useTheme } from '@/hooks/useTheme';
 import { motion } from 'framer-motion';
 
-const Header = () => {
+type HeaderProps = {
+   onMobileMenuToggle?: () => void;
+};
+
+const Header = ({ onMobileMenuToggle }: HeaderProps) => {
    const router = useRouter();
    const pathname = router.pathname;
    const dispatch = useDispatch();
@@ -74,9 +78,22 @@ const Header = () => {
                transition={{ duration: 0.25, ease: 'easeOut' }}
                className="h-16 md:h-[4.5rem] sticky top-0 z-[5001] px-4 md:px-8 border-b border-[var(--border-default)] bg-[var(--surface-paper)] text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition-colors duration-300"
             >
-               <div className="flex items-center justify-end h-full w-full">
+               <div className="flex items-center h-full w-full">
+                  {/* Hamburger — mobile only */}
+                  <button
+                     onClick={onMobileMenuToggle}
+                     className="md:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-[var(--border-default)] bg-[var(--surface-paper)] hover:bg-[var(--surface-low)] transition-colors cursor-pointer"
+                     aria-label="Open navigation menu"
+                  >
+                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                     </svg>
+                  </button>
+
                   {/* Right: actions */}
-                  <div className="flex items-center gap-3">
+                  <div className="ml-auto flex items-center gap-3">
                      {/* Notification bell */}
                      <NotificationBell />
 
