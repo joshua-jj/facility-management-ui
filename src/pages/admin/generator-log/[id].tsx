@@ -27,6 +27,11 @@ interface GeneratorLogDetail {
    dieselUnit?: 'litres' | 'percentage' | null;
    lastServiceHour: string | null;
    nextServiceHour: string | null;
+   /** Live schedule overlaid by the API; preferred source for the UI. */
+   serviceSchedule?: {
+      lastServiceHour: number | null;
+      nextServiceHour: number | null;
+   } | null;
    dueForService: boolean;
    oilFilterDueForReplacement: boolean;
    lastOilFilterReplacement: string | null;
@@ -221,7 +226,13 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
    const dieselUnitLabel = log.dieselUnit === 'percentage' ? '%' : 'L';
    const dieselUnitFull = log.dieselUnit === 'percentage' ? 'Percentage' : 'Litres';
 
-   const nextService = asNum(log.nextServiceHour);
+   /* Prefer the live schedule attached by the API; fall back to the snapshot
+    * persisted on the log row. The schedule is the source of truth — the log
+    * row is rarely populated since the create form doesn't submit it. */
+   const lastService =
+      log.serviceSchedule?.lastServiceHour ?? asNum(log.lastServiceHour);
+   const nextService =
+      log.serviceSchedule?.nextServiceHour ?? asNum(log.nextServiceHour);
    const hoursUntilService =
       nextService != null && engineOff != null ? nextService - engineOff : null;
 
@@ -505,12 +516,12 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                      >
                         <Field
                            label="Last Service"
-                           value={log.lastServiceHour ? `${log.lastServiceHour} hrs` : undefined}
+                           value={lastService != null ? `${lastService} hrs` : undefined}
                            mono
                         />
                         <Field
                            label="Next Service"
-                           value={log.nextServiceHour ? `${log.nextServiceHour} hrs` : undefined}
+                           value={nextService != null ? `${nextService} hrs` : undefined}
                            mono
                         />
                         <Field
