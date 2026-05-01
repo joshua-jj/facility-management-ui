@@ -52,7 +52,7 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
    const showDepartment = !user && selectedRoleId === '3';
 
    const handleSubmit = (data: CreateUserForm) => {
-      data.role = Number(selectedRoleId);
+      data.roleIds = selectedRoleId ? [Number(selectedRoleId)] : [];
       data.departmentId = Number(selectedDeptId) || undefined;
       dispatch(userActions.createUser(data) as unknown as UnknownAction);
    };
