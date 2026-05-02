@@ -46,8 +46,15 @@ const UpdateRole: React.FC<UpdateRoleModalProps> = ({ className, children, user,
    };
 
    const handleSubmit = () => {
+      // Coerce + filter — guard against any stale "undefined"/empty
+      // entries that could leak in if the API ever returns a role
+      // shape without ids. The server validates positive ints; sending
+      // NaN/0 would 400 the whole request.
+      const cleanRoleIds = selectedRoleIds
+         .map((v) => Number(v))
+         .filter((n) => Number.isInteger(n) && n > 0);
       const data: UpdateUserRoleForm = {
-         roleIds: selectedRoleIds.map(Number),
+         roleIds: cleanRoleIds,
          userId: user?.id as number,
       };
       dispatch(userActions.updateUserRole(data) as unknown as UnknownAction);
