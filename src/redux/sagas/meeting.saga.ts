@@ -19,21 +19,37 @@ function* getMeetings({ data }: GetMeetingsAction) {
   yield put({ type: meetingConstants.REQUEST_GET_MEETINGS });
 
   try {
-    const page = data?.page ?? 1;
-    const limit = data?.limit ?? 10;
-    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-    if (data?.search) params.set('search', data.search);
-    if (data?.status) params.set('status', data.status);
-    if (data?.locationId) params.set('locationId', data.locationId);
-    const uri = `${meetingConstants.MEETING_URI}?${params.toString()}`;
+    let uri: string;
+    let paginated = false;
+
+    if (data?.limit !== undefined) {
+      const page = data.page ?? 1;
+      const limit = data.limit;
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (data.search) params.set('search', data.search);
+      if (data.status) params.set('status', data.status);
+      if (data.locationId) params.set('locationId', data.locationId);
+      uri = `${meetingConstants.MEETING_URI}?${params.toString()}`;
+      paginated = true;
+    } else {
+      // No limit specified — fetch all meetings (for dropdowns)
+      uri = meetingConstants.MEETING_ALL_URI;
+    }
 
     const jsonResponse = yield* authenticatedRequest(uri, { method: 'GET' });
     if (!jsonResponse) return;
 
     const payload = jsonResponse?.data;
-    // API returns paginated { items, meta, links }
-    const items = Array.isArray(payload) ? payload : (payload as { items?: unknown[] })?.items ?? payload;
-    const meta = (payload as { meta?: unknown })?.meta ?? null;
+
+    let items: unknown[];
+    let meta: unknown = null;
+
+    if (paginated) {
+      items = Array.isArray(payload) ? payload : (payload as { items?: unknown[] })?.items ?? [];
+      meta = (payload as { meta?: unknown })?.meta ?? null;
+    } else {
+      items = Array.isArray(payload) ? payload : [];
+    }
 
     yield put({
       type: meetingConstants.GET_MEETINGS_SUCCESS,

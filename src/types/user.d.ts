@@ -57,7 +57,7 @@ export interface Users {
   phoneNumber: string;
   gender: string;
   isVerified: boolean;
-  role: {
+  roles: Array<{
     id: number;
     status: string;
     createdAt: string;
@@ -66,7 +66,7 @@ export interface Users {
     updatedBy: null;
     name: string;
     description: string;
-  };
+  }>;
   status: number | string;
 }
 
@@ -76,8 +76,15 @@ export interface UserDetail {
   id: number;
   lastName: string;
   phoneNumber: string;
-  role: string;
-  roleId: number;
+  /** Array of role names (the canonical shape post-many-to-many). */
+  roles?: string[];
+  /** Array of role ids the user holds. */
+  roleIds?: number[];
+  /** @deprecated transitional — first role id only. Remove after the
+   *  API drops the deprecated `roleId` field from the signin response. */
+  roleId?: number;
+  /** @deprecated transitional — first role name only. */
+  role?: string;
   departmentId?: number;
 }
 
@@ -109,13 +116,17 @@ export interface CreateUserForm {
   lastName: string;
   email: string;
   phoneNumber: string;
-  role: number;
+  /** Primary role id. Optional — server falls back to the USER default
+   *  (CoreConstants.DEFAULT_ROLE) when omitted. The MEMBER role is
+   *  auto-merged server-side regardless. Use the UpdateRole modal to
+   *  assign additional roles after creation. */
+  role?: number;
   departmentId?: number;
 }
 
 export interface UpdateUserRoleForm {
   userId: number;
-  roleId: number;
+  roleIds: number[];
 }
 
 export interface UserStatusForm {
