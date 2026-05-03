@@ -116,7 +116,11 @@ export interface CreateUserForm {
   lastName: string;
   email: string;
   phoneNumber: string;
-  roleIds: number[];
+  /** Primary role id. Optional — server falls back to the USER default
+   *  (CoreConstants.DEFAULT_ROLE) when omitted. The MEMBER role is
+   *  auto-merged server-side regardless. Use the UpdateRole modal to
+   *  assign additional roles after creation. */
+  role?: number;
   departmentId?: number;
 }
 
