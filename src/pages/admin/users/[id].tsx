@@ -17,14 +17,14 @@ interface UserDetail {
    email: string;
    phoneNumber: string;
    gender: string;
-   role: {
+   roles?: Array<{
       id: number;
       name: string;
-   };
-   department: {
+   }>;
+   department?: {
       id: number;
       name: string;
-   };
+   } | null;
    isVerified: boolean;
    status: string;
    createdAt: string;
@@ -87,7 +87,11 @@ const UserDetailPage: NextPage<UserDetailProps> = ({ user }) => {
                         <StatusChip status={isActive ? 'active' : 'inactive'} size="md" pulse={isActive} />
                      </div>
                      <p className="text-xs text-gray-400 dark:text-white/40">
-                        {user.email} &middot; {user.role?.name ?? 'No Role'}
+                        {user.email}
+                        {' · '}
+                        {user.roles?.length
+                           ? user.roles.map((r) => r.name).join(', ')
+                           : 'No Role'}
                      </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -110,10 +114,42 @@ const UserDetailPage: NextPage<UserDetailProps> = ({ user }) => {
             {/* Role & Department */}
             <DetailSection title="Role & Department">
                <div className="grid grid-cols-1 sm:grid-cols-2">
-                  <DetailRow label="Role" value={<StatusChip status={user.role?.name?.toLowerCase() ?? 'default'} />} />
-                  <DetailRow label="Department" value={user.department?.name} />
-                  <DetailRow label="Verified" value={<StatusChip status={user.isVerified ? 'verified' : 'unverified'} />} />
-                  <DetailRow label="Status" value={<StatusChip status={isActive ? 'active' : 'inactive'} />} />
+                  <DetailRow
+                     label="Roles"
+                     value={
+                        user.roles?.length ? (
+                           <div className="flex flex-wrap gap-1">
+                              {user.roles.map((r) => (
+                                 <StatusChip
+                                    key={r.id}
+                                    status={r.name?.toLowerCase() ?? 'default'}
+                                    size="sm"
+                                 />
+                              ))}
+                           </div>
+                        ) : (
+                           '—'
+                        )
+                     }
+                  />
+                  <DetailRow
+                     label="Department"
+                     value={user.department?.name ?? '—'}
+                  />
+                  <DetailRow
+                     label="Verified"
+                     value={
+                        <StatusChip
+                           status={user.isVerified ? 'verified' : 'unverified'}
+                        />
+                     }
+                  />
+                  <DetailRow
+                     label="Status"
+                     value={
+                        <StatusChip status={isActive ? 'active' : 'inactive'} />
+                     }
+                  />
                </div>
             </DetailSection>
 

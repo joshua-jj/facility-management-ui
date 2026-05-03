@@ -21,13 +21,19 @@ import { RoleId } from '@/constants/roles.constant';
 export const usePermissions = () => {
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-   const roleId = userDetails?.roleId;
+   // Canonical multi-role state. Falls back to wrapping the deprecated
+   // single roleId so any reducer code still emitting it stays compatible.
+   const roleIds: number[] =
+      userDetails?.roleIds ??
+      (typeof userDetails?.roleId === 'number' && userDetails.roleId > 0
+         ? [userDetails.roleId]
+         : []);
 
-   const isSuperAdmin = roleId === RoleId.SUPER_ADMIN;
-   const isAdmin = roleId === RoleId.ADMIN;
-   const isHod = roleId === RoleId.HOD;
-   const isMember = roleId === RoleId.MEMBER;
-   const isOffice = roleId === RoleId.OFFICE;
+   const isSuperAdmin = roleIds.includes(RoleId.SUPER_ADMIN);
+   const isAdmin = roleIds.includes(RoleId.ADMIN);
+   const isHod = roleIds.includes(RoleId.HOD);
+   const isMember = roleIds.includes(RoleId.MEMBER);
+   const isOffice = roleIds.includes(RoleId.OFFICE);
 
    // Anyone with SUPER_ADMIN or ADMIN sees all the back-office admin tools.
    const isBackOffice = isSuperAdmin || isAdmin;
@@ -55,7 +61,9 @@ export const usePermissions = () => {
       userDetails?.departmentId === facilityDepartmentId;
 
    return {
-      roleId,
+      roleIds,
+      /** @deprecated transitional — first role id only. Use `roleIds`. */
+      roleId: roleIds[0] ?? null,
       userId: userDetails?.id,
       userEmail: userDetails?.email,
       userDepartmentId: userDetails?.departmentId,
