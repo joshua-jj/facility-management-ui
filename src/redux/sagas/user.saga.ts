@@ -116,7 +116,7 @@ function* updateUserRole({ data }: UpdateUserRoleAction) {
   try {
     if (data) {
       const { userId, ...restData } = data;
-      const userUri = `${userConstants.USER_URI}/${userId}/role`;
+      const userUri = `${userConstants.USER_URI}/${userId}/roles`;
 
       const jsonResponse = yield* authenticatedRequest(userUri, {
         method: 'PATCH',

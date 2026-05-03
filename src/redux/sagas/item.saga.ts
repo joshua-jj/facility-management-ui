@@ -68,17 +68,34 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
     const user = yield* getStoredUser();
     const deptId = data?.departmentId || (user?.user as Record<string, unknown>)?.departmentId;
     if (!deptId) return; // Guard: skip fetch if no departmentId available
-    let itemUri = `${itemConstants.ITEM_URI}/department/${deptId}`;
+
+    // No page/limit specified → caller wants the full list (e.g. for a
+    // dropdown). Hit the unpaginated /item/all/:departmentId endpoint
+    // so we don't silently cap the result at 10. The paginated
+    // /item/department/:departmentId branch only fires when the caller
+    // explicitly asks for a page.
+    let itemUri: string;
+    let paginated = false;
     if (data?.page) {
-      itemUri = `${itemUri}?page=${data.page}`;
+      itemUri = `${itemConstants.ITEM_URI}/department/${deptId}?page=${data.page}`;
+      paginated = true;
+    } else {
+      itemUri = `${itemConstants.ITEM_URI}/all/${deptId}`;
     }
 
     const jsonResponse = yield* authenticatedRequest(itemUri, { method: 'GET' });
     if (!jsonResponse) return;
 
+    // Paginated response is { items, meta, links }; /all returns a flat
+    // array. Normalise to a flat array for the reducer.
+    const payload = jsonResponse?.data;
+    const items = paginated
+      ? (payload as { items?: unknown[] })?.items ?? payload
+      : payload;
+
     yield put({
       type: itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS,
-      items: jsonResponse?.data,
+      items,
     });
   } catch (error: unknown) {
     yield* handleSagaError(error, itemConstants.GET_DEPARTMENT_ITEMS_ERROR, false);

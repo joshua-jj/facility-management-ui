@@ -259,10 +259,22 @@ const Users = () => {
          render: (value) => <PhoneDisplay value={String(value ?? '')} />,
       },
       {
-         key: 'role',
-         header: 'Role',
+         key: 'roles',
+         header: 'Roles',
          render: (_, row) => (
-            <StatusChip status={row.role?.name?.toLowerCase() ?? 'default'} size="sm" />
+            <div className="flex flex-wrap gap-1">
+               {row.roles?.length ? (
+                  row.roles.map((r) => (
+                     <StatusChip
+                        key={r.id}
+                        status={r.name?.toLowerCase() ?? 'default'}
+                        size="sm"
+                     />
+                  ))
+               ) : (
+                  <span style={{ color: 'var(--text-hint)' }}>—</span>
+               )}
+            </div>
          ),
       },
       {

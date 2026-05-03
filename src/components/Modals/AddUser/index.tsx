@@ -52,7 +52,10 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
    const showDepartment = !user && selectedRoleId === '3';
 
    const handleSubmit = (data: CreateUserForm) => {
-      data.role = Number(selectedRoleId);
+      // Send the primary role as a singular id; if none chosen the server
+      // falls back to the USER default. MEMBER is auto-merged on the
+      // server, so admins don't have to remember to include it.
+      data.role = selectedRoleId ? Number(selectedRoleId) : undefined;
       data.departmentId = Number(selectedDeptId) || undefined;
       dispatch(userActions.createUser(data) as unknown as UnknownAction);
    };

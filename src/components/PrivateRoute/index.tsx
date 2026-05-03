@@ -28,9 +28,13 @@ const PrivateRoute: React.FC<LayoutProps> = ({ children, allowedRoles }) => {
     return null;
   }
 
-  if (allowedRoles && !allowedRoles.includes(userDetails?.roleId)) {
-    router.replace('/login');
-    return null;
+  if (allowedRoles) {
+    const userRoleIds = userDetails?.roleIds ?? [];
+    const hasAccess = allowedRoles.some((rid) => userRoleIds.includes(rid));
+    if (!hasAccess) {
+      router.replace('/login');
+      return null;
+    }
   }
 
   return <>{children}</>;

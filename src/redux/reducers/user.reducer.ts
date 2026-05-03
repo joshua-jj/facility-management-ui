@@ -34,22 +34,31 @@ const userDetails = (
     firstName: '',
     lastName: '',
     phoneNumber: '',
+    roles: [],
+    roleIds: [],
     role: '',
     roleId: 0,
     departmentId: 0,
     id: 0,
-    // Add other required fields with default values
   },
   action: Action
 ): UserDetailsState => {
   switch (action.type) {
-    case authConstants.LOGIN_SUCCESS:
-      return {
-        ...state,
-        ...(typeof action.user === 'object' && action.user !== null
-          ? action.user
-          : {}),
-      };
+    case authConstants.LOGIN_SUCCESS: {
+      const incoming =
+        typeof action.user === 'object' && action.user !== null
+          ? (action.user as Partial<UserDetailsState>)
+          : {};
+      // Normalise role shape: prefer roleIds[] from the new API, but
+      // fall back to wrapping the deprecated single roleId so older
+      // session payloads still populate the canonical array.
+      const roleIds =
+        incoming.roleIds ??
+        (typeof incoming.roleId === 'number' && incoming.roleId > 0
+          ? [incoming.roleId]
+          : []);
+      return { ...state, ...incoming, roleIds };
+    }
     default:
       return state;
   }

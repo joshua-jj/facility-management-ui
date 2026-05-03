@@ -4,6 +4,7 @@ const meeting: string = 'meetings';
 
 export const meetingConstants = {
   MEETING_URI: `${appConstants.BASE_URI}${meeting}`,
+  MEETING_ALL_URI: `${appConstants.BASE_URI}${meeting}/all`,
 
   GET_MEETINGS: 'GET_MEETINGS',
   REQUEST_GET_MEETINGS: 'REQUEST_GET_MEETINGS',

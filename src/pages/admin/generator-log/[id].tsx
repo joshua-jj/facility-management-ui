@@ -27,6 +27,11 @@ interface GeneratorLogDetail {
    dieselUnit?: 'litres' | 'percentage' | null;
    lastServiceHour: string | null;
    nextServiceHour: string | null;
+   /** Live schedule overlaid by the API; preferred source for the UI. */
+   serviceSchedule?: {
+      lastServiceHour: number | null;
+      nextServiceHour: number | null;
+   } | null;
    dueForService: boolean;
    oilFilterDueForReplacement: boolean;
    lastOilFilterReplacement: string | null;
@@ -194,10 +199,25 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
       return Number.isFinite(n) ? n : null;
    };
 
-   const engineStart = asNum(log.engineStartHours);
    const engineOff = asNum(log.engineOffHours);
-   const engineDelta =
-      engineStart != null && engineOff != null ? engineOff - engineStart : null;
+
+   /* Date + time in Lagos timezone, e.g. "Tue, Apr 28, 2026 · 7:32 PM" */
+   const formatDateTime = (iso: string): string => {
+      const date = new Date(iso);
+      const datePart = date.toLocaleDateString('en-US', {
+         weekday: 'short',
+         year: 'numeric',
+         month: 'short',
+         day: 'numeric',
+         timeZone: 'Africa/Lagos',
+      });
+      const timePart = date.toLocaleTimeString('en-US', {
+         hour: 'numeric',
+         minute: '2-digit',
+         timeZone: 'Africa/Lagos',
+      });
+      return `${datePart} · ${timePart}`;
+   };
 
    const dieselOn = asNum(log.dieselLevelOn);
    const dieselOff = asNum(log.dieselLevelOff);
@@ -206,7 +226,13 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
    const dieselUnitLabel = log.dieselUnit === 'percentage' ? '%' : 'L';
    const dieselUnitFull = log.dieselUnit === 'percentage' ? 'Percentage' : 'Litres';
 
-   const nextService = asNum(log.nextServiceHour);
+   /* Prefer the live schedule attached by the API; fall back to the snapshot
+    * persisted on the log row. The schedule is the source of truth — the log
+    * row is rarely populated since the create form doesn't submit it. */
+   const lastService =
+      log.serviceSchedule?.lastServiceHour ?? asNum(log.lastServiceHour);
+   const nextService =
+      log.serviceSchedule?.nextServiceHour ?? asNum(log.nextServiceHour);
    const hoursUntilService =
       nextService != null && engineOff != null ? nextService - engineOff : null;
 
@@ -271,7 +297,7 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                </div>
 
                {/* KPI strip inside the hero */}
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-6">
                   <KpiTile
                      label="Hours Used"
                      value={formatHoursUsed()}
@@ -281,15 +307,6 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                            : log.onTime
                              ? 'Still running'
                              : undefined
-                     }
-                  />
-                  <KpiTile
-                     label="Engine Run"
-                     value={engineDelta != null ? `${engineDelta.toFixed(1)} hrs` : '—'}
-                     hint={
-                        engineStart != null && engineOff != null
-                           ? `${engineStart} → ${engineOff}`
-                           : 'No reading'
                      }
                   />
                   <KpiTile
@@ -364,7 +381,7 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                                  className="text-sm font-medium"
                                  style={{ color: 'var(--text-primary)' }}
                               >
-                                 {log.onTime ? formatReadableDate(log.onTime) : '—'}
+                                 {log.onTime ? formatDateTime(log.onTime) : '—'}
                               </span>
                            </div>
                         </div>
@@ -401,7 +418,7 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                                     color: log.offTime ? 'var(--text-primary)' : 'var(--text-hint)',
                                  }}
                               >
-                                 {log.offTime ? formatReadableDate(log.offTime) : 'Still running'}
+                                 {log.offTime ? formatDateTime(log.offTime) : 'Still running'}
                               </span>
                            </div>
                         </div>
@@ -499,12 +516,12 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                      >
                         <Field
                            label="Last Service"
-                           value={log.lastServiceHour ? `${log.lastServiceHour} hrs` : undefined}
+                           value={lastService != null ? `${lastService} hrs` : undefined}
                            mono
                         />
                         <Field
                            label="Next Service"
-                           value={log.nextServiceHour ? `${log.nextServiceHour} hrs` : undefined}
+                           value={nextService != null ? `${nextService} hrs` : undefined}
                            mono
                         />
                         <Field
