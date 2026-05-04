@@ -78,7 +78,12 @@ const filters: FilterDef[] = [
 
 const MaintenanceLogs = () => {
    const dispatch = useDispatch();
-   const { isBackOffice, isHod, isMember, isAuthor } = usePermissions();
+   const { isBackOffice, isHod, isMember, isFacilityTeam, isAuthor } =
+      usePermissions();
+   // Per spec, HODs of other departments are read-only on maintenance
+   // logs — but the Facility HOD owns the maintenance workflow and must
+   // be able to create logs. Treat them as an exception.
+   const canCreateMaintenance = !isHod || isFacilityTeam;
    const router = useRouter();
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
@@ -271,9 +276,9 @@ const MaintenanceLogs = () => {
             <PageHeader
                subtitle="Track facility maintenance activities"
                action={
-                  isHod ? null : (
+                  canCreateMaintenance ? (
                      <ActionButton onClick={() => setShowAddModal(true)}>Add Log</ActionButton>
-                  )
+                  ) : null
                }
             />
 
