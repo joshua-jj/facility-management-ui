@@ -64,7 +64,12 @@ const IncidenceLogsPage = () => {
       (s: RootState) => s.incidenceLog,
    );
    const { meta } = pagination;
-   const { isBackOffice, isMember, isHod, userId } = usePermissions();
+   const { isBackOffice, isMember, isHod, isFacilityTeam, userId } =
+      usePermissions();
+   // HODs of other departments are read-only on incidence logs, but the
+   // Facility HOD owns the incident-response workflow and must be able
+   // to file a report.
+   const canFileIncidence = !isHod || isFacilityTeam;
 
    // Per spec: only the member who FILED the report may edit it.
    const isReporter = (row: IncidenceLog) =>
@@ -231,11 +236,11 @@ const IncidenceLogsPage = () => {
             <PageHeader
                subtitle="Facility incident reports — each report emails the focus department HOD and senior leadership"
                action={
-                  isHod ? null : (
+                  canFileIncidence ? (
                      <AddIncidenceLog className="text-start w-full cursor-pointer">
                         <ActionButton variant="primary">+ New Report</ActionButton>
                      </AddIncidenceLog>
-                  )
+                  ) : null
                }
             />
 
