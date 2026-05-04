@@ -50,10 +50,21 @@ const Profile: FC = () => {
    const { theme, toggleTheme } = useTheme();
 
    const fullName = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
-   const roleName =
-      (typeof userDetails?.role === 'object'
-         ? (userDetails?.role as Record<string, string>)?.name
-         : userDetails?.role) || 'Not assigned';
+   // Prefer the array of role names emitted by the signin response.
+   // Fall back to legacy single-string `role` for sessions that pre-date
+   // the multi-role refactor.
+   const roleName = (() => {
+      const roles = userDetails?.roles;
+      if (Array.isArray(roles) && roles.length > 0) {
+         return (roles as string[]).join(', ');
+      }
+      const legacy = userDetails?.role as unknown;
+      if (typeof legacy === 'object' && legacy !== null) {
+         return (legacy as Record<string, string>)?.name || 'Not assigned';
+      }
+      if (typeof legacy === 'string' && legacy) return legacy;
+      return 'Not assigned';
+   })();
    const departmentName =
       (allDepartmentsList ?? []).find(
          (d: { id: number; name: string }) => d.id === userDetails?.departmentId,
@@ -162,7 +173,7 @@ const Profile: FC = () => {
                               name="phoneNumber"
                               label="Phone number"
                               type="text"
-                              value={userDetails?.phoneNumber}
+                              value={userDetails?.phoneNumber ?? ''}
                            />
                         </div>
                      </div>
