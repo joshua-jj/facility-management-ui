@@ -53,7 +53,11 @@ const VIEW_ICON = (
 const GeneratorLogs = () => {
    const dispatch = useDispatch();
    const router = useRouter();
-   const { isBackOffice, isMember, isAuthor } = usePermissions();
+   const { isSuperAdmin, isBackOffice, isHod, isMember, isFacilityTeam, isAuthor } =
+      usePermissions();
+   // SUPER_ADMIN and Facility HOD have blanket edit authority on any log
+   // (per spec extension); MEMBERs can still only edit logs they created.
+   const isFacilityHod = isHod && isFacilityTeam;
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
    const [editData, setEditData] = useState<GeneratorLog | null>(null);
@@ -234,9 +238,12 @@ const GeneratorLogs = () => {
             onClick: () => router.push(`/admin/generator-log/${row.id}`),
          },
       ];
-      // Per spec: SUPER_ADMIN / ADMIN can view + delete only (no edit).
-      // MEMBER may edit only logs they created.
-      const canEdit = isMember && isAuthor(row as unknown as { createdBy?: string });
+      // SUPER_ADMIN and Facility HOD have blanket edit authority; MEMBER
+      // may edit only logs they created.
+      const canEdit =
+         isSuperAdmin ||
+         isFacilityHod ||
+         (isMember && isAuthor(row as unknown as { createdBy?: string }));
       if (canEdit) {
          actions.push({
             label: 'Edit',
@@ -244,7 +251,6 @@ const GeneratorLogs = () => {
             onClick: () => handleUpdate(row),
          });
       }
-      // Acknowledge lint unused when backoffice has no inline edit action.
       void isBackOffice;
       return actions;
    };
