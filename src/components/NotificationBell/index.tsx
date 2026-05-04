@@ -23,6 +23,24 @@ export const NotificationBell: React.FC = () => {
             isStreamConnected: false,
          },
    );
+   const isAuthenticated = useSelector(
+      (s: RootState) => s.auth?.IsAuthenticated ?? false,
+   );
+
+   // The SSE stream is only kicked off on LOGIN_SUCCESS today, so a
+   // rehydrated session (page reload while still signed in) sits with
+   // 'Live updates paused — reconnecting…' forever. Fire the connect
+   // action on mount when the persisted auth says we're signed in;
+   // the saga is idempotent — if a stream is already running this is
+   // a no-op because it's gated by the watcher's race().
+   React.useEffect(() => {
+      if (isAuthenticated && !isStreamConnected) {
+         dispatch(notificationActions.connectNotificationStream());
+      }
+      // Intentionally not depending on isStreamConnected — we only want
+      // to dispatch once on mount; the saga handles retries.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [dispatch, isAuthenticated]);
 
    const handleOpenChange = (next: boolean) => {
       setOpen(next);
