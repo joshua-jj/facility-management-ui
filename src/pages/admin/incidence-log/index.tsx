@@ -129,9 +129,12 @@ const IncidenceLogsPage = () => {
             onClick: () => router.push(`/admin/incidence-log/${row.id}`),
          },
       ];
-      // Edit reserved for the member who filed the report; HOD is strictly
-      // view-only and SUPER_ADMIN / ADMIN don't edit incident reports per spec.
-      if (isMember && isReporter(row)) {
+      // SUPER_ADMIN and Facility HOD have blanket edit authority; MEMBERs
+      // may edit only reports they filed. Other HODs stay view-only.
+      const isFacilityHod = isHod && isFacilityTeam;
+      const canEdit =
+         isBackOffice || isFacilityHod || (isMember && isReporter(row));
+      if (canEdit) {
          actions.push({
             label: 'Edit',
             icon: EDIT_ICON,
