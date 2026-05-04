@@ -129,13 +129,22 @@ const allDepartmentItemsList = (
   }
 };
 
+// Saga can deliver either a paginated `{ items, meta }` shape (when the
+// caller passed ?page=N) or a flat array (the unpaginated /all branch).
+// Normalise both so the reducer doesn't silently drop the array case.
+const asItemArray = (payload: unknown): AllItemsListState => {
+  if (Array.isArray(payload)) return payload as AllItemsListState;
+  const nested = (payload as { items?: unknown })?.items;
+  return Array.isArray(nested) ? (nested as AllItemsListState) : [];
+};
+
 const departmentItemsList = (
   state: AllItemsListState = [],
   action: AllItemsAction
 ): AllItemsListState => {
   switch (action.type) {
     case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
-      return action.items?.items ?? state;
+      return asItemArray(action.items) ?? state;
     default:
       return state;
   }
@@ -147,9 +156,9 @@ const allItemsList = (
 ): AllItemsListState => {
   switch (action.type) {
     case itemConstants.GET_ALL_ITEMS_SUCCESS:
-      return action.items?.items ?? state;
+      return asItemArray(action.items) ?? state;
     case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
-      return action.items?.items ?? state;
+      return asItemArray(action.items) ?? state;
     case itemConstants.SEARCH_ITEM_SUCCESS:
       return action.item ?? state;
     case itemConstants.DELETE_ITEM_SUCCESS:
