@@ -203,7 +203,13 @@ const MaintenanceLogs = () => {
       ];
       // Per spec: SUPER_ADMIN / ADMIN can always edit. MEMBER can only edit
       // logs they created. HOD is strictly view-only.
-      const canEdit = isBackOffice || (isMember && isAuthor(row as unknown as { createdBy?: string }));
+      // SUPER_ADMIN / ADMIN (isBackOffice) and Facility HOD have blanket
+      // edit authority; MEMBER may edit only logs they created.
+      const isFacilityHod = isHod && isFacilityTeam;
+      const canEdit =
+         isBackOffice ||
+         isFacilityHod ||
+         (isMember && isAuthor(row as unknown as { createdBy?: string }));
       if (canEdit) {
          actions.push({
             label: 'Edit',
