@@ -83,11 +83,24 @@ export const usePermissions = () => {
          if (!userDetails) return false;
          if (row?.createdByUserId && row.createdByUserId === userDetails.id)
             return true;
-         const fullName = `${userDetails.firstName ?? ''} ${userDetails.lastName ?? ''}`
-            .trim()
-            .toLowerCase();
-         if (!fullName) return false;
-         return row?.createdBy?.toLowerCase() === fullName;
+         // Normalise whitespace on both sides — DB rows have shown stray
+         // internal/leading/trailing spaces from migrated data, and a
+         // strict === miss silently disables the edit gate. The audit
+         // field is built by `buildUserName(profile, id)` on the API,
+         // which falls back through firstName-only, lastName-only,
+         // email, then `User-<id>`. Mirror those candidates here.
+         const norm = (s: string | null | undefined) =>
+            (s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+         const author = norm(row?.createdBy);
+         if (!author) return false;
+         const candidates = [
+            norm(`${userDetails.firstName ?? ''} ${userDetails.lastName ?? ''}`),
+            norm(userDetails.firstName),
+            norm(userDetails.lastName),
+            norm(userDetails.email),
+            userDetails.id ? `user-${userDetails.id}` : '',
+         ].filter(Boolean);
+         return candidates.includes(author);
       },
    };
 };
