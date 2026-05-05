@@ -37,12 +37,18 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    );
    const { userDetails } = useSelector((s: RootState) => s.user);
 
-   // Infinite-scroll state for the item dropdown. The combo-box fires
-   // onLoadMore when the user scrolls within 40px of the list bottom;
-   // we increment page and re-dispatch with append=true so the reducer
-   // concatenates instead of replacing.
+   // Infinite-scroll + server-side search state for the item dropdown.
+   // The combo-box fires onLoadMore when the user scrolls within 40px
+   // of the list bottom; we increment page and re-dispatch with
+   // append=true so the reducer concatenates instead of replacing.
+   // Search keystrokes are debounced and reset pagination — laptop
+   // users typing to filter should never have to scroll past pages
+   // they don't care about.
    const ITEMS_PAGE_SIZE = 50;
+   const SEARCH_DEBOUNCE_MS = 250;
    const [itemsPage, setItemsPage] = React.useState(1);
+   const [itemsSearch, setItemsSearch] = React.useState('');
+   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
    const itemsMeta = pagination?.meta;
    const hasMoreItems = itemsMeta
       ? Number(itemsMeta.currentPage ?? 0) <
@@ -103,10 +109,40 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
          itemActions.getAllItems({
             page: nextPage,
             limit: ITEMS_PAGE_SIZE,
+            search: itemsSearch || undefined,
             append: true,
          }) as unknown as UnknownAction,
       );
-   }, [dispatch, IsRequestingAllItems, hasMoreItems, itemsPage]);
+   }, [dispatch, IsRequestingAllItems, hasMoreItems, itemsPage, itemsSearch]);
+
+   const handleSearchChange = useCallback(
+      (next: string) => {
+         setItemsSearch(next);
+         // Debounce: don't fire one HTTP request per keystroke. The
+         // 250ms window matches typical typing cadence and feels
+         // instant on a laptop while still being cheap.
+         if (searchDebounceRef.current) {
+            clearTimeout(searchDebounceRef.current);
+         }
+         searchDebounceRef.current = setTimeout(() => {
+            setItemsPage(1);
+            dispatch(
+               itemActions.getAllItems({
+                  page: 1,
+                  limit: ITEMS_PAGE_SIZE,
+                  search: next || undefined,
+               }) as unknown as UnknownAction,
+            );
+         }, SEARCH_DEBOUNCE_MS);
+      },
+      [dispatch],
+   );
+
+   useEffect(() => {
+      return () => {
+         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      };
+   }, []);
 
    const itemOptions = (allItemsList ?? []).map((item) => ({
       value: String(item.id),
@@ -192,6 +228,7 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                         hasMore={hasMoreItems}
                         isLoading={IsRequestingAllItems}
                         loadingText="Loading more items…"
+                        onSearchChange={handleSearchChange}
                      />
                   )}
                   <div>

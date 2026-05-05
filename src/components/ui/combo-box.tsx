@@ -23,6 +23,10 @@ export interface ComboBoxProps {
    hasMore?: boolean;
    isLoading?: boolean;
    loadingText?: string;
+   /** When provided, the ComboBox emits the user's keystrokes (debounced
+    *  upstream by the caller) instead of filtering client-side. Use for
+    *  paginated dropdowns where matches may live on later pages. */
+   onSearchChange?: (search: string) => void;
 }
 
 type Rect = { top: number; left: number; width: number; openUp: boolean; maxHeight: number };
@@ -42,6 +46,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
    hasMore = false,
    isLoading = false,
    loadingText = 'Loading...',
+   onSearchChange,
 }) => {
    const [open, setOpen] = useState(false);
    const [search, setSearch] = useState('');
@@ -150,9 +155,12 @@ const ComboBox: React.FC<ComboBoxProps> = ({
    }, [open, handleListScroll]);
 
    const filteredOptions = useMemo(() => {
+      // When the parent owns the search (server-side), `options` is
+      // already the result set — don't filter again client-side.
+      if (onSearchChange) return options;
       if (!search) return options;
       return options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()));
-   }, [options, search]);
+   }, [options, search, onSearchChange]);
 
    const handleSelect = useCallback(
       (opt: ComboBoxOption) => {
@@ -209,7 +217,13 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                         ref={searchRef}
                         type="text"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => {
+                           const next = e.target.value;
+                           setSearch(next);
+                           // Emit upstream so the caller can dispatch
+                           // a server-side search (debounced there).
+                           onSearchChange?.(next);
+                        }}
                         placeholder={searchPlaceholder}
                         className="w-full pl-8 pr-3 py-2 text-xs rounded-md outline-none"
                         style={{
