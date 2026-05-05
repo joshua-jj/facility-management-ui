@@ -283,11 +283,14 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                         </li>
                      );
                   })
-               ) : (
+               ) : !isLoading ? (
+                  // Suppress "No results" while a fetch is in flight — the
+                  // loading row below covers that case. Showing both at
+                  // once is contradictory.
                   <li className="px-3 py-4 text-xs text-center" style={{ color: 'var(--text-hint)' }}>
                      {noResultsText}
                   </li>
-               )}
+               ) : null}
 
                {isLoading && (
                   <li
