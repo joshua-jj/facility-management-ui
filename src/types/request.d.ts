@@ -45,6 +45,22 @@ export interface RequestConstants {
   VERIFY_REQUEST_TOKEN_URI: string;
 }
 
+/**
+ * v2 submission payload shape — multi-department capable.
+ *
+ * The legacy v1 shape used a single `requesterDepartmentId` (the "Focus
+ * Department") plus an `items: { storeId, itemId, quantityLeased,
+ * conditionBeforeLease }[]` array. v2 drops the focus dept entirely and
+ * gives each item row its own `departmentId`. The server groups items by
+ * `departmentId` to decide whether to write a flat row or a parent +
+ * children tree.
+ */
+export interface RequestFormItem {
+  departmentId: number;
+  itemId: number;
+  quantity: number;
+}
+
 export interface RequestForm {
   requesterName: string;
   requesterEmail: string;
@@ -53,20 +69,18 @@ export interface RequestForm {
   ministryName: string;
   isChurch?: boolean;
   churchName?: string;
-  requesterDepartmentId: number | undefined;
+  // Requester's *own* department (kept for backward compat with the v1
+  // payload field name on the server). Distinct from per-row department.
+  requesterOwnDepartmentId?: number;
+  requesterHodName?: string;
+  requesterHodEmail?: string;
+  requesterHodPhone?: string;
   locationOfUse: string;
-  // durationOfUse: string;
+  durationOfUse?: string;
+  dateOfCollection: string;
   dateOfReturn: string;
   descriptionOfRequest: string;
-  //   items: [
-  //     {
-  //       storeId: number;
-  //       itemId: number;
-  //       quantityLeased: number;
-  //     //   quantityLeased?: number;
-  //       conditionBeforeLease: string;
-  //     },
-  //   ];
+  items: RequestFormItem[];
 }
 
 export interface UpdateStatusForm {
