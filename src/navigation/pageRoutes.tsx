@@ -27,6 +27,13 @@ export interface PageRoute {
    * Admin always see Facility-scoped routes because they own the app.
    */
   requiresFacilityTeam?: boolean;
+  /**
+   * When true, only users with `isAnalyticsAccess` from usePermissions
+   * see the route. That covers SUPER_ADMIN / ADMIN plus the HODs of
+   * Facility and Logistics — the departments that own the operational
+   * telemetry surfaced on the Analytics screen.
+   */
+  requiresAnalyticsAccess?: boolean;
 }
 
 /**
@@ -45,6 +52,22 @@ export const pageRoutes: PageRoute[] = [
     link: '/admin/dashboard',
     icon: <DashboardIcon />,
     allowedRoles: [RoleId.SUPER_ADMIN, RoleId.ADMIN],
+  },
+  {
+    id: 13,
+    label: 'analytics',
+    link: '/admin/analytics',
+    icon: <DashboardIcon />,
+    // The Sidebar applies the analytics-access predicate (see
+    // requiresAnalyticsAccess below) — allowedRoles stays permissive
+    // because Facility / Logistics HODs need to be admitted on top of
+    // back-office. The page guards itself too.
+    allowedRoles: [
+      RoleId.SUPER_ADMIN,
+      RoleId.ADMIN,
+      RoleId.HOD,
+    ],
+    requiresAnalyticsAccess: true,
   },
   {
     id: 2,
@@ -151,6 +174,8 @@ export const getPageNames = (link: string) => {
   switch (link) {
     case '/admin/dashboard':
       return 'dashboard';
+    case '/admin/analytics':
+      return 'analytics';
     case '/admin/requests':
       return 'requests';
     case '/admin/request/[id]':

@@ -155,8 +155,18 @@ const allItemsList = (
   action: AllItemsAction
 ): AllItemsListState => {
   switch (action.type) {
-    case itemConstants.GET_ALL_ITEMS_SUCCESS:
-      return asItemArray(action.items) ?? state;
+    case itemConstants.GET_ALL_ITEMS_SUCCESS: {
+      const next = asItemArray(action.items) ?? state;
+      // Infinite-scroll dropdowns ask the saga to set append=true so
+      // each subsequent page is concatenated rather than replacing.
+      // Dedupe by id in case a page boundary repeats a row.
+      if ((action as AllItemsAction & { append?: boolean }).append) {
+        const seen = new Set(state.map((i) => (i as Item).id));
+        const incoming = next.filter((i) => !seen.has((i as Item).id));
+        return [...state, ...incoming];
+      }
+      return next;
+    }
     case itemConstants.GET_DEPARTMENT_ITEMS_SUCCESS:
       return asItemArray(action.items) ?? state;
     case itemConstants.SEARCH_ITEM_SUCCESS:
