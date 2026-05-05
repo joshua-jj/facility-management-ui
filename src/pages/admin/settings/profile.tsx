@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 import LetteredAvatar from '@/components/LetteredAvatar';
-import { departmentActions } from '@/actions';
+import { departmentActions, roleActions } from '@/actions';
 import { useTheme } from '@/hooks/useTheme';
 import { userConstants } from '@/constants';
 
@@ -47,16 +47,32 @@ const Profile: FC = () => {
    const allDepartmentsList = useSelector(
       (s: RootState) => s.department.allDepartmentsList,
    );
+   const allRolesList = useSelector(
+      (s: RootState) => s.role.allRolesList,
+   );
    const { theme, toggleTheme } = useTheme();
 
    const fullName = `${userDetails?.firstName ?? ''} ${userDetails?.lastName ?? ''}`.trim();
-   // Prefer the array of role names emitted by the signin response.
-   // Fall back to legacy single-string `role` for sessions that pre-date
-   // the multi-role refactor.
+   // Resolve role names through several fallbacks. We need the lookup
+   // path from roleIds → allRolesList because user state is persisted
+   // in localStorage; older sessions cached before the API started
+   // emitting `roles[]` lack the names but still have the ids.
    const roleName = (() => {
       const roles = userDetails?.roles;
       if (Array.isArray(roles) && roles.length > 0) {
          return (roles as string[]).join(', ');
+      }
+      const ids = userDetails?.roleIds ?? [];
+      if (ids.length && allRolesList?.length) {
+         const names = ids
+            .map(
+               (id) =>
+                  (allRolesList as Array<{ id: number; name: string }>).find(
+                     (r) => r.id === id,
+                  )?.name,
+            )
+            .filter(Boolean) as string[];
+         if (names.length > 0) return names.join(', ');
       }
       const legacy = userDetails?.role as unknown;
       if (typeof legacy === 'object' && legacy !== null) {
@@ -81,6 +97,14 @@ const Profile: FC = () => {
          );
       }
    }, [dispatch, allDepartmentsList]);
+
+   useEffect(() => {
+      // Roles are needed to resolve names from roleIds when the cached
+      // userDetails lacks the roles[] field (pre-API-update sessions).
+      if (!allRolesList || allRolesList.length === 0) {
+         dispatch(roleActions.getRoles() as unknown as UnknownAction);
+      }
+   }, [dispatch, allRolesList]);
 
    /** Fetch the full user record to get createdAt — login payload doesn't include it */
    useEffect(() => {

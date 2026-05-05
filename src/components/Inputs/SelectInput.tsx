@@ -25,6 +25,7 @@ interface SelectInputProps {
    hasMore?: boolean;
    isLoading?: boolean;
    loadingText?: string;
+   onSearchChange?: (search: string) => void;
 }
 
 const SelectInput: React.FC<SelectInputProps> = (props) => {
@@ -42,6 +43,7 @@ const SelectInput: React.FC<SelectInputProps> = (props) => {
       hasMore,
       isLoading,
       loadingText,
+      onSearchChange,
    } = props;
    const hasError = Boolean(errorMessage) && !isPristine;
 
@@ -67,6 +69,7 @@ const SelectInput: React.FC<SelectInputProps> = (props) => {
             hasMore={hasMore}
             isLoading={isLoading}
             loadingText={loadingText}
+            onSearchChange={onSearchChange}
          />
          {hasError && <span className="text-red-500 text-xs mt-1 block">{errorMessage}</span>}
       </div>

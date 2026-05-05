@@ -32,8 +32,28 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
 }) => {
    const dispatch = useDispatch();
    const { IsCreatingMaintenanceLog } = useSelector((s: RootState) => s.maintenance);
-   const { allItemsList } = useSelector((s: RootState) => s.item);
+   const { allItemsList, IsRequestingAllItems, pagination } = useSelector(
+      (s: RootState) => s.item,
+   );
    const { userDetails } = useSelector((s: RootState) => s.user);
+
+   // Infinite-scroll + server-side search state for the item dropdown.
+   // The combo-box fires onLoadMore when the user scrolls within 40px
+   // of the list bottom; we increment page and re-dispatch with
+   // append=true so the reducer concatenates instead of replacing.
+   // Search keystrokes are debounced and reset pagination — laptop
+   // users typing to filter should never have to scroll past pages
+   // they don't care about.
+   const ITEMS_PAGE_SIZE = 50;
+   const SEARCH_DEBOUNCE_MS = 250;
+   const [itemsPage, setItemsPage] = React.useState(1);
+   const [itemsSearch, setItemsSearch] = React.useState('');
+   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const itemsMeta = pagination?.meta;
+   const hasMoreItems = itemsMeta
+      ? Number(itemsMeta.currentPage ?? 0) <
+        Number(itemsMeta.totalPages ?? 0)
+      : false;
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,8 +87,61 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    }, [onClose, maintenanceData]);
 
    useEffect(() => {
-      dispatch(itemActions.getAllItems({ page: 1, limit: 1000 }) as unknown as UnknownAction);
+      // First page on mount. Subsequent pages are loaded by the combo
+      // box's onLoadMore callback (handleLoadMore below). The reducer
+      // replaces on the first call (append unset) and concatenates on
+      // every later one (append=true), so the dropdown grows.
+      dispatch(
+         itemActions.getAllItems({
+            page: 1,
+            limit: ITEMS_PAGE_SIZE,
+         }) as unknown as UnknownAction,
+      );
+      setItemsPage(1);
       // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
+
+   const handleLoadMore = useCallback(() => {
+      if (IsRequestingAllItems || !hasMoreItems) return;
+      const nextPage = itemsPage + 1;
+      setItemsPage(nextPage);
+      dispatch(
+         itemActions.getAllItems({
+            page: nextPage,
+            limit: ITEMS_PAGE_SIZE,
+            search: itemsSearch || undefined,
+            append: true,
+         }) as unknown as UnknownAction,
+      );
+   }, [dispatch, IsRequestingAllItems, hasMoreItems, itemsPage, itemsSearch]);
+
+   const handleSearchChange = useCallback(
+      (next: string) => {
+         setItemsSearch(next);
+         // Debounce: don't fire one HTTP request per keystroke. The
+         // 250ms window matches typical typing cadence and feels
+         // instant on a laptop while still being cheap.
+         if (searchDebounceRef.current) {
+            clearTimeout(searchDebounceRef.current);
+         }
+         searchDebounceRef.current = setTimeout(() => {
+            setItemsPage(1);
+            dispatch(
+               itemActions.getAllItems({
+                  page: 1,
+                  limit: ITEMS_PAGE_SIZE,
+                  search: next || undefined,
+               }) as unknown as UnknownAction,
+            );
+         }, SEARCH_DEBOUNCE_MS);
+      },
+      [dispatch],
+   );
+
+   useEffect(() => {
+      return () => {
+         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      };
    }, []);
 
    const itemOptions = (allItemsList ?? []).map((item) => ({
@@ -151,6 +224,11 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                         value={selectedItemId}
                         onValueChange={(val) => setSelectedItemId(val)}
                         required
+                        onLoadMore={handleLoadMore}
+                        hasMore={hasMoreItems}
+                        isLoading={IsRequestingAllItems}
+                        loadingText="Loading more items…"
+                        onSearchChange={handleSearchChange}
                      />
                   )}
                   <div>

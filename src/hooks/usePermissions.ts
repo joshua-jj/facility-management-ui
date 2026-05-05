@@ -60,6 +60,28 @@ export const usePermissions = () => {
       facilityDepartmentId != null &&
       userDetails?.departmentId === facilityDepartmentId;
 
+   // Logistics department id — same lenient match as Facility above.
+   const logisticsDepartmentId = useMemo<number | null>(() => {
+      const list = allDepartmentsList as Array<{ id: number; name?: string }> | undefined;
+      if (!list || list.length === 0) return null;
+      const match = list.find((d) =>
+         (d?.name ?? '').trim().toLowerCase().startsWith('logistics'),
+      );
+      return match ? match.id : null;
+   }, [allDepartmentsList]);
+
+   const isLogisticsTeam =
+      logisticsDepartmentId != null &&
+      userDetails?.departmentId === logisticsDepartmentId;
+
+   // The Analytics screen is for back-office (SUPER_ADMIN / ADMIN) and
+   // for the HODs whose departments own the operational telemetry —
+   // Facility (maintenance + generator + incidents) and Logistics
+   // (requests + inventory). Other HODs and MEMBERs see the regular
+   // Dashboard only.
+   const isAnalyticsAccess =
+      isBackOffice || (isHod && (isFacilityTeam || isLogisticsTeam));
+
    return {
       roleIds,
       /** @deprecated transitional — first role id only. Use `roleIds`. */
@@ -75,6 +97,8 @@ export const usePermissions = () => {
       isOffice,
       isBackOffice,
       isFacilityTeam,
+      isLogisticsTeam,
+      isAnalyticsAccess,
 
       // Row-level helper: the current user is the author of a row whose
       // createdBy matches their full name OR whose explicit author FK
