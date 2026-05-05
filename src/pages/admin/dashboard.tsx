@@ -12,19 +12,9 @@ import { dashboardConstants, authConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { exportToCsv } from '@/utilities/exportCsv';
 import axios from 'axios';
-import Sparkline from '@/components/dashboard/Sparkline';
-import {
-   BarChart,
-   Bar,
-   XAxis,
-   YAxis,
-   CartesianGrid,
-   Tooltip,
-   Legend,
-   ResponsiveContainer,
-   AreaChart,
-   Area,
-} from 'recharts';
+// Trend charts + sparklines now live on /admin/analytics; dashboard
+// is the operational at-a-glance surface and no longer depends on
+// recharts or Sparkline.
 
 /* ── Card shell — muted surface, subtle border, rounded ── */
 const CARD = 'rounded-2xl p-5 md:p-6 transition-colors';
@@ -55,32 +45,6 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       {children}
    </span>
 );
-
-const formatMonthLabel = (raw: string) => {
-   try {
-      if (raw.length === 10) return format(parseISO(raw), 'MMM');
-      return format(parseISO(`${raw}-01`), 'MMM');
-   } catch {
-      return raw;
-   }
-};
-
-/** Format an API date label given the current trend period:
- *  - week/month: show day + month ("Apr 8")
- *  - year/6months: show month only ("Apr 26")
- */
-const formatTrendLabel = (raw: string, period: 'week' | 'month' | 'year'): string => {
-   try {
-      const daily = raw.length === 10;
-      if (period === 'year') {
-         return format(daily ? parseISO(raw) : parseISO(`${raw}-01`), 'MMM yy');
-      }
-      if (daily) return format(parseISO(raw), 'MMM d');
-      return format(parseISO(`${raw}-01`), 'MMM');
-   } catch {
-      return raw;
-   }
-};
 
 const fmtNumber = (n: number | string | undefined) =>
    (Number(n ?? 0) || 0).toLocaleString('en-US');
@@ -141,18 +105,9 @@ const DashboardSkeleton: React.FC = () => (
    </>
 );
 
-type TrendPeriod = 'week' | 'month' | 'year';
-
-const PERIOD_OPTIONS: { value: TrendPeriod; label: string }[] = [
-   { value: 'week', label: 'Week' },
-   { value: 'month', label: 'Month' },
-   { value: 'year', label: 'Year' },
-];
-
 const Dashboard = () => {
    const dispatch = useDispatch();
    const [isExportingReport, setIsExportingReport] = useState(false);
-   const [period, setPeriod] = useState<TrendPeriod>('month');
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { dashboardStats, dashboardAnalytics, IsFetchingDashboardStats } =
       useSelector((s: RootState) => s.dashboard);
@@ -162,7 +117,7 @@ const Dashboard = () => {
    useEffect(() => {
       dispatch(dashboardActions.getDashboardStats() as unknown as UnknownAction);
       dispatch(
-         dashboardActions.getDashboardAnalytics(period) as unknown as UnknownAction,
+         dashboardActions.getDashboardAnalytics('month') as unknown as UnknownAction,
       );
 
       if (userDetails?.roleId === RoleId.HOD) {
@@ -180,7 +135,7 @@ const Dashboard = () => {
       } else {
          dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
       }
-   }, [dispatch, userDetails, period]);
+   }, [dispatch, userDetails]);
 
    const handleExportDailyReport = useCallback(async () => {
       setIsExportingReport(true);
@@ -382,13 +337,7 @@ const Dashboard = () => {
       return { avg: Math.round(avg), peak, change: Math.round(change * 10) / 10 };
    }, [requestsSparkline]);
 
-   /* ── Top requested items (top 5) ── */
-   const topItems = useMemo(
-      () => (dashboardAnalytics?.topRequestedItems ?? []).slice(0, 5),
-      [dashboardAnalytics],
-   );
-
-   /* ── Next upcoming schedule ── */
+   /* ── Next upcoming schedule (operational lookahead) ── */
    const nextSchedule = useMemo(
       () => (dashboardAnalytics?.upcomingSchedules ?? [])[0],
       [dashboardAnalytics],
@@ -398,54 +347,6 @@ const Dashboard = () => {
    const recentMaintenance = useMemo(
       () => (dashboardAnalytics?.recentMaintenanceLogs ?? []).slice(0, 3),
       [dashboardAnalytics],
-   );
-
-   /* ── Monthly requests bar-chart series ── */
-   const requestTrendData = useMemo(
-      () =>
-         (dashboardAnalytics?.requestTrend ?? []).map((t) => ({
-            month: formatMonthLabel(t.month),
-            Requests: t.count,
-         })),
-      [dashboardAnalytics],
-   );
-
-   /* ── Generator usage line-chart series — count of generator logs per period ── */
-   const generatorTrendData = useMemo(() => {
-      const countTrend = dashboardAnalytics?.generatorStats?.usageCountTrend;
-      if (countTrend && countTrend.length > 0) {
-         return countTrend.map((p) => ({
-            date: p.date,
-            label: formatTrendLabel(p.date, period),
-            value: p.count,
-         }));
-      }
-      /* Fallback: hours trend (legacy, while backend deploys) */
-      return (dashboardAnalytics?.generatorStats?.hoursUsedTrend ?? []).map((p) => ({
-         date: p.date,
-         label: formatTrendLabel(p.date, period),
-         value: p.hours,
-      }));
-   }, [dashboardAnalytics, period]);
-
-   const generatorTrendChange = useMemo(() => {
-      if (generatorTrendData.length < 2) return null;
-      const first = generatorTrendData[0].value;
-      const last = generatorTrendData[generatorTrendData.length - 1].value;
-      if (!first) return null;
-      const pct = ((last - first) / Math.abs(first)) * 100;
-      return { pct, up: pct >= 0 };
-   }, [generatorTrendData]);
-
-   /* ── Items line-chart data ── */
-   const itemsLineData = useMemo(
-      () =>
-         itemsSparkline.map((p) => ({
-            date: p.date,
-            label: formatTrendLabel(p.date, period),
-            value: p.value,
-         })),
-      [itemsSparkline, period],
    );
 
    return (
@@ -505,18 +406,13 @@ const Dashboard = () => {
                {/* Total Requests */}
                <div className={CARD} style={CARD_STYLE}>
                   <SectionLabel>Total Requests</SectionLabel>
-                  <div className="mt-5 flex items-start gap-6">
-                     <div className="flex-1 min-w-0">
-                        <h2 className="text-4xl md:text-5xl font-bold tabular-nums tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                           {fmtNumber(dashboardStats?.totalRequests)}
-                        </h2>
-                        <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
-                           Total Requests
-                        </p>
-                     </div>
-                     <div className="flex-1 max-w-[60%]">
-                        <Sparkline data={requestsSparkline} color="#6B8FCC" height={56} showDelta={false} className="w-full" />
-                     </div>
+                  <div className="mt-5">
+                     <h2 className="text-4xl md:text-5xl font-bold tabular-nums tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                        {fmtNumber(dashboardStats?.totalRequests)}
+                     </h2>
+                     <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+                        Total Requests
+                     </p>
                   </div>
                   <div className="mt-6 flex items-center gap-6">
                      <div className="flex items-center gap-2">
@@ -572,47 +468,8 @@ const Dashboard = () => {
                </div>
             </div>
 
-            {/* Row 2: Most Requested · Total Items */}
+            {/* Row 2: Total Items snapshot — sparkline + leaderboard moved to Analytics */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
-               {/* Most Requested Items */}
-               <div className={CARD} style={CARD_STYLE}>
-                  <div className="flex items-start justify-between">
-                     <SectionLabel>Most Requested Items</SectionLabel>
-                     <span className="text-[0.6rem]" style={{ color: 'var(--text-hint)' }}>
-                        Top 5
-                     </span>
-                  </div>
-                  <h3 className="mt-5 font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
-                     Your most requested items
-                  </h3>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
-                     Here are your top 5 most requested items this period
-                  </p>
-                  <ul className="mt-4 space-y-2.5">
-                     {topItems.length === 0 && (
-                        <li className="text-xs" style={{ color: 'var(--text-hint)' }}>No data yet.</li>
-                     )}
-                     {topItems.map((it, idx) => (
-                        <li key={it.itemId} className="flex items-center justify-between text-sm">
-                           <span className="flex items-center gap-2 min-w-0">
-                              <span
-                                 className="text-[0.65rem] font-bold tabular-nums w-5 text-center"
-                                 style={{ color: 'var(--text-hint)' }}
-                              >
-                                 {idx + 1}
-                              </span>
-                              <span className="truncate" style={{ color: 'var(--text-primary)' }}>
-                                 {it.itemName}
-                              </span>
-                           </span>
-                           <span className="tabular-nums text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                              {fmtNumber(it.count)}
-                           </span>
-                        </li>
-                     ))}
-                  </ul>
-               </div>
-
                {/* Total Items in Stock */}
                <div className={CARD} style={CARD_STYLE}>
                   <div className="flex items-start justify-between">
@@ -653,7 +510,9 @@ const Dashboard = () => {
                </div>
             </div>
 
-            {/* Row 3: Recent Maintenance · Request Trends */}
+            {/* Row 3: Recent Maintenance · Request Activity Snapshot
+                Trend charts (period-scoped) live on /admin/analytics — this
+                row keeps the operational at-a-glance summary only. */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
                {/* Recent Maintenance */}
                <div className={CARD} style={CARD_STYLE}>
@@ -746,287 +605,6 @@ const Dashboard = () => {
                </div>
             </div>
 
-            {/* Trends header — period selector scoped to charts below */}
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3 mt-2">
-               <div>
-                  <h2
-                     className="text-sm font-bold uppercase tracking-wider"
-                     style={{ color: 'var(--text-secondary)' }}
-                  >
-                     Trends
-                  </h2>
-                  <p className="text-[0.7rem] mt-0.5" style={{ color: 'var(--text-hint)' }}>
-                     Charts below respond to the selected period
-                  </p>
-               </div>
-               <div
-                  role="tablist"
-                  aria-label="Trend period"
-                  className="inline-flex rounded-full overflow-hidden"
-                  style={{ border: '1px solid var(--border-strong)' }}
-               >
-                  {PERIOD_OPTIONS.map((p) => {
-                     const active = period === p.value;
-                     return (
-                        <button
-                           key={p.value}
-                           role="tab"
-                           aria-selected={active}
-                           onClick={() => setPeriod(p.value)}
-                           className="px-3.5 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wider transition-all cursor-pointer"
-                           style={{
-                              background: active
-                                 ? 'var(--color-secondary)'
-                                 : 'transparent',
-                              color: active ? '#fff' : 'var(--text-secondary)',
-                           }}
-                        >
-                           {p.label}
-                        </button>
-                     );
-                  })}
-               </div>
-            </div>
-
-            {/* Row 4: Items trend · Generator usage — line charts with % delta */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
-               {/* Items Trend */}
-               <div className={CARD} style={CARD_STYLE}>
-                  <div className="flex items-start justify-between">
-                     <SectionLabel>Items Trend</SectionLabel>
-                     {itemsWoW && (
-                        <span
-                           className="text-[0.65rem] font-semibold px-2 py-0.5 rounded-md tabular-nums"
-                           style={{
-                              background: itemsWoW.up ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-                              color: itemsWoW.up ? '#10B981' : '#EF4444',
-                              border: `1px solid ${itemsWoW.up ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
-                           }}
-                        >
-                           {itemsWoW.up ? '▲' : '▼'} {itemsWoW.up ? '+' : ''}{itemsWoW.pct.toFixed(1)}%
-                        </span>
-                     )}
-                  </div>
-                  <h3 className="mt-5 font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
-                     Stock movement
-                  </h3>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
-                     Total items logged across the last 14 days
-                  </p>
-                  <div className="mt-5 w-full" style={{ height: 220 }}>
-                     {itemsLineData.length === 0 ? (
-                        <div className="h-full flex items-center justify-center">
-                           <p className="text-xs" style={{ color: 'var(--text-hint)' }}>No item data yet.</p>
-                        </div>
-                     ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                           <AreaChart data={itemsLineData} margin={{ top: 10, right: 15, bottom: 30, left: 10 }}>
-                              <defs>
-                                 <linearGradient id="itemsGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#D4A84B" stopOpacity={0.35} />
-                                    <stop offset="100%" stopColor="#D4A84B" stopOpacity={0} />
-                                 </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="4 4" stroke="var(--border-default)" vertical={false} />
-                              <XAxis
-                                 dataKey="label"
-                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
-                                 axisLine={{ stroke: 'var(--border-default)' }}
-                                 tickLine={false}
-                                 interval="preserveStartEnd"
-                                 minTickGap={30}
-                                 label={{
-                                    value: 'Date',
-                                    position: 'insideBottom',
-                                    offset: -15,
-                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600 },
-                                 }}
-                              />
-                              <YAxis
-                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
-                                 axisLine={{ stroke: 'var(--border-default)' }}
-                                 tickLine={false}
-                                 width={44}
-                                 allowDecimals={false}
-                                 label={{
-                                    value: 'Items',
-                                    angle: -90,
-                                    position: 'insideLeft',
-                                    offset: 5,
-                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600, textAnchor: 'middle' },
-                                 }}
-                              />
-                              <Tooltip
-                                 contentStyle={{
-                                    background: 'var(--surface-medium)',
-                                    border: '1px solid var(--border-default)',
-                                    borderRadius: 8,
-                                    fontSize: 12,
-                                 }}
-                                 cursor={{ stroke: 'var(--border-strong)' }}
-                              />
-                              <Area
-                                 type="monotone"
-                                 dataKey="value"
-                                 stroke="#D4A84B"
-                                 strokeWidth={2}
-                                 fill="url(#itemsGradient)"
-                                 name="Items"
-                              />
-                           </AreaChart>
-                        </ResponsiveContainer>
-                     )}
-                  </div>
-               </div>
-
-               {/* Generator Usage */}
-               <div className={CARD} style={CARD_STYLE}>
-                  <div className="flex items-start justify-between">
-                     <SectionLabel>Generator Usage</SectionLabel>
-                     {generatorTrendChange && (
-                        <span
-                           className="text-[0.65rem] font-semibold px-2 py-0.5 rounded-md tabular-nums"
-                           style={{
-                              background: generatorTrendChange.up ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-                              color: generatorTrendChange.up ? '#10B981' : '#EF4444',
-                              border: `1px solid ${generatorTrendChange.up ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
-                           }}
-                        >
-                           {generatorTrendChange.up ? '▲' : '▼'} {generatorTrendChange.up ? '+' : ''}{generatorTrendChange.pct.toFixed(1)}%
-                        </span>
-                     )}
-                  </div>
-                  <h3 className="mt-5 font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
-                     Generator logs filed
-                  </h3>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
-                     How often generator items were logged across the selected period
-                  </p>
-                  <div className="mt-5 w-full" style={{ height: 220 }}>
-                     {generatorTrendData.length === 0 ? (
-                        <div className="h-full flex items-center justify-center">
-                           <p className="text-xs" style={{ color: 'var(--text-hint)' }}>No generator data yet.</p>
-                        </div>
-                     ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                           <AreaChart data={generatorTrendData} margin={{ top: 10, right: 15, bottom: 30, left: 10 }}>
-                              <defs>
-                                 <linearGradient id="genGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#6B8FCC" stopOpacity={0.35} />
-                                    <stop offset="100%" stopColor="#6B8FCC" stopOpacity={0} />
-                                 </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="4 4" stroke="var(--border-default)" vertical={false} />
-                              <XAxis
-                                 dataKey="label"
-                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
-                                 axisLine={{ stroke: 'var(--border-default)' }}
-                                 tickLine={false}
-                                 interval="preserveStartEnd"
-                                 minTickGap={30}
-                                 label={{
-                                    value: 'Date',
-                                    position: 'insideBottom',
-                                    offset: -15,
-                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600 },
-                                 }}
-                              />
-                              <YAxis
-                                 tick={{ fill: 'var(--text-hint)', fontSize: 10 }}
-                                 axisLine={{ stroke: 'var(--border-default)' }}
-                                 tickLine={false}
-                                 width={44}
-                                 allowDecimals={false}
-                                 label={{
-                                    value: 'Uses',
-                                    angle: -90,
-                                    position: 'insideLeft',
-                                    offset: 5,
-                                    style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600, textAnchor: 'middle' },
-                                 }}
-                              />
-                              <Tooltip
-                                 contentStyle={{
-                                    background: 'var(--surface-medium)',
-                                    border: '1px solid var(--border-default)',
-                                    borderRadius: 8,
-                                    fontSize: 12,
-                                 }}
-                                 cursor={{ stroke: 'var(--border-strong)' }}
-                              />
-                              <Area
-                                 type="monotone"
-                                 dataKey="value"
-                                 stroke="#6B8FCC"
-                                 strokeWidth={2}
-                                 fill="url(#genGradient)"
-                                 name="Uses"
-                              />
-                           </AreaChart>
-                        </ResponsiveContainer>
-                     )}
-                  </div>
-               </div>
-            </div>
-
-            {/* Full-width Requests-over-time bar chart */}
-            <div className={CARD} style={CARD_STYLE}>
-               <SectionLabel>Requests</SectionLabel>
-               <div className="mt-5 w-full" style={{ height: 320 }}>
-                  {requestTrendData.length === 0 ? (
-                     <div className="h-full flex items-center justify-center">
-                        <p className="text-xs" style={{ color: 'var(--text-hint)' }}>No request data available yet.</p>
-                     </div>
-                  ) : (
-                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={requestTrendData} margin={{ top: 10, right: 15, bottom: 45, left: 15 }}>
-                           <CartesianGrid strokeDasharray="4 4" stroke="var(--border-default)" vertical={false} />
-                           <XAxis
-                              dataKey="month"
-                              tick={{ fill: 'var(--text-hint)', fontSize: 11 }}
-                              axisLine={{ stroke: 'var(--border-default)' }}
-                              tickLine={false}
-                              interval="preserveStartEnd"
-                              minTickGap={30}
-                              label={{
-                                 value: 'Period',
-                                 position: 'insideBottom',
-                                 offset: -15,
-                                 style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600 },
-                              }}
-                           />
-                           <YAxis
-                              tick={{ fill: 'var(--text-hint)', fontSize: 11 }}
-                              axisLine={{ stroke: 'var(--border-default)' }}
-                              tickLine={false}
-                              allowDecimals={false}
-                              label={{
-                                 value: 'Requests',
-                                 angle: -90,
-                                 position: 'insideLeft',
-                                 offset: 5,
-                                 style: { fill: 'var(--text-hint)', fontSize: 11, fontWeight: 600, textAnchor: 'middle' },
-                              }}
-                           />
-                           <Tooltip
-                              contentStyle={{
-                                 background: 'var(--surface-medium)',
-                                 border: '1px solid var(--border-default)',
-                                 borderRadius: 8,
-                                 fontSize: 12,
-                              }}
-                              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                           />
-                           <Legend
-                              iconType="square"
-                              wrapperStyle={{ fontSize: 12, color: 'var(--text-secondary)', paddingTop: 10 }}
-                           />
-                           <Bar dataKey="Requests" fill="#10B981" radius={[4, 4, 0, 0]} barSize={18} />
-                        </BarChart>
-                     </ResponsiveContainer>
-                  )}
-               </div>
-            </div>
             </>
             )}
          </Layout>
