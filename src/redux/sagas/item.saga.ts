@@ -106,18 +106,42 @@ function* getAllItems({ data }: GetAllItemsAction) {
   yield put({ type: itemConstants.REQUEST_GET_ALL_ITEMS });
 
   try {
-    const params = new URLSearchParams({ page: String(data?.page ?? 1), limit: String(data?.limit ?? 10) });
-    if (data?.search) params.set('search', data.search);
-    if (data?.status) params.set('status', data.status);
-    if (data?.departmentId) params.set('departmentId', String(data.departmentId));
-    if (data?.storeId) params.set('storeId', String(data.storeId));
-    if (data?.fragile) params.set('fragile', data.fragile);
+    // Caller didn't ask for a page → it's a dropdown / picker that
+    // wants every item. Hit the unpaginated endpoint so we don't get
+    // silently capped by the API's per-page limit (100). Paginated
+    // callers (e.g. items list page) keep using ?page=N&limit=M.
+    const wantsAll =
+      !data?.page &&
+      !data?.search &&
+      !data?.status &&
+      !data?.departmentId &&
+      !data?.storeId &&
+      !data?.fragile;
 
-    const itemUri = `${itemConstants.ITEM_URI}?${params.toString()}`;
+    let itemUri: string;
+    let paginated = false;
+    if (wantsAll) {
+      itemUri = `${itemConstants.ITEM_URI}/all-list`;
+    } else {
+      const params = new URLSearchParams({
+        page: String(data?.page ?? 1),
+        limit: String(data?.limit ?? 10),
+      });
+      if (data?.search) params.set('search', data.search);
+      if (data?.status) params.set('status', data.status);
+      if (data?.departmentId) params.set('departmentId', String(data.departmentId));
+      if (data?.storeId) params.set('storeId', String(data.storeId));
+      if (data?.fragile) params.set('fragile', data.fragile);
+      itemUri = `${itemConstants.ITEM_URI}?${params.toString()}`;
+      paginated = true;
+    }
 
     const jsonResponse = yield* authenticatedRequest(itemUri, { method: 'GET' });
     if (!jsonResponse) return;
 
+    // Reducers call asItemArray() which handles both shapes; keep
+    // shapes intact so paginated callers still see meta.
+    void paginated;
     yield put({
       type: itemConstants.GET_ALL_ITEMS_SUCCESS,
       items: jsonResponse?.data,

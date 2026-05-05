@@ -67,7 +67,10 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    }, [onClose, maintenanceData]);
 
    useEffect(() => {
-      dispatch(itemActions.getAllItems({ page: 1, limit: 1000 }) as unknown as UnknownAction);
+      // No page/limit → saga hits the unpaginated /item/all-list
+      // endpoint so the dropdown isn't truncated to 100 by the API's
+      // pagination cap.
+      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
 
