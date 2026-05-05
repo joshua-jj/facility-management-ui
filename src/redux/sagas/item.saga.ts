@@ -106,7 +106,10 @@ function* getAllItems({ data }: GetAllItemsAction) {
   yield put({ type: itemConstants.REQUEST_GET_ALL_ITEMS });
 
   try {
-    const params = new URLSearchParams({ page: String(data?.page ?? 1), limit: String(data?.limit ?? 10) });
+    const params = new URLSearchParams({
+      page: String(data?.page ?? 1),
+      limit: String(data?.limit ?? 10),
+    });
     if (data?.search) params.set('search', data.search);
     if (data?.status) params.set('status', data.status);
     if (data?.departmentId) params.set('departmentId', String(data.departmentId));
@@ -121,6 +124,10 @@ function* getAllItems({ data }: GetAllItemsAction) {
     yield put({
       type: itemConstants.GET_ALL_ITEMS_SUCCESS,
       items: jsonResponse?.data,
+      // append=true tells the reducer to concatenate the new page onto
+      // the existing list (used by infinite-scroll dropdowns). Default
+      // (replace) is right for paginated tables that swap pages.
+      append: data?.append === true,
     });
   } catch (error: unknown) {
     yield* handleSagaError(error, itemConstants.GET_ALL_ITEMS_ERROR, false);

@@ -72,7 +72,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
    const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-   const { isBackOffice, isFacilityTeam } = usePermissions();
+   const { isBackOffice, isFacilityTeam, isAnalyticsAccess } = usePermissions();
    const { theme } = useTheme();
    const isDark = theme === 'dark';
 
@@ -124,6 +124,9 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       if (route.requiresFacilityTeam) {
          const isHod = userDetails?.roleId === RoleId.HOD;
          if (isHod && !isFacilityTeam && !isBackOffice) return false;
+      }
+      if (route.requiresAnalyticsAccess && !isAnalyticsAccess) {
+         return false;
       }
       return true;
    });

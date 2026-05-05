@@ -21,6 +21,9 @@ export interface GetAllItemsAction {
     departmentId?: number;
     storeId?: number;
     fragile?: string;
+    /** Concatenate onto existing list (infinite-scroll dropdowns)
+     *  rather than replacing it (paginated tables). Default false. */
+    append?: boolean;
   };
 }
 export interface GetAnItemAction {
