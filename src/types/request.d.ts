@@ -48,10 +48,10 @@ export interface RequestConstants {
 /**
  * v2 submission payload shape — multi-department capable.
  *
- * The legacy v1 shape used a single `requesterDepartmentId` (the "Focus
- * Department") plus an `items: { storeId, itemId, quantityLeased,
- * conditionBeforeLease }[]` array. v2 drops the focus dept entirely and
- * gives each item row its own `departmentId`. The server groups items by
+ * The legacy v1 shape used a single header-level `requesterDepartmentId`
+ * plus an `items: { storeId, itemId, quantityLeased, conditionBeforeLease
+ * }[]` array. v2 drops the header-level department entirely and gives
+ * each item row its own `departmentId`. The server groups items by
  * `departmentId` to decide whether to write a flat row or a parent +
  * children tree.
  */
