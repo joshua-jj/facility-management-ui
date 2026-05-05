@@ -32,8 +32,22 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
 }) => {
    const dispatch = useDispatch();
    const { IsCreatingMaintenanceLog } = useSelector((s: RootState) => s.maintenance);
-   const { allItemsList } = useSelector((s: RootState) => s.item);
+   const { allItemsList, IsRequestingAllItems, pagination } = useSelector(
+      (s: RootState) => s.item,
+   );
    const { userDetails } = useSelector((s: RootState) => s.user);
+
+   // Infinite-scroll state for the item dropdown. The combo-box fires
+   // onLoadMore when the user scrolls within 40px of the list bottom;
+   // we increment page and re-dispatch with append=true so the reducer
+   // concatenates instead of replacing.
+   const ITEMS_PAGE_SIZE = 50;
+   const [itemsPage, setItemsPage] = React.useState(1);
+   const itemsMeta = pagination?.meta;
+   const hasMoreItems = itemsMeta
+      ? Number(itemsMeta.currentPage ?? 0) <
+        Number(itemsMeta.totalPages ?? 0)
+      : false;
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,12 +81,32 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
    }, [onClose, maintenanceData]);
 
    useEffect(() => {
-      // No page/limit → saga hits the unpaginated /item/all-list
-      // endpoint so the dropdown isn't truncated to 100 by the API's
-      // pagination cap.
-      dispatch(itemActions.getAllItems() as unknown as UnknownAction);
+      // First page on mount. Subsequent pages are loaded by the combo
+      // box's onLoadMore callback (handleLoadMore below). The reducer
+      // replaces on the first call (append unset) and concatenates on
+      // every later one (append=true), so the dropdown grows.
+      dispatch(
+         itemActions.getAllItems({
+            page: 1,
+            limit: ITEMS_PAGE_SIZE,
+         }) as unknown as UnknownAction,
+      );
+      setItemsPage(1);
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
+
+   const handleLoadMore = useCallback(() => {
+      if (IsRequestingAllItems || !hasMoreItems) return;
+      const nextPage = itemsPage + 1;
+      setItemsPage(nextPage);
+      dispatch(
+         itemActions.getAllItems({
+            page: nextPage,
+            limit: ITEMS_PAGE_SIZE,
+            append: true,
+         }) as unknown as UnknownAction,
+      );
+   }, [dispatch, IsRequestingAllItems, hasMoreItems, itemsPage]);
 
    const itemOptions = (allItemsList ?? []).map((item) => ({
       value: String(item.id),
@@ -154,6 +188,10 @@ const AddMaintenanceLog: React.FC<AddItemModalProps> = ({
                         value={selectedItemId}
                         onValueChange={(val) => setSelectedItemId(val)}
                         required
+                        onLoadMore={handleLoadMore}
+                        hasMore={hasMoreItems}
+                        isLoading={IsRequestingAllItems}
+                        loadingText="Loading more items…"
                      />
                   )}
                   <div>
