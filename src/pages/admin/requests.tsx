@@ -135,7 +135,13 @@ const Requests = () => {
 
    const isPulseStatus = (status: string) => {
       const lower = status?.toLowerCase();
-      return lower === 'assigned' || lower === 'pending';
+      // Pulse on intermediate states that still need someone to act.
+      return (
+         lower === 'assigned' ||
+         lower === 'pending' ||
+         lower === 'submitted' ||
+         lower === 'partially approved'
+      );
    };
 
    const formatReturnDate = (value: unknown) => {
@@ -181,6 +187,9 @@ const Requests = () => {
          options: [
             { value: 'Pending', label: 'Pending' },
             { value: 'Approved', label: 'Approved' },
+            // Multi-dept parent computed state — falls between
+            // Approved and Declined per Spec §4.
+            { value: 'Partially Approved', label: 'Partially Approved' },
             { value: 'Assigned', label: 'Assigned' },
             { value: 'Collected', label: 'Collected' },
             { value: 'Completed', label: 'Completed' },
@@ -206,8 +215,27 @@ const Requests = () => {
    const columns: Column<Request>[] = [
       {
          key: 'requesterName',
-         header: 'Requester Name',
+         header: 'Requester',
          width: '18%',
+         // Spec §5.2 — the description tag travels with the row so context
+         // follows the request everywhere it's rendered. Showing it under
+         // the requester name on the list keeps it visible without adding
+         // an extra column for short blurbs.
+         render: (_value: unknown, row: Request) => (
+            <div className="flex flex-col gap-0.5 min-w-0">
+               <span className="font-medium text-[#0F2552] dark:text-white/85 truncate">
+                  {row.requesterName || '—'}
+               </span>
+               {row.descriptionOfRequest && (
+                  <span
+                     className="text-[0.7rem] text-gray-500 dark:text-white/40 truncate max-w-[260px]"
+                     title={row.descriptionOfRequest}
+                  >
+                     {row.descriptionOfRequest}
+                  </span>
+               )}
+            </div>
+         ),
       },
       {
          key: 'requesterEmail',

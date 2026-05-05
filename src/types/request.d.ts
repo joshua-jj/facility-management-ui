@@ -86,6 +86,14 @@ export interface RequestForm {
 export interface UpdateStatusForm {
   requestId: string;
   status: string;
+  /**
+   * Optional decline reason. Phase 3 of the multi-department-requests
+   * spec added a `{ reason?: string }` body on the decline endpoint —
+   * the reason is rendered alongside the declined child on subsequent
+   * detail-page views (see Multi-Department Requests Spec §4 / §11
+   * Phase 6). Approve calls leave this undefined.
+   */
+  reason?: string;
 }
 
 export interface AssignRequestForm {
@@ -113,6 +121,46 @@ export interface ReleaseItemsForm {
   }>;
 }
 
+/**
+ * Audit-trail fields the API attaches to a Request (or each child of a
+ * parent) once an HOD has acted. The fulfillment / collection / return
+ * fields are only meaningful on flat rows or on a parent — a child never
+ * advances past APPROVED / DECLINED.
+ */
+export interface RequestAudit {
+  /** Items in this row's snapshot — children carry their own subset. */
+  items?: Array<{
+    id: number;
+    itemId: number;
+    itemName: string;
+    quantityLeased: string;
+    quantityReleased: string;
+    quantityReturned: number;
+    storeName?: string;
+    conditionBeforeLease?: string;
+    unitIds?: (number | string)[];
+    units?: Array<{
+      serialNumber: string;
+      condition?: string;
+      storeId?: number | null;
+      storeName?: string | null;
+    }>;
+  }>;
+  assigneeName?: string;
+  collectedDate?: string;
+  completedDate?: string;
+  // Approval audit — Phase 3 multi-dept-requests. Populated on a child
+  // (or flat row) the moment its HOD approves / declines. Parents never
+  // carry these directly; their state is derived from children.
+  approvedByUserId?: number | null;
+  approvedByName?: string | null;
+  approvedAt?: string | null;
+  declinedByUserId?: number | null;
+  declinedByName?: string | null;
+  declinedAt?: string | null;
+  declineReason?: string | null;
+}
+
 export interface Request {
   id: number;
   requesterName: string;
@@ -135,6 +183,20 @@ export interface Request {
   createdAt: string;
   updatedAt: string;
   status: number;
+  // Multi-department tree wiring (Phase 3 detail endpoint).
+  // - `parentId` is null on flat rows / parents, set on children.
+  // - `fulfillingDepartmentId` is the department whose HOD owns the
+  //   approve/decline decision for this row. On a parent it's null.
+  // - `children` populates only on a parent detail response.
+  // - `parent` populates only on a child detail response (read-only
+  //   summary used by the UI to render the "Part of Request #PARENT_ID"
+  //   banner — see Multi-Department Requests Spec §5.2).
+  parentId?: number | null;
+  fulfillingDepartmentId?: number | null;
+  fulfillingDepartmentName?: string | null;
+  children?: Request[];
+  parent?: Request;
+  audit?: RequestAudit;
   summary?: {
     id: number;
     requestStatus: string;
