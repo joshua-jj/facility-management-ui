@@ -159,6 +159,37 @@ const Analytics = () => {
       [dashboardAnalytics?.topRequestedItems],
    );
 
+   const topDepartments = useMemo(
+      () => (dashboardAnalytics?.topDepartmentsByRequests ?? []).slice(0, 5),
+      [dashboardAnalytics?.topDepartmentsByRequests],
+   );
+
+   const topArtisans = useMemo(
+      () => (dashboardAnalytics?.topArtisansByCost ?? []).slice(0, 5),
+      [dashboardAnalytics?.topArtisansByCost],
+   );
+
+   const fmtCurrency = (n: number): string =>
+      `₦${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+   const heatmap = useMemo(
+      () =>
+         (dashboardAnalytics?.requestVolumeHeatmap ?? []).map((p) => ({
+            date: p.date,
+            value: Number(p.count ?? 0),
+         })),
+      [dashboardAnalytics?.requestVolumeHeatmap],
+   );
+
+   const heatmapMax = useMemo(
+      () =>
+         heatmap.reduce(
+            (m: number, p: { value: number }) => (p.value > m ? p.value : m),
+            0,
+         ),
+      [heatmap],
+   );
+
    if (isAnalyticsAccess === false) return null;
 
    const isLoading = IsFetchingDashboardStats && !dashboardAnalytics;
@@ -311,69 +342,163 @@ const Analytics = () => {
                   </div>
                </section>
 
-               {/* Top requested items */}
-               <section className="rounded-2xl p-5 md:p-6" style={CARD_STYLE}>
-                  <SectionLabel>Leaderboard</SectionLabel>
-                  <h3
-                     className="mt-4 font-semibold text-base"
-                     style={{ color: 'var(--text-primary)' }}
-                  >
-                     Top 5 most requested items
-                  </h3>
-                  <p
-                     className="text-xs mt-1"
-                     style={{ color: 'var(--text-hint)' }}
-                  >
-                     Ranked by request count this period.
-                  </p>
-                  <ul className="mt-4 space-y-2.5">
-                     {topItems.length === 0 && (
-                        <li
-                           className="text-xs"
-                           style={{ color: 'var(--text-hint)' }}
-                        >
-                           No data yet.
-                        </li>
-                     )}
-                     {topItems.map(
-                        (
-                           it: { itemId: number; itemName: string; count: number },
-                           idx: number,
-                        ) => (
-                           <li
-                              key={it.itemId}
-                              className="flex items-center justify-between text-sm"
-                           >
-                              <span className="flex items-center gap-2 min-w-0">
-                                 <span
-                                    className="text-[0.65rem] font-bold tabular-nums w-5 text-center"
-                                    style={{ color: 'var(--text-hint)' }}
-                                 >
-                                    {idx + 1}
-                                 </span>
-                                 <span
-                                    className="truncate"
-                                    style={{ color: 'var(--text-primary)' }}
-                                 >
-                                    {it.itemName}
-                                 </span>
-                              </span>
+               {/* Activity heatmap — compact 90-day density grid */}
+               {heatmap.length > 0 && (
+                  <section className="rounded-2xl p-5 md:p-6" style={CARD_STYLE}>
+                     <SectionLabel>Activity Density</SectionLabel>
+                     <h3
+                        className="mt-4 font-semibold text-base"
+                        style={{ color: 'var(--text-primary)' }}
+                     >
+                        Request volume — last 90 days
+                     </h3>
+                     <p
+                        className="text-xs mt-1"
+                        style={{ color: 'var(--text-hint)' }}
+                     >
+                        Each square is one day. Darker = more requests filed.
+                     </p>
+                     <div className="mt-4 flex flex-wrap gap-1">
+                        {heatmap.map((p) => {
+                           const intensity =
+                              heatmapMax > 0 ? p.value / heatmapMax : 0;
+                           // 5 buckets: 0, 0–25, 25–50, 50–75, 75–100%
+                           const opacity =
+                              p.value === 0
+                                 ? 0.08
+                                 : 0.2 + Math.ceil(intensity * 4) * 0.2;
+                           return (
                               <span
-                                 className="tabular-nums text-xs font-semibold"
-                                 style={{ color: 'var(--text-secondary)' }}
-                              >
-                                 {fmtNumber(it.count)}
-                              </span>
-                           </li>
-                        ),
-                     )}
-                  </ul>
+                                 key={p.date}
+                                 title={`${p.date}: ${p.value} request${p.value === 1 ? '' : 's'}`}
+                                 className="rounded-sm"
+                                 style={{
+                                    width: 12,
+                                    height: 12,
+                                    background: `rgba(107, 143, 204, ${opacity})`,
+                                    border: '1px solid var(--border-default)',
+                                 }}
+                              />
+                           );
+                        })}
+                     </div>
+                     <div
+                        className="mt-3 flex items-center gap-2 text-[0.65rem]"
+                        style={{ color: 'var(--text-hint)' }}
+                     >
+                        <span>Less</span>
+                        {[0.08, 0.4, 0.6, 0.8, 1].map((o, i) => (
+                           <span
+                              key={i}
+                              className="rounded-sm"
+                              style={{
+                                 width: 12,
+                                 height: 12,
+                                 background: `rgba(107, 143, 204, ${o})`,
+                                 border: '1px solid var(--border-default)',
+                              }}
+                           />
+                        ))}
+                        <span>More</span>
+                     </div>
+                  </section>
+               )}
+
+               {/* Leaderboards — three side-by-side rankings to compare
+                   "what" (items), "who" (departments), "by-cost" (artisans) */}
+               <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
+                  <Leaderboard
+                     title="Top 5 requested items"
+                     subtitle="Ranked by request count."
+                     rows={topItems.map((it) => ({
+                        id: it.itemId,
+                        primary: it.itemName,
+                        secondary: fmtNumber(it.count),
+                     }))}
+                  />
+                  <Leaderboard
+                     title="Top 5 departments by requests"
+                     subtitle="Which teams ask for the most."
+                     rows={topDepartments.map((d) => ({
+                        id: d.departmentId,
+                        primary: d.departmentName,
+                        secondary: fmtNumber(d.count),
+                     }))}
+                  />
+                  <Leaderboard
+                     title="Top 5 artisans by maintenance cost"
+                     subtitle="Cumulative maintenance spend."
+                     rows={topArtisans.map((a, idx) => ({
+                        id: idx,
+                        primary: a.artisanName,
+                        secondary: fmtCurrency(Number(a.totalCost ?? 0)),
+                     }))}
+                  />
                </section>
             </div>
          </Layout>
       </PrivateRoute>
    );
 };
+
+interface LeaderboardRow {
+   id: number | string;
+   primary: string;
+   secondary: string;
+}
+
+const Leaderboard: React.FC<{
+   title: string;
+   subtitle: string;
+   rows: LeaderboardRow[];
+}> = ({ title, subtitle, rows }) => (
+   <div className="rounded-2xl p-5 md:p-6" style={CARD_STYLE}>
+      <SectionLabel>Leaderboard</SectionLabel>
+      <h3
+         className="mt-4 font-semibold text-base"
+         style={{ color: 'var(--text-primary)' }}
+      >
+         {title}
+      </h3>
+      <p className="text-xs mt-1" style={{ color: 'var(--text-hint)' }}>
+         {subtitle}
+      </p>
+      <ul className="mt-4 space-y-2.5">
+         {rows.length === 0 && (
+            <li className="text-xs" style={{ color: 'var(--text-hint)' }}>
+               No data yet.
+            </li>
+         )}
+         {rows.map((row, idx) => (
+            <li
+               key={row.id}
+               className="flex items-center justify-between text-sm gap-2"
+            >
+               <span className="flex items-center gap-2 min-w-0">
+                  <span
+                     className="text-[0.65rem] font-bold tabular-nums w-5 text-center"
+                     style={{ color: 'var(--text-hint)' }}
+                  >
+                     {idx + 1}
+                  </span>
+                  <span
+                     className="truncate"
+                     style={{ color: 'var(--text-primary)' }}
+                  >
+                     {row.primary}
+                  </span>
+               </span>
+               <span
+                  className="tabular-nums text-xs font-semibold shrink-0"
+                  style={{ color: 'var(--text-secondary)' }}
+               >
+                  {row.secondary}
+               </span>
+            </li>
+         ))}
+      </ul>
+   </div>
+);
 
 interface KpiCardProps {
    label: string;

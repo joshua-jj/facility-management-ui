@@ -105,6 +105,22 @@ const DashboardSkeleton: React.FC = () => (
    </>
 );
 
+/* ── Role-aware "Action Items" hero ──────────────────────────────────────────
+ * The most useful prompt on landing is "what needs me right now". The
+ * RequestsByStatus / ComplaintsByStatus arrays are already role-scoped on
+ * fetch (HOD by department, MEMBER by assignee, back-office sees all), so
+ * the count of a specific status row is also the count of that status the
+ * user is responsible for. Pick the status that's the user's next action
+ * by role and surface it as a tappable counter that deep-links into the
+ * filtered list.
+ */
+type ActionItem = {
+   label: string;
+   count: number;
+   href: string;
+   accent: string;
+};
+
 const Dashboard = () => {
    const dispatch = useDispatch();
    const [isExportingReport, setIsExportingReport] = useState(false);
@@ -349,6 +365,96 @@ const Dashboard = () => {
       [dashboardAnalytics],
    );
 
+   /* ── Role-aware action items (tappable queue counters) ───────────────────
+    * Pick the status row(s) that are the actor's responsibility:
+    *   SUPER_ADMIN / ADMIN: APPROVED requests need an assignee, NEW
+    *     complaints need triage, dueReturns are red-flag overdue.
+    *   HOD: PENDING requests are awaiting their approval.
+    *   MEMBER: ASSIGNED requests need to be released; COLLECTED ones
+    *     need to be returned.
+    */
+   const actionItems = useMemo<ActionItem[]>(() => {
+      const reqByStatus = (status: string): number =>
+         (dashboardStats?.requestsByStatus ?? []).find(
+            (s) => s.status?.toUpperCase() === status,
+         )?.count ?? 0;
+      const complaintByStatus = (status: string): number =>
+         (dashboardAnalytics?.complaintsByStatus ?? []).find(
+            (s) => s.status?.toUpperCase() === status,
+         )?.count ?? 0;
+
+      const role = userDetails?.roleId;
+      const items: ActionItem[] = [];
+
+      if (role === RoleId.SUPER_ADMIN || role === RoleId.ADMIN) {
+         items.push({
+            label: 'Requests pending assignment',
+            count: reqByStatus('APPROVED'),
+            href: '/admin/requests',
+            accent: '#6B8FCC',
+         });
+         items.push({
+            label: 'New complaints to triage',
+            count: complaintByStatus('NEW'),
+            href: '/admin/reports',
+            accent: '#F59E0B',
+         });
+         const overdue = dashboardStats?.dueReturns ?? 0;
+         if (overdue > 0) {
+            items.push({
+               label: 'Overdue returns',
+               count: overdue,
+               href: '/admin/requests',
+               accent: '#EF4444',
+            });
+         }
+      } else if (role === RoleId.HOD) {
+         items.push({
+            label: 'Requests awaiting your approval',
+            count: reqByStatus('PENDING'),
+            href: '/admin/requests',
+            accent: '#6B8FCC',
+         });
+         const overdue = dashboardStats?.dueReturns ?? 0;
+         if (overdue > 0) {
+            items.push({
+               label: "Department's overdue returns",
+               count: overdue,
+               href: '/admin/requests',
+               accent: '#EF4444',
+            });
+         }
+      } else if (role === RoleId.MEMBER) {
+         items.push({
+            label: 'Assigned to you — release pending',
+            count: reqByStatus('ASSIGNED'),
+            href: '/admin/requests',
+            accent: '#6B8FCC',
+         });
+         items.push({
+            label: 'Collected — awaiting return',
+            count: reqByStatus('COLLECTED'),
+            href: '/admin/requests',
+            accent: '#F59E0B',
+         });
+         items.push({
+            label: 'Complaints assigned to you',
+            count: complaintByStatus('ASSIGNED'),
+            href: '/admin/reports',
+            accent: '#10B981',
+         });
+      }
+
+      return items;
+   }, [
+      dashboardStats?.requestsByStatus,
+      dashboardStats?.dueReturns,
+      dashboardAnalytics?.complaintsByStatus,
+      userDetails?.roleId,
+   ]);
+
+   const totalActionCount = actionItems.reduce((s, i) => s + i.count, 0);
+
    return (
       <PrivateRoute>
          <Layout title="Dashboard">
@@ -401,6 +507,77 @@ const Dashboard = () => {
 
             {!isLoading && (
             <>
+            {/* Action Items — role-aware queue counts (deep-linked) */}
+            {actionItems.length > 0 && (
+               <div
+                  className={`${CARD} mb-4 md:mb-5`}
+                  style={CARD_STYLE}
+                  aria-label="Things that need your attention"
+               >
+                  <div className="flex items-center justify-between">
+                     <SectionLabel>Action Items</SectionLabel>
+                     <span
+                        className="text-[0.6rem] font-semibold tabular-nums"
+                        style={{ color: 'var(--text-hint)' }}
+                     >
+                        {totalActionCount > 0
+                           ? `${fmtNumber(totalActionCount)} pending`
+                           : 'all clear'}
+                     </span>
+                  </div>
+                  <h3
+                     className="mt-4 font-semibold text-base"
+                     style={{ color: 'var(--text-primary)' }}
+                  >
+                     What needs you right now
+                  </h3>
+                  <p
+                     className="text-xs mt-1"
+                     style={{ color: 'var(--text-hint)' }}
+                  >
+                     Tap a row to jump to the filtered list.
+                  </p>
+                  <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                     {actionItems.map((item) => (
+                        <li key={item.label}>
+                           <Link
+                              href={item.href}
+                              className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors hover:opacity-90"
+                              style={{
+                                 background: 'var(--surface-medium)',
+                                 border: '1px solid var(--border-default)',
+                              }}
+                           >
+                              <span className="flex items-center gap-2 min-w-0">
+                                 <span
+                                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                                    style={{ background: item.accent }}
+                                 />
+                                 <span
+                                    className="text-xs truncate"
+                                    style={{ color: 'var(--text-secondary)' }}
+                                 >
+                                    {item.label}
+                                 </span>
+                              </span>
+                              <span
+                                 className="text-lg font-bold tabular-nums shrink-0"
+                                 style={{
+                                    color:
+                                       item.count > 0
+                                          ? item.accent
+                                          : 'var(--text-hint)',
+                                 }}
+                              >
+                                 {fmtNumber(item.count)}
+                              </span>
+                           </Link>
+                        </li>
+                     ))}
+                  </ul>
+               </div>
+            )}
+
             {/* Row 1: Total Requests · Upcoming */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-4 md:mb-5">
                {/* Total Requests */}
