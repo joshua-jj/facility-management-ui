@@ -67,10 +67,22 @@ const ReturnLandingPage: NextPage<ReturnLandingProps> = ({ requestId, tokenStatu
    // Login reads `?from=` to redirect post-auth (see login.tsx — query.from).
    const loginHref = `/login?from=${encodeURIComponent(adminHref)}`;
 
+   const isValid = tokenStatus === 'valid';
    return (
-      <main className="min-h-screen flex items-center justify-center px-4 py-12 bg-[var(--surface-paper,_#0F1730)]">
-         <div className="w-full max-w-md rounded-2xl bg-[var(--surface-low,rgba(255,255,255,0.04))] border border-white/10 p-8 text-center shadow-xl">
-            <div className="mx-auto mb-5 inline-flex items-center justify-center rounded-full w-14 h-14 bg-[var(--color-secondary,_#B28309)]/15">
+      <main
+         className="min-h-screen flex items-center justify-center px-4 py-12"
+         style={{ background: '#F5F6FA' }}
+      >
+         <div
+            className="w-full max-w-md rounded-2xl p-8 text-center shadow-[0_8px_30px_rgba(15,37,82,0.08)]"
+            style={{ background: '#ffffff', border: '1px solid rgba(15,37,82,0.08)' }}
+         >
+            <div
+               className="mx-auto mb-5 inline-flex items-center justify-center rounded-full w-14 h-14"
+               style={{
+                  background: isValid ? 'rgba(178,131,9,0.12)' : 'rgba(220,38,38,0.10)',
+               }}
+            >
                <svg
                   width="28"
                   height="28"
@@ -80,9 +92,9 @@ const ReturnLandingPage: NextPage<ReturnLandingProps> = ({ requestId, tokenStatu
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-[var(--color-secondary,_#B28309)]"
+                  style={{ color: isValid ? '#B28309' : '#DC2626' }}
                >
-                  {tokenStatus === 'valid' ? (
+                  {isValid ? (
                      <>
                         <path d="M21 12a9 9 0 1 1-9-9" />
                         <polyline points="22 4 12 14.01 9 11.01" />
@@ -97,25 +109,37 @@ const ReturnLandingPage: NextPage<ReturnLandingProps> = ({ requestId, tokenStatu
                </svg>
             </div>
 
-            <h1 className="text-xl font-semibold text-white mb-2 tracking-[-0.006em]">{heading}</h1>
-            <p className="text-sm text-white/65 leading-relaxed mb-6">{body}</p>
+            <h1
+               className="text-xl font-semibold mb-2 tracking-[-0.006em]"
+               style={{ color: '#0F2552' }}
+            >
+               {heading}
+            </h1>
+            <p
+               className="text-sm leading-relaxed mb-6"
+               style={{ color: 'rgba(15,37,82,0.65)' }}
+            >
+               {body}
+            </p>
 
             <div className="flex flex-col gap-2.5">
                <Link
                   href={loginHref}
-                  className="inline-flex items-center justify-center rounded-lg bg-[var(--color-secondary,_#B28309)] hover:bg-[var(--color-secondary,_#B28309)]/90 text-white font-medium text-sm px-4 py-2.5 transition-colors"
+                  className="inline-flex items-center justify-center rounded-lg font-medium text-sm px-4 py-2.5 transition-colors"
+                  style={{ background: '#B28309', color: '#ffffff' }}
                >
                   Sign in to confirm return
                </Link>
                <Link
                   href="/"
-                  className="inline-flex items-center justify-center text-xs text-white/50 hover:text-white/80 transition-colors"
+                  className="inline-flex items-center justify-center text-xs transition-colors"
+                  style={{ color: 'rgba(15,37,82,0.5)' }}
                >
                   Back to home
                </Link>
             </div>
 
-            <p className="mt-8 text-[0.65rem] text-white/40">
+            <p className="mt-8 text-[0.65rem]" style={{ color: 'rgba(15,37,82,0.4)' }}>
                &copy; {new Date().getFullYear()} EGFM Facility Portal
             </p>
          </div>
