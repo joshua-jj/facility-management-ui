@@ -39,14 +39,39 @@ function NotificationItem({
    onClick: () => void;
 }) {
    const initial = (notification.actorName ?? "EGFM").charAt(0).toUpperCase();
+   const isUnread = !notification.readAt;
+   const hasLink = Boolean(notification.link);
    return (
       <button
          type="button"
          onClick={onClick}
-         className="block w-full text-left py-4 first:pt-0 last:pb-0 hover:bg-muted/40 rounded-md transition-colors px-2"
+         className={[
+            "group relative block w-full cursor-pointer overflow-hidden",
+            "px-3 py-3.5 text-left",
+            "rounded-lg border border-transparent",
+            "transition-all duration-200 ease-out",
+            "hover:border-border hover:bg-muted/50 hover:shadow-sm",
+            "active:scale-[0.99] active:bg-muted/70",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+            isUnread ? "bg-[var(--color-secondary)]/[0.04]" : "",
+         ].join(" ")}
+         aria-label={
+            hasLink ? `Open: ${notification.title}` : notification.title
+         }
       >
-         <div className="flex gap-3">
-            <Avatar className="size-11">
+         {/* Left accent stripe — solid for unread, faint on hover for read */}
+         <span
+            aria-hidden
+            className={[
+               "absolute inset-y-2 left-0 w-0.5 rounded-full transition-all duration-200",
+               isUnread
+                  ? "bg-[var(--color-secondary)] opacity-100"
+                  : "bg-muted-foreground/40 opacity-0 group-hover:opacity-100",
+            ].join(" ")}
+         />
+
+         <div className="flex gap-3 pl-1">
+            <Avatar className="size-10 shrink-0 transition-transform duration-200 group-hover:scale-[1.04]">
                <AvatarImage
                   src=""
                   alt={`${notification.actorName ?? "system"} avatar`}
@@ -55,37 +80,51 @@ function NotificationItem({
                <AvatarFallback>{initial}</AvatarFallback>
             </Avatar>
 
-            <div className="flex flex-1 flex-col space-y-2">
-               <div className="w-full items-start">
-                  <div className="flex items-center justify-between gap-2">
-                     <div className="text-sm">
-                        {notification.actorName ? (
-                           <>
-                              <span className="font-medium">{notification.actorName}</span>
-                              <span className="text-muted-foreground"> · </span>
-                           </>
-                        ) : null}
-                        <span className="font-medium">{notification.title}</span>
-                     </div>
-                     {!notification.readAt && (
-                        <div className="size-1.5 rounded-full bg-[var(--color-secondary)]" />
-                     )}
+            <div className="flex flex-1 min-w-0 flex-col gap-1.5">
+               <div className="flex items-start justify-between gap-2">
+                  <div className={["text-sm leading-snug", isUnread ? "text-foreground" : "text-foreground/85"].join(" ")}>
+                     {notification.actorName ? (
+                        <>
+                           <span className="font-semibold">{notification.actorName}</span>
+                           <span className="text-muted-foreground"> · </span>
+                        </>
+                     ) : null}
+                     <span className={isUnread ? "font-semibold" : "font-medium"}>
+                        {notification.title}
+                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
-                     <div className="mt-0.5 text-xs text-muted-foreground">
-                        {new Date(notification.createdAt).toLocaleString()}
-                     </div>
-                     <div className="text-xs text-muted-foreground">
-                        {formatRelative(notification.createdAt)}
-                     </div>
-                  </div>
+                  {/* Chevron slides in on hover when the item routes somewhere */}
+                  {hasLink && (
+                     <svg
+                        aria-hidden
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={[
+                           "size-4 shrink-0 mt-0.5 text-muted-foreground",
+                           "translate-x-[-4px] opacity-0",
+                           "transition-all duration-200 ease-out",
+                           "group-hover:translate-x-0 group-hover:opacity-100 group-hover:text-foreground",
+                        ].join(" ")}
+                     >
+                        <polyline points="6 4 11 8 6 12" />
+                     </svg>
+                  )}
                </div>
 
                {notification.body && (
-                  <div className="rounded-lg bg-muted p-2.5 text-sm tracking-[-0.006em]">
+                  <div className="line-clamp-2 rounded-md bg-muted/60 px-2.5 py-1.5 text-xs leading-relaxed text-muted-foreground tracking-[-0.006em] group-hover:bg-muted">
                      {notification.body}
                   </div>
                )}
+
+               <div className="flex items-center justify-between gap-2 text-[0.7rem] text-muted-foreground">
+                  <span>{new Date(notification.createdAt).toLocaleString()}</span>
+                  <span className="tabular-nums">{formatRelative(notification.createdAt)}</span>
+               </div>
             </div>
          </div>
       </button>
@@ -163,7 +202,7 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
          </CardHeader>
 
          <CardContent className="h-full p-0 max-h-[60vh] overflow-y-auto">
-            <div className="space-y-0 divide-y divide-dashed divide-border">
+            <div className="flex flex-col gap-1">
                {filtered.length > 0 ? (
                   filtered.map((n) => (
                      <NotificationItem key={n.id} notification={n} onClick={() => onItemClick(n)} />
