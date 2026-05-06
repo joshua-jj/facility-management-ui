@@ -1,6 +1,7 @@
 import { appConstants } from '@/constants/app.constant';
 
-const notification = '/notification';
+// No leading slash — BASE_URI already ends with one.
+const notification = 'notification';
 
 export const notificationConstants = {
    // API URIs — prepend BASE_URI so callers don't end up hitting the
