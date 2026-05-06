@@ -56,7 +56,7 @@ const Header = ({ onMobileMenuToggle }: HeaderProps) => {
                   <Link href="/" passHref className="flex items-center">
                      <EgfmLogo />
                      <span className="ml-2 hidden md:block text-[#32323d] dark:text-white/90 text-[20px] font-bold leading-[21px] text-left transition-colors">
-                        Logistics
+                        Facility Portal
                      </span>
                   </Link>
                   <div className="flex items-center gap-x-3">
