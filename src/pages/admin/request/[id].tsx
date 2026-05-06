@@ -319,7 +319,24 @@ export const getServerSideProps: GetServerSideProps<
             requestDetail: resp.data?.data ?? null,
          },
       };
-   } catch {
+   } catch (err: unknown) {
+      // Log the SSR error so the dev-server console actually surfaces
+      // the cause (auth expired, API 5xx, ECONNREFUSED, etc.) instead
+      // of silently passing `null` to the page and leaving the user
+      // with a blank form. The client-side mount effect retries, so a
+      // transient failure here doesn't lock the page into a null state.
+      const axiosErr = err as { response?: { status?: number; data?: unknown }; message?: string; code?: string };
+      // eslint-disable-next-line no-console
+      console.error(
+         `[request/[id]] SSR fetch failed for id=${id}:`,
+         {
+            status: axiosErr?.response?.status,
+            code: axiosErr?.code,
+            message: axiosErr?.message,
+            body: axiosErr?.response?.data,
+            url: `${requestConstants.REQUEST_URI}/detail/${id}`,
+         },
+      );
       return {
          props: {
             requestDetail: null,
@@ -357,11 +374,20 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    // Next.js re-runs getServerSideProps and passes a new `requestDetail`,
    // but `useState(initial)` only honours its argument on first mount, so
    // without this effect the page would keep rendering the stale row.
+   //
+   // Skip the sync when the new prop is null AND we already have data
+   // locally — that situation means SSR failed (logged in
+   // getServerSideProps' catch) but a client-side fetch already
+   // hydrated the page. Overwriting back to null would blank the UI.
    useEffect(() => {
+      if (requestDetail == null && requestDetails != null) {
+         return;
+      }
       setRequestDetails(requestDetail);
       setStatus(requestDetail?.requestStatus);
       setItems(requestDetail?.audit?.items ?? []);
       setAssignedUserId('');
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [requestDetail]);
 
    // Decline-reason modal — captures the optional `reason` body the API
@@ -649,6 +675,21 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
          );
       }
    }, [userDetails, dispatch]);
+
+   // Fallback: when SSR returned null (the catch in getServerSideProps
+   // logs the underlying cause), retry from the client on mount so the
+   // page heals itself instead of rendering an empty form. The retry
+   // uses the user's actual auth token from localForage, which can
+   // differ from the SSR cookie if it's been refreshed since the page
+   // request was sent.
+   useEffect(() => {
+      if (requestDetails == null && id != null) {
+         fetchRequestDetails();
+      }
+      // Only fires on mount — once data arrives, requestDetails is set
+      // and we don't want to re-trigger from this effect.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
 
    // The view page needs the department list to resolve
    // `fulfillingDepartmentId` -> name on each child sub-request card.
