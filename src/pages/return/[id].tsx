@@ -49,7 +49,7 @@ export const getServerSideProps: GetServerSideProps<ReturnLandingProps> = async 
 const ReturnLandingPage: NextPage<ReturnLandingProps> = ({ requestId, tokenStatus }) => {
    const heading =
       tokenStatus === 'valid'
-         ? `Confirm return of request #${requestId}`
+         ? 'Confirm item return'
          : tokenStatus === 'expired'
            ? 'This link has expired'
            : tokenStatus === 'missing'
