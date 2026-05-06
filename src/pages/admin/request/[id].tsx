@@ -25,11 +25,6 @@ import { DetailRow, DetailSection } from '@/components/DetailField';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import ModalWrapper from '@/components/Modals/ModalWrapper';
 import { departmentActions } from '@/actions';
-import RequestActivityPane, {
-   ActivityToggleButton,
-   RequestActivityDrawer,
-   useActivityPaneCollapsed,
-} from '@/components/RequestActivityPane';
 
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
@@ -359,10 +354,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
 
-   // Activity-pane collapse state lives at the page level so the grid
-   // column track can shrink in lock-step with the pane's own width.
-   const [activityCollapsed, toggleActivityCollapsed] = useActivityPaneCollapsed();
-
    const [requestDetails, setRequestDetails] =
       useState<RequestDetails>(requestDetail);
    const [assignedUserId, setAssignedUserId] = useState('');
@@ -396,13 +387,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    // declining one sub-request from the parent's tree view.
    const [declineModalTargetId, setDeclineModalTargetId] = useState<number | null>(null);
    const [declineReason, setDeclineReason] = useState('');
-
-   // Activity pane drawer state — only used at `md:` and below where
-   // the right-side column collapses into a slide-in panel.
-   const [activityDrawerOpen, setActivityDrawerOpen] = useState(false);
-
-   // Quick count for the toggle pill badge. Mirrors the derivation
-   // inside the pane, but cheap enough to recompute here.
 
    type UnitOption = {
       value: number | string;
@@ -847,28 +831,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const hasChildren = isParentRow(requestDetails);
    const hasParent = isChildRow(requestDetails);
 
-   // Activity-pane event count — used to badge the mobile toggle.
-   // Cheap to recompute; mirrors the derivation inside the pane.
-   const activityEventCount = useMemo(() => {
-      if (!requestDetails) return 0;
-      const a = requestDetails?.audit ?? ({} as RequestDetailsAudit);
-      let count = 0;
-      if (requestDetails?.createdAt) count += 1;
-      if (Array.isArray(requestDetails?.children) && requestDetails.children!.length > 0) {
-         requestDetails.children!.forEach((c) => {
-            if (c.audit?.approvedAt) count += 1;
-            if (c.audit?.declinedAt) count += 1;
-         });
-      } else {
-         if (a.approvedAt) count += 1;
-         if (a.declinedAt) count += 1;
-      }
-      if (a.dateAssigned) count += 1;
-      if (a.collectedDate) count += 1;
-      if (a.completedDate) count += 1;
-      return count;
-   }, [requestDetails]);
-
    // Deps list normalised so resolve calls don't crash when the list is
    // still loading. Cast through `unknown` because the department reducer
    // uses a slightly looser type.
@@ -925,21 +887,8 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 get squeezed when the right column appears. */}
             <PageHeader />
 
-            {/* Two-column split: existing detail content on the left,
-                activity timeline on the right. The pane only shows as a
-                column at `lg:` and up — below that, the toggle button
-                opens a slide-in drawer with the same content.
-                Grid track shrinks when the pane is collapsed. */}
-            <div
-               className="mt-6 lg:grid lg:gap-6 transition-[grid-template-columns] duration-300 ease-out"
-               style={{
-                  gridTemplateColumns: activityCollapsed
-                     ? 'minmax(0,1fr) 48px'
-                     : 'minmax(0,1fr) 360px',
-               }}
-            >
-               <div className="space-y-6 min-w-0">
-            {/* Back button + mobile activity toggle */}
+            <div className="mt-6 space-y-6">
+            {/* Back button */}
             <div className="flex items-center justify-between gap-3">
                <button
                   onClick={() => router.back()}
@@ -950,12 +899,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   </svg>
                   Back
                </button>
-               <div className="lg:hidden">
-                  <ActivityToggleButton
-                     onClick={() => setActivityDrawerOpen(true)}
-                     count={activityEventCount}
-                  />
-               </div>
             </div>
 
             {/* Workflow stepper */}
@@ -1624,34 +1567,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   </div>
                </div>
             </ModalWrapper>
-               </div>
-
-               {/* Activity pane — desktop column. Hidden below `lg:`,
-                   where it falls back to the slide-in drawer. Sticky so
-                   it stays in view as the (potentially long) detail
-                   content scrolls. */}
-               <div className="hidden lg:block">
-                  <div className="sticky top-6 h-[calc(100vh-3rem)]">
-                     <RequestActivityPane
-                        request={requestDetails}
-                        className="h-full"
-                        collapsed={activityCollapsed}
-                        onToggle={toggleActivityCollapsed}
-                     />
-                  </div>
-               </div>
             </div>
-         </div>
-
-         {/* Activity drawer — only mounted at `md:` and below via CSS,
-             but always rendered so the slide-in transition is smooth.
-             The drawer's own backdrop handles dismissal. */}
-         <div className="lg:hidden">
-            <RequestActivityDrawer
-               open={activityDrawerOpen}
-               onClose={() => setActivityDrawerOpen(false)}
-               request={requestDetails}
-            />
          </div>
       </Layout>
    );
