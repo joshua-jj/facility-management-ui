@@ -129,7 +129,11 @@ const resolveDepartmentName = (
    if (!row) return '—';
    if (row.fulfillingDepartmentName) return row.fulfillingDepartmentName;
    if (row.fulfillingDepartmentId == null) return '—';
-   const match = departments.find((d) => d.id === row.fulfillingDepartmentId);
+   // Coerce to Number on both sides — bigint columns ride the wire as
+   // strings while @PrimaryGeneratedColumn ids come through as numbers,
+   // so a strict `===` would silently miss every match.
+   const target = Number(row.fulfillingDepartmentId);
+   const match = departments.find((d) => Number(d.id) === target);
    return match?.name ?? `Dept #${row.fulfillingDepartmentId}`;
 };
 
