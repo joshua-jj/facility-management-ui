@@ -25,6 +25,10 @@ import { DetailRow, DetailSection } from '@/components/DetailField';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import ModalWrapper from '@/components/Modals/ModalWrapper';
 import { departmentActions } from '@/actions';
+import RequestActivityPane, {
+   ActivityToggleButton,
+   RequestActivityDrawer,
+} from '@/components/RequestActivityPane';
 
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
@@ -56,8 +60,12 @@ interface RequestDetailsAudit {
       }>;
    }>;
    assigneeName: string;
+   assigner?: string | null;
+   dateAssigned?: string | null;
    collectedDate: string;
+   collectedBy?: string | null;
    completedDate: string;
+   completedBy?: string | null;
    approvedByUserId?: number | null;
    approvedByName?: string | null;
    approvedAt?: string | null;
@@ -86,6 +94,8 @@ interface RequestDetails {
    parentId?: number | null;
    fulfillingDepartmentId?: number | null;
    fulfillingDepartmentName?: string | null;
+   createdAt?: string | null;
+   createdBy?: string | null;
    children?: RequestDetails[];
    parent?: RequestDetails;
 }
@@ -343,6 +353,13 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    // declining one sub-request from the parent's tree view.
    const [declineModalTargetId, setDeclineModalTargetId] = useState<number | null>(null);
    const [declineReason, setDeclineReason] = useState('');
+
+   // Activity pane drawer state — only used at `md:` and below where
+   // the right-side column collapses into a slide-in panel.
+   const [activityDrawerOpen, setActivityDrawerOpen] = useState(false);
+
+   // Quick count for the toggle pill badge. Mirrors the derivation
+   // inside the pane, but cheap enough to recompute here.
 
    type UnitOption = {
       value: number | string;
@@ -772,6 +789,28 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const hasChildren = isParentRow(requestDetails);
    const hasParent = isChildRow(requestDetails);
 
+   // Activity-pane event count — used to badge the mobile toggle.
+   // Cheap to recompute; mirrors the derivation inside the pane.
+   const activityEventCount = useMemo(() => {
+      if (!requestDetails) return 0;
+      const a = requestDetails?.audit ?? ({} as RequestDetailsAudit);
+      let count = 0;
+      if (requestDetails?.createdAt) count += 1;
+      if (Array.isArray(requestDetails?.children) && requestDetails.children!.length > 0) {
+         requestDetails.children!.forEach((c) => {
+            if (c.audit?.approvedAt) count += 1;
+            if (c.audit?.declinedAt) count += 1;
+         });
+      } else {
+         if (a.approvedAt) count += 1;
+         if (a.declinedAt) count += 1;
+      }
+      if (a.dateAssigned) count += 1;
+      if (a.collectedDate) count += 1;
+      if (a.completedDate) count += 1;
+      return count;
+   }, [requestDetails]);
+
    // Deps list normalised so resolve calls don't crash when the list is
    // still loading. Cast through `unknown` because the department reducer
    // uses a slightly looser type.
@@ -822,18 +861,36 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
    return (
       <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
-         <div className="md:col-span-10 md:col-start-2 space-y-6">
+         <div className="md:col-span-10 md:col-start-2">
+            {/* PageHeader stays full-width above the activity split so
+                the page chrome (search / role switcher / etc.) doesn't
+                get squeezed when the right column appears. */}
             <PageHeader />
-            {/* Back button */}
-            <button
-               onClick={() => router.back()}
-               className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/50 hover:text-[#0F2552] dark:hover:text-white/80 transition-colors cursor-pointer"
-            >
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-               </svg>
-               Back
-            </button>
+
+            {/* Two-column split: existing detail content on the left,
+                activity timeline on the right. The pane only shows as a
+                column at `lg:` and up — below that, the toggle button
+                opens a slide-in drawer with the same content. */}
+            <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+               <div className="space-y-6 min-w-0">
+            {/* Back button + mobile activity toggle */}
+            <div className="flex items-center justify-between gap-3">
+               <button
+                  onClick={() => router.back()}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/50 hover:text-[#0F2552] dark:hover:text-white/80 transition-colors cursor-pointer"
+               >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back
+               </button>
+               <div className="lg:hidden">
+                  <ActivityToggleButton
+                     onClick={() => setActivityDrawerOpen(true)}
+                     count={activityEventCount}
+                  />
+               </div>
+            </div>
 
             {/* Workflow stepper */}
             {requestDetails?.requestStatus && (() => {
@@ -1501,6 +1558,32 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   </div>
                </div>
             </ModalWrapper>
+               </div>
+
+               {/* Activity pane — desktop column. Hidden below `lg:`,
+                   where it falls back to the slide-in drawer. Sticky so
+                   it stays in view as the (potentially long) detail
+                   content scrolls. */}
+               <div className="hidden lg:block">
+                  <div className="sticky top-6 h-[calc(100vh-3rem)]">
+                     <RequestActivityPane
+                        request={requestDetails}
+                        className="h-full"
+                     />
+                  </div>
+               </div>
+            </div>
+         </div>
+
+         {/* Activity drawer — only mounted at `md:` and below via CSS,
+             but always rendered so the slide-in transition is smooth.
+             The drawer's own backdrop handles dismissal. */}
+         <div className="lg:hidden">
+            <RequestActivityDrawer
+               open={activityDrawerOpen}
+               onClose={() => setActivityDrawerOpen(false)}
+               request={requestDetails}
+            />
          </div>
       </Layout>
    );
