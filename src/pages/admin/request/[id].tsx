@@ -347,6 +347,18 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const [status, setStatus] = useState(requestDetails?.requestStatus);
    const [items, setItems] = useState(requestDetails?.audit?.items || []);
 
+   // Re-sync local state when the SSR prop changes — i.e. when navigating
+   // from /admin/request/A to /admin/request/B without a full reload.
+   // Next.js re-runs getServerSideProps and passes a new `requestDetail`,
+   // but `useState(initial)` only honours its argument on first mount, so
+   // without this effect the page would keep rendering the stale row.
+   useEffect(() => {
+      setRequestDetails(requestDetail);
+      setStatus(requestDetail?.requestStatus);
+      setItems(requestDetail?.audit?.items ?? []);
+      setAssignedUserId('');
+   }, [requestDetail]);
+
    // Decline-reason modal — captures the optional `reason` body the API
    // accepts on the decline endpoint. Targets either the row currently
    // being viewed (flat row) or a specific child id when an HOD is
