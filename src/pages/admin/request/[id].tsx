@@ -23,18 +23,65 @@ import { RoleId } from '@/constants/roles.constant';
 import StatusChip from '@/components/StatusChip';
 import { DetailRow, DetailSection } from '@/components/DetailField';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
-
-const optionsFilter = [
-   { value: 'approve', label: 'approve' },
-   { value: 'decline', label: 'decline' },
-];
+import ModalWrapper from '@/components/Modals/ModalWrapper';
+import { departmentActions } from '@/actions';
+import RequestActivityPane, {
+   ActivityToggleButton,
+   RequestActivityDrawer,
+} from '@/components/RequestActivityPane';
 
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
    { value: 'Bad', label: 'Bad' },
 ];
 
+/**
+ * Audit-trail snapshot returned per row (parent / child / flat). The
+ * approve / decline fields are written when an HOD acts on the row;
+ * release / return fields are written by the assignee on a parent or
+ * flat row. See `Request` in `@/types`.
+ */
+interface RequestDetailsAudit {
+   items: Array<{
+      id: number;
+      itemId: number;
+      itemName: string;
+      quantityLeased: string;
+      quantityReleased: string;
+      quantityReturned: number;
+      storeName: string;
+      conditionBeforeLease: string;
+      unitIds: (number | string)[];
+      units?: Array<{
+         serialNumber: string;
+         condition?: string;
+         storeId?: number | null;
+         storeName?: string | null;
+      }>;
+   }>;
+   assigneeName: string;
+   assigner?: string | null;
+   dateAssigned?: string | null;
+   collectedDate: string;
+   collectedBy?: string | null;
+   completedDate: string;
+   completedBy?: string | null;
+   approvedByUserId?: number | null;
+   approvedByName?: string | null;
+   approvedAt?: string | null;
+   declinedByUserId?: number | null;
+   declinedByName?: string | null;
+   declinedAt?: string | null;
+   declineReason?: string | null;
+}
+
+/**
+ * Detail-page row payload. Mirrors the multi-dept tree-aware shape from
+ * the Phase 3 API: a parent carries `children[]`, a child carries a
+ * read-only `parent` summary, and a flat row carries neither.
+ */
 interface RequestDetails {
+   id?: number;
    requesterName: string;
    ministryName?: string;
    requesterEmail: string;
@@ -42,29 +89,15 @@ interface RequestDetails {
    locationOfUse: string;
    dateOfReturn: string;
    descriptionOfRequest: string;
-   audit: {
-      items: Array<{
-         id: number;
-         itemId: number;
-         itemName: string;
-         quantityLeased: string;
-         quantityReleased: string;
-         quantityReturned: number;
-         storeName: string;
-         conditionBeforeLease: string;
-         unitIds: (number | string)[];
-         units?: Array<{
-            serialNumber: string;
-            condition?: string;
-            storeId?: number | null;
-            storeName?: string | null;
-         }>;
-      }>;
-      assigneeName: string;
-      collectedDate: string;
-      completedDate: string;
-   };
+   audit: RequestDetailsAudit;
    requestStatus: string;
+   parentId?: number | null;
+   fulfillingDepartmentId?: number | null;
+   fulfillingDepartmentName?: string | null;
+   createdAt?: string | null;
+   createdBy?: string | null;
+   children?: RequestDetails[];
+   parent?: RequestDetails;
 }
 
 interface RequestDetailsProps {
@@ -74,6 +107,172 @@ interface RequestDetailsProps {
 type SelectedUnit = {
    serialNumber: string;
    condition: string;
+};
+
+// Approve / decline live in the row's status field as the human strings
+// "Submitted" or "Pending". v1 used "Pending"; v2 children come back as
+// "Submitted" until acted on. Treat both as actionable.
+const PENDING_HOD_STATUSES = new Set(['Submitted', 'Pending']);
+
+const isParentRow = (r?: RequestDetails | null) =>
+   !!r && Array.isArray(r.children) && r.children.length > 0;
+
+const isChildRow = (r?: RequestDetails | null) =>
+   !!r && !!r.parent;
+
+/**
+ * Resolve a department id to a name using the loaded department list.
+ * Falls back to the `fulfillingDepartmentName` server hint, then to a
+ * placeholder. Server-side hint wins when both exist — it represents
+ * the snapshot at HOD-action time, not the current state of the dept.
+ */
+const resolveDepartmentName = (
+   row: Pick<RequestDetails, 'fulfillingDepartmentId' | 'fulfillingDepartmentName'> | null | undefined,
+   departments: Array<{ id: number; name?: string }>,
+): string => {
+   if (!row) return '—';
+   if (row.fulfillingDepartmentName) return row.fulfillingDepartmentName;
+   if (row.fulfillingDepartmentId == null) return '—';
+   const match = departments.find((d) => d.id === row.fulfillingDepartmentId);
+   return match?.name ?? `Dept #${row.fulfillingDepartmentId}`;
+};
+
+/**
+ * Resolve approve / decline actor's display name. Prefers the API-
+ * provided name field; if not present, surfaces a `(user #ID)` stub
+ * so the audit line still renders coherently. Per Phase 6 brief:
+ * proper name lookup can be a follow-up.
+ */
+const resolveActorName = (
+   name?: string | null,
+   id?: number | null,
+): string => {
+   if (name && name.trim().length > 0) return name;
+   if (id != null) return `(user #${id})`;
+   return '—';
+};
+
+interface SubRequestCardProps {
+   child: RequestDetails;
+   departmentName: string;
+   /** When true (the actor is the row's HOD and it's still pending),
+    *  inline approve/decline buttons render. */
+   canAct: boolean;
+   onApprove?: (childId: number) => void;
+   onDecline?: (childId: number) => void;
+   busy?: boolean;
+}
+
+/**
+ * One card per child sub-request on the parent detail page. Renders the
+ * child's department, status pill, approval audit line, item list, and
+ * (when the viewer is the row's HOD) inline approve / decline buttons.
+ *
+ * Declined children are dimmed (`opacity-60`) per Spec Q1: greyed with
+ * a small reason caption, no strike-through.
+ */
+const SubRequestCard: React.FC<SubRequestCardProps> = ({
+   child,
+   departmentName,
+   canAct,
+   onApprove,
+   onDecline,
+   busy,
+}) => {
+   const isDeclined = child.requestStatus === 'Declined';
+   const isApproved = child.requestStatus === 'Approved';
+   const audit = child.audit;
+   const items = audit?.items ?? [];
+
+   const auditLine = isApproved && audit?.approvedAt
+      ? `Approved by ${resolveActorName(audit.approvedByName, audit.approvedByUserId)} on ${formatReadableDate(audit.approvedAt)}`
+      : isDeclined && audit?.declinedAt
+      ? `Declined by ${resolveActorName(audit.declinedByName, audit.declinedByUserId)} on ${formatReadableDate(audit.declinedAt)}`
+      : null;
+
+   return (
+      <div
+         className={`rounded-xl p-4 border transition-all ${isDeclined ? 'opacity-60' : ''}`}
+         style={{
+            background: 'var(--surface-paper, #fff)',
+            borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
+         }}
+      >
+         <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="min-w-0">
+               <p className="text-sm font-semibold text-[#0F2552] dark:text-white/90 truncate">
+                  {departmentName}
+               </p>
+               {auditLine && (
+                  <p
+                     className="text-xs mt-0.5"
+                     style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                  >
+                     {auditLine}
+                  </p>
+               )}
+            </div>
+            <StatusChip status={child.requestStatus || ''} size="sm" />
+         </div>
+
+         {isDeclined && audit?.declineReason && (
+            <p
+               className="text-xs italic mb-2 px-3 py-2 rounded-md"
+               style={{
+                  background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                  color: 'var(--text-secondary, #5a6478)',
+               }}
+            >
+               Reason: &ldquo;{audit.declineReason}&rdquo;
+            </p>
+         )}
+
+         {items.length > 0 && (
+            <div className="mt-2">
+               <p
+                  className="text-[0.6rem] uppercase font-semibold tracking-wider mb-1"
+                  style={{ color: 'var(--text-hint, rgba(15,37,82,0.45))' }}
+               >
+                  Items
+               </p>
+               <ul className="text-sm text-[#0F2552] dark:text-white/85 space-y-1">
+                  {items.map((it) => (
+                     <li key={`${it.itemId}-${it.id ?? ''}`} className="tabular-nums">
+                        {it.itemName}{' '}
+                        <span
+                           className="text-xs"
+                           style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                        >
+                           ({it.quantityLeased})
+                        </span>
+                     </li>
+                  ))}
+               </ul>
+            </div>
+         )}
+
+         {canAct && (
+            <div className="mt-4 flex items-center gap-2 justify-end">
+               <ActionButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDecline?.(child.id ?? 0)}
+                  disabled={busy}
+               >
+                  Decline
+               </ActionButton>
+               <ActionButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onApprove?.(child.id ?? 0)}
+                  disabled={busy}
+               >
+                  Approve
+               </ActionButton>
+            </div>
+         )}
+      </div>
+   );
 };
 
 export const getServerSideProps: GetServerSideProps<
@@ -140,13 +339,39 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       IsReturningRequestItems,
    } = useSelector((s: RootState) => s.request);
    const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
+   const { allDepartmentsList } = useSelector((s: RootState) => s.department);
 
-   const [requestStatus, setRequestStatus] = useState('');
    const [requestDetails, setRequestDetails] =
       useState<RequestDetails>(requestDetail);
    const [assignedUserId, setAssignedUserId] = useState('');
    const [status, setStatus] = useState(requestDetails?.requestStatus);
-   const [items, setItems] = useState(requestDetails?.audit.items || []);
+   const [items, setItems] = useState(requestDetails?.audit?.items || []);
+
+   // Re-sync local state when the SSR prop changes — i.e. when navigating
+   // from /admin/request/A to /admin/request/B without a full reload.
+   // Next.js re-runs getServerSideProps and passes a new `requestDetail`,
+   // but `useState(initial)` only honours its argument on first mount, so
+   // without this effect the page would keep rendering the stale row.
+   useEffect(() => {
+      setRequestDetails(requestDetail);
+      setStatus(requestDetail?.requestStatus);
+      setItems(requestDetail?.audit?.items ?? []);
+      setAssignedUserId('');
+   }, [requestDetail]);
+
+   // Decline-reason modal — captures the optional `reason` body the API
+   // accepts on the decline endpoint. Targets either the row currently
+   // being viewed (flat row) or a specific child id when an HOD is
+   // declining one sub-request from the parent's tree view.
+   const [declineModalTargetId, setDeclineModalTargetId] = useState<number | null>(null);
+   const [declineReason, setDeclineReason] = useState('');
+
+   // Activity pane drawer state — only used at `md:` and below where
+   // the right-side column collapses into a slide-in panel.
+   const [activityDrawerOpen, setActivityDrawerOpen] = useState(false);
+
+   // Quick count for the toggle pill badge. Mirrors the derivation
+   // inside the pane, but cheap enough to recompute here.
 
    type UnitOption = {
       value: number | string;
@@ -290,14 +515,45 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       setItems(updatedItems);
    };
 
-   const handleUpdateStatus = () => {
-      const payload = {
-         status: requestStatus,
-         requestId: String(id),
-      };
+   /**
+    * Approve a row by id — used for both the parent's flat fallback path
+    * and per-child approval when an HOD acts on one sub-request from a
+    * tree view. The endpoint is the same: PATCH /request/approve/:id.
+    */
+   const handleApproveRow = (rowId: number) => {
+      if (!rowId) return;
       dispatch(
-         requestActions.updateRequestStatus(payload) as unknown as UnknownAction
+         requestActions.updateRequestStatus({
+            status: 'approve',
+            requestId: String(rowId),
+         }) as unknown as UnknownAction,
       );
+   };
+
+   /**
+    * Open the decline-reason modal for a specific row. Submission flows
+    * through `handleConfirmDecline` so the optional `reason` body is
+    * captured before firing the API call.
+    */
+   const handleOpenDecline = (rowId: number) => {
+      if (!rowId) return;
+      setDeclineModalTargetId(rowId);
+      setDeclineReason('');
+   };
+
+   const handleConfirmDecline = () => {
+      const target = declineModalTargetId;
+      if (!target) return;
+      const trimmed = declineReason.trim();
+      dispatch(
+         requestActions.updateRequestStatus({
+            status: 'decline',
+            requestId: String(target),
+            reason: trimmed.length > 0 ? trimmed : undefined,
+         }) as unknown as UnknownAction,
+      );
+      setDeclineModalTargetId(null);
+      setDeclineReason('');
    };
 
    const handleAssignRequest = () => {
@@ -389,24 +645,36 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       }
    }, [userDetails, dispatch]);
 
+   // The view page needs the department list to resolve
+   // `fulfillingDepartmentId` -> name on each child sub-request card.
+   // Avoid the round-trip if the list is already loaded.
+   useEffect(() => {
+      if (!allDepartmentsList || allDepartmentsList.length === 0) {
+         dispatch(
+            departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction,
+         );
+      }
+   }, [dispatch, allDepartmentsList]);
+
    useEffect(() => {
       const listener = AppEmitter.addListener(
          requestConstants.UPDATE_REQUEST_STATUS_SUCCESS,
          (evt: Event) => {
+            // The new approve/decline buttons fire status changes that
+            // can resolve to Approved, Declined, or (for parents) bubble
+            // up to Partially Approved. We don't try to predict the
+            // resolved status here — `fetchRequestDetails` re-reads the
+            // canonical state from the API and pushes it into the local
+            // `status` via the same callback.
             const customEvent = evt as CustomEvent;
-
             if (customEvent) {
-               const displayStatus = getDisplayStatus(requestStatus);
-
-               setStatus(displayStatus);
                fetchRequestDetails();
-               setRequestStatus('');
             }
          }
       );
 
       return () => listener.remove();
-   }, [requestStatus, fetchRequestDetails]);
+   }, [fetchRequestDetails]);
 
    useEffect(() => {
       const listener = AppEmitter.addListener(
@@ -525,6 +793,71 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       return false;
    });
 
+   // ── Tree-shape derivations ──────────────────────────────────────────────
+   // Phase 6 — the detail endpoint can return a parent (with children),
+   // a child (with parent summary), or a flat row. Derive the shape once
+   // from `requestDetails` and use it to drive the JSX below. (A flat
+   // row is implicit: `!hasChildren && !hasParent`.)
+   const hasChildren = isParentRow(requestDetails);
+   const hasParent = isChildRow(requestDetails);
+
+   // Activity-pane event count — used to badge the mobile toggle.
+   // Cheap to recompute; mirrors the derivation inside the pane.
+   const activityEventCount = useMemo(() => {
+      if (!requestDetails) return 0;
+      const a = requestDetails?.audit ?? ({} as RequestDetailsAudit);
+      let count = 0;
+      if (requestDetails?.createdAt) count += 1;
+      if (Array.isArray(requestDetails?.children) && requestDetails.children!.length > 0) {
+         requestDetails.children!.forEach((c) => {
+            if (c.audit?.approvedAt) count += 1;
+            if (c.audit?.declinedAt) count += 1;
+         });
+      } else {
+         if (a.approvedAt) count += 1;
+         if (a.declinedAt) count += 1;
+      }
+      if (a.dateAssigned) count += 1;
+      if (a.collectedDate) count += 1;
+      if (a.completedDate) count += 1;
+      return count;
+   }, [requestDetails]);
+
+   // Deps list normalised so resolve calls don't crash when the list is
+   // still loading. Cast through `unknown` because the department reducer
+   // uses a slightly looser type.
+   const departments = useMemo<Array<{ id: number; name?: string }>>(
+      () => (allDepartmentsList ?? []) as unknown as Array<{ id: number; name?: string }>,
+      [allDepartmentsList],
+   );
+
+   // Is the current viewer the HOD whose dept owns this row? Used to gate
+   // the inline approve / decline buttons on a flat row or a child row.
+   const isHodOfRow = (row: RequestDetails | null | undefined): boolean => {
+      if (!row || !userDetails) return false;
+      if (userDetails.roleId !== RoleId.HOD) return false;
+      // If the API didn't return a fulfilling department on this row,
+      // fall back to "this HOD owns whatever they're seeing" — Phase 3
+      // scoping already gated the data by department.
+      if (row.fulfillingDepartmentId == null) return true;
+      return userDetails.departmentId === row.fulfillingDepartmentId;
+   };
+
+   // Approve / decline visibility for the current viewer on a given row.
+   const canActOnRow = (row: RequestDetails | null | undefined): boolean => {
+      if (!row) return false;
+      if (!PENDING_HOD_STATUSES.has(row.requestStatus)) return false;
+      return isHodOfRow(row);
+   };
+
+   // Assignment is now also enabled on `Partially Approved` (per spec
+   // §11 Phase 6 + §8: server allows assign so long as at least one
+   // child is approved). Existing `Approved` path stays.
+   const canAssign =
+      userDetails?.roleId === RoleId.SUPER_ADMIN &&
+      (requestDetails?.requestStatus === 'Approved' ||
+         requestDetails?.requestStatus === 'Partially Approved');
+
    // ── Shared styled input for qty fields ──────────────────────────────────
    const themedInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
       <input
@@ -540,18 +873,36 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
    return (
       <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
-         <div className="md:col-span-10 md:col-start-2 space-y-6">
+         <div className="md:col-span-10 md:col-start-2">
+            {/* PageHeader stays full-width above the activity split so
+                the page chrome (search / role switcher / etc.) doesn't
+                get squeezed when the right column appears. */}
             <PageHeader />
-            {/* Back button */}
-            <button
-               onClick={() => router.back()}
-               className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/50 hover:text-[#0F2552] dark:hover:text-white/80 transition-colors cursor-pointer"
-            >
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-               </svg>
-               Back
-            </button>
+
+            {/* Two-column split: existing detail content on the left,
+                activity timeline on the right. The pane only shows as a
+                column at `lg:` and up — below that, the toggle button
+                opens a slide-in drawer with the same content. */}
+            <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+               <div className="space-y-6 min-w-0">
+            {/* Back button + mobile activity toggle */}
+            <div className="flex items-center justify-between gap-3">
+               <button
+                  onClick={() => router.back()}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/50 hover:text-[#0F2552] dark:hover:text-white/80 transition-colors cursor-pointer"
+               >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back
+               </button>
+               <div className="lg:hidden">
+                  <ActivityToggleButton
+                     onClick={() => setActivityDrawerOpen(true)}
+                     count={activityEventCount}
+                  />
+               </div>
+            </div>
 
             {/* Workflow stepper */}
             {requestDetails?.requestStatus && (() => {
@@ -612,6 +963,45 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                );
             })()}
 
+            {/* Parent-of-this-child banner — Spec §5.2: when a non-Facility
+                HOD opens a child sub-request via their email link, render
+                the parent header read-only so they have full context. */}
+            {hasParent && requestDetails?.parent && (
+               <div
+                  className="rounded-xl border px-5 py-4"
+                  style={{
+                     background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                     borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
+                  }}
+               >
+                  <p
+                     className="text-[0.6rem] uppercase font-semibold tracking-wider mb-1"
+                     style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                  >
+                     Part of Request #{requestDetails.parent.id ?? requestDetails.parentId ?? '—'}
+                  </p>
+                  <p className="text-sm text-[#0F2552] dark:text-white/85">
+                     {capitalizeFirstLetter(requestDetails.parent.requesterName) || '—'}
+                     {requestDetails.parent.ministryName && (
+                        <>
+                           &nbsp;&middot;&nbsp;
+                           <span style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}>
+                              {capitalizeFirstLetter(requestDetails.parent.ministryName)}
+                           </span>
+                        </>
+                     )}
+                  </p>
+                  {requestDetails.parent.descriptionOfRequest && (
+                     <p
+                        className="text-xs mt-1 italic"
+                        style={{ color: 'var(--text-secondary, #5a6478)' }}
+                     >
+                        &ldquo;{requestDetails.parent.descriptionOfRequest}&rdquo;
+                     </p>
+                  )}
+               </div>
+            )}
+
             {/* Header card */}
             <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-6">
                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -622,6 +1012,17 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                         </h1>
                         <StatusChip status={status || ''} size="md" pulse />
                      </div>
+                     {/* Spec §5.2: the description tag travels with the row
+                         on every page. Surface it prominently right under
+                         the requester name so context never gets lost. */}
+                     {requestDetails?.descriptionOfRequest && (
+                        <p
+                           className="text-sm font-medium italic max-w-2xl"
+                           style={{ color: 'var(--text-secondary, #5a6478)' }}
+                        >
+                           &ldquo;{requestDetails.descriptionOfRequest}&rdquo;
+                        </p>
+                     )}
                      {requestDetails?.ministryName && (
                         <p className="text-sm text-gray-500 dark:text-white/50">
                            {capitalizeFirstLetter(requestDetails.ministryName)}
@@ -693,7 +1094,39 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                />
             </DetailSection>
 
+            {/* ── Sub-requests (parent rows only) ─────────────────────────
+                Spec §5.2 / §11 Phase 6: on a parent the items section is
+                replaced with one card per child sub-request. The card
+                shows the child's department, its current status pill,
+                approval audit, and item subset. HODs whose dept owns a
+                child see inline approve / decline buttons. */}
+            {hasChildren && (
+               <DetailSection title="Sub-requests">
+                  <div className="space-y-3 p-4">
+                     {(requestDetails.children ?? []).map((child) => {
+                        const deptName = resolveDepartmentName(child, departments);
+                        const showActions = canActOnRow(child);
+                        return (
+                           <SubRequestCard
+                              key={child.id}
+                              child={child}
+                              departmentName={deptName}
+                              canAct={showActions}
+                              onApprove={handleApproveRow}
+                              onDecline={handleOpenDecline}
+                              busy={IsUpdatingRequestStatus}
+                           />
+                        );
+                     })}
+                  </div>
+               </DetailSection>
+            )}
+
             {/* ── Requested Items ─────────────────────────────────────────────────────── */}
+            {/* Hide the items table for parent rows — items live under
+                each child instead. Children and flat rows still render
+                this section as today. */}
+            {!hasChildren && (
             <DetailSection title="Requested Items">
                {/* Card-based layout for MEMBER action states */}
                {(isMemberAssigned || isMemberCollected) ? (
@@ -934,42 +1367,71 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   </div>
                )}
             </DetailSection>
+            )}
+
+            {/* ── Sibling sub-requests strip — child detail view only.
+                Shows other children of the parent so a non-Facility HOD
+                acting on one child has at-a-glance context for the rest
+                of the tree. Read-only by design (Spec §5.2). */}
+            {hasParent &&
+               requestDetails?.parent?.children &&
+               requestDetails.parent.children.length > 1 && (
+                  <DetailSection title="Sibling sub-requests">
+                     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {requestDetails.parent.children
+                           .filter((sib) => sib.id !== requestDetails.id)
+                           .map((sib) => {
+                              const sibDept = resolveDepartmentName(sib, departments);
+                              return (
+                                 <div
+                                    key={sib.id}
+                                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg"
+                                    style={{
+                                       background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                                       border: '1px solid var(--border-default, rgba(15,37,82,0.08))',
+                                    }}
+                                 >
+                                    <span className="text-sm text-[#0F2552] dark:text-white/85 truncate">
+                                       {sibDept}
+                                    </span>
+                                    <StatusChip status={sib.requestStatus || ''} size="sm" />
+                                 </div>
+                              );
+                           })}
+                     </div>
+                  </DetailSection>
+               )}
 
             {/* Action area */}
             <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5">
                <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-                  {/* Role-conditional dropdowns */}
+                  {/* Role-conditional dropdowns. The HOD approve/decline
+                      dropdown is replaced with explicit buttons below
+                      when the viewer is the row's HOD on a flat row or
+                      a child detail view (canActOnRow). */}
                   <div className="w-full sm:max-w-xs">
-                     {(userDetails?.roleId === RoleId.HOD) &&
-                        requestDetails?.requestStatus === 'Pending' && (
-                           <div>
-                              <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
-                                 Update Status
-                              </label>
-                              <CustomDropdownSelect
-                                 options={optionsFilter}
-                                 value={requestStatus}
-                                 onChange={setRequestStatus}
-                                 placeholder="Select status"
-                                 noSearch
-                              />
-                           </div>
-                        )}
-                     {userDetails?.roleId === RoleId.SUPER_ADMIN &&
-                        requestDetails?.requestStatus === 'Approved' && (
-                           <div>
-                              <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
-                                 Assign Member
-                              </label>
-                              <CustomDropdownSelect
-                                 options={roleUsersArray}
-                                 value={assignedUserId}
-                                 onChange={setAssignedUserId}
-                                 placeholder="Select Member to assign request to"
-                                 noSearch
-                              />
-                           </div>
-                        )}
+                     {canAssign && (
+                        <div>
+                           <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
+                              Assign Member
+                           </label>
+                           <CustomDropdownSelect
+                              options={roleUsersArray}
+                              value={assignedUserId}
+                              onChange={setAssignedUserId}
+                              placeholder="Select Member to assign request to"
+                              noSearch
+                           />
+                           {requestDetails?.requestStatus === 'Partially Approved' && (
+                              <p
+                                 className="text-[0.7rem] mt-1.5"
+                                 style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                              >
+                                 Note: only approved sub-requests are included.
+                              </p>
+                           )}
+                        </div>
+                     )}
                   </div>
 
                   {/* Action buttons */}
@@ -1006,28 +1468,134 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                               'Return Items'
                            )}
                         </ActionButton>
-                     ) : (
+                     ) : canActOnRow(requestDetails) ? (
+                        // Flat row OR child detail view where the viewer
+                        // is the HOD whose dept owns this row. Show
+                        // explicit Approve / Decline buttons. Decline
+                        // routes through the modal so we capture an
+                        // optional reason (Phase 3 endpoint accepts a
+                        // `{ reason?: string }` body).
+                        <>
+                           <ActionButton
+                              variant="outline"
+                              size="md"
+                              onClick={() => handleOpenDecline(Number(requestDetails?.id ?? id))}
+                              disabled={IsUpdatingRequestStatus}
+                           >
+                              Decline
+                           </ActionButton>
+                           <ActionButton
+                              variant="primary"
+                              size="md"
+                              onClick={() => handleApproveRow(Number(requestDetails?.id ?? id))}
+                              disabled={IsUpdatingRequestStatus}
+                           >
+                              {IsUpdatingRequestStatus ? (
+                                 <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Processing...
+                                 </div>
+                              ) : (
+                                 'Approve'
+                              )}
+                           </ActionButton>
+                        </>
+                     ) : canAssign ? (
                         <ActionButton
-                           onClick={
-                              requestStatus !== '' ? handleUpdateStatus : handleAssignRequest
-                           }
-                           disabled={requestStatus === '' && assignedUserId === ''}
+                           onClick={handleAssignRequest}
+                           disabled={assignedUserId === ''}
                            variant="primary"
                            size="md"
                         >
-                           {IsUpdatingRequestStatus || IsAssigningRequest ? (
+                           {IsAssigningRequest ? (
                               <div className="flex items-center gap-2">
                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                  Processing...
                               </div>
                            ) : (
-                              'Submit'
+                              'Assign'
                            )}
                         </ActionButton>
-                     )}
+                     ) : null}
                   </div>
                </div>
             </div>
+
+            {/* Decline-reason modal — captures the optional `reason`
+                body the API accepts on the decline endpoint (Phase 3).
+                Reuses the shared `ModalWrapper` so the dialog matches
+                every other modal in the app. */}
+            <ModalWrapper
+               open={declineModalTargetId != null}
+               onClose={() => {
+                  setDeclineModalTargetId(null);
+                  setDeclineReason('');
+               }}
+               title="Decline sub-request"
+               subtitle="Add an optional reason — it will be visible to the requester and other HODs on the request."
+            >
+               <div className="space-y-4">
+                  <textarea
+                     className="w-full text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#B28309]/30"
+                     style={{
+                        background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                        border: '1.5px solid var(--border-default, rgba(15,37,82,0.18))',
+                        color: 'var(--text-primary, #0F2552)',
+                        minHeight: '6rem',
+                     }}
+                     placeholder="e.g. Out of stock for the requested period"
+                     value={declineReason}
+                     onChange={(e) => setDeclineReason(e.target.value)}
+                     maxLength={500}
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                     <ActionButton
+                        variant="ghost"
+                        size="md"
+                        onClick={() => {
+                           setDeclineModalTargetId(null);
+                           setDeclineReason('');
+                        }}
+                     >
+                        Cancel
+                     </ActionButton>
+                     <ActionButton
+                        variant="secondary"
+                        size="md"
+                        onClick={handleConfirmDecline}
+                        disabled={IsUpdatingRequestStatus}
+                     >
+                        Confirm decline
+                     </ActionButton>
+                  </div>
+               </div>
+            </ModalWrapper>
+               </div>
+
+               {/* Activity pane — desktop column. Hidden below `lg:`,
+                   where it falls back to the slide-in drawer. Sticky so
+                   it stays in view as the (potentially long) detail
+                   content scrolls. */}
+               <div className="hidden lg:block">
+                  <div className="sticky top-6 h-[calc(100vh-3rem)]">
+                     <RequestActivityPane
+                        request={requestDetails}
+                        className="h-full"
+                     />
+                  </div>
+               </div>
+            </div>
+         </div>
+
+         {/* Activity drawer — only mounted at `md:` and below via CSS,
+             but always rendered so the slide-in transition is smooth.
+             The drawer's own backdrop handles dismissal. */}
+         <div className="lg:hidden">
+            <RequestActivityDrawer
+               open={activityDrawerOpen}
+               onClose={() => setActivityDrawerOpen(false)}
+               request={requestDetails}
+            />
          </div>
       </Layout>
    );

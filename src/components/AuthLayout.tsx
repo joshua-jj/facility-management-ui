@@ -71,7 +71,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, heading, subtitle, child
                <span
                   className={`mt-2 text-sm font-semibold tracking-[0.12em] uppercase transition-colors ${isDark ? 'text-white/80' : 'text-[#0F2552]'}`}
                >
-                  Logistics
+                  Facility Portal
                </span>
             </div>
 
@@ -105,7 +105,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, heading, subtitle, child
             <p
                className={`animate-fade-up-delay-5 mt-10 text-xs z-10 transition-colors ${isDark ? 'text-white/20' : 'text-[#0F2552]/30'}`}
             >
-               &copy; {new Date().getFullYear()} EGFM Logistics. All rights reserved.
+               &copy; {new Date().getFullYear()} EGFM Facility Portal. All rights reserved.
             </p>
          </div>
       </>

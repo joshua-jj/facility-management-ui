@@ -90,26 +90,28 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
                required
             />
          </div>
-         <PhoneInput
-            name="contact_number"
-            label="Contact Number"
-            value={data.contactNumber}
-            defaultCountry="NG"
-            outputFormat="local"
-            required
-         />
-         <SelectInput
-            name="own_department_id"
-            label="Your Department"
-            placeholder="Select your department"
-            options={departmentOptions}
-            value={data.ownDepartmentId}
-            onValueChange={(val) =>
-               setData({ ...data, ownDepartmentId: val })
-            }
-            required
-            searchable
-         />
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <PhoneInput
+               name="contact_number"
+               label="Contact Number"
+               value={data.contactNumber}
+               defaultCountry="NG"
+               outputFormat="local"
+               required
+            />
+            <SelectInput
+               name="own_department_id"
+               label="Your Department"
+               placeholder="Select your department"
+               options={departmentOptions}
+               value={data.ownDepartmentId}
+               onValueChange={(val) =>
+                  setData({ ...data, ownDepartmentId: val })
+               }
+               required
+               searchable
+            />
+         </div>
       </Formsy>
    );
 };

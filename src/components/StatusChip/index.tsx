@@ -7,6 +7,12 @@ interface StatusChipProps {
    size?: 'sm' | 'md';
    pulse?: boolean;
    className?: string;
+   /**
+    * Optional tooltip / accessible label override. Defaults to a sensible
+    * help string for `Partially Approved` (since the label alone is opaque
+    * to first-time viewers); otherwise falls back to the status label.
+    */
+   title?: string;
 }
 
 const STATUS_MAP: Record<string, { variant: StatusVariant; label?: string }> = {
@@ -28,6 +34,10 @@ const STATUS_MAP: Record<string, { variant: StatusVariant; label?: string }> = {
    cancelled: { variant: 'error' },
    expired: { variant: 'error' },
    submitted: { variant: 'info' },
+   // Multi-department parent computed state — uses warning palette so it
+   // reads as "still in progress / partial" rather than success or error.
+   // Tooltip on the chip clarifies what it means for non-power users.
+   'partially approved': { variant: 'warning', label: 'Partially Approved' },
    'not assigned': { variant: 'warning', label: 'Not Assigned' },
    'no status': { variant: 'default', label: 'No Status' },
 
@@ -73,17 +83,25 @@ const PULSE_COLORS: Record<StatusVariant, string> = {
    default: 'bg-gray-400',
 };
 
-const StatusChip: React.FC<StatusChipProps> = ({ status, size = 'sm', pulse = false, className = '' }) => {
+const DEFAULT_TITLES: Record<string, string> = {
+   'partially approved':
+      'Some HODs have approved, some have declined. Assignable.',
+};
+
+const StatusChip: React.FC<StatusChipProps> = ({ status, size = 'sm', pulse = false, className = '', title }) => {
    const key = String(status ?? '').toLowerCase().trim();
    const mapped = STATUS_MAP[key] ?? { variant: 'default' as StatusVariant };
    const label = mapped.label ?? (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown');
    const styles = VARIANT_STYLES[mapped.variant];
    const pulseColor = PULSE_COLORS[mapped.variant];
+   const resolvedTitle = title ?? DEFAULT_TITLES[key];
 
    const sizeClass = size === 'sm' ? 'text-[0.65rem] px-2 py-0.5' : 'text-xs px-2.5 py-1';
 
    return (
       <span
+         title={resolvedTitle}
+         aria-label={resolvedTitle ?? label}
          className={`inline-flex items-center gap-1.5 rounded-full font-semibold tracking-wide whitespace-nowrap transition-colors ${styles} ${sizeClass} ${className}`}
       >
          {pulse && (
