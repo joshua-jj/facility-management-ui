@@ -25,10 +25,6 @@ import { DetailRow, DetailSection } from '@/components/DetailField';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import ModalWrapper from '@/components/Modals/ModalWrapper';
 import { departmentActions } from '@/actions';
-import RequestActivityPane, {
-   ActivityToggleButton,
-   RequestActivityDrawer,
-} from '@/components/RequestActivityPane';
 
 const conditionOptions = [
    { value: 'Good', label: 'Good' },
@@ -133,7 +129,11 @@ const resolveDepartmentName = (
    if (!row) return '—';
    if (row.fulfillingDepartmentName) return row.fulfillingDepartmentName;
    if (row.fulfillingDepartmentId == null) return '—';
-   const match = departments.find((d) => d.id === row.fulfillingDepartmentId);
+   // Coerce to Number on both sides — bigint columns ride the wire as
+   // strings while @PrimaryGeneratedColumn ids come through as numbers,
+   // so a strict `===` would silently miss every match.
+   const target = Number(row.fulfillingDepartmentId);
+   const match = departments.find((d) => Number(d.id) === target);
    return match?.name ?? `Dept #${row.fulfillingDepartmentId}`;
 };
 
@@ -318,7 +318,24 @@ export const getServerSideProps: GetServerSideProps<
             requestDetail: resp.data?.data ?? null,
          },
       };
-   } catch {
+   } catch (err: unknown) {
+      // Log the SSR error so the dev-server console actually surfaces
+      // the cause (auth expired, API 5xx, ECONNREFUSED, etc.) instead
+      // of silently passing `null` to the page and leaving the user
+      // with a blank form. The client-side mount effect retries, so a
+      // transient failure here doesn't lock the page into a null state.
+      const axiosErr = err as { response?: { status?: number; data?: unknown }; message?: string; code?: string };
+      // eslint-disable-next-line no-console
+      console.error(
+         `[request/[id]] SSR fetch failed for id=${id}:`,
+         {
+            status: axiosErr?.response?.status,
+            code: axiosErr?.code,
+            message: axiosErr?.message,
+            body: axiosErr?.response?.data,
+            url: `${requestConstants.REQUEST_URI}/detail/${id}`,
+         },
+      );
       return {
          props: {
             requestDetail: null,
@@ -352,11 +369,20 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    // Next.js re-runs getServerSideProps and passes a new `requestDetail`,
    // but `useState(initial)` only honours its argument on first mount, so
    // without this effect the page would keep rendering the stale row.
+   //
+   // Skip the sync when the new prop is null AND we already have data
+   // locally — that situation means SSR failed (logged in
+   // getServerSideProps' catch) but a client-side fetch already
+   // hydrated the page. Overwriting back to null would blank the UI.
    useEffect(() => {
+      if (requestDetail == null && requestDetails != null) {
+         return;
+      }
       setRequestDetails(requestDetail);
       setStatus(requestDetail?.requestStatus);
       setItems(requestDetail?.audit?.items ?? []);
       setAssignedUserId('');
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [requestDetail]);
 
    // Decline-reason modal — captures the optional `reason` body the API
@@ -365,13 +391,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    // declining one sub-request from the parent's tree view.
    const [declineModalTargetId, setDeclineModalTargetId] = useState<number | null>(null);
    const [declineReason, setDeclineReason] = useState('');
-
-   // Activity pane drawer state — only used at `md:` and below where
-   // the right-side column collapses into a slide-in panel.
-   const [activityDrawerOpen, setActivityDrawerOpen] = useState(false);
-
-   // Quick count for the toggle pill badge. Mirrors the derivation
-   // inside the pane, but cheap enough to recompute here.
 
    type UnitOption = {
       value: number | string;
@@ -645,6 +664,21 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       }
    }, [userDetails, dispatch]);
 
+   // Fallback: when SSR returned null (the catch in getServerSideProps
+   // logs the underlying cause), retry from the client on mount so the
+   // page heals itself instead of rendering an empty form. The retry
+   // uses the user's actual auth token from localForage, which can
+   // differ from the SSR cookie if it's been refreshed since the page
+   // request was sent.
+   useEffect(() => {
+      if (requestDetails == null && id != null) {
+         fetchRequestDetails();
+      }
+      // Only fires on mount — once data arrives, requestDetails is set
+      // and we don't want to re-trigger from this effect.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
+
    // The view page needs the department list to resolve
    // `fulfillingDepartmentId` -> name on each child sub-request card.
    // Avoid the round-trip if the list is already loaded.
@@ -801,28 +835,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const hasChildren = isParentRow(requestDetails);
    const hasParent = isChildRow(requestDetails);
 
-   // Activity-pane event count — used to badge the mobile toggle.
-   // Cheap to recompute; mirrors the derivation inside the pane.
-   const activityEventCount = useMemo(() => {
-      if (!requestDetails) return 0;
-      const a = requestDetails?.audit ?? ({} as RequestDetailsAudit);
-      let count = 0;
-      if (requestDetails?.createdAt) count += 1;
-      if (Array.isArray(requestDetails?.children) && requestDetails.children!.length > 0) {
-         requestDetails.children!.forEach((c) => {
-            if (c.audit?.approvedAt) count += 1;
-            if (c.audit?.declinedAt) count += 1;
-         });
-      } else {
-         if (a.approvedAt) count += 1;
-         if (a.declinedAt) count += 1;
-      }
-      if (a.dateAssigned) count += 1;
-      if (a.collectedDate) count += 1;
-      if (a.completedDate) count += 1;
-      return count;
-   }, [requestDetails]);
-
    // Deps list normalised so resolve calls don't crash when the list is
    // still loading. Cast through `unknown` because the department reducer
    // uses a slightly looser type.
@@ -879,13 +891,8 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                 get squeezed when the right column appears. */}
             <PageHeader />
 
-            {/* Two-column split: existing detail content on the left,
-                activity timeline on the right. The pane only shows as a
-                column at `lg:` and up — below that, the toggle button
-                opens a slide-in drawer with the same content. */}
-            <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-               <div className="space-y-6 min-w-0">
-            {/* Back button + mobile activity toggle */}
+            <div className="mt-6 space-y-6">
+            {/* Back button */}
             <div className="flex items-center justify-between gap-3">
                <button
                   onClick={() => router.back()}
@@ -896,12 +903,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   </svg>
                   Back
                </button>
-               <div className="lg:hidden">
-                  <ActivityToggleButton
-                     onClick={() => setActivityDrawerOpen(true)}
-                     count={activityEventCount}
-                  />
-               </div>
             </div>
 
             {/* Workflow stepper */}
@@ -1570,32 +1571,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                   </div>
                </div>
             </ModalWrapper>
-               </div>
-
-               {/* Activity pane — desktop column. Hidden below `lg:`,
-                   where it falls back to the slide-in drawer. Sticky so
-                   it stays in view as the (potentially long) detail
-                   content scrolls. */}
-               <div className="hidden lg:block">
-                  <div className="sticky top-6 h-[calc(100vh-3rem)]">
-                     <RequestActivityPane
-                        request={requestDetails}
-                        className="h-full"
-                     />
-                  </div>
-               </div>
             </div>
-         </div>
-
-         {/* Activity drawer — only mounted at `md:` and below via CSS,
-             but always rendered so the slide-in transition is smooth.
-             The drawer's own backdrop handles dismissal. */}
-         <div className="lg:hidden">
-            <RequestActivityDrawer
-               open={activityDrawerOpen}
-               onClose={() => setActivityDrawerOpen(false)}
-               request={requestDetails}
-            />
          </div>
       </Layout>
    );
