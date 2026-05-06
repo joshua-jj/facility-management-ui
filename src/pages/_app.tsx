@@ -9,6 +9,7 @@ import { Persistor } from 'redux-persist';
 import '../utilities/formsyValidationRules';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/Toast';
+import RouteProgress from '@/components/RouteProgress';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -36,6 +37,7 @@ export default function App({ Component, pageProps, ...rest }: AppProps) {
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <ErrorBoundary>
+            <RouteProgress />
             <ToastContainer />
             <Component {...pageProps} />
           </ErrorBoundary>

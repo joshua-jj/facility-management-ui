@@ -49,3 +49,9 @@ export const requestConstants: RequestConstants = {
   REQUEST_URI: `${appConstants.BASE_URI}${request}`,
   VERIFY_REQUEST_TOKEN_URI: `${appConstants.BASE_URI}${request}/verify-token`,
 };
+
+// v2 multi-department submission endpoint. v1 (`/request/new`) is left
+// in place for backward compat; the redesigned form always POSTs JSON
+// to /v2 with a per-row `{ departmentId, itemId, quantity }[]` items
+// array — see Multi-Department Requests Spec §7.3 / §11 Phase 5.
+export const CREATE_REQUEST_V2_URI = `${appConstants.BASE_URI}${request}/new/v2`;

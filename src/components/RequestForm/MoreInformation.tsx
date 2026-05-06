@@ -2,20 +2,17 @@ import React from 'react';
 import TextInput from '../Inputs/TextInput';
 import DateInput from '../Inputs/DateInput';
 import Formsy from 'formsy-react';
-import TextArea from '../Inputs/TextArea';
 
 interface MoreInformationProps {
    data: {
       location: string;
       returnDate: string;
       dateOfCollection: string;
-      description: string;
    };
    setData: (data: {
       location: string;
       returnDate: string;
       dateOfCollection: string;
-      description: string;
    }) => void;
 }
 
@@ -27,12 +24,14 @@ const todayIso = () => {
    return d.toISOString().split('T')[0];
 };
 
+// NOTE: The "Description" textarea was moved to Step 1 (ItemDetails) as
+// part of the multi-department-requests redesign — alien HODs need that
+// context up-front when the request fans out across depts. See Spec §7.
 const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
    const handleChange = (currentValues: {
       location?: string;
       return_date?: string;
       dateOfCollection?: string;
-      description?: string;
    }) => {
       // Use ?? so the user can clear a field — the previous `||` fallback
       // silently restored stale state when the user emptied an input.
@@ -40,7 +39,6 @@ const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
          location: currentValues.location ?? data.location,
          returnDate: currentValues.return_date ?? data.returnDate,
          dateOfCollection: currentValues.dateOfCollection ?? data.dateOfCollection,
-         description: currentValues.description ?? data.description,
       });
    };
 
@@ -121,14 +119,6 @@ const MoreInformation: React.FC<MoreInformationProps> = ({ data, setData }) => {
                )}
             </div>
          </div>
-         <TextArea
-            type="text"
-            name="description"
-            label="Description"
-            placeholder="Describe what you need the items for"
-            rows={4}
-            value={data.description}
-         />
       </Formsy>
    );
 };
