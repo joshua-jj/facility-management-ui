@@ -266,7 +266,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                      </div>
                      {!collapsed && (
                         <span className={classNames('ml-3 text-[16px] font-bold leading-[21px] whitespace-nowrap overflow-hidden transition-colors', isDark ? 'text-white' : 'text-[#0F2552]')}>
-                           Logistics
+                           Facility Portal
                         </span>
                      )}
                   </motion.div>
@@ -350,7 +350,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                               <Image src="/assets/images/egfm-logo.png" alt="egfm-logo" height={40} width={40} unoptimized className={isDark ? 'brightness-125 saturate-[0.9]' : ''} />
                            </div>
                            <span className={classNames('ml-3 text-[16px] font-bold leading-[21px] whitespace-nowrap overflow-hidden transition-colors', isDark ? 'text-white' : 'text-[#0F2552]')}>
-                              Logistics
+                              Facility Portal
                            </span>
                         </motion.div>
                      </Link>

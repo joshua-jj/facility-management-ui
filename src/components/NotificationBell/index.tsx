@@ -76,11 +76,20 @@ export const NotificationBell: React.FC = () => {
                <button
                   {...props}
                   className="relative flex items-center justify-center h-9 w-9 rounded-lg border border-[var(--border-default)] bg-[var(--surface-paper)] hover:bg-[var(--surface-low)] text-[var(--text-secondary)] transition-colors cursor-pointer"
-                  aria-label="Notifications"
+                  aria-label={
+                     unreadCount > 0
+                        ? `Notifications, ${unreadCount} unread`
+                        : 'Notifications'
+                  }
                >
                   <BellIcon />
                   {unreadCount > 0 && (
-                     <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />
+                     <span
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold leading-none flex items-center justify-center tabular-nums shadow-sm ring-2 ring-[var(--surface-paper)]"
+                        aria-hidden
+                     >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                     </span>
                   )}
                </button>
             )}

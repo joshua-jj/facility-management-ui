@@ -1,5 +1,6 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { requestConstants } from '@/constants';
+import { CREATE_REQUEST_V2_URI } from '@/constants/request.constant';
 import {
   appActions,
   CreateRequestAction,
@@ -24,7 +25,12 @@ function* createNewRequest({ data }: CreateRequestAction) {
 
   try {
     if (data) {
-      const requestUri = `${requestConstants.REQUEST_URI}/new`;
+      // v2 endpoint — accepts the new per-row `{ departmentId, itemId,
+      // quantity }[]` shape. The server groups by departmentId and
+      // writes either a single flat row (one dept) or a parent+children
+      // tree (N depts). v1 (`/request/new`, multipart) stays live for
+      // back-compat but the redesigned form never calls it.
+      const requestUri = CREATE_REQUEST_V2_URI;
       const requestReq = createRequest(requestUri, {
         method: 'POST',
         body: JSON.stringify(data),

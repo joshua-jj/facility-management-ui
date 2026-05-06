@@ -53,8 +53,11 @@ function formatRelative(value: string): string {
    if (!value) return '';
    const d = dayjs(value);
    if (!d.isValid()) return '';
-   const now = dayjs();
-   const diff = d.diff(now, 'day');
+   // Compare calendar-day boundaries, not 24-hour gaps. dayjs' default
+   // diff(unit='day') is integer division of millisecond delta by 86_400_000
+   // — so May 7 00:00 − May 6 06:39 ≈ 17h truncates to 0 and renders
+   // "Today" for tomorrow.
+   const diff = d.startOf('day').diff(dayjs().startOf('day'), 'day');
    if (diff === 0) return 'Today';
    if (diff === 1) return 'Tomorrow';
    if (diff === -1) return 'Yesterday';

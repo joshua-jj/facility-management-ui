@@ -11,6 +11,11 @@ export enum RequestStatus {
   DEFAULT = 'No Status',
   SUBMITTED = 'Submitted',
   PENDING = 'Pending',
+  // Multi-department parent computed state: at least one HOD approved
+  // and at least one HOD declined. The parent is still assignable —
+  // declined children are stripped from the assignee's view server-side.
+  // See Multi-Department Requests Spec §4 (status machine).
+  PARTIALLY_APPROVED = 'Partially Approved',
 }
 export enum RequestType {
   MINISTRY = 'Ministry',
