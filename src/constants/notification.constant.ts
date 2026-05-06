@@ -1,11 +1,16 @@
+import { appConstants } from '@/constants/app.constant';
+
+const notification = '/notification';
+
 export const notificationConstants = {
-   // API URIs
-   NOTIFICATION_URI: '/notification',
-   NOTIFICATION_SUMMARY_URI: '/notification/summary',
-   NOTIFICATION_READ_URI: '/notification/{id}/read',
-   NOTIFICATION_READ_ALL_URI: '/notification/read-all',
-   NOTIFICATION_STREAM_TICKET_URI: '/notification/stream/ticket',
-   NOTIFICATION_STREAM_URI: '/notification/stream',
+   // API URIs — prepend BASE_URI so callers don't end up hitting the
+   // Next.js dev server when they pass these straight to fetch().
+   NOTIFICATION_URI: `${appConstants.BASE_URI}${notification}`,
+   NOTIFICATION_SUMMARY_URI: `${appConstants.BASE_URI}${notification}/summary`,
+   NOTIFICATION_READ_URI: `${appConstants.BASE_URI}${notification}/{id}/read`,
+   NOTIFICATION_READ_ALL_URI: `${appConstants.BASE_URI}${notification}/read-all`,
+   NOTIFICATION_STREAM_TICKET_URI: `${appConstants.BASE_URI}${notification}/stream/ticket`,
+   NOTIFICATION_STREAM_URI: `${appConstants.BASE_URI}${notification}/stream`,
 
    // Action types
    GET_NOTIFICATIONS: 'GET_NOTIFICATIONS',

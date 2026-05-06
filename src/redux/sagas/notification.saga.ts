@@ -81,8 +81,10 @@ interface StreamEvent {
 }
 
 function createStreamChannel(ticket: string): EventChannel<StreamEvent> {
-   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? '';
-   const url = `${baseUrl}${notificationConstants.NOTIFICATION_STREAM_URI}?ticket=${encodeURIComponent(ticket)}`;
+   // NOTIFICATION_STREAM_URI already includes BASE_URI, so don't prepend
+   // again — that double-prepend used to leave the URL relative to the
+   // Next.js dev server (port 3000) and 404 on the ticket POST too.
+   const url = `${notificationConstants.NOTIFICATION_STREAM_URI}?ticket=${encodeURIComponent(ticket)}`;
    return eventChannel<StreamEvent>((emit) => {
       const source = new EventSource(url);
       source.onopen = () => emit({ kind: 'open' });
