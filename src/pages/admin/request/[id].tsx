@@ -28,6 +28,7 @@ import { departmentActions } from '@/actions';
 import RequestActivityPane, {
    ActivityToggleButton,
    RequestActivityDrawer,
+   useActivityPaneCollapsed,
 } from '@/components/RequestActivityPane';
 
 const conditionOptions = [
@@ -340,6 +341,10 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    } = useSelector((s: RootState) => s.request);
    const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+
+   // Activity-pane collapse state lives at the page level so the grid
+   // column track can shrink in lock-step with the pane's own width.
+   const [activityCollapsed, toggleActivityCollapsed] = useActivityPaneCollapsed();
 
    const [requestDetails, setRequestDetails] =
       useState<RequestDetails>(requestDetail);
@@ -882,8 +887,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             {/* Two-column split: existing detail content on the left,
                 activity timeline on the right. The pane only shows as a
                 column at `lg:` and up — below that, the toggle button
-                opens a slide-in drawer with the same content. */}
-            <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+                opens a slide-in drawer with the same content.
+                Grid track shrinks when the pane is collapsed. */}
+            <div
+               className="mt-6 lg:grid lg:gap-6 transition-[grid-template-columns] duration-300 ease-out"
+               style={{
+                  gridTemplateColumns: activityCollapsed
+                     ? 'minmax(0,1fr) 48px'
+                     : 'minmax(0,1fr) 360px',
+               }}
+            >
                <div className="space-y-6 min-w-0">
             {/* Back button + mobile activity toggle */}
             <div className="flex items-center justify-between gap-3">
@@ -1581,6 +1594,8 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                      <RequestActivityPane
                         request={requestDetails}
                         className="h-full"
+                        collapsed={activityCollapsed}
+                        onToggle={toggleActivityCollapsed}
                      />
                   </div>
                </div>

@@ -41,7 +41,46 @@ export interface ActivityRequest {
 export interface RequestActivityPaneProps {
    request: ActivityRequest;
    className?: string;
+   /**
+    * Controlled collapse state. When provided, the pane operates in
+    * controlled mode and the parent owns the grid-column width. When
+    * omitted the pane manages its own state via localStorage.
+    */
+   collapsed?: boolean;
+   /** Required only when `collapsed` is provided. */
+   onToggle?: () => void;
 }
+
+const COLLAPSE_STORAGE_KEY = 'request.activityPane.collapsed';
+
+/**
+ * Read + persist activity-pane collapse preference. Page-level callers
+ * can mount this hook to drive their grid template; the pane reads the
+ * same key when it's running uncontrolled. Returns [collapsed, toggle].
+ */
+export const useActivityPaneCollapsed = (): [boolean, () => void] => {
+   const [collapsed, setCollapsed] = React.useState(false);
+   React.useEffect(() => {
+      try {
+         const stored = window.localStorage.getItem(COLLAPSE_STORAGE_KEY);
+         if (stored === '1') setCollapsed(true);
+      } catch {
+         /* ignore */
+      }
+   }, []);
+   const toggle = React.useCallback(() => {
+      setCollapsed((c) => {
+         const next = !c;
+         try {
+            window.localStorage.setItem(COLLAPSE_STORAGE_KEY, next ? '1' : '0');
+         } catch {
+            /* ignore */
+         }
+         return next;
+      });
+   }, []);
+   return [collapsed, toggle];
+};
 
 type EventKind = 'created' | 'approved' | 'declined' | 'assigned' | 'collected' | 'returned';
 
@@ -373,23 +412,50 @@ const ActivityPaneBody: React.FC<{ events: TimelineEvent[] }> = ({ events }) => 
    );
 };
 
-const PaneHeader: React.FC<{ count: number }> = ({ count }) => (
+const PaneHeader: React.FC<{
+   count: number;
+   collapsed: boolean;
+   onToggle: () => void;
+}> = ({ count, collapsed, onToggle }) => (
    <div
-      className="flex items-center justify-between px-4 py-3 border-b"
+      className="flex items-center justify-between px-3 py-3 border-b"
       style={{ borderColor: 'var(--border-default, rgba(15,37,82,0.12))' }}
    >
-      <h3 className="text-sm font-semibold text-[#0F2552] dark:text-white/90 tracking-[-0.006em]">
-         Activity
-      </h3>
-      <span
-         className="text-[0.65rem] font-semibold px-2 py-0.5 rounded-full tabular-nums"
-         style={{
-            background: 'var(--surface-low, rgba(15,37,82,0.06))',
-            color: 'var(--text-hint, rgba(15,37,82,0.6))',
-         }}
+      <button
+         type="button"
+         onClick={onToggle}
+         className="flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-[var(--surface-low,rgba(15,37,82,0.06))] cursor-pointer"
+         aria-label={collapsed ? 'Expand activity pane' : 'Collapse activity pane'}
+         title={collapsed ? 'Expand' : 'Collapse'}
       >
-         {count}
-      </span>
+         <svg
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`w-3.5 h-3.5 text-[#0F2552] dark:text-white/80 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}
+         >
+            <polyline points="10 4 6 8 10 12" />
+         </svg>
+      </button>
+      {!collapsed && (
+         <>
+            <h3 className="text-sm font-semibold text-[#0F2552] dark:text-white/90 tracking-[-0.006em] flex-1 ml-2">
+               Activity
+            </h3>
+            <span
+               className="text-[0.65rem] font-semibold px-2 py-0.5 rounded-full tabular-nums"
+               style={{
+                  background: 'var(--surface-low, rgba(15,37,82,0.06))',
+                  color: 'var(--text-hint, rgba(15,37,82,0.6))',
+               }}
+            >
+               {count}
+            </span>
+         </>
+      )}
    </div>
 );
 
@@ -397,18 +463,60 @@ const PaneHeader: React.FC<{ count: number }> = ({ count }) => (
  * Right-side activity timeline for the request detail page. On `lg:`
  * and up the parent renders this as a sticky column. On smaller
  * breakpoints the parent renders it inside a slide-in drawer.
+ *
+ * Can run controlled (page passes `collapsed` + `onToggle`, owning the
+ * grid-column width) or uncontrolled (the pane reads/writes
+ * localStorage itself).
  */
-const RequestActivityPane: React.FC<RequestActivityPaneProps> = ({ request, className }) => {
+const RequestActivityPane: React.FC<RequestActivityPaneProps> = ({
+   request,
+   className,
+   collapsed: collapsedProp,
+   onToggle: onToggleProp,
+}) => {
    const events = useMemo(() => deriveEvents(request), [request]);
+   const [internalCollapsed, internalToggle] = useActivityPaneCollapsed();
+   const collapsed = collapsedProp ?? internalCollapsed;
+   const toggle = onToggleProp ?? internalToggle;
 
    return (
       <aside
-         className={`bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col ${className ?? ''}`}
+         data-collapsed={collapsed}
+         className={`bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col transition-[width] duration-300 ease-out ${
+            collapsed ? 'w-12' : 'w-full'
+         } ${className ?? ''}`}
       >
-         <PaneHeader count={events.length} />
-         <div className="flex-1 overflow-y-auto">
-            <ActivityPaneBody events={events} />
-         </div>
+         <PaneHeader count={events.length} collapsed={collapsed} onToggle={toggle} />
+         {/* Vertical "Activity" label + count badge while collapsed —
+              keeps the strip recognisable without dominating the screen. */}
+         {collapsed ? (
+            <button
+               type="button"
+               onClick={toggle}
+               aria-label="Expand activity pane"
+               className="flex-1 flex flex-col items-center justify-start gap-2 pt-3 cursor-pointer hover:bg-[var(--surface-low,rgba(15,37,82,0.04))] transition-colors"
+            >
+               <span
+                  className="text-[0.65rem] font-semibold px-1.5 py-0.5 rounded-full tabular-nums"
+                  style={{
+                     background: 'var(--surface-low, rgba(15,37,82,0.06))',
+                     color: 'var(--text-hint, rgba(15,37,82,0.6))',
+                  }}
+               >
+                  {events.length}
+               </span>
+               <span
+                  className="text-[0.7rem] font-semibold tracking-wider text-[#0F2552] dark:text-white/80"
+                  style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+               >
+                  ACTIVITY
+               </span>
+            </button>
+         ) : (
+            <div className="flex-1 overflow-y-auto">
+               <ActivityPaneBody events={events} />
+            </div>
+         )}
       </aside>
    );
 };
