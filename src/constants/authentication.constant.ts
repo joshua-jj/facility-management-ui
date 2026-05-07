@@ -33,6 +33,11 @@ export const authConstants: AuthConstants = {
   USER_KEY: 'USER_KEY',
   USER_ROLE_ID: 2,
 
+  REFRESH_USER_DETAILS: 'REFRESH_USER_DETAILS',
+  REFRESH_USER_DETAILS_SUCCESS: 'REFRESH_USER_DETAILS_SUCCESS',
+  REFRESH_USER_DETAILS_ERROR: 'REFRESH_USER_DETAILS_ERROR',
+
   LOGIN_URI: `${appConstants.BASE_URI}${authentication}/login`,
   AUTH_URI: `${appConstants.BASE_URI}${authentication}`,
+  ME_URI: `${appConstants.BASE_URI}${authentication}/me`,
 };
