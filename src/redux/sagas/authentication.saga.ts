@@ -198,11 +198,65 @@ function* logoutWatcher() {
   yield takeLatest(authConstants.LOGOUT, logout);
 }
 
+/**
+ * Refresh the cached user profile from the API. Used after admin-side
+ * role changes (e.g. Member promoted to Super Admin) — without this,
+ * userDetails in redux + localForage stays stale until next login and
+ * the sidebar / permissions don't reflect the new role.
+ */
+function* refreshUserDetails(): Generator<unknown, void, unknown> {
+  try {
+    const stored = yield call(getObjectFromStorage, authConstants.USER_KEY);
+    const token = (stored as { token?: string } | null)?.token;
+    if (!token) return;
+
+    const req = createRequestWithToken(authConstants.ME_URI, {
+      method: 'GET',
+    })(token);
+
+    const response = yield call(fetch, req);
+    yield call(checkStatus, response as unknown as Response);
+    const jsonResponse = (yield call(
+      parseResponse,
+      response as unknown as Response,
+    )) as ParsedResponse;
+    if (!jsonResponse?.data?.user) return;
+
+    // Mirror the localForage shape login uses so consumers stay
+    // happy. Keep the existing token/refreshToken — we're only
+    // refreshing the profile slice, not re-issuing tokens.
+    yield call(setObjectInStorage, authConstants.USER_KEY, {
+      user: jsonResponse.data.user,
+      token,
+      refreshToken: (stored as { refreshToken?: string } | null)?.refreshToken,
+    });
+
+    // Reuse LOGIN_SUCCESS so the existing reducer hydrates userDetails
+    // — no new reducer case needed.
+    yield put({
+      type: authConstants.LOGIN_SUCCESS,
+      data: {
+        user: jsonResponse.data.user,
+        accessToken: token,
+        refreshToken: (stored as { refreshToken?: string } | null)?.refreshToken,
+      },
+    });
+    yield put({ type: authConstants.REFRESH_USER_DETAILS_SUCCESS });
+  } catch (error: unknown) {
+    yield* handleSagaError(error, authConstants.REFRESH_USER_DETAILS_ERROR, false);
+  }
+}
+
+function* refreshUserDetailsWatcher() {
+  yield takeLatest(authConstants.REFRESH_USER_DETAILS, refreshUserDetails);
+}
+
 export default function* rootSaga() {
   yield all([
     loginWatcher(),
     resendEmailWatcher(),
     changePasswordWatcher(),
     logoutWatcher(),
+    refreshUserDetailsWatcher(),
   ]);
 }
