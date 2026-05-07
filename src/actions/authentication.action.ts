@@ -19,6 +19,10 @@ export interface LogoutAction {
   type: typeof authConstants.LOGOUT;
 }
 
+export interface RefreshUserDetailsAction {
+  type: typeof authConstants.REFRESH_USER_DETAILS;
+}
+
 const login = (data: LoginForm): LoginAction => ({
   type: authConstants.LOGIN,
   data,
@@ -38,9 +42,14 @@ const logout = (): LogoutAction => ({
   type: authConstants.LOGOUT,
 });
 
+const refreshUserDetails = (): RefreshUserDetailsAction => ({
+  type: authConstants.REFRESH_USER_DETAILS,
+});
+
 export const authActions = {
   login,
   resendEmail,
   changePassword,
   logout,
+  refreshUserDetails,
 };

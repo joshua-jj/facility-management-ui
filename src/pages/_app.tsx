@@ -10,6 +10,7 @@ import '../utilities/formsyValidationRules';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/Toast';
 import RouteProgress from '@/components/RouteProgress';
+import UserDetailsRefresher from '@/components/UserDetailsRefresher';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -38,6 +39,7 @@ export default function App({ Component, pageProps, ...rest }: AppProps) {
         <PersistGate loading={null} persistor={persistor}>
           <ErrorBoundary>
             <RouteProgress />
+            <UserDetailsRefresher />
             <ToastContainer />
             <Component {...pageProps} />
           </ErrorBoundary>

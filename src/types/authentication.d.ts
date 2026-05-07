@@ -44,8 +44,13 @@ export interface AuthConstants {
   USER_KEY: string;
   USER_ROLE_ID: number;
 
+  REFRESH_USER_DETAILS: string;
+  REFRESH_USER_DETAILS_SUCCESS: string;
+  REFRESH_USER_DETAILS_ERROR: string;
+
   LOGIN_URI: string;
   AUTH_URI: string;
+  ME_URI: string;
 }
 
 export interface AuthAction {
