@@ -15,8 +15,7 @@ import AddUser from '@/components/Modals/AddUser';
 import UpdateRole from '@/components/Modals/UpdateRole';
 import UserStatusModal from '@/components/Modals/UserStatus';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermission } from '@/hooks/usePermission';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
@@ -40,7 +39,12 @@ const VIEW_ICON = (
 
 const Users = () => {
    const dispatch = useDispatch();
-   const { isSuperAdmin } = usePermissions();
+   const { can } = usePermission();
+   // `users:write` covers add / edit / role-change. `users:delete`
+   // covers activate / deactivate (a soft delete in this app).
+   // SUPER_ADMIN holds both via `users:manage`; ADMIN holds neither.
+   const canWriteUsers = can('users:write');
+   const canDeleteUsers = can('users:delete');
    const router = useRouter();
    const [showAddUserModal, setShowAddUserModal] = useState(false);
    const [showEditUserModal, setShowEditUserModal] = useState(false);
@@ -174,9 +178,11 @@ const Users = () => {
             onClick: () => router.push(`/admin/users/${row.id}`),
          },
       ];
-      // Per spec: ADMIN on Users Management is strictly view-only. Only
-      // SUPER_ADMIN may edit, change role, or activate/deactivate users.
-      if (isSuperAdmin) {
+      // Edit / role-change require `users:write`. Activate / deactivate
+      // is a soft delete and gates on `users:delete`. SUPER_ADMIN holds
+      // both via `users:manage`; ADMIN's seed grants neither — keeps
+      // ADMIN view-only on this page per spec.
+      if (canWriteUsers) {
          actions.push(
             {
                label: 'Edit',
@@ -188,6 +194,10 @@ const Users = () => {
                icon: ROLE_ICON,
                onClick: () => handleRole(row),
             },
+         );
+      }
+      if (canDeleteUsers) {
+         actions.push(
             {
                label: row.status === 'A' ? 'Deactivate' : 'Activate',
                icon: TOGGLE_ICON,
@@ -342,11 +352,11 @@ const Users = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute permissions={['users:read']}>
          <Layout title="Users">
             <PageHeader
                action={
-                  isSuperAdmin ? (
+                  canWriteUsers ? (
                      <ActionButton variant="primary" onClick={() => setShowAddUserModal(true)}>
                         + Add User
                      </ActionButton>

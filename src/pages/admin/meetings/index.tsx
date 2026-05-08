@@ -16,7 +16,6 @@ import ListStatsStrip from '@/components/ListStatsStrip';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { meetingConstants } from '@/constants/meeting.constant';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -255,7 +254,7 @@ const Meetings = () => {
    ).size;
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute permissions={['meetings:read']}>
          <Layout title="Meetings">
             <PageHeader
                action={

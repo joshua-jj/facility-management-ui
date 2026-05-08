@@ -19,6 +19,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import SmallSelect from '@/components/CustomDropdownSelect/small';
+import { usePermission } from '@/hooks/usePermission';
+// RoleId still imported because the API exposes a `getUsersByRole(roleId)`
+// endpoint for identity lookups — that's not a capability check, it's
+// a "give me the candidate assignees" query and the API speaks role-ids.
 import { RoleId } from '@/constants/roles.constant';
 import StatusChip from '@/components/StatusChip';
 import { DetailRow, DetailSection } from '@/components/DetailField';
@@ -357,6 +361,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    } = useSelector((s: RootState) => s.request);
    const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   // Capability gates resolved from the user's flat permission set.
+   // Multi-role users (e.g. SA + HOD) get the union of every hat's
+   // permissions for free — kills the OR-of-hats class of bugs that
+   // hid approve/decline buttons from exactly the user who needed them.
+   const { can } = usePermission();
+   const canApproveRequest = can('requests:approve');
+   const canAssignRequest = can('requests:assign');
+   const canReleaseRequest = can('requests:release');
+   const canReturnRequest = can('requests:return');
+   const canManageRequests = can('requests:manage');
 
    const [requestDetails, setRequestDetails] =
       useState<RequestDetails>(requestDetail);
@@ -657,12 +671,19 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    };
 
    useEffect(() => {
-      if (userDetails?.roleId === RoleId.SUPER_ADMIN) {
+      // Pre-load the assignee picker when the viewer can actually
+      // assign — that's the capability we care about, not "is SA".
+      if (canAssignRequest) {
+         // Hardcoded MEMBER role-id remains because the API endpoint
+         // takes a roleId query param to fetch candidate assignees.
+         // Identity (which users to suggest) is still role-shaped on
+         // the API; capability (can the current user assign?) is now
+         // permission-shaped.
          dispatch(
             userActions.getUsersByRole({ roleId: RoleId.MEMBER }) as unknown as UnknownAction
          );
       }
-   }, [userDetails, dispatch]);
+   }, [canAssignRequest, dispatch]);
 
    // Fallback: when SSR returned null (the catch in getServerSideProps
    // logs the underlying cause), retry from the client on mount so the
@@ -777,8 +798,18 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
    const showReleasedQty = requestDetails?.requestStatus === 'Collected' || requestDetails?.requestStatus === 'Completed';
    const showReturnedQty = requestDetails?.requestStatus === 'Completed';
-   const isMemberAssigned = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Assigned';
-   const isMemberCollected = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Collected';
+   // "Assignee shape" — the user can release/return on a request and
+   // the request is at the right status for that step. Capability-based,
+   // so an SA who is also an assignee gets the right form. The previous
+   // `roleId === MEMBER` check missed back-office-and-also-assignee.
+   const isAssigneeOnAssignedRow =
+      canReleaseRequest && requestDetails?.requestStatus === 'Assigned';
+   const isAssigneeOnCollectedRow =
+      canReturnRequest && requestDetails?.requestStatus === 'Collected';
+   // Aliases preserved for the rest of the file's use sites — they
+   // historically named the role; now they name the capability+state.
+   const isMemberAssigned = isAssigneeOnAssignedRow;
+   const isMemberCollected = isAssigneeOnCollectedRow;
 
    // Return flow forces full returns: seed selectedUnits with exactly the
    // units that were released, using their release-time conditions as defaults.
@@ -843,22 +874,15 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       [allDepartmentsList],
    );
 
-   // Is the current viewer the HOD whose dept owns this row? Used to gate
-   // the inline approve / decline buttons on a flat row or a child row.
-   //
-   // Multi-role users hold MEMBER auto-merged plus their other roles —
-   // an SA who is also HOD of a dept has roleIds = [MEMBER, SA, HOD].
-   // The deprecated singular `roleId` only carries the first one, so
-   // `roleId !== HOD` would silently hide the approve buttons from
-   // exactly the user who needs them. Read from roleIds[].
+   // Capability + dept-context: can THIS user approve / decline THIS
+   // row? Capability says "you hold requests:approve"; the department
+   // check narrows to "and this row is your dept's". Back-office users
+   // (`requests:manage`) bypass the dept check — they can act anywhere.
    const isHodOfRow = (row: RequestDetails | null | undefined): boolean => {
       if (!row || !userDetails) return false;
-      const userRoleIds: number[] =
-         userDetails.roleIds ??
-         (typeof userDetails.roleId === 'number' && userDetails.roleId > 0
-            ? [userDetails.roleId]
-            : []);
-      if (!userRoleIds.includes(RoleId.HOD)) return false;
+      if (!canApproveRequest) return false;
+      // Manage = back-office; act on any row regardless of department.
+      if (canManageRequests) return true;
       // If the API didn't return a fulfilling department on this row,
       // fall back to "this HOD owns whatever they're seeing" — Phase 3
       // scoping already gated the data by department.
@@ -873,11 +897,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       return isHodOfRow(row);
    };
 
-   // Assignment is now also enabled on `Partially Approved` (per spec
-   // §11 Phase 6 + §8: server allows assign so long as at least one
-   // child is approved). Existing `Approved` path stays.
+   // Assignment is enabled on Approved + Partially Approved (per spec
+   // §11 Phase 6 + §8). Capability gate replaces the old SA-only check
+   // — anyone with `requests:assign` can assign. Server is the source
+   // of truth on which rows accept assignment.
    const canAssign =
-      userDetails?.roleId === RoleId.SUPER_ADMIN &&
+      canAssignRequest &&
       (requestDetails?.requestStatus === 'Approved' ||
          requestDetails?.requestStatus === 'Partially Approved');
 

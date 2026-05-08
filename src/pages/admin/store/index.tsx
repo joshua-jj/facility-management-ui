@@ -15,7 +15,6 @@ import AddStore from '@/components/Modals/AddStore';
 import ListStatsStrip from '@/components/ListStatsStrip';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
@@ -231,7 +230,7 @@ const Stores = () => {
    const inactiveStoreCount = filteredStores.length - activeStoreCount;
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute permissions={['stores:read']}>
          <Layout title="Stores">
             <PageHeader
                action={<ActionButton onClick={() => setShowAddModal(true)}>Add Store</ActionButton>}

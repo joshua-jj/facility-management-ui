@@ -12,7 +12,7 @@ import PageHeader from '@/components/PageHeader';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { RootState } from '@/redux/reducers';
 import { appActions, departmentActions, requestActions } from '@/actions';
-import { RoleId } from '@/constants/roles.constant';
+import { usePermission } from '@/hooks/usePermission';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
@@ -40,22 +40,34 @@ const Requests = () => {
    const { meta } = pagination;
    const { totalItems, itemsPerPage, totalPages } = meta;
 
+   // Capability-driven view shape:
+   // - back-office (`requests:manage`)            -> all (admin view)
+   // - dept lead   (`requests:approve`, no manage)-> dept-scoped
+   // - assignee    (`requests:release`, no above) -> assigned-to-me
+   const { can } = usePermission();
+   const isBackOffice = can('requests:manage');
+   const canApproveRequests = can('requests:approve');
+   const canReleaseRequests = can('requests:release');
+   const isAdminView = isBackOffice;
+   const isDeptScoped = !isBackOffice && canApproveRequests;
+   const isAssigneeScoped = !isBackOffice && !canApproveRequests && canReleaseRequests;
+
    // Fetch departments for filter dropdown on mount (admin-only view)
    useEffect(() => {
-      if (userDetails?.roleId !== RoleId.HOD && userDetails?.roleId !== RoleId.MEMBER) {
+      if (isAdminView) {
          dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
       }
-   }, [dispatch, userDetails?.roleId]);
+   }, [dispatch, isAdminView]);
 
    useEffect(() => {
-      if (userDetails?.roleId === RoleId.HOD) {
+      if (isDeptScoped) {
          dispatch(
             requestActions.getDepartmentRequests({
                departmentId: userDetails?.departmentId ?? 0,
                page: currentPage,
             }) as unknown as UnknownAction,
          );
-      } else if (userDetails?.roleId === RoleId.MEMBER) {
+      } else if (isAssigneeScoped) {
          dispatch(
             requestActions.getAssignedRequests({
                userId: userDetails?.id ?? 0,
@@ -74,7 +86,16 @@ const Requests = () => {
             }) as unknown as UnknownAction,
          );
       }
-   }, [dispatch, userDetails, currentPage, searchQuery, filterValues]); // eslint-disable-line react-hooks/exhaustive-deps
+   }, [
+      dispatch,
+      isDeptScoped,
+      isAssigneeScoped,
+      userDetails?.departmentId,
+      userDetails?.id,
+      currentPage,
+      searchQuery,
+      filterValues,
+   ]);
 
    const handleRowClick = (row: Request) => {
       router.push(
@@ -172,8 +193,6 @@ const Requests = () => {
             ),
       },
    ];
-
-   const isAdminView = userDetails?.roleId !== RoleId.HOD && userDetails?.roleId !== RoleId.MEMBER;
 
    const departmentOptions = (allDepartmentsList ?? []).map((d: { id: number; name: string }) => ({
       value: String(d.id),
@@ -310,7 +329,7 @@ const Requests = () => {
    ];
 
    return (
-      <PrivateRoute>
+      <PrivateRoute permissions={['requests:read']}>
          <Layout title="Requests">
             <div className="space-y-6">
                <PageHeader />
@@ -326,9 +345,9 @@ const Requests = () => {
                      onSearch={handleSearch}
                      onExport={() => setShowExportModal(true)}
                      onRefresh={() => {
-                        if (userDetails?.roleId === RoleId.HOD) {
+                        if (isDeptScoped) {
                            dispatch(requestActions.getDepartmentRequests({ departmentId: userDetails?.departmentId ?? 0, page: currentPage }) as unknown as UnknownAction);
-                        } else if (userDetails?.roleId === RoleId.MEMBER) {
+                        } else if (isAssigneeScoped) {
                            dispatch(requestActions.getAssignedRequests({ userId: userDetails?.id ?? 0, page: currentPage }) as unknown as UnknownAction);
                         } else {
                            dispatch(requestActions.getAllRequests({ page: currentPage, limit: 10, search: searchQuery || undefined, requestStatus: filterValues.requestStatus || undefined, departmentId: filterValues.departmentId ? Number(filterValues.departmentId) : undefined, assigneeId: filterValues.assigneeId ? Number(filterValues.assigneeId) : undefined }) as unknown as UnknownAction);
