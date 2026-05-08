@@ -132,10 +132,9 @@ const RolesAndPermissions: FC = () => {
                      <table className="w-full">
                         <thead>
                            <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5">
-                              <th className="px-6 py-3 text-left font-semibold">Role Name</th>
-                              <th className="px-6 py-3 text-left font-semibold">Users</th>
-                              <th className="px-6 py-3 text-left font-semibold">Created</th>
-                              <th className="px-6 py-3 text-right font-semibold">Actions</th>
+                              <th className="px-6 py-3 text-left font-semibold w-[55%]">Role Name</th>
+                              <th className="px-6 py-3 text-left font-semibold w-[30%]">Created</th>
+                              <th className="px-6 py-3 text-right font-semibold w-[15%]">Actions</th>
                            </tr>
                         </thead>
                         <tbody>
@@ -143,13 +142,13 @@ const RolesAndPermissions: FC = () => {
                               Array.from({ length: 6 }).map((_, i) => (
                                  <TableSkeletonRow
                                     key={`sk-${i}`}
-                                    cols={4}
-                                    widths={['60%', '25%', '35%', '40%']}
+                                    cols={3}
+                                    widths={['60%', '35%', '40%']}
                                  />
                               ))}
                            {!loading && pagedRoles.length === 0 && (
                               <tr>
-                                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                                 <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500">
                                     No roles found.
                                  </td>
                               </tr>
@@ -160,7 +159,7 @@ const RolesAndPermissions: FC = () => {
                                     key={role.id}
                                     className="border-b border-gray-100 dark:border-white/5 last:border-0"
                                  >
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-left align-middle">
                                        <div className="flex items-center gap-3">
                                           <LetterAvatar name={role.name} />
                                           <span className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
@@ -173,13 +172,10 @@ const RolesAndPermissions: FC = () => {
                                           )}
                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-white/60">
-                                       {(role as { userCount?: number }).userCount ?? '-'}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-white/60">
+                                    <td className="px-6 py-4 text-left align-middle text-sm text-gray-500 dark:text-white/60">
                                        {formatDate(role.createdAt)}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right align-middle whitespace-nowrap">
                                        <button
                                           onClick={() => setPreviewingRoleId(role.id)}
                                           className="text-xs font-semibold text-[#B28309] hover:underline cursor-pointer mr-3"
