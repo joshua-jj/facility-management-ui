@@ -19,13 +19,23 @@ interface UpdateRoleModalProps {
 
 const UpdateRole: React.FC<UpdateRoleModalProps> = ({ className, children, user, onClose, open }) => {
    const dispatch = useDispatch();
-   const { IsUpdatingUserRole } = useSelector((s: RootState) => s.user);
+   const { IsUpdatingUserRole, updateUserRoleError } = useSelector((s: RootState) => s.user);
    const { allRolesList } = useSelector((s: RootState) => s.role);
 
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>(
       user?.roles?.map((r) => String(r.id)) ?? [],
    );
+
+   // Did this attempt include the HOD role? Used to gate the inline hint —
+   // we only want the dedicated "single-HOD-per-dept" message for HOD
+   // conflicts; other 4xx errors fall through to the snackbar.
+   const hodRole = (allRolesList ?? []).find((r) => r.name === 'HOD');
+   const willHaveHod = hodRole ? selectedRoleIds.includes(String(hodRole.id)) : false;
+   const showHodConflict =
+      !!updateUserRoleError &&
+      willHaveHod &&
+      /already has an HOD/i.test(updateUserRoleError);
 
    const openModal = () => setIsModalOpen(true);
    const closeModal = useCallback(() => {
@@ -118,6 +128,25 @@ const UpdateRole: React.FC<UpdateRoleModalProps> = ({ className, children, user,
                      </p>
                   )}
                </div>
+
+               {/* Inline hint for the single-HOD-per-department conflict. Mirrors
+                  the API's 409 message so admins can resolve the conflict
+                  without scanning the snackbar. Other API errors continue to
+                  surface via the global snackbar handled by handleSagaError. */}
+               {showHodConflict && (
+                  <div
+                     className="rounded-lg p-3 mb-3 text-xs"
+                     style={{
+                        background: 'rgba(220, 38, 38, 0.1)',
+                        border: '1px solid rgba(220, 38, 38, 0.3)',
+                        color: '#dc2626',
+                     }}
+                     role="alert"
+                  >
+                     <strong className="font-semibold">HOD conflict:</strong>{' '}
+                     {updateUserRoleError}
+                  </div>
+               )}
 
                <div className="flex justify-end pt-3 mt-2" style={{ borderTop: '1px solid var(--border-default)' }}>
                   <button

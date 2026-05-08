@@ -1,5 +1,10 @@
 import { userConstants } from '@/constants';
-import { CreateUserForm, UpdateUserRoleForm, UserStatusForm } from '@/types';
+import {
+  CreateUserForm,
+  UpdateUserForm,
+  UpdateUserRoleForm,
+  UserStatusForm,
+} from '@/types';
 
 export interface GetUsersAction {
   type: typeof userConstants.GET_USERS;
@@ -26,6 +31,11 @@ export interface GetUsersByRoleAction {
 export interface CreateUserAction {
   type: typeof userConstants.CREATE_USER;
   data: CreateUserForm;
+}
+
+export interface UpdateUserAction {
+  type: typeof userConstants.UPDATE_USER;
+  data: UpdateUserForm;
 }
 
 export interface UpdateUserRoleAction {
@@ -66,6 +76,11 @@ const createUser = (data: CreateUserForm): CreateUserAction => ({
   data,
 });
 
+const updateUser = (data: UpdateUserForm): UpdateUserAction => ({
+  type: userConstants.UPDATE_USER,
+  data,
+});
+
 const updateUserRole = (data: UpdateUserRoleForm): UpdateUserRoleAction => ({
   type: userConstants.UPDATE_USER_ROLE,
   data,
@@ -86,6 +101,7 @@ export const userActions = {
   searchUser,
   getUsersByRole,
   createUser,
+  updateUser,
   updateUserRole,
   activateUser,
   deactivateUser,
