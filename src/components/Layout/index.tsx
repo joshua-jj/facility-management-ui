@@ -36,7 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children, className, title }) => {
                   <meta charSet="UTF-8" />
                   <meta name="description" content="EGFM - Facility Management System" />
                   <meta name="viewport" content="width=device-width, initial-scale=1" />
-                  <link rel="icon" href="/favicon.ico" />
+                  <link rel="icon" href="/assets/images/egfm-logo.png" />
                </Head>
                <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
                <div className="flex-1 overflow-y-auto min-w-0">

@@ -15,7 +15,7 @@ const Worker: FC = () => {
         <meta charSet="UTF-8" />
         <meta name="description" content="EGFM - Facility Management System" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/assets/images/egfm-logo.png" />
       </Head>
       <div className="flex flex-col md:flex-row justify-start md:justify-center items-center gap-8 md:gap-20 w-full h-full mt-8">
         <RequestForm route={currentRoute} />
