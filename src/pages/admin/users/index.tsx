@@ -85,6 +85,7 @@ const Users = () => {
    useEffect(() => {
       const events = [
          userConstants.CREATE_USER_SUCCESS,
+         userConstants.UPDATE_USER_SUCCESS,
          userConstants.UPDATE_USER_ROLE_SUCCESS,
          userConstants.ACTIVATE_USER_SUCCESS,
          userConstants.DEACTIVATE_USER_SUCCESS,
@@ -278,6 +279,28 @@ const Users = () => {
          ),
       },
       {
+         key: 'department',
+         header: 'Department',
+         render: (_, row) => {
+            const name = row.department?.name;
+            if (name) {
+               return <span className="text-[#0F2552] dark:text-white/85">{name}</span>;
+            }
+            // Pre-migration data could land here as null. Highlight in red
+            // so admins notice — once the EnforceUserDepartmentNotNull
+            // migration runs this state is unreachable.
+            return (
+               <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                  style={{ background: 'rgba(220, 38, 38, 0.12)', color: '#dc2626' }}
+                  title="This user has no department on record. Edit and assign one."
+               >
+                  No department
+               </span>
+            );
+         },
+      },
+      {
          key: 'isVerified',
          header: 'Verified',
          align: 'center',
@@ -322,7 +345,6 @@ const Users = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Users">
             <PageHeader
-               subtitle={`${meta?.totalItems ?? 0} total users`}
                action={
                   isSuperAdmin ? (
                      <ActionButton variant="primary" onClick={() => setShowAddUserModal(true)}>

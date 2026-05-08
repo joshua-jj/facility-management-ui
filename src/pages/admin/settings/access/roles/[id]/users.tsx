@@ -210,7 +210,6 @@ const RoleUsers = () => {
          <Layout title="Role Users">
             <PageHeader
                title="Users in Role"
-               subtitle={`${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''} assigned to this role`}
                action={
                   <div className="flex items-center gap-2">
                      <ActionButton variant="outline" onClick={() => router.push(`/admin/settings/access/roles/${roleId}`)}>

@@ -52,7 +52,21 @@ const Items = () => {
    const { allStoresList } = useSelector((s: RootState) => s.store);
 
    const { meta } = pagination;
-   const isDepartmentScoped = userDetails?.roleId !== undefined && DEPARTMENT_SCOPED_ROLES.includes(userDetails.roleId as RoleIdValue);
+   // OR-over-roles. A multi-role user (e.g. SA who is also HOD of a
+   // dept) gets the unrestricted view: SA / ADMIN beats any dept-scoped
+   // role. Reading the deprecated singular `roleId` would only see
+   // whichever role landed at index 0 (often MEMBER, auto-merged onto
+   // every user) and silently dept-scope the page for back-office.
+   const userRoleIds: RoleIdValue[] = (userDetails?.roleIds ??
+      (typeof userDetails?.roleId === 'number' && userDetails.roleId > 0
+         ? [userDetails.roleId]
+         : [])) as RoleIdValue[];
+   const hasUnrestrictedRole = userRoleIds.some(
+      (r) => r === RoleId.SUPER_ADMIN || r === RoleId.ADMIN,
+   );
+   const isDepartmentScoped =
+      !hasUnrestrictedRole &&
+      userRoleIds.some((r) => DEPARTMENT_SCOPED_ROLES.includes(r));
 
    // ── Fetch filter list data on mount ──
 
@@ -401,7 +415,6 @@ const Items = () => {
       <PrivateRoute>
          <Layout title="Items">
             <PageHeader
-               subtitle={`Manage your inventory items${isDepartmentScoped ? ' for your department' : ''}`}
                action={
                   isBackOffice ? (
                   <ActionButton

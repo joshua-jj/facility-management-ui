@@ -234,7 +234,6 @@ const Stores = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Stores">
             <PageHeader
-               subtitle="Manage facility stores and storage locations"
                action={<ActionButton onClick={() => setShowAddModal(true)}>Add Store</ActionButton>}
             />
 
