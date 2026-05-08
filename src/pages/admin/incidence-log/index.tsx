@@ -237,7 +237,6 @@ const IncidenceLogsPage = () => {
       <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER]}>
          <Layout title="Incidence Logs">
             <PageHeader
-               subtitle="Facility incident reports — each report emails the focus department HOD and senior leadership"
                action={
                   canFileIncidence ? (
                      <AddIncidenceLog className="text-start w-full cursor-pointer">

@@ -345,7 +345,6 @@ const Users = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Users">
             <PageHeader
-               subtitle={`${meta?.totalItems ?? 0} total users`}
                action={
                   isSuperAdmin ? (
                      <ActionButton variant="primary" onClick={() => setShowAddUserModal(true)}>
