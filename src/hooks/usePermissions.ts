@@ -52,20 +52,6 @@ export const usePermissions = () => {
       logisticsDepartmentId != null &&
       userDetails?.departmentId === logisticsDepartmentId;
 
-   // Transitional flag preserved for the Sidebar's `requiresFacilityTeam`
-   // gate — back-office sees Facility-only routes regardless of dept.
-   // This is still derived from roleIds[] because there's no clean
-   // capability-only way to express "you're an admin who can see
-   // everything in the building" — the spec ties it to roles. When the
-   // seeder grows a `back-office:read` permission this can move there.
-   const roleIds = userDetails?.roleIds ?? [];
-   // Hardcoded role-id values to avoid importing the whole RoleId enum
-   // from this hook. Match the seed: ADMIN=1, SUPER_ADMIN=5, OFFICE=6.
-   const BACK_OFFICE_ROLE_IDS = [1, 5, 6];
-   const isBackOffice = roleIds.some((r: number) =>
-      BACK_OFFICE_ROLE_IDS.includes(r),
-   );
-
    return {
       userId: userDetails?.id,
       userEmail: userDetails?.email,
@@ -74,7 +60,6 @@ export const usePermissions = () => {
       logisticsDepartmentId,
       isFacilityTeam,
       isLogisticsTeam,
-      isBackOffice,
 
       // Row-level helper: the current user is the author of a row whose
       // createdBy matches their full name OR whose explicit author FK

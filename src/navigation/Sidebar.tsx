@@ -72,10 +72,10 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
    const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-   // Department-context flags only — capability is checked via canAny()
+   // Department-context flag only — capability is checked via canAny()
    // against route.permissions. The dept flag handles "Facility-team
    // only" routes that aren't expressible as a pure capability.
-   const { isFacilityTeam, isBackOffice } = usePermissions();
+   const { isFacilityTeam } = usePermissions();
    const { canAny } = usePermission();
    const { theme } = useTheme();
    const isDark = theme === 'dark';
@@ -125,16 +125,16 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
    // hat's permissions for free — that's where the OR-of-hats class of
    // bugs used to bite. The Facility-team flag is layered on top
    // because it's a department check, not a capability.
+   //
+   // The back-office bypass is now a capability check: anyone holding
+   // `requests:manage` (SA / ADMIN by seed) sees the route regardless
+   // of department. Other HODs only see it if they belong to Facility.
+   // No more reading deprecated role flags here.
+   const hasBackOfficeBypass = canAny(['requests:manage']);
    const filteredRoutes = pageRoutes.filter((route) => {
       if (!canAny(route.permissions)) return false;
       if (route.requiresFacilityTeam) {
-         // Back-office (anyone with the underlying `:manage` cap) sees
-         // the route regardless of department; otherwise only the
-         // Facility team does. `isBackOffice` here is a transitional
-         // flag derived from roleIds — it'll go once the seed grants
-         // back-office users `generator-logs:manage` directly, at
-         // which point a permission-only check is enough.
-         if (!isFacilityTeam && !isBackOffice) return false;
+         if (!isFacilityTeam && !hasBackOfficeBypass) return false;
       }
       return true;
    });
