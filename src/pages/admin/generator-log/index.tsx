@@ -388,7 +388,6 @@ const GeneratorLogs = () => {
       <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER]}>
          <Layout title="Generator Logs">
             <PageHeader
-               subtitle="Track generator usage and faults"
                action={
                   <ActionButton onClick={() => setShowAddModal(true)}>Add Log</ActionButton>
                }

@@ -117,12 +117,24 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       [router?.pathname],
    );
 
+   // OR-over-roles. Users routinely hold multiple roles
+   // (MEMBER auto-merged onto everyone, SA + HOD, etc.). The route
+   // shows if ANY of the user's roles is in `allowedRoles` — using
+   // the deprecated singular `roleId` would only check the first role
+   // and silently hide routes that the user's other roles entitle.
+   const userRoleIds: RoleIdValue[] = (userDetails?.roleIds ??
+      (typeof userDetails?.roleId === 'number' && userDetails.roleId > 0
+         ? [userDetails.roleId]
+         : [])) as RoleIdValue[];
+   const hasAnyRole = (allowed: readonly RoleIdValue[]): boolean =>
+      userRoleIds.some((rid) => allowed.includes(rid));
+   const isHod = userRoleIds.includes(RoleId.HOD as RoleIdValue);
+
    const filteredRoutes = pageRoutes.filter((route) => {
-      if (route.allowedRoles && !route.allowedRoles.includes(userDetails?.roleId as RoleIdValue)) {
+      if (route.allowedRoles && !hasAnyRole(route.allowedRoles as readonly RoleIdValue[])) {
          return false;
       }
       if (route.requiresFacilityTeam) {
-         const isHod = userDetails?.roleId === RoleId.HOD;
          if (isHod && !isFacilityTeam && !isBackOffice) return false;
       }
       if (route.requiresAnalyticsAccess && !isAnalyticsAccess) {

@@ -231,15 +231,15 @@ function* refreshUserDetails(): Generator<unknown, void, unknown> {
       refreshToken: (stored as { refreshToken?: string } | null)?.refreshToken,
     });
 
-    // Reuse LOGIN_SUCCESS so the existing reducer hydrates userDetails
-    // — no new reducer case needed.
+    // Reuse LOGIN_SUCCESS so the existing reducer hydrates userDetails.
+    // The reducer reads `action.user` directly (NOT `action.data.user`)
+    // — see `user.reducer.ts` LOGIN_SUCCESS case. Mirror the original
+    // login saga's dispatch shape exactly, otherwise the new role from
+    // /authentication/me lands in the action but never reaches state,
+    // and the sidebar / permission gates stay stuck on the old role.
     yield put({
       type: authConstants.LOGIN_SUCCESS,
-      data: {
-        user: jsonResponse.data.user,
-        accessToken: token,
-        refreshToken: (stored as { refreshToken?: string } | null)?.refreshToken,
-      },
+      user: jsonResponse.data.user,
     });
     yield put({ type: authConstants.REFRESH_USER_DETAILS_SUCCESS });
   } catch (error: unknown) {

@@ -15,6 +15,10 @@ export interface UserConstants {
   CREATE_USER_SUCCESS: string;
   CREATE_USER_ERROR: string;
 
+  REQUEST_UPDATE_USER: string;
+  UPDATE_USER_SUCCESS: string;
+  UPDATE_USER_ERROR: string;
+
   REQUEST_UPDATE_USER_ROLE: string;
   UPDATE_USER_ROLE_SUCCESS: string;
   UPDATE_USER_ROLE_ERROR: string;
@@ -32,6 +36,7 @@ export interface UserConstants {
   GET_USERS_BY_ROLE: string;
 
   CREATE_USER: string;
+  UPDATE_USER: string;
   UPDATE_USER_ROLE: string;
   ACTIVATE_USER: string;
   DEACTIVATE_USER: string;
@@ -67,6 +72,18 @@ export interface Users {
     name: string;
     description: string;
   }>;
+  /**
+   * Department the user belongs to. Every user must have one per the
+   * Roles & Permissions spec, but legacy rows that pre-date the
+   * EnforceUserDepartmentNotNull migration may have arrived as null —
+   * mark optional and treat null/undefined as "missing" in the UI.
+   */
+  department?: {
+    id: number;
+    name: string;
+  } | null;
+  /** Convenience FK alongside `department` — present when the API serves it. */
+  departmentId?: number;
   status: number | string;
 }
 
@@ -121,6 +138,23 @@ export interface CreateUserForm {
    *  auto-merged server-side regardless. Use the UpdateRole modal to
    *  assign additional roles after creation. */
   role?: number;
+  /** Department the user belongs to. Required — every user must belong
+   *  to exactly one department per the Roles & Permissions spec. */
+  departmentId: number;
+}
+
+/**
+ * Profile-update payload sent to PATCH /user/update/:userId. All fields are
+ * optional — the server treats this as a partial update — but we always send
+ * `departmentId` from the AddUser modal so admins can move a user between
+ * departments via the same form they use to fix a typo'd name.
+ */
+export interface UpdateUserForm {
+  userId: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
   departmentId?: number;
 }
 

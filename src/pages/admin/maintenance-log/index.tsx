@@ -280,7 +280,6 @@ const MaintenanceLogs = () => {
       <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER]}>
          <Layout title="Maintenance Logs">
             <PageHeader
-               subtitle="Track facility maintenance activities"
                action={
                   canCreateMaintenance ? (
                      <ActionButton onClick={() => setShowAddModal(true)}>Add Log</ActionButton>
