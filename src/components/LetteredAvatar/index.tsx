@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 interface LetterAvatarProps {
   name: string;
@@ -16,24 +16,12 @@ const getInitials = (name: string, singleLetter: boolean): string => {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 };
 
-// Generate a random hex color
-const getRandomColor = (): string => {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-};
-
-// Determine if white or black text is better for contrast
-const getTextColor = (bgColor: string): string => {
-  const r = parseInt(bgColor.slice(1, 3), 16);
-  const g = parseInt(bgColor.slice(3, 5), 16);
-  const b = parseInt(bgColor.slice(5, 7), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? '#000000' : '#ffffff';
-};
+// Brand colors — gold accent on dark navy text, or vice versa for the
+// inverted hover state. The previous version generated random hex
+// colors per-name (purple, magenta, lime, …) which produced an
+// off-brand look across the app.
+const BRAND_GOLD = '#B28309';
+const BRAND_NAVY = '#0F2552';
 
 const LetterAvatar: React.FC<LetterAvatarProps> = ({
   name,
@@ -43,24 +31,17 @@ const LetterAvatar: React.FC<LetterAvatarProps> = ({
 }) => {
   const initials = getInitials(name, singleLetter);
 
-  const [bgColor, textColor] = useMemo(() => {
-    const bg = getRandomColor();
-    const text = getTextColor(bg);
-    return [bg, text];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
-
   return (
     <div
-      className={`flex items-center justify-center font-medium ${className}`}
+      className={`flex items-center justify-center font-semibold ${className}`}
       style={{
         width: size,
         height: size,
         borderRadius: '50%',
         overflow: 'hidden',
         fontSize: size / 2.2,
-        backgroundColor: bgColor,
-        color: textColor,
+        backgroundColor: BRAND_GOLD,
+        color: BRAND_NAVY,
       }}
       aria-label={`Avatar for ${name}`}
     >
