@@ -845,9 +845,20 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
    // Is the current viewer the HOD whose dept owns this row? Used to gate
    // the inline approve / decline buttons on a flat row or a child row.
+   //
+   // Multi-role users hold MEMBER auto-merged plus their other roles —
+   // an SA who is also HOD of a dept has roleIds = [MEMBER, SA, HOD].
+   // The deprecated singular `roleId` only carries the first one, so
+   // `roleId !== HOD` would silently hide the approve buttons from
+   // exactly the user who needs them. Read from roleIds[].
    const isHodOfRow = (row: RequestDetails | null | undefined): boolean => {
       if (!row || !userDetails) return false;
-      if (userDetails.roleId !== RoleId.HOD) return false;
+      const userRoleIds: number[] =
+         userDetails.roleIds ??
+         (typeof userDetails.roleId === 'number' && userDetails.roleId > 0
+            ? [userDetails.roleId]
+            : []);
+      if (!userRoleIds.includes(RoleId.HOD)) return false;
       // If the API didn't return a fulfilling department on this row,
       // fall back to "this HOD owns whatever they're seeing" — Phase 3
       // scoping already gated the data by department.
