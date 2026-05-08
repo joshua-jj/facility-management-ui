@@ -232,7 +232,6 @@ const MeetingLocations = () => {
       <PrivateRoute allowedRoles={ADMIN_ROLES}>
          <Layout title="Meeting Locations">
             <PageHeader
-               subtitle="Manage the venues available for meetings"
                action={
                   <ActionButton variant="primary" onClick={openCreate}>
                      + Add Location

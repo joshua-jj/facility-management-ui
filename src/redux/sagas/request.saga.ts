@@ -127,11 +127,16 @@ function* updateRequestStatus({ data }: UpdateRequestStatusAction) {
 
   try {
     if (data) {
-      const requestUri = `${requestConstants.REQUEST_URI}/${data?.status}/${data?.requestId}`;
+      const { status, requestId, ...restData } = data;
+      const requestUri = `${requestConstants.REQUEST_URI}/${status}/${requestId}`;
 
+      // Strip status + requestId from the body. They live in the URL
+      // path; sending them in the body too tripped the API's
+      // forbidNonWhitelisted ValidationPipe (DeclineRequestDto only
+      // permits `reason`).
       const jsonResponse = yield* authenticatedRequest(requestUri, {
         method: 'PATCH',
-        body: JSON.stringify(data),
+        body: JSON.stringify(restData),
       });
       if (!jsonResponse) return;
 

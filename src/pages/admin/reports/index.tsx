@@ -266,7 +266,7 @@ const Reports = () => {
    return (
       <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER]}>
          <Layout title="Complaints">
-            <PageHeader subtitle="View and manage complaints submitted through the facility" />
+            <PageHeader />
 
             <DataTable
                columns={columns}

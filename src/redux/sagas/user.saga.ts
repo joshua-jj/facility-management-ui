@@ -7,6 +7,7 @@ import {
   GetUsersAction,
   GetUsersByRoleAction,
   SearchUserAction,
+  UpdateUserAction,
   UpdateUserRoleAction,
   UserStatusAction,
 } from '@/actions';
@@ -107,6 +108,38 @@ function* createUser({ data }: CreateUserAction) {
     }
   } catch (error: unknown) {
     yield* handleSagaError(error, userConstants.CREATE_USER_ERROR);
+  }
+}
+
+function* updateUser({ data }: UpdateUserAction) {
+  yield put({ type: userConstants.REQUEST_UPDATE_USER });
+
+  try {
+    if (data) {
+      const { userId, ...restData } = data;
+      const userUri = `${userConstants.USER_URI}/update/${userId}`;
+
+      const jsonResponse = yield* authenticatedRequest(userUri, {
+        method: 'PATCH',
+        body: JSON.stringify(restData),
+      });
+      if (!jsonResponse) return;
+
+      yield put({
+        type: userConstants.UPDATE_USER_SUCCESS,
+        user: jsonResponse.data,
+      });
+
+      AppEmitter.emit(userConstants.UPDATE_USER_SUCCESS, jsonResponse);
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: (jsonResponse.message as string) ?? 'User updated successfully',
+        variant: 'success',
+      };
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    yield* handleSagaError(error, userConstants.UPDATE_USER_ERROR);
   }
 }
 
@@ -219,6 +252,10 @@ function* createUserWatcher() {
   yield takeLatest(userConstants.CREATE_USER, createUser);
 }
 
+function* updateUserWatcher() {
+  yield takeLatest(userConstants.UPDATE_USER, updateUser);
+}
+
 function* updateUserRoleWatcher() {
   yield takeLatest(userConstants.UPDATE_USER_ROLE, updateUserRole);
 }
@@ -237,6 +274,7 @@ export default function* rootSaga() {
     searchUserWatcher(),
     getUsersByRoleWatcher(),
     createUserWatcher(),
+    updateUserWatcher(),
     updateUserRoleWatcher(),
     activateUserWatcher(),
     deactivateUserWatcher(),

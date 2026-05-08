@@ -82,11 +82,20 @@ function NotificationItem({
 
             <div className="flex flex-1 min-w-0 flex-col gap-1.5">
                <div className="flex items-start justify-between gap-2">
-                  <div className={["text-sm leading-snug", isUnread ? "text-foreground" : "text-foreground/85"].join(" ")}>
+                  {/* Pin colors explicitly. The shadcn `text-foreground`
+                       token gets overridden to near-white when the OS
+                       prefers dark mode (see prefers-color-scheme block
+                       in globals.css), and the Radix popover renders in
+                       a portal that doesn't always inherit the page's
+                       theme class — so on a light page with a dark OS,
+                       this title was rendering near-white-on-near-white. */}
+                  <div
+                     className="text-sm leading-snug text-[#0F2552] dark:text-white/90"
+                  >
                      {notification.actorName ? (
                         <>
                            <span className="font-semibold">{notification.actorName}</span>
-                           <span className="text-muted-foreground"> · </span>
+                           <span className="text-[#0F2552]/55 dark:text-white/55"> · </span>
                         </>
                      ) : null}
                      <span className={isUnread ? "font-semibold" : "font-medium"}>
@@ -104,10 +113,10 @@ function NotificationItem({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         className={[
-                           "size-4 shrink-0 mt-0.5 text-muted-foreground",
+                           "size-4 shrink-0 mt-0.5 text-[#0F2552]/55 dark:text-white/55",
                            "translate-x-[-4px] opacity-0",
                            "transition-all duration-200 ease-out",
-                           "group-hover:translate-x-0 group-hover:opacity-100 group-hover:text-foreground",
+                           "group-hover:translate-x-0 group-hover:opacity-100 group-hover:text-[#0F2552] dark:group-hover:text-white/90",
                         ].join(" ")}
                      >
                         <polyline points="6 4 11 8 6 12" />
@@ -116,12 +125,12 @@ function NotificationItem({
                </div>
 
                {notification.body && (
-                  <div className="line-clamp-2 rounded-md bg-muted/60 px-2.5 py-1.5 text-xs leading-relaxed text-muted-foreground tracking-[-0.006em] group-hover:bg-muted">
+                  <div className="line-clamp-2 rounded-md bg-[#0F2552]/[0.05] dark:bg-white/[0.06] px-2.5 py-1.5 text-xs leading-relaxed text-[#0F2552]/75 dark:text-white/75 tracking-[-0.006em] group-hover:bg-[#0F2552]/[0.08] dark:group-hover:bg-white/[0.10]">
                      {notification.body}
                   </div>
                )}
 
-               <div className="flex items-center justify-between gap-2 text-[0.7rem] text-muted-foreground">
+               <div className="flex items-center justify-between gap-2 text-[0.7rem] text-[#0F2552]/55 dark:text-white/55">
                   <span>{new Date(notification.createdAt).toLocaleString()}</span>
                   <span className="tabular-nums">{formatRelative(notification.createdAt)}</span>
                </div>
@@ -156,10 +165,10 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
    const assignedInList = items.filter((n) => n.assignedToMe).length;
 
    return (
-      <Card className="flex w-full max-w-[min(calc(100vw-1rem),420px)] flex-col gap-4 p-4 shadow-none">
+      <Card className="flex w-full max-w-[min(calc(100vw-1rem),420px)] flex-col gap-4 p-4 shadow-none bg-white dark:bg-[#0F1730]">
          <CardHeader className="p-0">
             <div className="flex items-center justify-between">
-               <h3 className="text-base leading-none font-semibold tracking-[-0.006em]">
+               <h3 className="text-base leading-none font-semibold tracking-[-0.006em] text-[#0F2552] dark:text-white/90">
                   Your notifications
                </h3>
                <Button

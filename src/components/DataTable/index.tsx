@@ -493,7 +493,7 @@ export function DataTable<T extends Record<string, any>>({
                            className="min-w-[32px] h-8 rounded-md text-xs font-medium transition-all cursor-pointer disabled:cursor-not-allowed"
                            style={
                               p === currentPage
-                                 ? { background: 'var(--color-primary)', color: '#fff', boxShadow: 'var(--shadow-sm)' }
+                                 ? { background: 'var(--color-secondary)', color: '#fff', boxShadow: 'var(--shadow-sm)' }
                                  : { color: 'var(--text-secondary)' }
                            }
                         >

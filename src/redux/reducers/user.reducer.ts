@@ -109,6 +109,21 @@ const IsCreatingUser = (
   }
 };
 
+const IsUpdatingUser = (
+  state: LoadingState = false,
+  action: UserAction
+): LoadingState => {
+  switch (action.type) {
+    case userConstants.REQUEST_UPDATE_USER:
+      return true;
+    case userConstants.UPDATE_USER_SUCCESS:
+    case userConstants.UPDATE_USER_ERROR:
+      return false;
+    default:
+      return state;
+  }
+};
+
 const IsUpdatingUserRole = (
   state: LoadingState = false,
   action: UserAction
@@ -119,6 +134,27 @@ const IsUpdatingUserRole = (
     case userConstants.UPDATE_USER_ROLE_SUCCESS:
     case userConstants.UPDATE_USER_ROLE_ERROR:
       return false;
+    default:
+      return state;
+  }
+};
+
+/**
+ * Last error message from a role-update attempt. Cleared when the next
+ * REQUEST_UPDATE_USER_ROLE fires or on a successful save. The UpdateRole
+ * modal reads this to surface 409 conflicts (e.g. single-HOD-per-dept)
+ * inline, in addition to the global snackbar.
+ */
+const updateUserRoleError = (
+  state: string | null = null,
+  action: UserAction & { error?: string }
+): string | null => {
+  switch (action.type) {
+    case userConstants.REQUEST_UPDATE_USER_ROLE:
+    case userConstants.UPDATE_USER_ROLE_SUCCESS:
+      return null;
+    case userConstants.UPDATE_USER_ROLE_ERROR:
+      return action.error ?? 'Failed to update user roles';
     default:
       return state;
   }
@@ -197,10 +233,18 @@ export interface RootState {
     state: LoadingState | undefined,
     action: UserAction
   ) => LoadingState;
+  IsUpdatingUser: (
+    state: LoadingState | undefined,
+    action: UserAction
+  ) => LoadingState;
   IsUpdatingUserRole: (
     state: LoadingState | undefined,
     action: UserAction
   ) => LoadingState;
+  updateUserRoleError: (
+    state: string | null | undefined,
+    action: UserAction & { error?: string }
+  ) => string | null;
   allUsersList: (
     state: UsersListState | undefined,
     action: AllUsersAction
@@ -220,7 +264,9 @@ const rootReducer = combineReducers<RootState>({
   IsRequestingUsers,
   IsSearchingUser,
   IsCreatingUser,
+  IsUpdatingUser,
   IsUpdatingUserRole,
+  updateUserRoleError,
   allUsersList,
   roleUsersList,
   pagination,
