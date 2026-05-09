@@ -364,8 +364,6 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
    // who holds it can assign anywhere. Otherwise we still need the
    // Facility HOD shape (matched by hodEmail) to assign within Facility.
    const canManageComplaints = can('complaints:manage');
-   const isFacilityMember =
-      !!facilityDepartment && userDetails?.departmentId === facilityDepartment.id;
    const isFacilityHod =
       !!facilityHodEmail &&
       !!userDetails?.email &&
