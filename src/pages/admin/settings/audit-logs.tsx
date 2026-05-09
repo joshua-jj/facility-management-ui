@@ -217,26 +217,37 @@ const AuditLogs: FC = () => {
                      </div>
                   </Formsy>
 
-                  {/* Table */}
+                  {/* Table — fixed-height viewport so the body doesn't
+                      collapse on short pages or while loading. Mirrors the
+                      shared DataTable behaviour. */}
                   <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 overflow-hidden">
-                     <table className="w-full">
-                        <thead>
-                           <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5">
-                              <th className="px-6 py-3 text-left font-semibold">When</th>
-                              <th className="px-6 py-3 text-left font-semibold">Actor</th>
-                              <th className="px-6 py-3 text-left font-semibold">Entity</th>
-                              <th className="px-6 py-3 text-left font-semibold">Action</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {loading &&
-                              Array.from({ length: 6 }).map((_, i) => (
-                                 <TableSkeletonRow
-                                    key={`sk-${i}`}
-                                    cols={4}
-                                    widths={['45%', '50%', '55%', '30%']}
-                                 />
-                              ))}
+                     <div
+                        className="overflow-auto"
+                        style={{
+                           minHeight: `${PAGE_SIZE * 56}px`,
+                           maxHeight: '65vh',
+                        }}
+                     >
+                        <table className="w-full">
+                           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                              <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-[#0F1A33]">
+                                 <th className="px-6 py-3 text-left font-semibold bg-inherit">When</th>
+                                 <th className="px-6 py-3 text-left font-semibold bg-inherit">Actor</th>
+                                 <th className="px-6 py-3 text-left font-semibold bg-inherit">Entity</th>
+                                 <th className="px-6 py-3 text-left font-semibold bg-inherit">Action</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              {loading &&
+                                 // Match page size so the loading layout is
+                                 // identical to the loaded layout — no jank.
+                                 Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                                    <TableSkeletonRow
+                                       key={`sk-${i}`}
+                                       cols={4}
+                                       widths={['45%', '50%', '55%', '30%']}
+                                    />
+                                 ))}
                            {!loading && items.length === 0 && (
                               <tr>
                                  <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
@@ -271,8 +282,9 @@ const AuditLogs: FC = () => {
                                     </td>
                                  </tr>
                               ))}
-                        </tbody>
-                     </table>
+                           </tbody>
+                        </table>
+                     </div>
                   </div>
 
                   {/* Pagination */}

@@ -15,7 +15,6 @@ import ListStatsStrip from '@/components/ListStatsStrip';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { meetingLocationConstants } from '@/constants/meetingLocation.constant';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -229,7 +228,7 @@ const MeetingLocations = () => {
    const inactiveLocationCount = filteredLocations.length - activeLocationCount;
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute permissions={['meeting-locations:read']}>
          <Layout title="Meeting Locations">
             <PageHeader
                action={

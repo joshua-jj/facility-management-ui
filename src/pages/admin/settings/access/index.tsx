@@ -127,29 +127,39 @@ const RolesAndPermissions: FC = () => {
                      <span className="absolute left-3 top-3 text-gray-400">🔍</span>
                   </div>
 
-                  {/* Table */}
+                  {/* Table — fixed-height viewport so the body doesn't
+                      collapse on short pages or while loading. Mirrors the
+                      shared DataTable behaviour. */}
                   <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 overflow-hidden">
-                     <table className="w-full">
-                        <thead>
-                           <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5">
-                              <th className="px-6 py-3 text-left font-semibold">Role Name</th>
-                              <th className="px-6 py-3 text-left font-semibold">Users</th>
-                              <th className="px-6 py-3 text-left font-semibold">Created</th>
-                              <th className="px-6 py-3 text-right font-semibold">Actions</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {loading &&
-                              Array.from({ length: 6 }).map((_, i) => (
-                                 <TableSkeletonRow
-                                    key={`sk-${i}`}
-                                    cols={4}
-                                    widths={['60%', '25%', '35%', '40%']}
-                                 />
-                              ))}
+                     <div
+                        className="overflow-auto"
+                        style={{
+                           minHeight: `${PAGE_SIZE * 56}px`,
+                           maxHeight: '65vh',
+                        }}
+                     >
+                        <table className="w-full">
+                           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                              <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-[#0F1A33]">
+                                 <th className="px-6 py-3 text-left font-semibold w-[55%] bg-inherit">Role Name</th>
+                                 <th className="px-6 py-3 text-left font-semibold w-[30%] bg-inherit">Created</th>
+                                 <th className="px-6 py-3 text-right font-semibold w-[15%] bg-inherit">Actions</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              {loading &&
+                                 // Match page size so loading and loaded
+                                 // states occupy the same vertical footprint.
+                                 Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                                    <TableSkeletonRow
+                                       key={`sk-${i}`}
+                                       cols={3}
+                                       widths={['60%', '35%', '40%']}
+                                    />
+                                 ))}
                            {!loading && pagedRoles.length === 0 && (
                               <tr>
-                                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                                 <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500">
                                     No roles found.
                                  </td>
                               </tr>
@@ -160,7 +170,7 @@ const RolesAndPermissions: FC = () => {
                                     key={role.id}
                                     className="border-b border-gray-100 dark:border-white/5 last:border-0"
                                  >
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-left align-middle">
                                        <div className="flex items-center gap-3">
                                           <LetterAvatar name={role.name} />
                                           <span className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
@@ -173,13 +183,10 @@ const RolesAndPermissions: FC = () => {
                                           )}
                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-white/60">
-                                       {(role as { userCount?: number }).userCount ?? '-'}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-white/60">
+                                    <td className="px-6 py-4 text-left align-middle text-sm text-gray-500 dark:text-white/60">
                                        {formatDate(role.createdAt)}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right align-middle whitespace-nowrap">
                                        <button
                                           onClick={() => setPreviewingRoleId(role.id)}
                                           className="text-xs font-semibold text-[#B28309] hover:underline cursor-pointer mr-3"
@@ -195,8 +202,9 @@ const RolesAndPermissions: FC = () => {
                                     </td>
                                  </tr>
                               ))}
-                        </tbody>
-                     </table>
+                           </tbody>
+                        </table>
+                     </div>
                   </div>
 
                   {/* Pagination — always visible, server-side meta */}

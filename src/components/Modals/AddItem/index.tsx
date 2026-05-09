@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Department, Item, ItemForm, Store } from '@/types';
 import { appActions, departmentActions, itemActions, storeActions } from '@/actions';
 import { UnknownAction } from 'redux';
+import { usePermission } from '@/hooks/usePermission';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { itemConstants } from '@/constants';
 import Router from 'next/router';
@@ -26,6 +27,11 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { allStoresList } = useSelector((s: RootState) => s.store);
    const { userDetails } = useSelector((s: RootState) => s.user);
+   // Department-pickable iff the user can manage items globally — back-
+   // office. Otherwise we silently scope the new item to their dept.
+   // Mirrors the page-level isDepartmentScoped flag on /admin/items.
+   const { can } = usePermission();
+   const canManageItems = can('items:manage');
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -264,7 +270,10 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
          const newItem = evt as CustomEvent;
          if (newItem) {
             closeModal();
-            if (userDetails?.roleId !== 3 && newItem.detail) {
+            // Back-office gets routed to the new item's detail page;
+            // dept-scoped users land back on their dept's filtered list
+            // because the global items list isn't theirs to navigate to.
+            if (canManageItems && newItem.detail) {
                Router.push(`/admin/item/${newItem.detail.id}`);
             } else {
                dispatch(itemActions.getDepartmentItems({ departmentId: Number(userDetails.departmentId) }) as unknown as UnknownAction);
@@ -284,7 +293,8 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    useEffect(() => {
       const listener = AppEmitter.addListener(itemConstants.UPDATE_ITEM_BASIC_SUCCESS, () => {
          closeModal();
-         if (userDetails?.roleId !== 3) {
+         // Same back-office-vs-dept-scoped split as on create.
+         if (canManageItems) {
             dispatch(itemActions.getAllItems({ page: 1, limit: 10 }) as unknown as UnknownAction);
          } else {
             dispatch(itemActions.getDepartmentItems({ departmentId: Number(userDetails?.departmentId) }) as unknown as UnknownAction);
@@ -447,7 +457,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
 
                {/* Row 2 — Department & Tracking Mode */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                  {userDetails?.roleId !== 3 ? (
+                  {canManageItems ? (
                      <SelectInput
                         name="departmentId"
                         label="Department"

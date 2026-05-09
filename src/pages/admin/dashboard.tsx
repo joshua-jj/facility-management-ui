@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import PrivateRoute from '@/components/PrivateRoute';
-import { RoleId } from '@/constants/roles.constant';
+import { usePermission } from '@/hooks/usePermission';
 import { dashboardConstants, authConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { exportToCsv } from '@/utilities/exportCsv';
@@ -127,6 +127,14 @@ const Dashboard = () => {
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { dashboardStats, dashboardAnalytics, IsFetchingDashboardStats } =
       useSelector((s: RootState) => s.dashboard);
+   // Capability gates: `requests:approve` is the HOD-shape (you can
+   // approve, so you see "awaiting your approval"); back-office is
+   // expressed as the union `requests:manage`. Member-shape is "you
+   // hold release/return but not approve" — i.e. the assignee track.
+   const { can } = usePermission();
+   const isBackOffice = can('requests:manage');
+   const canApproveRequests = can('requests:approve');
+   const canReleaseRequests = can('requests:release');
 
    const isLoading = IsFetchingDashboardStats && !dashboardStats;
 
@@ -136,13 +144,21 @@ const Dashboard = () => {
          dashboardActions.getDashboardAnalytics('month') as unknown as UnknownAction,
       );
 
-      if (userDetails?.roleId === RoleId.HOD) {
+      // Capability-driven fetch shape:
+      // - back-office (requests:manage)         -> all requests
+      // - dept lead   (requests:approve no man) -> their dept's
+      // - assignee    (requests:release only)   -> assigned-to-me
+      // The OR-of-hats case (SA + HOD) lands on `getAllRequests` thanks
+      // to `requests:manage` winning — same data, broader view.
+      if (isBackOffice) {
+         dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
+      } else if (canApproveRequests) {
          dispatch(
             requestActions.getDepartmentRequests({
                departmentId: userDetails?.departmentId ?? 0,
             }) as unknown as UnknownAction,
          );
-      } else if (userDetails?.roleId === RoleId.MEMBER) {
+      } else if (canReleaseRequests) {
          dispatch(
             requestActions.getAssignedRequests({
                userId: userDetails?.id ?? 0,
@@ -151,7 +167,14 @@ const Dashboard = () => {
       } else {
          dispatch(requestActions.getAllRequests() as unknown as UnknownAction);
       }
-   }, [dispatch, userDetails]);
+   }, [
+      dispatch,
+      isBackOffice,
+      canApproveRequests,
+      canReleaseRequests,
+      userDetails?.departmentId,
+      userDetails?.id,
+   ]);
 
    const handleExportDailyReport = useCallback(async () => {
       setIsExportingReport(true);
@@ -383,10 +406,13 @@ const Dashboard = () => {
             (s) => s.status?.toUpperCase() === status,
          )?.count ?? 0;
 
-      const role = userDetails?.roleId;
       const items: ActionItem[] = [];
 
-      if (role === RoleId.SUPER_ADMIN || role === RoleId.ADMIN) {
+      // Capability-driven action items. Multi-role users get the
+      // strongest hat: back-office (manage) > approve > release. Each
+      // branch is independent so SA+HOD users see the back-office
+      // shape (more useful at a glance).
+      if (isBackOffice) {
          items.push({
             label: 'Requests pending assignment',
             count: reqByStatus('APPROVED'),
@@ -408,7 +434,7 @@ const Dashboard = () => {
                accent: '#EF4444',
             });
          }
-      } else if (role === RoleId.HOD) {
+      } else if (canApproveRequests) {
          items.push({
             label: 'Requests awaiting your approval',
             count: reqByStatus('PENDING'),
@@ -424,7 +450,7 @@ const Dashboard = () => {
                accent: '#EF4444',
             });
          }
-      } else if (role === RoleId.MEMBER) {
+      } else if (canReleaseRequests) {
          items.push({
             label: 'Assigned to you — release pending',
             count: reqByStatus('ASSIGNED'),
@@ -450,13 +476,15 @@ const Dashboard = () => {
       dashboardStats?.requestsByStatus,
       dashboardStats?.dueReturns,
       dashboardAnalytics?.complaintsByStatus,
-      userDetails?.roleId,
+      isBackOffice,
+      canApproveRequests,
+      canReleaseRequests,
    ]);
 
    const totalActionCount = actionItems.reduce((s, i) => s + i.count, 0);
 
    return (
-      <PrivateRoute>
+      <PrivateRoute permissions={['dashboard:read']}>
          <Layout title="Dashboard">
             {/* Greeting bar */}
             <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">

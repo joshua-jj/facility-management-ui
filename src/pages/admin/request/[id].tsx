@@ -19,6 +19,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import SmallSelect from '@/components/CustomDropdownSelect/small';
+import { usePermission } from '@/hooks/usePermission';
+// RoleId still imported because the API exposes a `getUsersByRole(roleId)`
+// endpoint for identity lookups — that's not a capability check, it's
+// a "give me the candidate assignees" query and the API speaks role-ids.
 import { RoleId } from '@/constants/roles.constant';
 import StatusChip from '@/components/StatusChip';
 import { DetailRow, DetailSection } from '@/components/DetailField';
@@ -357,6 +361,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    } = useSelector((s: RootState) => s.request);
    const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   // Capability gates resolved from the user's flat permission set.
+   // Multi-role users (e.g. SA + HOD) get the union of every hat's
+   // permissions for free — kills the OR-of-hats class of bugs that
+   // hid approve/decline buttons from exactly the user who needed them.
+   const { can } = usePermission();
+   const canApproveRequest = can('requests:approve');
+   const canAssignRequest = can('requests:assign');
+   const canReleaseRequest = can('requests:release');
+   const canReturnRequest = can('requests:return');
+   const canManageRequests = can('requests:manage');
 
    const [requestDetails, setRequestDetails] =
       useState<RequestDetails>(requestDetail);
@@ -657,12 +671,19 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    };
 
    useEffect(() => {
-      if (userDetails?.roleId === RoleId.SUPER_ADMIN) {
+      // Pre-load the assignee picker when the viewer can actually
+      // assign — that's the capability we care about, not "is SA".
+      if (canAssignRequest) {
+         // Hardcoded MEMBER role-id remains because the API endpoint
+         // takes a roleId query param to fetch candidate assignees.
+         // Identity (which users to suggest) is still role-shaped on
+         // the API; capability (can the current user assign?) is now
+         // permission-shaped.
          dispatch(
             userActions.getUsersByRole({ roleId: RoleId.MEMBER }) as unknown as UnknownAction
          );
       }
-   }, [userDetails, dispatch]);
+   }, [canAssignRequest, dispatch]);
 
    // Fallback: when SSR returned null (the catch in getServerSideProps
    // logs the underlying cause), retry from the client on mount so the
@@ -777,8 +798,18 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
    const showReleasedQty = requestDetails?.requestStatus === 'Collected' || requestDetails?.requestStatus === 'Completed';
    const showReturnedQty = requestDetails?.requestStatus === 'Completed';
-   const isMemberAssigned = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Assigned';
-   const isMemberCollected = userDetails?.roleId === RoleId.MEMBER && requestDetails?.requestStatus === 'Collected';
+   // "Assignee shape" — the user can release/return on a request and
+   // the request is at the right status for that step. Capability-based,
+   // so an SA who is also an assignee gets the right form. The previous
+   // `roleId === MEMBER` check missed back-office-and-also-assignee.
+   const isAssigneeOnAssignedRow =
+      canReleaseRequest && requestDetails?.requestStatus === 'Assigned';
+   const isAssigneeOnCollectedRow =
+      canReturnRequest && requestDetails?.requestStatus === 'Collected';
+   // Aliases preserved for the rest of the file's use sites — they
+   // historically named the role; now they name the capability+state.
+   const isMemberAssigned = isAssigneeOnAssignedRow;
+   const isMemberCollected = isAssigneeOnCollectedRow;
 
    // Return flow forces full returns: seed selectedUnits with exactly the
    // units that were released, using their release-time conditions as defaults.
@@ -843,22 +874,15 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       [allDepartmentsList],
    );
 
-   // Is the current viewer the HOD whose dept owns this row? Used to gate
-   // the inline approve / decline buttons on a flat row or a child row.
-   //
-   // Multi-role users hold MEMBER auto-merged plus their other roles —
-   // an SA who is also HOD of a dept has roleIds = [MEMBER, SA, HOD].
-   // The deprecated singular `roleId` only carries the first one, so
-   // `roleId !== HOD` would silently hide the approve buttons from
-   // exactly the user who needs them. Read from roleIds[].
+   // Capability + dept-context: can THIS user approve / decline THIS
+   // row? Capability says "you hold requests:approve"; the department
+   // check narrows to "and this row is your dept's". Back-office users
+   // (`requests:manage`) bypass the dept check — they can act anywhere.
    const isHodOfRow = (row: RequestDetails | null | undefined): boolean => {
       if (!row || !userDetails) return false;
-      const userRoleIds: number[] =
-         userDetails.roleIds ??
-         (typeof userDetails.roleId === 'number' && userDetails.roleId > 0
-            ? [userDetails.roleId]
-            : []);
-      if (!userRoleIds.includes(RoleId.HOD)) return false;
+      if (!canApproveRequest) return false;
+      // Manage = back-office; act on any row regardless of department.
+      if (canManageRequests) return true;
       // If the API didn't return a fulfilling department on this row,
       // fall back to "this HOD owns whatever they're seeing" — Phase 3
       // scoping already gated the data by department.
@@ -873,11 +897,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       return isHodOfRow(row);
    };
 
-   // Assignment is now also enabled on `Partially Approved` (per spec
-   // §11 Phase 6 + §8: server allows assign so long as at least one
-   // child is approved). Existing `Approved` path stays.
+   // Assignment is enabled on Approved + Partially Approved (per spec
+   // §11 Phase 6 + §8). Capability gate replaces the old SA-only check
+   // — anyone with `requests:assign` can assign. Server is the source
+   // of truth on which rows accept assignment.
    const canAssign =
-      userDetails?.roleId === RoleId.SUPER_ADMIN &&
+      canAssignRequest &&
       (requestDetails?.requestStatus === 'Approved' ||
          requestDetails?.requestStatus === 'Partially Approved');
 
@@ -975,44 +1000,126 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                );
             })()}
 
-            {/* Parent-of-this-child banner — Spec §5.2: when a non-Facility
-                HOD opens a child sub-request via their email link, render
-                the parent header read-only so they have full context. */}
-            {hasParent && requestDetails?.parent && (
-               <div
-                  className="rounded-xl border px-5 py-4"
-                  style={{
-                     background: 'var(--surface-low, rgba(15,37,82,0.04))',
-                     borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
-                  }}
-               >
-                  <p
-                     className="text-[0.6rem] uppercase font-semibold tracking-wider mb-1"
-                     style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+            {/* Request Reference card — replaces the requests-list "Tag"
+                column. Every request detail page surfaces this so HODs and
+                SAs can quickly tell a Main from a Sub, see the request id,
+                and (for subs) jump to the parent in one click. The label
+                used to be a column header on the list — moved here because
+                a single-letter tag on the list was easy to miss and lacked
+                room for an explanation. */}
+            {(() => {
+               const parentId =
+                  requestDetails?.parent?.id ?? requestDetails?.parentId ?? null;
+               const goToParent = () => {
+                  if (parentId == null) return;
+                  router.push(
+                     { pathname: '/admin/request/[id]', query: { id: parentId } },
+                     `/admin/request/${parentId}`,
+                  );
+               };
+               const isSub = hasParent;
+               const isParent = hasChildren;
+               const typeLabel = isSub ? 'Sub-request' : isParent ? 'Main request' : 'Standalone request';
+               // Sub uses a solid gold fill so it's visually distinct as
+               // the row that needs parent-lookup context. Main / Standalone
+               // are the common cases, so they stay quiet (outline-only)
+               // — heavy navy fills felt loud and clashed with the rest
+               // of the detail card.
+               const pillStyle: React.CSSProperties = isSub
+                  ? { background: '#B28309', color: '#fff' }
+                  : {
+                       background: 'transparent',
+                       color: 'var(--text-secondary)',
+                       border: '1px solid var(--border-strong)',
+                    };
+               const explanation = isSub
+                  ? 'This request belongs to a parent and was created automatically because the original request needed items from this department. Approving or declining it only affects this department’s portion — siblings in other departments are decided independently.'
+                  : isParent
+                  ? 'This is the main request. It spans more than one department, so each department fulfils its share through its own sub-request below. The status here is computed from the children — once they all settle, this row updates.'
+                  : 'This request is fulfilled entirely by a single department, so it has no sub-requests. The number below is its own reference id.';
+               return (
+                  <div
+                     className="rounded-xl border px-5 py-4"
+                     style={{
+                        background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                        borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
+                     }}
                   >
-                     Part of Request #{requestDetails.parent.id ?? requestDetails.parentId ?? '—'}
-                  </p>
-                  <p className="text-sm text-[#0F2552] dark:text-white/85">
-                     {capitalizeFirstLetter(requestDetails.parent.requesterName) || '—'}
-                     {requestDetails.parent.ministryName && (
-                        <>
-                           &nbsp;&middot;&nbsp;
-                           <span style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}>
-                              {capitalizeFirstLetter(requestDetails.parent.ministryName)}
+                     <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="flex-1 min-w-[260px] space-y-1.5">
+                           <div className="flex items-center gap-2">
+                              <span
+                                 className="inline-flex items-center rounded-md text-[0.6rem] font-bold uppercase tracking-wider px-2 py-0.5"
+                                 style={pillStyle}
+                              >
+                                 {typeLabel}
+                              </span>
+                              <span
+                                 className="font-mono text-xs font-semibold"
+                                 style={{ color: 'var(--text-secondary, #5a6478)' }}
+                              >
+                                 #{requestDetails?.id ?? '—'}
+                              </span>
+                           </div>
+                           <p
+                              className="text-xs leading-relaxed max-w-2xl"
+                              style={{ color: 'var(--text-secondary, #5a6478)' }}
+                           >
+                              {explanation}
+                           </p>
+                        </div>
+                        {isSub && parentId != null && (
+                           <button
+                              type="button"
+                              onClick={goToParent}
+                              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer self-start"
+                              style={{
+                                 background: '#B28309',
+                                 color: '#fff',
+                              }}
+                              title={`Open parent request #${parentId}`}
+                           >
+                              View parent
+                              <span className="font-mono">#{parentId}</span>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                              </svg>
+                           </button>
+                        )}
+                     </div>
+                     {isSub && requestDetails?.parent && (
+                        <div
+                           className="mt-3 pt-3 text-xs"
+                           style={{
+                              borderTop: '1px solid var(--border-default, rgba(15,37,82,0.08))',
+                              color: 'var(--text-secondary, #5a6478)',
+                           }}
+                        >
+                           <span
+                              className="text-[0.6rem] uppercase font-semibold tracking-wider mr-2"
+                              style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                           >
+                              Parent
                            </span>
-                        </>
+                           <span className="text-[#0F2552] dark:text-white/85 font-medium">
+                              {capitalizeFirstLetter(requestDetails.parent.requesterName) || '—'}
+                           </span>
+                           {requestDetails.parent.ministryName && (
+                              <>
+                                 &nbsp;&middot;&nbsp;
+                                 {capitalizeFirstLetter(requestDetails.parent.ministryName)}
+                              </>
+                           )}
+                           {requestDetails.parent.descriptionOfRequest && (
+                              <span className="italic">
+                                 &nbsp;&middot;&nbsp;&ldquo;{requestDetails.parent.descriptionOfRequest}&rdquo;
+                              </span>
+                           )}
+                        </div>
                      )}
-                  </p>
-                  {requestDetails.parent.descriptionOfRequest && (
-                     <p
-                        className="text-xs mt-1 italic"
-                        style={{ color: 'var(--text-secondary, #5a6478)' }}
-                     >
-                        &ldquo;{requestDetails.parent.descriptionOfRequest}&rdquo;
-                     </p>
-                  )}
-               </div>
-            )}
+                  </div>
+               );
+            })()}
 
             {/* Header card */}
             <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-6">

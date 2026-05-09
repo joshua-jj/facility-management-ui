@@ -179,7 +179,10 @@ export function DataTable<T extends Record<string, any>>({
    const totalPages = pagination?.totalPages ?? 1;
    const currentPage = pagination?.currentPage ?? 1;
    const totalItems = pagination?.totalItems ?? data.length;
-   const itemsPerPage = pagination?.itemsPerPage ?? data.length;
+   // Fall through to a reasonable default when no pagination meta has
+   // landed yet (e.g. first paint). Without a floor the fixed-height
+   // viewport collapses on the very first render.
+   const itemsPerPage = pagination?.itemsPerPage ?? (data.length || 10);
    const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -380,10 +383,34 @@ export function DataTable<T extends Record<string, any>>({
             </div>
          )}
 
-         {/* ── Table ── */}
-         <div className="overflow-x-auto">
+         {/* ── Table ──
+             Fixed-height scroll viewport. Without this the table body
+             collapsed to whatever the current page returned — going from
+             a full page (10 rows) to a half page (3 rows) would visibly
+             shrink the card. We reserve `itemsPerPage * ROW_PX` of space
+             so layout stays stable, and let very tall content scroll
+             vertically inside instead of pushing the pagination off the
+             screen. */}
+         <div
+            className="overflow-auto"
+            style={{
+               // Approx rendered row height (py-3.5 + text + 1px border).
+               // Multiplying by itemsPerPage keeps the body the same size
+               // on short pages — no jank when paginating to the tail.
+               minHeight: `${Math.max(itemsPerPage, 1) * 56}px`,
+               maxHeight: '65vh',
+            }}
+         >
             <table className="w-full">
-               <thead>
+               <thead
+                  style={{
+                     // Sticky so column headers stay anchored while the
+                     // body scrolls. zIndex covers the scrolled rows.
+                     position: 'sticky',
+                     top: 0,
+                     zIndex: 1,
+                  }}
+               >
                   <tr style={{ background: 'var(--surface-low)', borderBottom: '1px solid var(--border-default)' }}>
                      {visibleColumns.map((col) => (
                         <th
@@ -391,7 +418,7 @@ export function DataTable<T extends Record<string, any>>({
                            className={`px-4 py-3.5 text-[0.65rem] font-semibold uppercase tracking-wider whitespace-nowrap ${
                               col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
                            }`}
-                           style={{ color: 'var(--text-hint)', width: col.width }}
+                           style={{ color: 'var(--text-hint)', width: col.width, background: 'var(--surface-low)' }}
                         >
                            {col.header}
                         </th>
@@ -400,7 +427,9 @@ export function DataTable<T extends Record<string, any>>({
                </thead>
                <tbody>
                   {loading ? (
-                     Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={visibleColumns.length} />)
+                     // Match the configured page size so the skeleton fills
+                     // the same vertical footprint the real data will.
+                     Array.from({ length: Math.max(itemsPerPage, 1) }).map((_, i) => <SkeletonRow key={i} cols={visibleColumns.length} />)
                   ) : data.length === 0 ? (
                      <tr>
                         <td colSpan={visibleColumns.length}>
