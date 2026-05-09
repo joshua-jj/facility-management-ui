@@ -25,7 +25,7 @@ import { usePermission } from '@/hooks/usePermission';
 // a "give me the candidate assignees" query and the API speaks role-ids.
 import { RoleId } from '@/constants/roles.constant';
 import StatusChip from '@/components/StatusChip';
-import { DetailRow, DetailSection } from '@/components/DetailField';
+import { DetailField, DetailSection } from '@/components/DetailField';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import ModalWrapper from '@/components/Modals/ModalWrapper';
 import { departmentActions } from '@/actions';
@@ -941,7 +941,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                </button>
             </div>
 
-            {/* Workflow stepper */}
+            {/* ── Slim workflow stepper ───────────────────────────────
+                Smaller circles + tighter padding than the original block.
+                Milestones still scan instantly but no longer eat a
+                quarter of the viewport above the actual content.
+                Sits at the very top of the content area so the viewer
+                lands on the workflow state first. */}
             {requestDetails?.requestStatus && (() => {
                const STEPS = [
                   { label: 'Pending', key: 'Pending' },
@@ -954,7 +959,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                const activeIdx = currentIdx === -1 ? 0 : currentIdx;
 
                return (
-                  <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm px-6 py-4">
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm px-5 py-3">
                      <div className="flex items-center justify-between">
                         {STEPS.map((step, idx) => {
                            const isCompleted = idx < activeIdx;
@@ -975,17 +980,17 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
                            return (
                               <React.Fragment key={step.key}>
-                                 <div className="flex flex-col items-center gap-1.5 min-w-0">
-                                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors ${circleClass}`}>
+                                 <div className="flex flex-col items-center gap-1 min-w-0">
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[0.6rem] font-bold flex-shrink-0 transition-colors ${circleClass}`}>
                                        {isCompleted ? (
-                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                              <polyline points="20 6 9 17 4 12" />
                                           </svg>
                                        ) : (
                                           idx + 1
                                        )}
                                     </div>
-                                    <span className={`text-[0.6rem] leading-tight text-center whitespace-nowrap transition-colors ${labelClass}`}>
+                                    <span className={`text-[0.55rem] leading-tight text-center whitespace-nowrap transition-colors ${labelClass}`}>
                                        {isDeclined && isCurrent ? 'Declined' : step.label}
                                     </span>
                                  </div>
@@ -1000,218 +1005,143 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                );
             })()}
 
-            {/* Request Reference card — replaces the requests-list "Tag"
-                column. Every request detail page surfaces this so HODs and
-                SAs can quickly tell a Main from a Sub, see the request id,
-                and (for subs) jump to the parent in one click. The label
-                used to be a column header on the list — moved here because
-                a single-letter tag on the list was easy to miss and lacked
-                room for an explanation. */}
-            {(() => {
-               const parentId =
-                  requestDetails?.parent?.id ?? requestDetails?.parentId ?? null;
-               const goToParent = () => {
-                  if (parentId == null) return;
-                  router.push(
-                     { pathname: '/admin/request/[id]', query: { id: parentId } },
-                     `/admin/request/${parentId}`,
-                  );
-               };
-               const isSub = hasParent;
-               const isParent = hasChildren;
-               const typeLabel = isSub ? 'Sub-request' : isParent ? 'Main request' : 'Standalone request';
-               // Sub uses a solid gold fill so it's visually distinct as
-               // the row that needs parent-lookup context. Main / Standalone
-               // are the common cases, so they stay quiet (outline-only)
-               // — heavy navy fills felt loud and clashed with the rest
-               // of the detail card.
-               const pillStyle: React.CSSProperties = isSub
-                  ? { background: '#B28309', color: '#fff' }
-                  : {
-                       background: 'transparent',
-                       color: 'var(--text-secondary)',
-                       border: '1px solid var(--border-strong)',
-                    };
-               const explanation = isSub
-                  ? 'This request belongs to a parent and was created automatically because the original request needed items from this department. Approving or declining it only affects this department’s portion — siblings in other departments are decided independently.'
-                  : isParent
-                  ? 'This is the main request. It spans more than one department, so each department fulfils its share through its own sub-request below. The status here is computed from the children — once they all settle, this row updates.'
-                  : 'This request is fulfilled entirely by a single department, so it has no sub-requests. The number below is its own reference id.';
-               return (
-                  <div
-                     className="rounded-xl border px-5 py-4"
-                     style={{
-                        background: 'var(--surface-low, rgba(15,37,82,0.04))',
-                        borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
-                     }}
-                  >
-                     <div className="flex items-start justify-between gap-4 flex-wrap">
-                        <div className="flex-1 min-w-[260px] space-y-1.5">
-                           <div className="flex items-center gap-2">
-                              <span
-                                 className="inline-flex items-center rounded-md text-[0.6rem] font-bold uppercase tracking-wider px-2 py-0.5"
-                                 style={pillStyle}
-                              >
-                                 {typeLabel}
-                              </span>
-                              <span
-                                 className="font-mono text-xs font-semibold"
-                                 style={{ color: 'var(--text-secondary, #5a6478)' }}
-                              >
-                                 #{requestDetails?.id ?? '—'}
-                              </span>
-                           </div>
-                           <p
-                              className="text-xs leading-relaxed max-w-2xl"
-                              style={{ color: 'var(--text-secondary, #5a6478)' }}
-                           >
-                              {explanation}
-                           </p>
-                        </div>
-                        {isSub && parentId != null && (
-                           <button
-                              type="button"
-                              onClick={goToParent}
-                              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer self-start"
-                              style={{
-                                 background: '#B28309',
-                                 color: '#fff',
-                              }}
-                              title={`Open parent request #${parentId}`}
-                           >
-                              View parent
-                              <span className="font-mono">#{parentId}</span>
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                              </svg>
-                           </button>
-                        )}
-                     </div>
-                     {isSub && requestDetails?.parent && (
-                        <div
-                           className="mt-3 pt-3 text-xs"
-                           style={{
-                              borderTop: '1px solid var(--border-default, rgba(15,37,82,0.08))',
-                              color: 'var(--text-secondary, #5a6478)',
-                           }}
-                        >
+            {/* ── Compact identity header ──────────────────────────────
+                Replaces the original tall "Header card" + the top-of-page
+                Reference card. Combines requester name, status, type chip,
+                request id, ministry, email, and phone into one strip so
+                the top of the page tells the viewer who/what/which-state
+                at a glance. The fuller Reference card (with its
+                explanatory paragraph and "View parent" CTA for subs)
+                lives in the right rail below — it's available without
+                dominating the viewport. */}
+            <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm px-5 py-4">
+               <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                     <h1 className="text-lg font-bold text-[#0F2552] dark:text-white/90">
+                        {capitalizeFirstLetter(requestDetails?.requesterName) || '—'}
+                     </h1>
+                     <StatusChip status={status || ''} size="sm" pulse />
+                     {(() => {
+                        const isSub = hasParent;
+                        const isParent = hasChildren;
+                        const typeLabel = isSub ? 'Sub' : isParent ? 'Main' : 'Standalone';
+                        const pillStyle: React.CSSProperties = isSub
+                           ? { background: '#B28309', color: '#fff' }
+                           : {
+                                background: 'transparent',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border-strong)',
+                             };
+                        return (
                            <span
-                              className="text-[0.6rem] uppercase font-semibold tracking-wider mr-2"
-                              style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                              className="inline-flex items-center rounded-md text-[0.6rem] font-bold uppercase tracking-wider px-2 py-0.5"
+                              style={pillStyle}
+                              title={`${typeLabel} request`}
                            >
-                              Parent
+                              {typeLabel}
                            </span>
-                           <span className="text-[#0F2552] dark:text-white/85 font-medium">
-                              {capitalizeFirstLetter(requestDetails.parent.requesterName) || '—'}
-                           </span>
-                           {requestDetails.parent.ministryName && (
-                              <>
-                                 &nbsp;&middot;&nbsp;
-                                 {capitalizeFirstLetter(requestDetails.parent.ministryName)}
-                              </>
-                           )}
-                           {requestDetails.parent.descriptionOfRequest && (
-                              <span className="italic">
-                                 &nbsp;&middot;&nbsp;&ldquo;{requestDetails.parent.descriptionOfRequest}&rdquo;
-                              </span>
-                           )}
-                        </div>
-                     )}
+                        );
+                     })()}
+                     <span
+                        className="font-mono text-xs font-semibold"
+                        style={{ color: 'var(--text-secondary, #5a6478)' }}
+                     >
+                        #{requestDetails?.id ?? '—'}
+                     </span>
                   </div>
-               );
-            })()}
-
-            {/* Header card */}
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-6">
-               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="space-y-2">
-                     <div className="flex items-center gap-3">
-                        <h1 className="text-xl font-bold text-[#0F2552] dark:text-white/90">
-                           {capitalizeFirstLetter(requestDetails?.requesterName)}
-                        </h1>
-                        <StatusChip status={status || ''} size="md" pulse />
-                     </div>
-                     {/* Spec §5.2: the description tag travels with the row
-                         on every page. Surface it prominently right under
-                         the requester name so context never gets lost. */}
-                     {requestDetails?.descriptionOfRequest && (
-                        <p
-                           className="text-sm font-medium italic max-w-2xl"
-                           style={{ color: 'var(--text-secondary, #5a6478)' }}
-                        >
-                           &ldquo;{requestDetails.descriptionOfRequest}&rdquo;
-                        </p>
-                     )}
+                  {/* Spec §5.2: the description tag travels with the row
+                      on every page. Surface it under the identity row so
+                      context never gets lost as you scan down. */}
+                  {requestDetails?.descriptionOfRequest && (
+                     <p
+                        className="text-sm font-medium italic max-w-3xl"
+                        style={{ color: 'var(--text-secondary, #5a6478)' }}
+                     >
+                        &ldquo;{requestDetails.descriptionOfRequest}&rdquo;
+                     </p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-white/40 pt-0.5">
                      {requestDetails?.ministryName && (
-                        <p className="text-sm text-gray-500 dark:text-white/50">
+                        <span className="font-medium text-gray-500 dark:text-white/55">
                            {capitalizeFirstLetter(requestDetails.ministryName)}
-                        </p>
+                        </span>
                      )}
-                     <div className="flex flex-wrap items-center gap-4 pt-1">
-                        {requestDetails?.requesterEmail && (
-                           <span className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/40">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
-                              {requestDetails.requesterEmail}
-                           </span>
-                        )}
-                        {requestDetails?.requesterPhone && (
-                           <span className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/40">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                              </svg>
-                              {formatPhoneDisplay(requestDetails.requesterPhone)}
-                           </span>
-                        )}
-                     </div>
+                     {requestDetails?.requesterEmail && (
+                        <span className="inline-flex items-center gap-1">
+                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                           </svg>
+                           {requestDetails.requesterEmail}
+                        </span>
+                     )}
+                     {requestDetails?.requesterPhone && (
+                        <span className="inline-flex items-center gap-1">
+                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                           </svg>
+                           {formatPhoneDisplay(requestDetails.requesterPhone)}
+                        </span>
+                     )}
                   </div>
                </div>
             </div>
 
-            {/* Request Information */}
-            <DetailSection title="Request Information">
-               <DetailRow
-                  label="Ministry Name"
-                  value={capitalizeFirstLetter(requestDetails?.ministryName as string)}
-               />
-               <DetailRow
-                  label="Requester Name"
-                  value={capitalizeFirstLetter(requestDetails?.requesterName)}
-               />
-               <DetailRow
-                  label="Email"
-                  value={requestDetails?.requesterEmail}
-               />
-               <DetailRow
-                  label="Phone"
-                  value={formatPhoneDisplay(requestDetails?.requesterPhone)}
-               />
-               <DetailRow
-                  label="Location"
-                  value={capitalizeFirstLetter(requestDetails?.locationOfUse)}
-               />
-               <DetailRow
-                  label="Return Date"
-                  value={
-                     status === 'Collected'
-                        ? formatReadableDate(requestDetails?.audit.collectedDate)
-                        : formatReadableDate(
-                             status === 'Completed'
-                                ? requestDetails?.audit.completedDate
-                                : requestDetails?.dateOfReturn
-                          )
-                  }
-               />
-               <DetailRow
-                  label="Description"
-                  value={capitalizeFirstLetter(requestDetails?.descriptionOfRequest)}
-               />
-               <DetailRow
-                  label="Assigned Member"
-                  value={requestDetails?.audit.assigneeName}
-               />
-            </DetailSection>
+            {/* ── Two-column main layout ─────────────────────────────
+                Main column (8/12) carries the request body; right rail
+                (4/12) carries actions, the Reference card, and parent /
+                sibling context. Collapses to a single column below `lg`
+                so mobile keeps the same vertical flow as before. */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+               <div className="lg:col-span-8 space-y-6 min-w-0">
+                  {/* Request Information — multi-column field grid.
+                      Was a single tall stack of label/value rows; the
+                      grid drops the section's vertical footprint by ~3×
+                      and fills the column width instead of leaving half
+                      of it empty. */}
+                  <DetailSection title="Request Information">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1 px-5 pb-3">
+                        <DetailField
+                           label="Ministry Name"
+                           value={capitalizeFirstLetter(requestDetails?.ministryName as string)}
+                        />
+                        <DetailField
+                           label="Requester Name"
+                           value={capitalizeFirstLetter(requestDetails?.requesterName)}
+                        />
+                        <DetailField label="Email" value={requestDetails?.requesterEmail} />
+                        <DetailField
+                           label="Phone"
+                           value={formatPhoneDisplay(requestDetails?.requesterPhone)}
+                        />
+                        <DetailField
+                           label="Location"
+                           value={capitalizeFirstLetter(requestDetails?.locationOfUse)}
+                        />
+                        <DetailField
+                           label="Return Date"
+                           value={
+                              status === 'Collected'
+                                 ? formatReadableDate(requestDetails?.audit.collectedDate)
+                                 : formatReadableDate(
+                                      status === 'Completed'
+                                         ? requestDetails?.audit.completedDate
+                                         : requestDetails?.dateOfReturn,
+                                   )
+                           }
+                        />
+                        <DetailField
+                           label="Assigned Member"
+                           value={requestDetails?.audit.assigneeName}
+                        />
+                        {/* Description spans the full row — long-form text
+                            doesn't fit a 1/3 column without truncation. */}
+                        <DetailField
+                           label="Description"
+                           value={capitalizeFirstLetter(requestDetails?.descriptionOfRequest)}
+                           className="sm:col-span-2 lg:col-span-3"
+                        />
+                     </div>
+                  </DetailSection>
 
             {/* ── Sub-requests (parent rows only) ─────────────────────────
                 Spec §5.2 / §11 Phase 6: on a parent the items section is
@@ -1488,157 +1418,301 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             </DetailSection>
             )}
 
-            {/* ── Sibling sub-requests strip — child detail view only.
-                Shows other children of the parent so a non-Facility HOD
-                acting on one child has at-a-glance context for the rest
-                of the tree. Read-only by design (Spec §5.2). */}
-            {hasParent &&
-               requestDetails?.parent?.children &&
-               requestDetails.parent.children.length > 1 && (
-                  <DetailSection title="Sibling sub-requests">
-                     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {requestDetails.parent.children
-                           .filter((sib) => sib.id !== requestDetails.id)
-                           .map((sib) => {
-                              const sibDept = resolveDepartmentName(sib, departments);
-                              return (
-                                 <div
-                                    key={sib.id}
-                                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg"
-                                    style={{
-                                       background: 'var(--surface-low, rgba(15,37,82,0.04))',
-                                       border: '1px solid var(--border-default, rgba(15,37,82,0.08))',
-                                    }}
-                                 >
-                                    <span className="text-sm text-[#0F2552] dark:text-white/85 truncate">
-                                       {sibDept}
-                                    </span>
-                                    <StatusChip status={sib.requestStatus || ''} size="sm" />
-                                 </div>
-                              );
-                           })}
-                     </div>
-                  </DetailSection>
-               )}
+               </div>
+               {/* End of left column ──────────────────────────────────── */}
 
-            {/* Action area */}
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5">
-               <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-                  {/* Role-conditional dropdowns. The HOD approve/decline
-                      dropdown is replaced with explicit buttons below
-                      when the viewer is the row's HOD on a flat row or
-                      a child detail view (canActOnRow). */}
-                  <div className="w-full sm:max-w-xs">
-                     {canAssign && (
-                        <div>
-                           <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
-                              Assign Member
-                           </label>
-                           <CustomDropdownSelect
-                              options={roleUsersArray}
-                              value={assignedUserId}
-                              onChange={setAssignedUserId}
-                              placeholder="Select Member to assign request to"
-                              noSearch
-                           />
-                           {requestDetails?.requestStatus === 'Partially Approved' && (
-                              <p
-                                 className="text-[0.7rem] mt-1.5"
-                                 style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+               {/* ── Right rail ─────────────────────────────────────────
+                   Reference card (compact) + the action panel + sibling
+                   strip. Action panel is sticky on lg so HODs / SAs can
+                   approve / decline / assign without scrolling back up
+                   on long item lists. */}
+               <div className="lg:col-span-4 space-y-6 min-w-0">
+                  {/* Compact Reference card. Same content as the
+                      previous top-of-page card but rail-sized — pill +
+                      id, explanatory paragraph, and (for subs) the
+                      "View parent" CTA + parent summary. */}
+                  {(() => {
+                     const parentId =
+                        requestDetails?.parent?.id ?? requestDetails?.parentId ?? null;
+                     const goToParent = () => {
+                        if (parentId == null) return;
+                        router.push(
+                           { pathname: '/admin/request/[id]', query: { id: parentId } },
+                           `/admin/request/${parentId}`,
+                        );
+                     };
+                     const isSub = hasParent;
+                     const isParent = hasChildren;
+                     const typeLabel = isSub
+                        ? 'Sub-request'
+                        : isParent
+                          ? 'Main request'
+                          : 'Standalone request';
+                     const pillStyle: React.CSSProperties = isSub
+                        ? { background: '#B28309', color: '#fff' }
+                        : {
+                             background: 'transparent',
+                             color: 'var(--text-secondary)',
+                             border: '1px solid var(--border-strong)',
+                          };
+                     const explanation = isSub
+                        ? 'This request belongs to a parent and was created automatically because the original request needed items from this department. Approving or declining it only affects this department’s portion — siblings in other departments are decided independently.'
+                        : isParent
+                          ? 'This is the main request. It spans more than one department, so each department fulfils its share through its own sub-request below. The status here is computed from the children — once they all settle, this row updates.'
+                          : 'This request is fulfilled entirely by a single department, so it has no sub-requests. The number below is its own reference id.';
+                     return (
+                        <div
+                           className="rounded-xl border px-4 py-3"
+                           style={{
+                              background: 'var(--surface-low, rgba(15,37,82,0.04))',
+                              borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
+                           }}
+                        >
+                           <div className="flex items-center gap-2 mb-2">
+                              <span
+                                 className="inline-flex items-center rounded-md text-[0.6rem] font-bold uppercase tracking-wider px-2 py-0.5"
+                                 style={pillStyle}
                               >
-                                 Note: only approved sub-requests are included.
-                              </p>
+                                 {typeLabel}
+                              </span>
+                              <span
+                                 className="font-mono text-xs font-semibold ml-auto"
+                                 style={{ color: 'var(--text-secondary, #5a6478)' }}
+                              >
+                                 #{requestDetails?.id ?? '—'}
+                              </span>
+                           </div>
+                           <p
+                              className="text-xs leading-relaxed"
+                              style={{ color: 'var(--text-secondary, #5a6478)' }}
+                           >
+                              {explanation}
+                           </p>
+                           {isSub && parentId != null && (
+                              <button
+                                 type="button"
+                                 onClick={goToParent}
+                                 className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+                                 style={{ background: '#B28309', color: '#fff' }}
+                                 title={`Open parent request #${parentId}`}
+                              >
+                                 View parent
+                                 <span className="font-mono">#{parentId}</span>
+                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                 </svg>
+                              </button>
+                           )}
+                           {isSub && requestDetails?.parent && (
+                              <div
+                                 className="mt-3 pt-3 text-xs"
+                                 style={{
+                                    borderTop:
+                                       '1px solid var(--border-default, rgba(15,37,82,0.08))',
+                                    color: 'var(--text-secondary, #5a6478)',
+                                 }}
+                              >
+                                 <span
+                                    className="block text-[0.6rem] uppercase font-semibold tracking-wider mb-0.5"
+                                    style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                                 >
+                                    Parent
+                                 </span>
+                                 <span className="text-[#0F2552] dark:text-white/85 font-medium">
+                                    {capitalizeFirstLetter(requestDetails.parent.requesterName) || '—'}
+                                 </span>
+                                 {requestDetails.parent.ministryName && (
+                                    <>
+                                       &nbsp;&middot;&nbsp;
+                                       {capitalizeFirstLetter(requestDetails.parent.ministryName)}
+                                    </>
+                                 )}
+                                 {requestDetails.parent.descriptionOfRequest && (
+                                    <p
+                                       className="italic mt-1"
+                                       style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                                    >
+                                       &ldquo;{requestDetails.parent.descriptionOfRequest}&rdquo;
+                                    </p>
+                                 )}
+                              </div>
                            )}
                         </div>
-                     )}
-                  </div>
+                     );
+                  })()}
 
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-3 shrink-0">
-                     {isMemberAssigned ? (
-                        <ActionButton
-                           onClick={handleReleaseRequestItems}
-                           variant="primary"
-                           size="md"
-                           disabled={releaseButtonDisabled}
-                        >
-                           {IsReleasingRequestItems ? (
-                              <div className="flex items-center gap-2">
-                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                 Releasing...
-                              </div>
-                           ) : (
-                              'Release Items'
-                           )}
-                        </ActionButton>
-                     ) : isMemberCollected ? (
-                        <ActionButton
-                           onClick={handleReturnRequestItems}
-                           variant="secondary"
-                           size="md"
-                           disabled={returnButtonDisabled}
-                        >
-                           {IsReturningRequestItems ? (
-                              <div className="flex items-center gap-2">
-                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                 Returning...
-                              </div>
-                           ) : (
-                              'Return Items'
-                           )}
-                        </ActionButton>
-                     ) : canActOnRow(requestDetails) ? (
-                        // Flat row OR child detail view where the viewer
-                        // is the HOD whose dept owns this row. Show
-                        // explicit Approve / Decline buttons. Decline
-                        // routes through the modal so we capture an
-                        // optional reason (Phase 3 endpoint accepts a
-                        // `{ reason?: string }` body).
-                        <>
-                           <ActionButton
-                              variant="outline"
-                              size="md"
-                              onClick={() => handleOpenDecline(Number(requestDetails?.id ?? id))}
-                              disabled={IsUpdatingRequestStatus}
-                           >
-                              Decline
-                           </ActionButton>
-                           <ActionButton
-                              variant="primary"
-                              size="md"
-                              onClick={() => handleApproveRow(Number(requestDetails?.id ?? id))}
-                              disabled={IsUpdatingRequestStatus}
-                           >
-                              {IsUpdatingRequestStatus ? (
-                                 <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Processing...
+                  {/* Sticky action stack — anchors the primary CTA so a
+                      reviewer scrolling down a long item list can still
+                      see what to do next without scrolling back up. */}
+                  <div className="lg:sticky lg:top-4 space-y-6">
+                     {/* Action panel — same role-conditional logic as
+                         before, restyled to stack vertically in the
+                         narrower right rail. */}
+                     {(canAssign ||
+                        canActOnRow(requestDetails) ||
+                        isMemberAssigned ||
+                        isMemberCollected) && (
+                        <DetailSection title="Actions">
+                           <div className="p-4 space-y-3">
+                              {canAssign && (
+                                 <div>
+                                    <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/40 mb-1.5">
+                                       Assign Member
+                                    </label>
+                                    <CustomDropdownSelect
+                                       options={roleUsersArray}
+                                       value={assignedUserId}
+                                       onChange={setAssignedUserId}
+                                       placeholder="Select Member to assign request to"
+                                       noSearch
+                                    />
+                                    {requestDetails?.requestStatus === 'Partially Approved' && (
+                                       <p
+                                          className="text-[0.7rem] mt-1.5"
+                                          style={{ color: 'var(--text-hint, rgba(15,37,82,0.55))' }}
+                                       >
+                                          Only approved sub-requests are included.
+                                       </p>
+                                    )}
                                  </div>
-                              ) : (
-                                 'Approve'
                               )}
-                           </ActionButton>
-                        </>
-                     ) : canAssign ? (
-                        <ActionButton
-                           onClick={handleAssignRequest}
-                           disabled={assignedUserId === ''}
-                           variant="primary"
-                           size="md"
-                        >
-                           {IsAssigningRequest ? (
-                              <div className="flex items-center gap-2">
-                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                 Processing...
+
+                              {/* Buttons stack vertically in the rail —
+                                  full-width so they read as primary CTAs. */}
+                              <div className="flex flex-col gap-2">
+                                 {isMemberAssigned ? (
+                                    <ActionButton
+                                       onClick={handleReleaseRequestItems}
+                                       variant="primary"
+                                       size="md"
+                                       disabled={releaseButtonDisabled}
+                                       className="w-full justify-center"
+                                    >
+                                       {IsReleasingRequestItems ? (
+                                          <div className="flex items-center gap-2">
+                                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                             Releasing...
+                                          </div>
+                                       ) : (
+                                          'Release Items'
+                                       )}
+                                    </ActionButton>
+                                 ) : isMemberCollected ? (
+                                    <ActionButton
+                                       onClick={handleReturnRequestItems}
+                                       variant="secondary"
+                                       size="md"
+                                       disabled={returnButtonDisabled}
+                                       className="w-full justify-center"
+                                    >
+                                       {IsReturningRequestItems ? (
+                                          <div className="flex items-center gap-2">
+                                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                             Returning...
+                                          </div>
+                                       ) : (
+                                          'Return Items'
+                                       )}
+                                    </ActionButton>
+                                 ) : canActOnRow(requestDetails) ? (
+                                    // HOD acting on a flat row or child:
+                                    // Approve is the primary CTA, Decline
+                                    // is the destructive secondary.
+                                    <>
+                                       <ActionButton
+                                          variant="primary"
+                                          size="md"
+                                          onClick={() => handleApproveRow(Number(requestDetails?.id ?? id))}
+                                          disabled={IsUpdatingRequestStatus}
+                                          className="w-full justify-center"
+                                       >
+                                          {IsUpdatingRequestStatus ? (
+                                             <div className="flex items-center gap-2">
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                Processing...
+                                             </div>
+                                          ) : (
+                                             'Approve'
+                                          )}
+                                       </ActionButton>
+                                       <ActionButton
+                                          variant="outline"
+                                          size="md"
+                                          onClick={() => handleOpenDecline(Number(requestDetails?.id ?? id))}
+                                          disabled={IsUpdatingRequestStatus}
+                                          className="w-full justify-center"
+                                       >
+                                          Decline
+                                       </ActionButton>
+                                    </>
+                                 ) : canAssign ? (
+                                    <ActionButton
+                                       onClick={handleAssignRequest}
+                                       disabled={assignedUserId === ''}
+                                       variant="primary"
+                                       size="md"
+                                       className="w-full justify-center"
+                                    >
+                                       {IsAssigningRequest ? (
+                                          <div className="flex items-center gap-2">
+                                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                             Processing...
+                                          </div>
+                                       ) : (
+                                          'Assign'
+                                       )}
+                                    </ActionButton>
+                                 ) : null}
                               </div>
-                           ) : (
-                              'Assign'
-                           )}
-                        </ActionButton>
-                     ) : null}
+                           </div>
+                        </DetailSection>
+                     )}
+
+                     {/* Sibling sub-requests strip — child detail view
+                         only. Shows other children of the parent so a
+                         non-Facility HOD acting on one child has
+                         at-a-glance context for the rest of the tree.
+                         Single-column in the rail (was 2-column on the
+                         old full-width layout). Read-only by design
+                         (Spec §5.2). */}
+                     {hasParent &&
+                        requestDetails?.parent?.children &&
+                        requestDetails.parent.children.length > 1 && (
+                           <DetailSection title="Sibling sub-requests">
+                              <div className="p-3 space-y-2">
+                                 {requestDetails.parent.children
+                                    .filter((sib) => sib.id !== requestDetails.id)
+                                    .map((sib) => {
+                                       const sibDept = resolveDepartmentName(sib, departments);
+                                       return (
+                                          <div
+                                             key={sib.id}
+                                             className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg"
+                                             style={{
+                                                background:
+                                                   'var(--surface-low, rgba(15,37,82,0.04))',
+                                                border:
+                                                   '1px solid var(--border-default, rgba(15,37,82,0.08))',
+                                             }}
+                                          >
+                                             <span className="text-sm text-[#0F2552] dark:text-white/85 truncate">
+                                                {sibDept}
+                                             </span>
+                                             <StatusChip
+                                                status={sib.requestStatus || ''}
+                                                size="sm"
+                                             />
+                                          </div>
+                                       );
+                                    })}
+                              </div>
+                           </DetailSection>
+                        )}
                   </div>
                </div>
+               {/* End of right rail ─────────────────────────────────────── */}
             </div>
+            {/* End of two-column main layout ─────────────────────────── */}
 
             {/* Decline-reason modal — captures the optional `reason`
                 body the API accepts on the decline endpoint (Phase 3).
