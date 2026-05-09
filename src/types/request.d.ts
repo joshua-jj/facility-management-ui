@@ -147,6 +147,12 @@ export interface RequestAudit {
     }>;
   }>;
   assigneeName?: string;
+  // The assignee's user id. Surfaced so the UI can decide who actually
+  // sees Release/Return — only the assignee, not whoever happens to
+  // hold `requests:release` (e.g. SAs through manage). Returned by the
+  // detail endpoint as `audit.assignee` (bigint, may serialise as
+  // string from pg — coerce when comparing).
+  assignee?: number | string | null;
   collectedDate?: string;
   completedDate?: string;
   // Approval audit — Phase 3 multi-dept-requests. Populated on a child
