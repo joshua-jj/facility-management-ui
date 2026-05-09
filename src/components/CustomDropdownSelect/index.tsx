@@ -48,7 +48,12 @@ export default function CustomDropdownSelect({
          </button>
 
          {isOpen && (
-            <div className="absolute z-10 mt-2 w-full bg-white dark:bg-[#1a1a2e] border border-gray-300 dark:border-white/15 rounded shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] max-h-72 overflow-hidden">
+            // High z-index so we float above siblings (sticky panels,
+            // adjacent cards). Solid bg in both modes — earlier the
+            // option text used `dark:text-white/75` which read as faded
+            // when the panel sat partly behind a translucent ancestor
+            // card. Pinning to `white/95` + a deeper navy bg fixes it.
+            <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[#0F1A33] border border-gray-300 dark:border-white/20 rounded shadow-lg dark:shadow-[0_8px_28px_rgba(0,0,0,0.55)] max-h-72 overflow-hidden">
                {!noSearch && (
                   <div className="p-2 border-b border-gray-200 dark:border-white/10">
                      <div className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-md">
@@ -58,7 +63,7 @@ export default function CustomDropdownSelect({
                            placeholder="Search..."
                            value={search}
                            onChange={(e) => setSearch(e.target.value)}
-                           className="w-full bg-transparent outline-none text-sm text-[#0F2552] dark:text-white/85 placeholder:text-gray-400 dark:placeholder:text-white/25"
+                           className="w-full bg-transparent outline-none text-sm text-[#0F2552] dark:text-white/95 placeholder:text-gray-400 dark:placeholder:text-white/30"
                         />
                      </div>
                   </div>
@@ -73,9 +78,9 @@ export default function CustomDropdownSelect({
                               setIsOpen(false);
                               setSearch('');
                            }}
-                           className={`cursor-pointer capitalize text-xs px-4 py-2 text-[#0F2552] dark:text-white/75 hover:bg-[#B28309]/10 dark:hover:bg-[#B28309]/15 ${
+                           className={`cursor-pointer capitalize text-xs px-4 py-2 text-[#0F2552] dark:text-white/95 hover:bg-[#B28309]/10 dark:hover:bg-[#B28309]/20 ${
                               option.value === value
-                                 ? 'bg-[#B28309]/5 dark:bg-[#B28309]/10 font-semibold'
+                                 ? 'bg-[#B28309]/10 dark:bg-[#B28309]/20 font-semibold'
                                  : ''
                            } flex items-center justify-between transition-colors`}
                         >
@@ -83,7 +88,7 @@ export default function CustomDropdownSelect({
                         </li>
                      ))
                   ) : (
-                     <li className="px-4 py-2 text-sm text-gray-500 dark:text-white/30">No results found</li>
+                     <li className="px-4 py-2 text-sm text-gray-500 dark:text-white/40">No results found</li>
                   )}
                </ul>
             </div>
