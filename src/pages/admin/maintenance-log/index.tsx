@@ -13,8 +13,8 @@ import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
-import { RoleId } from '@/constants/roles.constant';
 import { usePermissions } from '@/hooks/usePermissions';
+import { usePermission } from '@/hooks/usePermission';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { CurrencyDisplay, PhoneDisplay } from '@/components/FormatValue';
 import { exportToCsv } from '@/utilities/exportCsv';
@@ -78,12 +78,19 @@ const filters: FilterDef[] = [
 
 const MaintenanceLogs = () => {
    const dispatch = useDispatch();
-   const { isBackOffice, isHod, isMember, isFacilityTeam, isAuthor } =
-      usePermissions();
+   // Identity helpers (department membership, row-author) only.
+   // Capability comes from the permission service.
+   const { isFacilityTeam, isAuthor } = usePermissions();
+   const { can } = usePermission();
+   const canWriteLogs = can('maintenance-logs:write');
+   const canManageLogs = can('maintenance-logs:manage');
    // Per spec, HODs of other departments are read-only on maintenance
-   // logs — but the Facility HOD owns the maintenance workflow and must
-   // be able to create logs. Treat them as an exception.
-   const canCreateMaintenance = !isHod || isFacilityTeam;
+   // logs — but the Facility HOD owns the workflow and must be able to
+   // create. Capability + dept context: write requires the cap, AND
+   // the user must either be back-office (manage) or actually on the
+   // Facility team. Non-Facility HODs hold `:write` via the seeder so
+   // they can edit their own logs, but creation is still gated.
+   const canCreateMaintenance = canWriteLogs && (canManageLogs || isFacilityTeam);
    const router = useRouter();
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
@@ -201,15 +208,17 @@ const MaintenanceLogs = () => {
             onClick: () => router.push(`/admin/maintenance-log/${row.id}`),
          },
       ];
-      // Per spec: SUPER_ADMIN / ADMIN can always edit. MEMBER can only edit
-      // logs they created. HOD is strictly view-only.
-      // SUPER_ADMIN / ADMIN (isBackOffice) and Facility HOD have blanket
-      // edit authority; MEMBER may edit only logs they created.
-      const isFacilityHod = isHod && isFacilityTeam;
+      // Edit authority:
+      //  - back-office (`maintenance-logs:manage`)  -> any row
+      //  - Facility team holding write              -> any row in their dept
+      //  - any other writer holding it              -> only rows they created
+      // The capability says "you can write maintenance logs"; the
+      // identity helpers (dept membership, row author) narrow which
+      // rows. This kept the OR-of-hats fix simple — no role-id branches.
       const canEdit =
-         isBackOffice ||
-         isFacilityHod ||
-         (isMember && isAuthor(row as unknown as { createdBy?: string }));
+         canManageLogs ||
+         (canWriteLogs && isFacilityTeam) ||
+         (canWriteLogs && isAuthor(row as unknown as { createdBy?: string }));
       if (canEdit) {
          actions.push({
             label: 'Edit',
@@ -277,7 +286,7 @@ const MaintenanceLogs = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER]}>
+      <PrivateRoute permissions={['maintenance-logs:read']}>
          <Layout title="Maintenance Logs">
             <PageHeader
                action={

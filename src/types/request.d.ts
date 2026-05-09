@@ -192,6 +192,9 @@ export interface Request {
   //   summary used by the UI to render the "Part of Request #PARENT_ID"
   //   banner — see Multi-Department Requests Spec §5.2).
   parentId?: number | null;
+  // Listing-only field — derived from `parentId` server-side. Drives the
+  // "Type" column on the requests table.
+  requestType?: 'MAIN' | 'SUB';
   fulfillingDepartmentId?: number | null;
   fulfillingDepartmentName?: string | null;
   children?: Request[];

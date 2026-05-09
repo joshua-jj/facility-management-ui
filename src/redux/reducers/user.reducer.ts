@@ -38,6 +38,7 @@ const userDetails = (
     roleIds: [],
     role: '',
     roleId: 0,
+    permissions: [],
     departmentId: 0,
     id: 0,
   },
@@ -57,7 +58,13 @@ const userDetails = (
         (typeof incoming.roleId === 'number' && incoming.roleId > 0
           ? [incoming.roleId]
           : []);
-      return { ...state, ...incoming, roleIds };
+      // Permissions land as a flat `subject:action` array from the
+      // server. Default to [] for safety so hooks reading this never
+      // see undefined and accidentally render "everything visible".
+      const permissions = Array.isArray(incoming.permissions)
+        ? incoming.permissions
+        : [];
+      return { ...state, ...incoming, roleIds, permissions };
     }
     default:
       return state;

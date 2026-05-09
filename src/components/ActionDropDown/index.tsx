@@ -2,8 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { DotsIcon } from '../Icons';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/reducers';
+import { usePermission } from '@/hooks/usePermission';
 
 type Props = {
   // row: object;
@@ -24,8 +23,10 @@ type DropdownPosition = {
 };
 
 const ActionDropDown = (props: Props) => {
-  // console.log('🚀 ~ ActionDropDown ~ props:', props);
-  const { userDetails } = useSelector((s: RootState) => s.user);
+  // The "open" entry is for editing the row's items in place — only
+  // make sense for users who can write to the items module.
+  const { can } = usePermission();
+  const canWriteItems = can('items:write');
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [position, setPosition] = useState<DropdownPosition>({ right: 0 });
@@ -77,7 +78,7 @@ const ActionDropDown = (props: Props) => {
       }}
       className="z-[9999] bg-white py-1 shadow-[16px_0px_32px_0px_rgba(150,150,150,0.15)] border-[0.5px] border-[rgba(15,37,82,0.15)] min-w-[120px] rounded animate-dropdown-enter"
     >
-      {props.items && userDetails?.roleId !== 3 && (
+      {props.items && canWriteItems && (
         <li
           onClick={() => {
             props.handleOpen?.();

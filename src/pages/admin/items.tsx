@@ -15,7 +15,6 @@ import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { RootState } from '@/redux/reducers';
 import { appActions, departmentActions, itemActions, storeActions } from '@/actions';
 import { Item } from '@/types';
-import { RoleId, RoleIdValue } from '@/constants/roles.constant';
 import { useDebounce } from '@/hooks/useDebounce';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
@@ -23,7 +22,7 @@ import { getObjectFromStorage } from '@/utilities/helpers';
 import { NumberDisplay } from '@/components/FormatValue';
 import { authConstants, itemConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermission } from '@/hooks/usePermission';
 import axios from 'axios';
 import { format, parseISO } from 'date-fns';
 
@@ -31,12 +30,15 @@ const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" st
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>;
 
-const DEPARTMENT_SCOPED_ROLES: RoleIdValue[] = [RoleId.HOD, RoleId.MEMBER];
-
 const Items = () => {
    const router = useRouter();
    const dispatch = useDispatch();
-   const { isBackOffice } = usePermissions();
+   // Capability gates. `items:write` covers add/edit; `items:delete`
+   // covers row deletion. `items:manage` (which SA / ADMIN hold)
+   // implicitly satisfies both via expandPermissions.
+   const { can } = usePermission();
+   const canWriteItems = can('items:write');
+   const canDeleteItems = can('items:delete');
 
    const [showAddModal, setShowAddModal] = useState(false);
    const [editItemData, setEditItemData] = useState<Item | null>(null);
@@ -52,21 +54,14 @@ const Items = () => {
    const { allStoresList } = useSelector((s: RootState) => s.store);
 
    const { meta } = pagination;
-   // OR-over-roles. A multi-role user (e.g. SA who is also HOD of a
-   // dept) gets the unrestricted view: SA / ADMIN beats any dept-scoped
-   // role. Reading the deprecated singular `roleId` would only see
-   // whichever role landed at index 0 (often MEMBER, auto-merged onto
-   // every user) and silently dept-scope the page for back-office.
-   const userRoleIds: RoleIdValue[] = (userDetails?.roleIds ??
-      (typeof userDetails?.roleId === 'number' && userDetails.roleId > 0
-         ? [userDetails.roleId]
-         : [])) as RoleIdValue[];
-   const hasUnrestrictedRole = userRoleIds.some(
-      (r) => r === RoleId.SUPER_ADMIN || r === RoleId.ADMIN,
-   );
-   const isDepartmentScoped =
-      !hasUnrestrictedRole &&
-      userRoleIds.some((r) => DEPARTMENT_SCOPED_ROLES.includes(r));
+   // Department-scoped iff the user CAN'T manage items globally.
+   // `items:manage` is the back-office cap (SA / ADMIN) — without it,
+   // we hit the per-department endpoint so HOD / Member only see
+   // their department's stock. Capability tells us "are you back-
+   // office?"; the route filter is a data-shape decision, not a
+   // capability check.
+   const canManageItems = can('items:manage');
+   const isDepartmentScoped = !canManageItems;
 
    // ── Fetch filter list data on mount ──
 
@@ -303,26 +298,27 @@ const Items = () => {
                onClick: () => handleView(row),
             },
          ];
-         // Per spec: only SUPER_ADMIN and ADMIN can edit or delete items.
-         // HOD is view-only (list already filtered to their dept server-side).
-         if (isBackOffice) {
-            actions.push(
-               {
-                  label: 'Edit',
-                  icon: EDIT_ICON,
-                  onClick: () => handleEdit(row),
-               },
-               {
-                  label: 'Delete',
-                  icon: DELETE_ICON,
-                  onClick: () => handleDelete(row),
-                  variant: 'danger',
-               },
-            );
+         // Per spec: only users with items:write can edit; items:delete
+         // gates removal. HOD is view-only by default — list is already
+         // filtered to their dept server-side.
+         if (canWriteItems) {
+            actions.push({
+               label: 'Edit',
+               icon: EDIT_ICON,
+               onClick: () => handleEdit(row),
+            });
+         }
+         if (canDeleteItems) {
+            actions.push({
+               label: 'Delete',
+               icon: DELETE_ICON,
+               onClick: () => handleDelete(row),
+               variant: 'danger',
+            });
          }
          return actions;
       },
-      [handleView, handleEdit, handleDelete, isBackOffice],
+      [handleView, handleEdit, handleDelete, canWriteItems, canDeleteItems],
    );
 
    // ── Columns ──
@@ -412,11 +408,11 @@ const Items = () => {
    // ── Render ──
 
    return (
-      <PrivateRoute>
+      <PrivateRoute permissions={['items:read']}>
          <Layout title="Items">
             <PageHeader
                action={
-                  isBackOffice ? (
+                  canWriteItems ? (
                   <ActionButton
                      variant="primary"
                      onClick={() => setShowAddModal(true)}

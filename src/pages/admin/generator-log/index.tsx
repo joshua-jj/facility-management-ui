@@ -13,8 +13,8 @@ import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
-import { RoleId } from '@/constants/roles.constant';
 import { usePermissions } from '@/hooks/usePermissions';
+import { usePermission } from '@/hooks/usePermission';
 import { exportToXlsx } from '@/utilities/exportXlsx';
 import ExportModal from '@/components/ExportModal';
 import { generatorConstants } from '@/constants';
@@ -53,12 +53,12 @@ const VIEW_ICON = (
 const GeneratorLogs = () => {
    const dispatch = useDispatch();
    const router = useRouter();
-   const { isBackOffice, isHod, isMember, isFacilityTeam, isAuthor } =
-      usePermissions();
-   // SUPER_ADMIN / ADMIN (back-office) and Facility HOD have blanket edit
-   // authority on any log (per spec extension); MEMBERs can still only
-   // edit logs they created.
-   const isFacilityHod = isHod && isFacilityTeam;
+   // Identity helpers (department membership, row-author) only;
+   // capability comes from the permission service.
+   const { isFacilityTeam, isAuthor } = usePermissions();
+   const { can } = usePermission();
+   const canWriteLogs = can('generator-logs:write');
+   const canManageLogs = can('generator-logs:manage');
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
    const [editData, setEditData] = useState<GeneratorLog | null>(null);
@@ -239,12 +239,14 @@ const GeneratorLogs = () => {
             onClick: () => router.push(`/admin/generator-log/${row.id}`),
          },
       ];
-      // SUPER_ADMIN / ADMIN and Facility HOD have blanket edit authority;
-      // MEMBER may edit only logs they created.
+      // Edit authority:
+      //  - back-office (`generator-logs:manage`)        -> any row
+      //  - Facility team holding write                  -> any row
+      //  - any other writer holding it                  -> only rows they made
       const canEdit =
-         isBackOffice ||
-         isFacilityHod ||
-         (isMember && isAuthor(row as unknown as { createdBy?: string }));
+         canManageLogs ||
+         (canWriteLogs && isFacilityTeam) ||
+         (canWriteLogs && isAuthor(row as unknown as { createdBy?: string }));
       if (canEdit) {
          actions.push({
             label: 'Edit',
@@ -385,7 +387,7 @@ const GeneratorLogs = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER]}>
+      <PrivateRoute permissions={['generator-logs:read']}>
          <Layout title="Generator Logs">
             <PageHeader
                action={
