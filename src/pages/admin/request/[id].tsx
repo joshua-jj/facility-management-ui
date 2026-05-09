@@ -1190,10 +1190,16 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
             )}
 
             {/* ── Requested Items ─────────────────────────────────────────────────────── */}
-            {/* Hide the items table for parent rows — items live under
-                each child instead. Children and flat rows still render
-                this section as today. */}
-            {!hasChildren && (
+            {/* Show whenever there are items to render. Pre-assignment a
+                multi-dept parent has `audit.items = []` (items live on each
+                child via the Sub-requests cards above) so the section
+                stays hidden. At assignment time the API aggregates the
+                approved children's items onto the parent's audit so the
+                assignee has a single bundle to release / return — gating
+                on `audit.items.length` lets the same section serve both
+                flat rows and post-assignment parents without a separate
+                code path. */}
+            {(requestDetails?.audit?.items?.length ?? 0) > 0 && (
             <DetailSection title="Requested Items">
                {/* Card-based layout for MEMBER action states */}
                {(isMemberAssigned || isMemberCollected) ? (
