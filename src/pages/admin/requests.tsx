@@ -287,6 +287,36 @@ const Requests = () => {
          ),
       },
       {
+         key: 'requestType',
+         header: 'Type',
+         width: '7%',
+         align: 'center',
+         render: (_value: unknown, row: Request) => {
+            const isSub = (row.requestType ?? (row.parentId ? 'SUB' : 'MAIN')) === 'SUB';
+            // Sub is the exception that needs eye-tracking — solid gold.
+            // Main is the common case, so it stays quiet: outline-only,
+            // theme-token colours so it reads cleanly in both modes
+            // without the heavy navy block visually shouting on every row.
+            return (
+               <span
+                  className="inline-flex items-center justify-center rounded-md text-[0.65rem] font-bold uppercase tracking-wide px-2 py-0.5"
+                  style={
+                     isSub
+                        ? { background: '#B28309', color: '#fff' }
+                        : {
+                             background: 'transparent',
+                             color: 'var(--text-secondary)',
+                             border: '1px solid var(--border-strong)',
+                          }
+                  }
+                  title={isSub ? 'Sub-request — see detail page for parent context' : 'Main request'}
+               >
+                  {isSub ? 'Sub' : 'Main'}
+               </span>
+            );
+         },
+      },
+      {
          key: 'requestStatus',
          header: 'Status',
          width: '14%',
