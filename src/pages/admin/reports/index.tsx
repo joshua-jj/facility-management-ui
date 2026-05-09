@@ -13,8 +13,7 @@ import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { RoleId } from '@/constants/roles.constant';
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermission } from '@/hooks/usePermission';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
 import { getObjectFromStorage } from '@/utilities/helpers';
@@ -29,7 +28,10 @@ const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 const Reports = () => {
    const dispatch = useDispatch();
    const router = useRouter();
-   const { isBackOffice } = usePermissions();
+   const { can } = usePermission();
+   // Delete is gated on `complaints:manage` (back-office). The page
+   // visibility itself is `complaints:read`.
+   const canDeleteComplaints = can('complaints:manage');
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
@@ -191,8 +193,8 @@ const Reports = () => {
             onClick: () => router.push(`/admin/reports/${row.id}`),
          },
       ];
-      // Per spec: only SUPER_ADMIN / ADMIN may delete complaints.
-      if (isBackOffice) {
+      // Per spec: only back-office may delete complaints (`complaints:manage`).
+      if (canDeleteComplaints) {
          actions.push({
             label: 'Delete',
             icon: DELETE_ICON,
@@ -264,7 +266,7 @@ const Reports = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.MEMBER]}>
+      <PrivateRoute permissions={['complaints:read']}>
          <Layout title="Complaints">
             <PageHeader />
 

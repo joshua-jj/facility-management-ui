@@ -1,10 +1,8 @@
 import React, { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useSelector } from 'react-redux';
 import classNames from 'classnames';
-import { RootState } from '@/redux/reducers';
-import { RoleId, RoleIdValue } from '@/constants/roles.constant';
+import { usePermission } from '@/hooks/usePermission';
 
 export type SettingsPanelKey =
    | 'profile'
@@ -17,19 +15,13 @@ type PanelEntry = {
    label: string;
    href: string;
    description: string;
-   allowedRoles: readonly RoleIdValue[];
+   /**
+    * Permissions to admit the panel (OR semantics). Empty array means
+    * "every authenticated user" — used for Profile / Security which
+    * any logged-in user must be able to reach.
+    */
+   permissions: readonly string[];
 };
-
-const ALL_ROLES: RoleIdValue[] = [
-   RoleId.SUPER_ADMIN,
-   RoleId.ADMIN,
-   RoleId.OFFICE,
-   RoleId.HOD,
-   RoleId.MEMBER,
-   RoleId.USER,
-];
-
-const ADMIN_ONLY: RoleIdValue[] = [RoleId.SUPER_ADMIN, RoleId.ADMIN];
 
 const PANELS: PanelEntry[] = [
    {
@@ -37,28 +29,31 @@ const PANELS: PanelEntry[] = [
       label: 'Profile',
       href: '/admin/settings/profile',
       description: 'Your personal details',
-      allowedRoles: ALL_ROLES,
+      permissions: [],
    },
    {
       key: 'security',
       label: 'Security',
       href: '/admin/settings/security',
       description: 'Password and account hygiene',
-      allowedRoles: ALL_ROLES,
+      permissions: [],
    },
    {
       key: 'access',
       label: 'Roles & Permissions',
       href: '/admin/settings/access',
       description: 'Manage roles and permissions',
-      allowedRoles: ADMIN_ONLY,
+      // Anyone who can read roles AND users belongs here. Use the
+      // wider read on roles as the gate — managing roles is what this
+      // panel is for, and `roles:read` lines up with that.
+      permissions: ['roles:read'],
    },
    {
       key: 'audit-logs',
       label: 'Audit Logs',
       href: '/admin/settings/audit-logs',
       description: 'Who did what, when',
-      allowedRoles: ADMIN_ONLY,
+      permissions: ['audit-logs:read'],
    },
 ];
 
@@ -69,24 +64,23 @@ type Props = {
 
 const SettingsShell: React.FC<Props> = ({ active, children }) => {
    const router = useRouter();
-   const { userDetails } = useSelector((s: RootState) => s.user);
-   const roleId = userDetails?.roleId as RoleIdValue | undefined;
+   const { canAny } = usePermission();
 
-   const visiblePanels = PANELS.filter((p) =>
-      roleId !== undefined ? p.allowedRoles.includes(roleId) : false,
+   const visiblePanels = PANELS.filter(
+      (p) => p.permissions.length === 0 || canAny(p.permissions),
    );
 
-   // Defense-in-depth: if the user hit a URL whose panel they can't access,
-   // bounce them to Profile. The left-rail already hides it, but typed URLs
-   // shouldn't bypass gating.
+   // Defense-in-depth: if the user hit a URL whose panel they can't
+   // access, bounce them to Profile. The left-rail already hides it,
+   // but typed URLs shouldn't bypass gating.
    React.useEffect(() => {
       const activePanel = PANELS.find((p) => p.key === active);
       if (!activePanel) return;
-      if (roleId === undefined) return;
-      if (!activePanel.allowedRoles.includes(roleId)) {
+      if (activePanel.permissions.length === 0) return;
+      if (!canAny(activePanel.permissions)) {
          router.replace('/admin/settings/profile');
       }
-   }, [active, roleId, router]);
+   }, [active, canAny, router]);
 
    return (
       <div className="max-w-6xl mx-auto">

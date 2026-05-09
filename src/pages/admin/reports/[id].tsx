@@ -13,7 +13,11 @@ import PageHeader, { ActionButton } from '@/components/PageHeader';
 import { appActions, departmentActions } from '@/actions';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
+// RoleId still used for the user-list query that fetches MEMBER-role
+// users as candidate assignees — that's an identity lookup the API
+// speaks role-ids on, not a capability check.
 import { RoleId } from '@/constants/roles.constant';
+import { usePermission } from '@/hooks/usePermission';
 import { ComboBox } from '@/components/ui/combo-box';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
@@ -350,18 +354,21 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
       [allDepartmentsList],
    );
 
-   // Assignment privileges: Super Admin + Facility HOD (matched by Facility
-   // department's hodEmail primary, or roleId=HOD+dept=Facility as fallback).
+   // Assignment privileges. Capability says "you can assign / manage
+   // complaints"; the identity context (Facility-team membership +
+   // matched-by-email HOD) is preserved for non-back-office users
+   // because complaints are Facility-owned.
    const facilityHodEmail = facilityDepartment?.hodEmail;
-   const isSuperAdmin = userDetails?.roleId === RoleId.SUPER_ADMIN;
-   const isFacilityMember =
-      !!facilityDepartment && userDetails?.departmentId === facilityDepartment.id;
+   const { can } = usePermission();
+   // `complaints:manage` is the back-office cap (SA / ADMIN). Anyone
+   // who holds it can assign anywhere. Otherwise we still need the
+   // Facility HOD shape (matched by hodEmail) to assign within Facility.
+   const canManageComplaints = can('complaints:manage');
    const isFacilityHod =
-      (!!facilityHodEmail &&
-         !!userDetails?.email &&
-         userDetails.email.toLowerCase() === facilityHodEmail.toLowerCase()) ||
-      (isFacilityMember && userDetails?.roleId === RoleId.HOD);
-   const canAssign = isFacilityHod || isSuperAdmin;
+      !!facilityHodEmail &&
+      !!userDetails?.email &&
+      userDetails.email.toLowerCase() === facilityHodEmail.toLowerCase();
+   const canAssign = canManageComplaints || isFacilityHod;
 
    // Resolve privileges: ONLY the user to whom this complaint is currently
    // assigned can mark it resolved. Not HOD, not Super Admin, not other

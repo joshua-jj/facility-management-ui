@@ -2,8 +2,7 @@ import { dashboardActions } from '@/actions';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import Sparkline from '@/components/dashboard/Sparkline';
-import { RoleId } from '@/constants/roles.constant';
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermission } from '@/hooks/usePermission';
 import { RootState } from '@/redux/reducers';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/router';
@@ -92,20 +91,24 @@ const wowDelta = (
 const Analytics = () => {
    const dispatch = useDispatch();
    const router = useRouter();
-   const { isAnalyticsAccess } = usePermissions();
+   // Capability gate. Whoever has analytics:read sees this — granted to
+   // SA / ADMIN automatically; granted to specific HODs (Facility,
+   // Logistics) by the seeder. No more role-id branching.
+   const { can } = usePermission();
+   const canViewAnalytics = can('analytics:read');
    const [period, setPeriod] = useState<TrendPeriod>('month');
    const { dashboardAnalytics, IsFetchingDashboardStats } = useSelector(
       (s: RootState) => s.dashboard,
    );
 
-   // Spec gate: even though the route's allowedRoles is permissive, the
-   // page itself enforces analytics access. HOD of Facility / Logistics
-   // gets in via isAnalyticsAccess; other HODs (e.g., Sound) bounce.
+   // Spec gate: bounce users who don't hold analytics:read. SA / ADMIN
+   // hold it via the seeder; specific HODs (Facility, Logistics) get
+   // it explicitly. Other HODs (e.g., Sound) bounce.
    useEffect(() => {
-      if (isAnalyticsAccess === false) {
+      if (!canViewAnalytics) {
          router.replace('/admin/dashboard');
       }
-   }, [isAnalyticsAccess, router]);
+   }, [canViewAnalytics, router]);
 
    useEffect(() => {
       dispatch(
@@ -190,14 +193,12 @@ const Analytics = () => {
       [heatmap],
    );
 
-   if (isAnalyticsAccess === false) return null;
+   if (!canViewAnalytics) return null;
 
    const isLoading = IsFetchingDashboardStats && !dashboardAnalytics;
 
    return (
-      <PrivateRoute
-         allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD]}
-      >
+      <PrivateRoute permissions={['analytics:read']}>
          <Layout title="Analytics">
             <div className="max-w-7xl mx-auto space-y-5">
                {/* Header + period selector */}

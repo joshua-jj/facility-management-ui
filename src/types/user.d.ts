@@ -93,10 +93,22 @@ export interface UserDetail {
   id: number;
   lastName: string;
   phoneNumber: string;
-  /** Array of role names (the canonical shape post-many-to-many). */
+  /** Array of role names (the canonical shape post-many-to-many).
+   *  Display only — DO NOT gate on this. Use `permissions` instead. */
   roles?: string[];
-  /** Array of role ids the user holds. */
+  /** Array of role ids the user holds.
+   *  Display only — DO NOT gate on this. Use `permissions` instead. */
   roleIds?: number[];
+  /**
+   * Flat wire-format permission strings (`subject:action`) the user
+   * holds via the union of their roles. Computed server-side and
+   * shipped on every login + `/authentication/me` response. This is the
+   * canonical capability surface — UI gates read this, not roleId.
+   *
+   * `subject:manage` implies every action on that subject (handled by
+   * `permissionService.has` on the way out).
+   */
+  permissions?: string[];
   /** @deprecated transitional — first role id only. Remove after the
    *  API drops the deprecated `roleId` field from the signin response. */
   roleId?: number;

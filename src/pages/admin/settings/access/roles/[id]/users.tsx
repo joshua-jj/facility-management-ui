@@ -12,7 +12,6 @@ import { departmentActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { Users } from '@/types/user';
 import PrivateRoute from '@/components/PrivateRoute';
-import { ADMIN_ROLES } from '@/constants/roles.constant';
 import { useRouter } from 'next/router';
 import { exportToXlsx } from '@/utilities/exportXlsx';
 
@@ -206,7 +205,7 @@ const RoleUsers = () => {
    ];
 
    return (
-      <PrivateRoute allowedRoles={ADMIN_ROLES}>
+      <PrivateRoute permissions={['roles:read']}>
          <Layout title="Role Users">
             <PageHeader
                title="Users in Role"

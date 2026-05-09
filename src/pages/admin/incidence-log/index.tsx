@@ -16,8 +16,8 @@ import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddIncidenceLog from '@/components/Modals/AddIncidenceLog';
 import ListStatsStrip from '@/components/ListStatsStrip';
-import { RoleId } from '@/constants/roles.constant';
 import { usePermissions } from '@/hooks/usePermissions';
+import { usePermission } from '@/hooks/usePermission';
 import { incidenceLogConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 
@@ -64,12 +64,18 @@ const IncidenceLogsPage = () => {
       (s: RootState) => s.incidenceLog,
    );
    const { meta } = pagination;
-   const { isBackOffice, isMember, isHod, isFacilityTeam, userId } =
-      usePermissions();
-   // HODs of other departments are read-only on incidence logs, but the
-   // Facility HOD owns the incident-response workflow and must be able
-   // to file a report.
-   const canFileIncidence = !isHod || isFacilityTeam;
+   // Identity helpers: department membership, current user id (for
+   // row-author / row-reporter checks). Capability comes from the
+   // permission service.
+   const { isFacilityTeam, userId } = usePermissions();
+   const { can } = usePermission();
+   const canWriteIncidence = can('incidence-logs:write');
+   const canManageIncidence = can('incidence-logs:manage');
+   // Filing requires write capability + Facility membership (or
+   // back-office's `:manage`). Mirrors the maintenance / generator log
+   // pattern — the dept gate is identity, the verb is capability.
+   const canFileIncidence =
+      canWriteIncidence && (canManageIncidence || isFacilityTeam);
 
    // Per spec: only the member who FILED the report may edit it.
    const isReporter = (row: IncidenceLog) =>
@@ -129,11 +135,14 @@ const IncidenceLogsPage = () => {
             onClick: () => router.push(`/admin/incidence-log/${row.id}`),
          },
       ];
-      // SUPER_ADMIN and Facility HOD have blanket edit authority; MEMBERs
-      // may edit only reports they filed. Other HODs stay view-only.
-      const isFacilityHod = isHod && isFacilityTeam;
+      // Edit authority:
+      //  - back-office (`incidence-logs:manage`)        -> any row
+      //  - Facility team holding write                  -> any row
+      //  - any other writer holding write               -> only own reports
       const canEdit =
-         isBackOffice || isFacilityHod || (isMember && isReporter(row));
+         canManageIncidence ||
+         (canWriteIncidence && isFacilityTeam) ||
+         (canWriteIncidence && isReporter(row));
       if (canEdit) {
          actions.push({
             label: 'Edit',
@@ -141,8 +150,8 @@ const IncidenceLogsPage = () => {
             onClick: () => openEdit(row),
          });
       }
-      // Delete is reserved for SUPER_ADMIN / ADMIN.
-      if (isBackOffice) {
+      // Delete is reserved for back-office (`:manage`).
+      if (canManageIncidence) {
          actions.push({
             label: 'Delete',
             icon: DEACTIVATE_ICON,
@@ -150,8 +159,6 @@ const IncidenceLogsPage = () => {
             variant: 'danger',
          });
       }
-      // Silence lint for unused flag; kept for readability.
-      void isHod;
       return actions;
    };
 
@@ -234,7 +241,7 @@ const IncidenceLogsPage = () => {
    ).size;
 
    return (
-      <PrivateRoute allowedRoles={[RoleId.SUPER_ADMIN, RoleId.ADMIN, RoleId.HOD, RoleId.MEMBER]}>
+      <PrivateRoute permissions={['incidence-logs:read']}>
          <Layout title="Incidence Logs">
             <PageHeader
                action={
