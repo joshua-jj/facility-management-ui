@@ -8,6 +8,8 @@ export const RBAC_MODULES = [
    { slug: 'meeting-locations', label: 'Meeting Locations' },
    { slug: 'maintenance-logs', label: 'Maintenance Logs' },
    { slug: 'generator-logs', label: 'Generator Logs' },
+   { slug: 'incidence-logs', label: 'Incidence Logs' },
+   { slug: 'analytics', label: 'Analytics' },
    { slug: 'reports', label: 'Reports' },
    { slug: 'users', label: 'User Management' },
    { slug: 'roles', label: 'Roles & Permissions' },
