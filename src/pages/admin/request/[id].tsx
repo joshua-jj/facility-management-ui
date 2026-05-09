@@ -60,6 +60,11 @@ interface RequestDetailsAudit {
       }>;
    }>;
    assigneeName: string;
+   // The assignee's user id. Lets the UI gate Release / Return on the
+   // viewer actually being the assignee — capability alone (SAs hold
+   // `requests:release` via manage) was painting the form on every
+   // assigned request, not just the assignee's own.
+   assignee?: number | string | null;
    assigner?: string | null;
    dateAssigned?: string | null;
    collectedDate: string;
@@ -799,13 +804,24 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const showReleasedQty = requestDetails?.requestStatus === 'Collected' || requestDetails?.requestStatus === 'Completed';
    const showReturnedQty = requestDetails?.requestStatus === 'Completed';
    // "Assignee shape" — the user can release/return on a request and
-   // the request is at the right status for that step. Capability-based,
-   // so an SA who is also an assignee gets the right form. The previous
-   // `roleId === MEMBER` check missed back-office-and-also-assignee.
+   // the request is at the right status for that step. Three conditions
+   // must hold: the viewer holds the capability, the row is in the
+   // matching workflow step, AND the viewer IS the assignee. The
+   // capability alone wasn't enough — SAs hold `requests:release` via
+   // `requests:manage`, so without the identity check they were getting
+   // the Release Items form on every assigned main, not just their own.
+   const viewerIsAssignee =
+      requestDetails?.audit?.assignee != null &&
+      userDetails?.id != null &&
+      Number(requestDetails.audit.assignee) === Number(userDetails.id);
    const isAssigneeOnAssignedRow =
-      canReleaseRequest && requestDetails?.requestStatus === 'Assigned';
+      canReleaseRequest &&
+      requestDetails?.requestStatus === 'Assigned' &&
+      viewerIsAssignee;
    const isAssigneeOnCollectedRow =
-      canReturnRequest && requestDetails?.requestStatus === 'Collected';
+      canReturnRequest &&
+      requestDetails?.requestStatus === 'Collected' &&
+      viewerIsAssignee;
    // Aliases preserved for the rest of the file's use sites — they
    // historically named the role; now they name the capability+state.
    const isMemberAssigned = isAssigneeOnAssignedRow;
@@ -898,11 +914,13 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    };
 
    // Assignment is enabled on Approved + Partially Approved (per spec
-   // §11 Phase 6 + §8). Capability gate replaces the old SA-only check
-   // — anyone with `requests:assign` can assign. Server is the source
-   // of truth on which rows accept assignment.
+   // §11 Phase 6 + §8) — and ONLY on parents / flat rows. Sub-requests
+   // are never assignable; the parent is the unit of work. The server
+   // returns 4xx for an attempt, but we should also hide the control
+   // so HODs aren't shown an option that throws on click.
    const canAssign =
       canAssignRequest &&
+      !hasParent &&
       (requestDetails?.requestStatus === 'Approved' ||
          requestDetails?.requestStatus === 'Partially Approved');
 
@@ -1552,7 +1570,15 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                         canActOnRow(requestDetails) ||
                         isMemberAssigned ||
                         isMemberCollected) && (
-                        <DetailSection title="Actions">
+                        // Custom card (not DetailSection) so the dropdown
+                        // popover isn't clipped by `overflow-hidden` —
+                        // CustomDropdownSelect renders its option list
+                        // absolutely-positioned and gets cut off inside
+                        // a clipped section.
+                        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm">
+                           <div className="px-5 py-4 border-b border-gray-100 dark:border-white/5">
+                              <h3 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">Actions</h3>
+                           </div>
                            <div className="p-4 space-y-3">
                               {canAssign && (
                                  <div>
@@ -1665,7 +1691,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                  ) : null}
                               </div>
                            </div>
-                        </DetailSection>
+                        </div>
                      )}
 
                      {/* Sibling sub-requests strip — child detail view
