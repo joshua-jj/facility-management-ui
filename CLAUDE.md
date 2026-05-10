@@ -69,6 +69,22 @@ Base URL is configured via `NEXT_PUBLIC_BASE_URL` environment variable.
 - Login success triggers token storage and cookie setting
 - Default password flow redirects to `/change-password` when `hasDefaultPassword` is true
 
+### Permissions
+
+The UI mirrors the API's `subject:action` capability model. Use
+`usePermission()` rather than checking role IDs:
+
+```tsx
+const { can, canAny, canAll } = usePermission();
+const canApprove = can('requests:approve');
+const canSeeAdminTools = canAny(['users:write', 'roles:write']);
+```
+
+- Route-level gating: declare `permissions: ['subject:action']` on the route in `src/navigation/pageRoutes.tsx`.
+- Component-level gating: wrap with `<RoleGuard permission={['...']}>` or branch inside the component on `can(...)`.
+- The `allowedRoles` prop on `PrivateRoute` and the `role` prop on `RoleGuard` are deprecated — present for legacy pages only. Prefer `permission` strings on new code.
+- Authoritative role-to-permission mapping: `docs/Roles and Permissions flow - Logistics App.md` (in repo root) + the API seeder at `facility-management-api/src/database/seeders/user-seeder/data/permissions.ts`.
+
 ### Form Handling
 
 Forms use Formsy-React for validation. The `TextInput` component in `src/components/Inputs/` wraps Formsy's withFormsy HOC.
