@@ -20,6 +20,7 @@ import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import SmallSelect from '@/components/CustomDropdownSelect/small';
 import { usePermission } from '@/hooks/usePermission';
+import { useRequestActions } from '@/hooks/useRequestActions';
 // RoleId still imported because the API exposes a `getUsersByRole(roleId)`
 // endpoint for identity lookups — that's not a capability check, it's
 // a "give me the candidate assignees" query and the API speaks role-ids.
@@ -113,17 +114,6 @@ type SelectedUnit = {
    serialNumber: string;
    condition: string;
 };
-
-// Approve / decline live in the row's status field as the human strings
-// "Submitted" or "Pending". v1 used "Pending"; v2 children come back as
-// "Submitted" until acted on. Treat both as actionable.
-const PENDING_HOD_STATUSES = new Set(['Submitted', 'Pending']);
-
-const isParentRow = (r?: RequestDetails | null) =>
-   !!r && Array.isArray(r.children) && r.children.length > 0;
-
-const isChildRow = (r?: RequestDetails | null) =>
-   !!r && !!r.parent;
 
 /**
  * Resolve a department id to a name using the loaded department list.
@@ -366,19 +356,27 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    } = useSelector((s: RootState) => s.request);
    const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-   // Capability gates resolved from the user's flat permission set.
    // Multi-role users (e.g. SA + HOD) get the union of every hat's
-   // permissions for free — kills the OR-of-hats class of bugs that
-   // hid approve/decline buttons from exactly the user who needed them.
+   // permissions for free via usePermission — kills the OR-of-hats
+   // class of bugs that hid approve/decline buttons from exactly the
+   // user who needed them.
    const { can } = usePermission();
-   const canApproveRequest = can('requests:approve');
-   const canAssignRequest = can('requests:assign');
-   const canReleaseRequest = can('requests:release');
-   const canReturnRequest = can('requests:return');
-   const canManageRequests = can('requests:manage');
 
    const [requestDetails, setRequestDetails] =
       useState<RequestDetails>(requestDetail);
+
+   // All gating ("who can do what on this row right now?") lives in
+   // useRequestActions — single source of truth, testable in isolation,
+   // and the natural seam if/when we cut over to a workflow-engine API.
+   const {
+      canAssignRequest,
+      hasParent,
+      hasChildren,
+      isMemberAssigned,
+      isMemberCollected,
+      canAssign,
+      canActOnRow,
+   } = useRequestActions({ requestDetails, userDetails, can });
    const [assignedUserId, setAssignedUserId] = useState('');
    const [status, setStatus] = useState(requestDetails?.requestStatus);
    const [items, setItems] = useState(requestDetails?.audit?.items || []);
@@ -763,30 +761,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
 
    const showReleasedQty = requestDetails?.requestStatus === 'Collected' || requestDetails?.requestStatus === 'Completed';
    const showReturnedQty = requestDetails?.requestStatus === 'Completed';
-   // "Assignee shape" — the user can release/return on a request and
-   // the request is at the right status for that step. Three conditions
-   // must hold: the viewer holds the capability, the row is in the
-   // matching workflow step, AND the viewer IS the assignee. The
-   // capability alone wasn't enough — SAs hold `requests:release` via
-   // `requests:manage`, so without the identity check they were getting
-   // the Release Items form on every assigned main, not just their own.
-   const viewerIsAssignee =
-      requestDetails?.audit?.assignee != null &&
-      userDetails?.id != null &&
-      Number(requestDetails.audit.assignee) === Number(userDetails.id);
-   const isAssigneeOnAssignedRow =
-      canReleaseRequest &&
-      requestDetails?.requestStatus === 'Assigned' &&
-      viewerIsAssignee;
-   const isAssigneeOnCollectedRow =
-      canReturnRequest &&
-      requestDetails?.requestStatus === 'Collected' &&
-      viewerIsAssignee;
-   // Aliases preserved for the rest of the file's use sites — they
-   // historically named the role; now they name the capability+state.
-   const isMemberAssigned = isAssigneeOnAssignedRow;
-   const isMemberCollected = isAssigneeOnCollectedRow;
-
    // Return flow forces full returns: seed selectedUnits with exactly the
    // units that were released, using their release-time conditions as defaults.
    // Prev wins so the assignee's condition edits aren't clobbered on re-render.
@@ -864,14 +838,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       return false;
    });
 
-   // ── Tree-shape derivations ──────────────────────────────────────────────
-   // Phase 6 — the detail endpoint can return a parent (with children),
-   // a child (with parent summary), or a flat row. Derive the shape once
-   // from `requestDetails` and use it to drive the JSX below. (A flat
-   // row is implicit: `!hasChildren && !hasParent`.)
-   const hasChildren = isParentRow(requestDetails);
-   const hasParent = isChildRow(requestDetails);
-
    // Deps list normalised so resolve calls don't crash when the list is
    // still loading. Cast through `unknown` because the department reducer
    // uses a slightly looser type.
@@ -879,45 +845,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       () => (allDepartmentsList ?? []) as unknown as Array<{ id: number; name?: string }>,
       [allDepartmentsList],
    );
-
-   // Capability + dept-context: can THIS user approve / decline THIS
-   // row? Capability says "you hold requests:approve"; the department
-   // check narrows to "and this row is your dept's". Back-office users
-   // (`requests:manage`) bypass the dept check — they can act anywhere.
-   const isHodOfRow = (row: RequestDetails | null | undefined): boolean => {
-      if (!row || !userDetails) return false;
-      if (!canApproveRequest) return false;
-      // Manage = back-office; act on any row regardless of department.
-      if (canManageRequests) return true;
-      // If the API didn't return a fulfilling department on this row,
-      // fall back to "this HOD owns whatever they're seeing" — Phase 3
-      // scoping already gated the data by department.
-      if (row.fulfillingDepartmentId == null) return true;
-      return userDetails.departmentId === row.fulfillingDepartmentId;
-   };
-
-   // Approve / decline visibility for the current viewer on a given row.
-   // Multi-department parent rows are auto-computed from their children
-   // (one sub-request per fulfilling dept) — acting on the parent directly
-   // would clobber settled children, so the panel hides for parents. The
-   // child cards each carry their own Approve / Decline buttons.
-   const canActOnRow = (row: RequestDetails | null | undefined): boolean => {
-      if (!row) return false;
-      if (!PENDING_HOD_STATUSES.has(row.requestStatus)) return false;
-      if ((row.children?.length ?? 0) > 0) return false;
-      return isHodOfRow(row);
-   };
-
-   // Assignment is enabled on Approved + Partially Approved (per spec
-   // §11 Phase 6 + §8) — and ONLY on parents / flat rows. Sub-requests
-   // are never assignable; the parent is the unit of work. The server
-   // returns 4xx for an attempt, but we should also hide the control
-   // so HODs aren't shown an option that throws on click.
-   const canAssign =
-      canAssignRequest &&
-      !hasParent &&
-      (requestDetails?.requestStatus === 'Approved' ||
-         requestDetails?.requestStatus === 'Partially Approved');
 
    // ── Shared styled input for qty fields ──────────────────────────────────
    const themedInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
