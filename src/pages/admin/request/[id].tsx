@@ -1,7 +1,7 @@
 import { GetServerSideProps, NextPage } from 'next';
 import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import Layout from '@/components/Layout';
-import { authConstants, itemConstants, requestConstants } from '@/constants';
+import { authConstants, requestConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/router';
@@ -469,46 +469,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    }, [router.isReady, router.query, router]);
 
 
-   const fetchItemUnits = async (itemId: number) => {
-      if (itemUnitsOptions[itemId]) return;
-
-      try {
-         const user = await getObjectFromStorage(authConstants.USER_KEY);
-         const resp = await axios.get(
-            `${itemConstants.ITEM_URI}/detail/${itemId}`,
-            {
-               headers: {
-                  Accept: 'application/json',
-                  Authorization: user?.token ? `Bearer ${user.token}` : '',
-               },
-            }
-         );
-
-         const itemData = resp.data?.data;
-         const trackingMode = itemData?.trackingMode || 'Quantity';
-         setItemTrackingModes((prev) => ({ ...prev, [itemId]: trackingMode }));
-
-         const units =
-            itemData?.itemUnits?.map(
-               (unit: {
-                  id: number;
-                  serialNumber: string;
-                  condition: string;
-                  store: { id: number };
-               }) => ({
-                  value: unit.id,
-                  label: unit.condition && unit.condition !== 'Not specified'
-                     ? `${unit.serialNumber} - ${unit.condition}`
-                     : unit.serialNumber,
-                  data: unit,
-               })
-            ) || [];
-
-         setItemUnitsOptions((prev) => ({ ...prev, [itemId]: units }));
-      } catch {
-         dispatch(appActions.setSnackBar({ type: 'error', message: 'Failed to load item units. Please try again.', variant: 'error' }) as unknown as UnknownAction);
-      }
-   };
 
    const fetchRequestDetails = useCallback(async () => {
       try {
@@ -844,15 +804,45 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       setSelectedUnits((prev) => ({ ...seed, ...prev }));
    }, [isMemberCollected, requestDetails?.audit?.items]);
 
-   // Pre-fetch item details (tracking mode + units) for all items when member needs to act
+   // Hydrate the unit picker from the request detail's embedded
+   // trackingMode + availableUnits. The API ships these inline so the
+   // assignee (a Member) doesn't need items:read to populate the form —
+   // see the API-side enrichment in request.service.ts:getRequest.
    useEffect(() => {
-      if ((isMemberAssigned || isMemberCollected) && requestDetails?.audit?.items) {
-         requestDetails.audit.items.forEach((item) => {
-            fetchItemUnits(item.itemId);
-         });
+      if (!requestDetails?.audit?.items?.length) return;
+      const trackingModes: Record<number, string> = {};
+      const unitsOptions: Record<number, UnitOption[]> = {};
+      for (const item of requestDetails.audit.items) {
+         const embeddedItem = item as unknown as {
+            itemId: number;
+            trackingMode?: string;
+            availableUnits?: {
+               id: number;
+               serialNumber: string;
+               condition: string;
+               store: { id: number } | null;
+            }[];
+         };
+         const itemId = Number(embeddedItem.itemId);
+         if (!Number.isFinite(itemId) || itemId <= 0) continue;
+         trackingModes[itemId] = embeddedItem.trackingMode ?? 'Quantity';
+         unitsOptions[itemId] = (embeddedItem.availableUnits ?? []).map((u) => ({
+            value: u.id,
+            label:
+               u.condition && u.condition !== 'Not specified'
+                  ? `${u.serialNumber} - ${u.condition}`
+                  : u.serialNumber,
+            data: {
+               id: u.id,
+               serialNumber: u.serialNumber,
+               condition: u.condition,
+               store: u.store ?? { id: 0 },
+            },
+         }));
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [isMemberAssigned, isMemberCollected, requestDetails?.audit?.items]);
+      setItemTrackingModes((prev) => ({ ...prev, ...trackingModes }));
+      setItemUnitsOptions((prev) => ({ ...prev, ...unitsOptions }));
+   }, [requestDetails?.audit?.items]);
 
    // Full-return policy: serialized items need units seeded from audit
    // (always true unless the release persisted zero units, which would be a
@@ -1325,7 +1315,6 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                                 data: opt.data,
                                              }))}
                                              placeholder="Select units to release"
-                                             onOpen={() => fetchItemUnits(item.itemId)}
                                              onChange={(selectedIds) => {
                                                 const fullUnits = (itemUnitsOptions[item.itemId] || [])
                                                    .filter((opt) => (selectedIds as string[]).includes(opt.data.serialNumber))
