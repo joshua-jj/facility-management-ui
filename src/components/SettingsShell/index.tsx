@@ -8,7 +8,8 @@ export type SettingsPanelKey =
    | 'profile'
    | 'security'
    | 'access'
-   | 'audit-logs';
+   | 'audit-logs'
+   | 'workflows';
 
 type PanelEntry = {
    key: SettingsPanelKey;
@@ -54,6 +55,15 @@ const PANELS: PanelEntry[] = [
       href: '/admin/settings/audit-logs',
       description: 'Who did what, when',
       permissions: ['audit-logs:read'],
+   },
+   {
+      key: 'workflows',
+      label: 'Workflows',
+      href: '/admin/settings/workflows',
+      description: 'Edit state-machine rules per subject',
+      // Workflows admin sits at the SUPER ADMIN tier — same gate as
+      // roles management. ADMIN doesn't hold it; SA does.
+      permissions: ['roles:manage'],
    },
 ];
 
