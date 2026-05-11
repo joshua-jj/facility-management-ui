@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
-import SettingsShell from '@/components/SettingsShell';
 import WorkflowEditor from '@/components/WorkflowEditor';
 import { RootState } from '@/redux/reducers';
 import { workflowActions } from '@/actions/workflow.actions';
@@ -81,37 +80,35 @@ const WorkflowDetailPage: FC = () => {
    };
 
    return (
-      <PrivateRoute>
+      <PrivateRoute permissions={['roles:manage']}>
          <Layout title={`Workflow: ${subject}`}>
-            <SettingsShell active="workflows">
-               <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                     <div>
-                        <Link
-                           href="/admin/settings/workflows"
-                           className="text-xs font-semibold text-[#B28309] hover:underline cursor-pointer"
-                        >
-                           ← Back to workflows
-                        </Link>
-                        <h2 className="text-lg font-bold text-[#0F2552] dark:text-white/90 mt-1">
-                           {detail?.definition.subject ?? subject}{' '}
-                           {detail && (
-                              <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-[#B28309]/15 text-[#B28309] ml-2 align-middle">
-                                 v{detail.definition.version}
-                              </span>
-                           )}
-                        </h2>
-                        {detail?.definition.description && (
-                           <p className="text-xs text-gray-400 dark:text-white/40 mt-1">
-                              {detail.definition.description}
-                           </p>
+            <div className="space-y-4 px-4 md:px-6 -mb-16">
+               <div className="flex items-center justify-between">
+                  <div>
+                     <Link
+                        href="/admin/settings/workflows"
+                        className="text-xs font-semibold text-[#B28309] hover:underline cursor-pointer"
+                     >
+                        ← Back to workflows
+                     </Link>
+                     <h2 className="text-lg font-bold text-[#0F2552] dark:text-white/90 mt-1">
+                        {detail?.definition.subject ?? subject}{' '}
+                        {detail && (
+                           <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-[#B28309]/15 text-[#B28309] ml-2 align-middle">
+                              v{detail.definition.version}
+                           </span>
                         )}
-                     </div>
+                     </h2>
+                     {detail?.definition.description && (
+                        <p className="text-xs text-gray-400 dark:text-white/40 mt-1">
+                           {detail.definition.description}
+                        </p>
+                     )}
                   </div>
-
-                  {renderBody()}
                </div>
-            </SettingsShell>
+
+               {renderBody()}
+            </div>
          </Layout>
       </PrivateRoute>
    );

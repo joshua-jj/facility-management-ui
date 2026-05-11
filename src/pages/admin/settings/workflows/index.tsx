@@ -1,14 +1,33 @@
 import React, { FC, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import TableSkeletonRow from '@/components/TableSkeletonRow';
+import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { RootState } from '@/redux/reducers';
 import { workflowActions } from '@/actions/workflow.actions';
 import { WorkflowSummary } from '@/types/workflow';
+
+// Match the inline SVG icons used by the other row-action menus across
+// the app (see `pages/admin/requests.tsx`).
+const EDIT_ICON = (
+   <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+   >
+      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+   </svg>
+);
 
 /**
  * Settings -> Workflows list view. Displays one row per seeded subject
@@ -64,6 +83,7 @@ const LetterAvatar: FC<{ name: string }> = ({ name }) => {
 };
 
 const WorkflowsList: FC = () => {
+   const router = useRouter();
    const dispatch = useDispatch();
    const workflows = useSelector((s: RootState) => s.workflow.list) as WorkflowSummary[];
    const loading = useSelector((s: RootState) => s.workflow.isLoadingList) as boolean;
@@ -77,7 +97,7 @@ const WorkflowsList: FC = () => {
    };
 
    return (
-      <PrivateRoute>
+      <PrivateRoute permissions={['roles:manage']}>
          <Layout title="Workflows">
             <SettingsShell active="workflows">
                <div className="space-y-6">
@@ -113,22 +133,22 @@ const WorkflowsList: FC = () => {
                         <table className="w-full">
                            <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                               <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-[#0F1A33]">
-                                 <th className="px-6 py-3 text-left font-semibold w-[35%] bg-inherit">
+                                 <th className="px-6 py-3 text-left font-semibold w-[32%] bg-inherit whitespace-nowrap">
                                     Subject
                                  </th>
-                                 <th className="px-6 py-3 text-left font-semibold w-[12%] bg-inherit">
+                                 <th className="px-6 py-3 text-left font-semibold w-[10%] bg-inherit whitespace-nowrap">
                                     Version
                                  </th>
-                                 <th className="px-6 py-3 text-left font-semibold w-[12%] bg-inherit">
+                                 <th className="px-6 py-3 text-left font-semibold w-[10%] bg-inherit whitespace-nowrap">
                                     States
                                  </th>
-                                 <th className="px-6 py-3 text-left font-semibold w-[14%] bg-inherit">
+                                 <th className="px-6 py-3 text-left font-semibold w-[12%] bg-inherit whitespace-nowrap">
                                     Transitions
                                  </th>
-                                 <th className="px-6 py-3 text-left font-semibold w-[15%] bg-inherit">
+                                 <th className="px-6 py-3 text-left font-semibold w-[22%] bg-inherit whitespace-nowrap">
                                     Last Updated
                                  </th>
-                                 <th className="px-6 py-3 text-right font-semibold w-[12%] bg-inherit">
+                                 <th className="px-6 py-3 text-right font-semibold w-[14%] bg-inherit whitespace-nowrap">
                                     Actions
                                  </th>
                               </tr>
@@ -185,16 +205,26 @@ const WorkflowsList: FC = () => {
                                        <td className="px-6 py-4 text-left align-middle text-sm text-[#0F2552] dark:text-white/80">
                                           {wf.transitionCount}
                                        </td>
-                                       <td className="px-6 py-4 text-left align-middle text-sm text-gray-500 dark:text-white/60">
+                                       <td className="px-6 py-4 text-left align-middle text-sm text-gray-500 dark:text-white/60 whitespace-nowrap">
                                           {formatDate(wf.updatedAt)}
                                        </td>
                                        <td className="px-6 py-4 text-right align-middle whitespace-nowrap">
-                                          <Link
-                                             href={`/admin/settings/workflows/${wf.subject}`}
-                                             className="text-xs font-semibold text-[#B28309] hover:underline cursor-pointer"
-                                          >
-                                             Edit →
-                                          </Link>
+                                          <div className="inline-flex justify-end">
+                                             <ActionMenu
+                                                items={
+                                                   [
+                                                      {
+                                                         label: 'Edit',
+                                                         icon: EDIT_ICON,
+                                                         onClick: () =>
+                                                            router.push(
+                                                               `/admin/settings/workflows/${wf.subject}`,
+                                                            ),
+                                                      },
+                                                   ] satisfies ActionMenuItem[]
+                                                }
+                                             />
+                                          </div>
                                        </td>
                                     </tr>
                                  ))}
