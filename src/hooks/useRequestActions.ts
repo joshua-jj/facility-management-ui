@@ -83,6 +83,23 @@ interface UseRequestActionsArgs {
     *  than imported, so the hook stays decoupled from the Redux store
     *  and is trivially testable with a stub. */
    can: (perm: string) => boolean;
+   /**
+    * Workflow Rules Module (Phase 3) — server's verdict on which
+    * actions the viewer can fire right now.
+    *
+    * When provided (non-null), the hook treats the server as
+    * canonical for every gate on the primary row. When `null`
+    * (the default), the hook falls back to local computation —
+    * keeping the pre-Phase-3 behavior intact whenever the engine
+    * verdict isn't loaded yet, the saga is in flight, or the
+    * environment isn't routing through the engine at all.
+    *
+    * Row-level (`canActOnRow(row)`) on a NON-primary row (a child
+    * card on a parent's tree view) always falls back to local
+    * computation because the server endpoint only returns actions
+    * for the queried entity.
+    */
+   serverActions?: ReadonlyArray<string> | null;
 }
 
 const isParentRow = (r?: RequestRow | null): boolean =>
@@ -94,6 +111,7 @@ export function useRequestActions({
    requestDetails,
    userDetails,
    can,
+   serverActions,
 }: UseRequestActionsArgs): RequestActions {
    return useMemo<RequestActions>(() => {
       const canApproveRequest = can('requests:approve');
@@ -110,12 +128,17 @@ export function useRequestActions({
          userDetails?.id != null &&
          Number(requestDetails.audit.assignee) === Number(userDetails.id);
 
-      const isAssigneeOnAssignedRow =
+      // ─── Local-computation branch (status quo) ───
+      // The gates below match the pre-Phase-3 behavior byte-for-byte
+      // when `serverActions` is null. The server-canonical branch
+      // overrides specific flags after the locals are computed.
+
+      const localIsAssigneeOnAssignedRow =
          canReleaseRequest &&
          requestDetails?.requestStatus === 'Assigned' &&
          viewerIsAssignee;
 
-      const isAssigneeOnCollectedRow =
+      const localIsAssigneeOnCollectedRow =
          canReturnRequest &&
          requestDetails?.requestStatus === 'Collected' &&
          viewerIsAssignee;
@@ -139,7 +162,9 @@ export function useRequestActions({
       // auto-computed from children — acting on them would clobber
       // settled siblings — so the gate is false for those rows. Each
       // child card carries its own Approve / Decline pair.
-      const canActOnRow = (row: RequestRow | null | undefined): boolean => {
+      const canActOnRowLocal = (
+         row: RequestRow | null | undefined,
+      ): boolean => {
          if (!row) return false;
          if (!PENDING_HOD_STATUSES.has(row.requestStatus)) return false;
          if ((row.children?.length ?? 0) > 0) return false;
@@ -151,11 +176,53 @@ export function useRequestActions({
       // server returns 4xx for an attempt on a sub-request, but we
       // also hide the control so the UI never offers an action that
       // throws on click.
-      const canAssign =
+      const localCanAssign =
          canAssignRequest &&
          !hasParent &&
          requestDetails != null &&
          ASSIGNABLE_PARENT_STATUSES.has(requestDetails.requestStatus);
+
+      // ─── Server-canonical branch (Phase 3) ───
+      // When the server has spoken, its verdict overrides local
+      // computation for every gate that targets the PRIMARY row.
+      // Row-level predicates on NON-primary rows (child cards in a
+      // parent's tree view) keep local computation — the server
+      // endpoint only returns actions for the queried entity.
+      //
+      // The fields below are byte-equivalent to the locals above
+      // whenever `serverActions === null` (the default), so callers
+      // that don't pass `serverActions` see exactly the pre-Phase-3
+      // behavior.
+      const hasServer = serverActions != null;
+      const serverCanAssign = hasServer && serverActions!.includes('assign');
+      const serverCanRelease = hasServer && serverActions!.includes('release');
+      const serverCanReturn = hasServer && serverActions!.includes('return');
+      const serverCanActOnPrimary =
+         hasServer &&
+         (serverActions!.includes('approve') ||
+            serverActions!.includes('decline'));
+
+      const isAssigneeOnAssignedRow = hasServer
+         ? serverCanRelease
+         : localIsAssigneeOnAssignedRow;
+
+      const isAssigneeOnCollectedRow = hasServer
+         ? serverCanReturn
+         : localIsAssigneeOnCollectedRow;
+
+      const canAssign = hasServer ? serverCanAssign : localCanAssign;
+
+      // `canActOnRow` accepts any row — primary or child. The server
+      // verdict only covers the primary row (the one whose id was
+      // queried). For child rows, fall back to local computation,
+      // which the existing rules already handle via `appliesTo:
+      // 'child'`.
+      const canActOnRow = (row: RequestRow | null | undefined): boolean => {
+         if (hasServer && row === requestDetails) {
+            return !!serverCanActOnPrimary;
+         }
+         return canActOnRowLocal(row);
+      };
 
       return {
          canApproveRequest,
@@ -174,5 +241,5 @@ export function useRequestActions({
          isHodOfRow,
          canActOnRow,
       };
-   }, [requestDetails, userDetails, can]);
+   }, [requestDetails, userDetails, can, serverActions]);
 }
