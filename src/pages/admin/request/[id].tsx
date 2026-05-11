@@ -353,6 +353,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       IsAssigningRequest,
       IsReleasingRequestItems,
       IsReturningRequestItems,
+      serverActions: serverActionRows,
    } = useSelector((s: RootState) => s.request);
    const { userDetails, roleUsersList } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
@@ -365,9 +366,20 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    const [requestDetails, setRequestDetails] =
       useState<RequestDetails>(requestDetail);
 
+   // Workflow Rules Module (Phase 3): the saga stores the engine's
+   // verdict as a `{ action, toState, transitionId }[]` array; the
+   // hook only needs the action keys.  `null` means "no verdict yet
+   // — fall back to local computation" (the unchanged status quo).
+   const serverActionKeys = useMemo(() => {
+      if (!serverActionRows) return null;
+      return serverActionRows.map((row: { action: string }) => row.action);
+   }, [serverActionRows]);
+
    // All gating ("who can do what on this row right now?") lives in
-   // useRequestActions — single source of truth, testable in isolation,
-   // and the natural seam if/when we cut over to a workflow-engine API.
+   // useRequestActions — single source of truth, testable in isolation.
+   // `serverActions` carries the engine's verdict when available; the
+   // hook falls back to local computation when it's null (e.g. before
+   // the saga returns, or in environments where the engine is off).
    const {
       canAssignRequest,
       hasParent,
@@ -376,7 +388,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       isMemberCollected,
       canAssign,
       canActOnRow,
-   } = useRequestActions({ requestDetails, userDetails, can });
+   } = useRequestActions({
+      requestDetails,
+      userDetails,
+      can,
+      serverActions: serverActionKeys,
+   });
    const [assignedUserId, setAssignedUserId] = useState('');
    const [status, setStatus] = useState(requestDetails?.requestStatus);
    const [items, setItems] = useState(requestDetails?.audit?.items || []);
@@ -482,6 +499,20 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
          );
          setRequestDetails(resp.data.data);
          setStatus(resp.data.data.requestStatus);
+         // Workflow Rules Module (Phase 3): refresh the engine's
+         // verdict alongside every detail refetch. The detail
+         // response already embeds `availableActions`, but the saga
+         // is the one that puts the array into Redux for the hook,
+         // so we still kick off the dedicated fetch. This is the
+         // post-mutation refresh path (approve / decline / assign /
+         // release / return all call fetchRequestDetails on success).
+         if (id != null) {
+            dispatch(
+               requestActions.getRequestActions({
+                  id: Number(id),
+               }) as unknown as UnknownAction,
+            );
+         }
       } catch {
          dispatch(appActions.setSnackBar({ type: 'error', message: 'Failed to refresh request details.', variant: 'error' }) as unknown as UnknownAction);
       }
@@ -662,6 +693,24 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
       // and we don't want to re-trigger from this effect.
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
+
+   // Workflow Rules Module (Phase 3): fetch the engine's verdict on
+   // available actions for this request. Runs on mount and whenever
+   // `id` changes (cross-route navigation). The SSR-fed detail
+   // response already embeds the same array under `availableActions`,
+   // but the redux saga is what stores it where the hook can read it,
+   // so the explicit dispatch is still load-bearing. Reset the
+   // server actions when the id changes so the hook falls back to
+   // local computation until the fresh fetch lands.
+   useEffect(() => {
+      if (id == null) return;
+      dispatch(requestActions.resetRequestActions() as unknown as UnknownAction);
+      dispatch(
+         requestActions.getRequestActions({
+            id: Number(id),
+         }) as unknown as UnknownAction,
+      );
+   }, [id, dispatch]);
 
    // The view page needs the department list to resolve
    // `fulfillingDepartmentId` -> name on each child sub-request card.
