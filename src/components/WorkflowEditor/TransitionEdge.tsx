@@ -22,6 +22,8 @@ type TransitionEdgeData = {
 
 const TransitionEdgeComponent: FC<EdgeProps> = ({
    id,
+   source,
+   target,
    sourceX,
    sourceY,
    targetX,
@@ -33,14 +35,44 @@ const TransitionEdgeComponent: FC<EdgeProps> = ({
    markerEnd,
 }) => {
    const edgeData = (data ?? {}) as TransitionEdgeData;
-   const [edgePath, labelX, labelY] = getBezierPath({
-      sourceX,
-      sourceY,
-      targetX,
-      targetY,
-      sourcePosition,
-      targetPosition,
-   });
+
+   /**
+    * Self-loop geometry: when source and target are the same node, the
+    * default bezier between right-source and top-target wraps tightly
+    * around the corner and the label sits on top of the state card.
+    * Replace the path with an explicit cubic that loops up and to the
+    * right of the node, then place the label at the curve's peak —
+    * well clear of the node bounds.
+    */
+   const isSelfLoop = source === target;
+   const LOOP_OUT = 90; // how far right/up the loop extends
+   let edgePath: string;
+   let labelX: number;
+   let labelY: number;
+
+   if (isSelfLoop) {
+      edgePath =
+         `M ${sourceX} ${sourceY} ` +
+         `C ${sourceX + LOOP_OUT} ${sourceY}, ` +
+         `${targetX + LOOP_OUT} ${targetY - LOOP_OUT}, ` +
+         `${targetX} ${targetY}`;
+      // Curve peak — roughly the bezier midpoint of the control polygon
+      // pushed out from the node so the label never collides with it.
+      labelX = (sourceX + targetX) / 2 + LOOP_OUT * 0.85;
+      labelY = (sourceY + targetY) / 2 - LOOP_OUT * 0.55;
+   } else {
+      const [path, lx, ly] = getBezierPath({
+         sourceX,
+         sourceY,
+         targetX,
+         targetY,
+         sourcePosition,
+         targetPosition,
+      });
+      edgePath = path;
+      labelX = lx;
+      labelY = ly;
+   }
 
    const stroke = selected ? '#B28309' : '#94a3b8';
    const strokeWidth = selected ? 2.5 : 1.5;

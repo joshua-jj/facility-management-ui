@@ -2,12 +2,14 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
    Background,
    BackgroundVariant,
+   Connection,
    Controls,
    Edge,
    EdgeMouseHandler,
    MarkerType,
    MiniMap,
    Node,
+   NodeChange,
    NodeMouseHandler,
    ReactFlow,
    ReactFlowProvider,
@@ -64,11 +66,14 @@ const buildNodes = (
    states: string[],
    transitions: WorkflowTransition[],
    selectedStateIndex: number | null,
+   nodePositions: Record<string, { x: number; y: number }>,
 ): Node[] =>
    states.map((name, i) => ({
       id: `state-${i}`,
       type: 'state',
-      position: positionFor(i),
+      // Prefer the dragged-and-dropped position if the user has moved
+      // this node; fall back to the static grid for new states.
+      position: nodePositions[name] ?? positionFor(i),
       data: {
          label: name,
          transitionCount: transitions.filter((t) => t.fromState === name).length,
@@ -86,10 +91,16 @@ const buildEdges = (
          const fromIdx = states.indexOf(t.fromState);
          const toIdx = states.indexOf(t.toState);
          if (fromIdx === -1 || toIdx === -1) return null;
+         // Self-loop: anchor source to the right handle (default) and
+         // target to the top handle so the bezier arcs over the node
+         // instead of collapsing through its center. Without this the
+         // label lands on top of the state and reads as overlap.
+         const isSelfLoop = fromIdx === toIdx;
          return {
             id: `t-${i}`,
             source: `state-${fromIdx}`,
             target: `state-${toIdx}`,
+            ...(isSelfLoop ? { targetHandle: 'target-top' } : {}),
             type: 'transition',
             data: {
                action: t.action,
@@ -122,6 +133,13 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
    const [validationError, setValidationError] = useState<string | null>(null);
    const [confirmOpen, setConfirmOpen] = useState(false);
 
+   // Per-state position overrides applied when the user drags a node.
+   // Keyed by state name so that renaming a state migrates the position
+   // along with the identity. Cleared on Discard via the `baseline` effect.
+   const [nodePositions, setNodePositions] = useState<
+      Record<string, { x: number; y: number }>
+   >({});
+
    // Snapshot of the loaded data — used to detect "dirty" state and to
    // power Discard.
    const baseline = useMemo(
@@ -137,6 +155,7 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
       setTransitions(baseline.transitions);
       setSelectedStateIndex(null);
       setSelectedTransitionIndex(null);
+      setNodePositions({});
    }, [baseline]);
 
    const isDirty = useMemo(() => {
@@ -158,8 +177,8 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
    }, [states, transitions, baseline]);
 
    const nodes = useMemo(
-      () => buildNodes(states, transitions, selectedStateIndex),
-      [states, transitions, selectedStateIndex],
+      () => buildNodes(states, transitions, selectedStateIndex, nodePositions),
+      [states, transitions, selectedStateIndex, nodePositions],
    );
    const edges = useMemo(
       () => buildEdges(transitions, states, selectedTransitionIndex),
@@ -184,6 +203,70 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
       setSelectedStateIndex(null);
       setSelectedTransitionIndex(null);
    }, []);
+
+   // ---------- Node drag wiring ----------
+
+   /**
+    * React Flow batches every interactive change (drag, select, dimension
+    * report) through `onNodesChange`. We care about position changes
+    * only — and only the final settled position once the user drops the
+    * node. Persisting on every frame would re-render the whole canvas
+    * for the duration of the drag; persisting on drop keeps the gesture
+    * smooth (RF owns the visual position internally during the drag).
+    */
+   const onNodesChange = useCallback(
+      (changes: NodeChange[]) => {
+         const updates: Record<string, { x: number; y: number }> = {};
+         for (const change of changes) {
+            if (change.type !== 'position') continue;
+            if (change.dragging) continue; // only persist on drag-end
+            if (!change.position) continue;
+            const idx = Number(change.id.replace('state-', ''));
+            const name = states[idx];
+            if (!name) continue;
+            updates[name] = change.position;
+         }
+         if (Object.keys(updates).length === 0) return;
+         setNodePositions((prev) => ({ ...prev, ...updates }));
+      },
+      [states],
+   );
+
+   /**
+    * Drag from one node's source handle to another node's target handle
+    * to create a transition. The new row goes in with empty action /
+    * capability so the user is forced to fill them in via the property
+    * panel — the validator on save will catch anything they leave blank.
+    */
+   const onConnect = useCallback(
+      (conn: Connection) => {
+         if (!conn.source || !conn.target) return;
+         const fromIdx = Number(conn.source.replace('state-', ''));
+         const toIdx = Number(conn.target.replace('state-', ''));
+         const fromState = states[fromIdx];
+         const toState = states[toIdx];
+         if (!fromState || !toState) return;
+         setTransitions((prev) => {
+            const next: WorkflowTransition[] = [
+               ...prev,
+               {
+                  fromState,
+                  action: 'new-action',
+                  toState,
+                  requiredCapability: '',
+                  scopeRule: 'any',
+                  appliesTo: 'flat',
+                  guardExpression: null,
+               },
+            ];
+            // Open the property panel on the freshly-created transition.
+            setSelectedTransitionIndex(next.length - 1);
+            setSelectedStateIndex(null);
+            return next;
+         });
+      },
+      [states],
+   );
 
    // ---------- Mutation handlers ----------
 
@@ -234,6 +317,15 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
                toState: t.toState === oldName ? newName : t.toState,
             })),
          );
+         // Carry the dragged position over to the renamed key so the
+         // node doesn't snap back to the grid after a rename.
+         setNodePositions((prev) => {
+            if (!prev[oldName]) return prev;
+            const next = { ...prev };
+            next[newName] = next[oldName];
+            delete next[oldName];
+            return next;
+         });
       },
       [states],
    );
@@ -247,6 +339,12 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
                (t) => t.fromState !== oldName && t.toState !== oldName,
             ),
          );
+         setNodePositions((prev) => {
+            if (!prev[oldName]) return prev;
+            const next = { ...prev };
+            delete next[oldName];
+            return next;
+         });
          setSelectedStateIndex(null);
       },
       [states],
@@ -333,7 +431,7 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
    }, [baseline]);
 
    return (
-      <div className="flex flex-col gap-4 h-[calc(100vh-220px)] min-h-[600px]">
+      <div className="flex flex-col gap-4 h-[calc(100vh-280px)] min-h-[480px]">
          {validationError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                {validationError}
@@ -353,11 +451,13 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
                   onNodeClick={onNodeClick}
                   onEdgeClick={onEdgeClick}
                   onPaneClick={onPaneClick}
+                  onNodesChange={onNodesChange}
+                  onConnect={onConnect}
                   fitView
                   fitViewOptions={{ padding: 0.2 }}
                   proOptions={{ hideAttribution: true }}
                   nodesDraggable
-                  nodesConnectable={false}
+                  nodesConnectable
                   elementsSelectable
                >
                   <Background
@@ -366,10 +466,17 @@ const WorkflowEditorInner: FC<WorkflowEditorProps> = ({
                      size={1}
                      color="#e5e7eb"
                   />
+                  {/* React Flow's default Controls inherit `currentColor`
+                      for their SVG icons. In dark mode the app's global
+                      text colour is light, so `currentColor` resolves to
+                      near-white and the zoom icons disappear against the
+                      white button background. Pin the button colour
+                      explicitly so the icons remain visible regardless
+                      of the parent text colour. */}
                   <Controls
                      position="bottom-left"
                      showInteractive={false}
-                     style={{ background: 'white' }}
+                     className="[&_button]:!bg-white [&_button]:!border-gray-200 [&_button]:!text-[#0F2552] [&_button:hover]:!bg-gray-50 [&_button>svg]:!fill-current"
                   />
                   <MiniMap
                      pannable
