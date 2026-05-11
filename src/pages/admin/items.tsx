@@ -53,7 +53,18 @@ const Items = () => {
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { allStoresList } = useSelector((s: RootState) => s.store);
 
-   const { meta } = pagination;
+   // Defensive: `pagination` can be undefined during the first render
+   // window (before the saga has dispatched GET_ALL_ITEMS_SUCCESS) or
+   // when the user lands on a state shape that predates the pagination
+   // sub-slice (e.g. dev hot-reload of the reducer). Falling back to
+   // the same zero-state the reducer uses keeps the render path safe.
+   const meta = pagination?.meta ?? {
+      currentPage: 0,
+      itemCount: 0,
+      itemsPerPage: 0,
+      totalItems: 0,
+      totalPages: 0,
+   };
    // Department-scoped iff the user CAN'T manage items globally.
    // `items:manage` is the back-office cap (SA / ADMIN) — without it,
    // we hit the per-department endpoint so HOD / Member only see
