@@ -1,6 +1,11 @@
 import { call, put, takeLatest, all } from 'typed-redux-saga';
 import { reportConstants } from '@/constants';
-import { appActions, GetReportsAction, SearchReportAction } from '@/actions';
+import {
+  appActions,
+  GetReportActionsAction,
+  GetReportsAction,
+  SearchReportAction,
+} from '@/actions';
 import { checkStatus, parseResponse, createRequest } from '@/utilities/helpers';
 import { ReportForm, SetSnackBarPayload } from '@/types';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -96,6 +101,37 @@ function* searchReport({ data }: SearchReportAction) {
   }
 }
 
+function* getReportActions({ data }: GetReportActionsAction) {
+  // Workflow Rules Module (Phase 4): asks the engine for the list of
+  // action keys the current viewer can fire on this complaint right
+  // now. Read-only — the server writes no event row. Powers the
+  // `useComplaintActions` hook in server-canonical mode; the hook's
+  // local-computation branch is the fall-through when serverActions
+  // is null (e.g. before the saga returns).
+  yield put({ type: reportConstants.REQUEST_GET_REPORT_ACTIONS });
+
+  try {
+    if (!data?.id) return;
+    const reqUri = `${reportConstants.REPORT_URI}/${data.id}/actions`;
+    const jsonResponse = yield* authenticatedRequest(reqUri, { method: 'GET' });
+    if (!jsonResponse) return;
+
+    // The engine returns `{ action, toState, transitionId }[]` —
+    // the hook only needs the action keys, so the reducer stores the
+    // raw array and the hook extracts via `.includes(...)`.
+    yield put({
+      type: reportConstants.GET_REPORT_ACTIONS_SUCCESS,
+      actions: jsonResponse?.data ?? [],
+    });
+  } catch (error: unknown) {
+    yield* handleSagaError(
+      error,
+      reportConstants.GET_REPORT_ACTIONS_FAILURE,
+      false,
+    );
+  }
+}
+
 function* sendReportWatcher() {
   yield takeLatest(reportConstants.SEND_REPORT, sendReport);
 }
@@ -108,6 +144,15 @@ function* searchReportWatcher() {
   yield takeLatest(reportConstants.SEARCH_REPORT, searchReport);
 }
 
+function* getReportActionsWatcher() {
+  yield takeLatest(reportConstants.GET_REPORT_ACTIONS, getReportActions);
+}
+
 export default function* rootSaga() {
-  yield all([sendReportWatcher(), getReportsWatcher(), searchReportWatcher()]);
+  yield all([
+    sendReportWatcher(),
+    getReportsWatcher(),
+    searchReportWatcher(),
+    getReportActionsWatcher(),
+  ]);
 }
