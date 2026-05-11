@@ -907,9 +907,14 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    };
 
    // Approve / decline visibility for the current viewer on a given row.
+   // Multi-department parent rows are auto-computed from their children
+   // (one sub-request per fulfilling dept) — acting on the parent directly
+   // would clobber settled children, so the panel hides for parents. The
+   // child cards each carry their own Approve / Decline buttons.
    const canActOnRow = (row: RequestDetails | null | undefined): boolean => {
       if (!row) return false;
       if (!PENDING_HOD_STATUSES.has(row.requestStatus)) return false;
+      if ((row.children?.length ?? 0) > 0) return false;
       return isHodOfRow(row);
    };
 
