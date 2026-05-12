@@ -1,4 +1,9 @@
 import '@/styles/globals.css';
+// React Flow base styles. Imported here (the only place Next.js
+// Pages Router permits CSS from node_modules without a CSS module)
+// so the workflow editor canvas has the controls / handles styling
+// it relies on. Skin overrides live in components/WorkflowEditor.
+import '@xyflow/react/dist/style.css';
 import type { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
 import { useEffect } from 'react';

@@ -20,6 +20,7 @@ import auditLogRootReducer from './auditLog.reducer';
 import securityRootReducer from './security.reducer';
 import incidenceLogRootReducer from './incidenceLog.reducer';
 import notificationRootReducer from './notification.reducer';
+import workflowRootReducer from './workflow.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
@@ -43,6 +44,7 @@ const rootReducer = combineReducers({
   security: securityRootReducer,
   incidenceLog: incidenceLogRootReducer,
   notification: notificationRootReducer,
+  workflow: workflowRootReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

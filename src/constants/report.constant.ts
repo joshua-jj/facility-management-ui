@@ -22,5 +22,15 @@ export const reportConstants: ReportConstants = {
   GET_REPORTS: 'GET_REPORTS',
   SEARCH_REPORT: 'SEARCH_REPORT',
 
+  // Workflow Rules Module (Phase 4) — fetch the engine's verdict on
+  // which complaint actions the current viewer can fire. Mirrors the
+  // requestConstants.GET_REQUEST_ACTIONS shape so the page wiring
+  // and reducer pattern are identical.
+  GET_REPORT_ACTIONS: 'GET_REPORT_ACTIONS',
+  REQUEST_GET_REPORT_ACTIONS: 'REQUEST_GET_REPORT_ACTIONS',
+  GET_REPORT_ACTIONS_SUCCESS: 'GET_REPORT_ACTIONS_SUCCESS',
+  GET_REPORT_ACTIONS_FAILURE: 'GET_REPORT_ACTIONS_FAILURE',
+  RESET_REPORT_ACTIONS: 'RESET_REPORT_ACTIONS',
+
   REPORT_URI: `${appConstants.BASE_URI}${report}`,
 };

@@ -103,6 +103,42 @@ const pagination = (
   }
 };
 
+// Workflow Rules Module (Phase 4) — server-side complaint action gates.
+// `null` is the load-bearing sentinel: the hook treats it as "no server
+// verdict yet, fall back to local computation". An empty array means
+// "engine evaluated and returned no available actions" (e.g. terminal
+// states like Resolved) — semantically different from "haven't asked
+// yet".
+type ServerActionRow = {
+  action: string;
+  toState?: string;
+  transitionId?: number;
+};
+type ServerActionsState = ServerActionRow[] | null;
+
+interface ServerActionsAction extends Action {
+  actions?: ServerActionRow[];
+}
+
+const serverActions = (
+  state: ServerActionsState = null,
+  action: ServerActionsAction,
+): ServerActionsState => {
+  switch (action.type) {
+    case reportConstants.GET_REPORT_ACTIONS_SUCCESS:
+      // Server has spoken — store the array verbatim (may be empty).
+      return action.actions ?? [];
+    case reportConstants.GET_REPORT_ACTIONS_FAILURE:
+    case reportConstants.RESET_REPORT_ACTIONS:
+    // Reset when a new detail-page load starts so the hook falls back
+    // to local computation until the fresh fetch lands.
+    case reportConstants.REQUEST_GET_REPORT_ACTIONS:
+      return null;
+    default:
+      return state;
+  }
+};
+
 export interface RootState {
   IsCreatingReport: (
     state: LoadingState | undefined,
@@ -124,6 +160,10 @@ export interface RootState {
     state: { meta: PaginationMeta | null } | undefined,
     action: PaginationAction,
   ) => { meta: PaginationMeta | null };
+  serverActions: (
+    state: ServerActionsState | undefined,
+    action: ServerActionsAction,
+  ) => ServerActionsState;
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -132,6 +172,7 @@ const rootReducer = combineReducers<RootState>({
   IsSearchingReport,
   allReportsList,
   pagination,
+  serverActions,
 });
 
 export default rootReducer;
