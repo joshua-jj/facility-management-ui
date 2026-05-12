@@ -17,6 +17,14 @@ export interface ReportConstants {
   GET_REPORTS: string;
   SEARCH_REPORT: string;
 
+  // Workflow Rules Module (Phase 4) — server-driven complaint action
+  // gates. Same shape as requestConstants.GET_REQUEST_ACTIONS etc.
+  GET_REPORT_ACTIONS: string;
+  REQUEST_GET_REPORT_ACTIONS: string;
+  GET_REPORT_ACTIONS_SUCCESS: string;
+  GET_REPORT_ACTIONS_FAILURE: string;
+  RESET_REPORT_ACTIONS: string;
+
   REPORT_URI: string;
 }
 

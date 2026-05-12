@@ -7,6 +7,7 @@ import {
   GetAllRequestsAction,
   GetAssignedRequestsAction,
   GetDepartmentRequestsAction,
+  GetRequestActionsAction,
   ReleaseItemsAction,
   ReturnItemsAction,
   UpdateRequestStatusAction,
@@ -271,6 +272,37 @@ function* returnRequestItems({ data }: ReturnItemsAction) {
   }
 }
 
+function* getRequestActions({ data }: GetRequestActionsAction) {
+  // Workflow Rules Module (Phase 3): asks the engine for the list of
+  // action keys the current viewer can fire on this request right now.
+  // Read-only — the server writes no event row. Powers the
+  // `useRequestActions` hook in server-canonical mode; the hook's
+  // local-computation branch is the fall-through when serverActions
+  // is null (e.g. before the saga returns).
+  yield put({ type: requestConstants.REQUEST_GET_REQUEST_ACTIONS });
+
+  try {
+    if (!data?.id) return;
+    const reqUri = `${requestConstants.REQUEST_URI}/${data.id}/actions`;
+    const jsonResponse = yield* authenticatedRequest(reqUri, { method: 'GET' });
+    if (!jsonResponse) return;
+
+    // The engine returns `{ action, toState, transitionId }[]` —
+    // the hook only needs the action keys, so the reducer stores the
+    // raw array and the hook extracts via `.includes(...)`.
+    yield put({
+      type: requestConstants.GET_REQUEST_ACTIONS_SUCCESS,
+      actions: jsonResponse?.data ?? [],
+    });
+  } catch (error: unknown) {
+    yield* handleSagaError(
+      error,
+      requestConstants.GET_REQUEST_ACTIONS_FAILURE,
+      false,
+    );
+  }
+}
+
 function* createNewRequestWatcher() {
   yield takeLatest(requestConstants.CREATE_REQUEST, createNewRequest);
 }
@@ -306,6 +338,10 @@ function* returnRequestItemsWatcher() {
   yield takeLatest(requestConstants.RETURN_REQUEST_ITEMS, returnRequestItems);
 }
 
+function* getRequestActionsWatcher() {
+  yield takeLatest(requestConstants.GET_REQUEST_ACTIONS, getRequestActions);
+}
+
 export default function* rootSaga() {
   yield all([
     createNewRequestWatcher(),
@@ -316,5 +352,6 @@ export default function* rootSaga() {
     assignRequestWatcher(),
     releaseRequestItemsWatcher(),
     returnRequestItemsWatcher(),
+    getRequestActionsWatcher(),
   ]);
 }

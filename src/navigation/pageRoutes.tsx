@@ -198,6 +198,10 @@ export const getPageNames = (link: string) => {
       return 'roles & permissions';
     case '/admin/settings/profile':
       return 'account settings';
+    case '/admin/settings/workflows':
+      return 'workflows';
+    case '/admin/settings/workflows/[subject]':
+      return 'workflows';
     default:
       return '';
   }

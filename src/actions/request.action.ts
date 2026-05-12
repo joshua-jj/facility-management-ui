@@ -53,6 +53,18 @@ export interface ReleaseItemsAction {
   data: ReleaseItemsForm;
 }
 
+// Workflow Rules Module (Phase 3) — fetch the engine's verdict on
+// which actions the current viewer can fire on this request. Powers
+// the `useRequestActions` hook in server-canonical mode.
+export interface GetRequestActionsAction {
+  type: typeof requestConstants.GET_REQUEST_ACTIONS;
+  data: { id: number };
+}
+
+export interface ResetRequestActionsAction {
+  type: typeof requestConstants.RESET_REQUEST_ACTIONS;
+}
+
 const createRequest = (data: RequestForm): CreateRequestAction => ({
   type: requestConstants.CREATE_REQUEST,
   data,
@@ -101,6 +113,15 @@ const returnRequestItems = (data: ReleaseItemsForm): ReturnItemsAction => ({
   data,
 });
 
+const getRequestActions = (data: { id: number }): GetRequestActionsAction => ({
+  type: requestConstants.GET_REQUEST_ACTIONS,
+  data,
+});
+
+const resetRequestActions = (): ResetRequestActionsAction => ({
+  type: requestConstants.RESET_REQUEST_ACTIONS,
+});
+
 export const requestActions = {
   createRequest,
   getAllRequests,
@@ -110,4 +131,6 @@ export const requestActions = {
   assignRequest,
   releaseRequestItems,
   returnRequestItems,
+  getRequestActions,
+  resetRequestActions,
 };

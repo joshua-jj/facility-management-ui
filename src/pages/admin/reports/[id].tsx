@@ -10,7 +10,7 @@ import { useRouter } from 'next/router';
 import { formatReadableDate, getObjectFromStorage } from '@/utilities/helpers';
 import { formatPhoneDisplay } from '@/components/FormatValue';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
-import { appActions, departmentActions } from '@/actions';
+import { appActions, departmentActions, reportActions } from '@/actions';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
 // RoleId still used for the user-list query that fetches MEMBER-role
@@ -18,6 +18,7 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 // speaks role-ids on, not a capability check.
 import { RoleId } from '@/constants/roles.constant';
 import { usePermission } from '@/hooks/usePermission';
+import { useComplaintActions } from '@/hooks/useComplaintActions';
 import { ComboBox } from '@/components/ui/combo-box';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
@@ -339,6 +340,15 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
    const router = useRouter();
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   // Workflow Rules Module (Phase 4) — engine's verdict on which
+   // actions the viewer can fire on this complaint right now. `null`
+   // until the saga returns (or when the user lacks complaints:read
+   // and the request 401/403s). The hook falls back to local
+   // computation when this is null, so the page never sees a "no
+   // verdict, no buttons" race.
+   const serverActions = useSelector(
+      (s: RootState) => s.report?.serverActions ?? null,
+   );
 
    const [report, setReport] = useState<ComplaintDetail | null>(initialReport);
    const [facilityMembers, setFacilityMembers] = useState<FacilityMember[]>([]);
@@ -356,28 +366,33 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
 
    // Assignment privileges. Capability says "you can assign / manage
    // complaints"; the identity context (Facility-team membership +
-   // matched-by-email HOD) is preserved for non-back-office users
-   // because complaints are Facility-owned.
+   // matched-by-email HOD) is still computed for the assignee-pool
+   // query, but the actual gate logic now lives in
+   // useComplaintActions — which consumes the engine's verdict via
+   // `serverActions` whenever present, with local computation as the
+   // fall-through (Phase 4 of the Workflow Rules Module).
    const facilityHodEmail = facilityDepartment?.hodEmail;
    const { can } = usePermission();
-   // `complaints:manage` is the back-office cap (SA / ADMIN). Anyone
-   // who holds it can assign anywhere. Otherwise we still need the
-   // Facility HOD shape (matched by hodEmail) to assign within Facility.
-   const canManageComplaints = can('complaints:manage');
-   const isFacilityHod =
-      !!facilityHodEmail &&
-      !!userDetails?.email &&
-      userDetails.email.toLowerCase() === facilityHodEmail.toLowerCase();
-   const canAssign = canManageComplaints || isFacilityHod;
 
-   // Resolve privileges: ONLY the user to whom this complaint is currently
-   // assigned can mark it resolved. Not HOD, not Super Admin, not other
-   // Facility members — only the assignee.
-   const assignedToMe =
-      !!report?.summary?.assignedToUserId &&
-      !!userDetails?.id &&
-      report.summary.assignedToUserId === userDetails.id;
-   const canResolve = assignedToMe;
+   // Engine-canonical gate flags. The hook resolves "is this row
+   // assignable" / "is this viewer the assignee, on an Assigned row"
+   // from either the server's verdict (when present) or local
+   // computation (the pre-Phase-4 path). The page consumes the
+   // unified shape — it doesn't know or care which branch fired.
+   const {
+      canAssign,
+      canResolve,
+   } = useComplaintActions({
+      complaintDetails: {
+         status: report?.summary?.complaintStatus ?? null,
+         assignedToUserId: report?.summary?.assignedToUserId ?? null,
+      },
+      userDetails: { id: userDetails?.id ?? null },
+      can,
+      serverActions: serverActions
+         ? serverActions.map((a) => a.action)
+         : null,
+   });
 
    const isAssigned = !!report?.summary?.assignedToUserId;
 
@@ -388,6 +403,21 @@ const ReportDetailPage: NextPage<ReportDetailProps> = ({ report: initialReport }
          );
       }
    }, [dispatch, allDepartmentsList]);
+
+   // Workflow Rules Module (Phase 4): fetch the engine's verdict on
+   // which actions the viewer can fire on this complaint. Re-fires
+   // whenever the report id changes (route nav) or after a mutation
+   // (assign / resolve) so the gates re-render against fresh server
+   // state. Reset first so the hook briefly falls back to local
+   // computation rather than reusing the stale previous verdict
+   // while the new fetch is in flight.
+   useEffect(() => {
+      if (!report?.id) return;
+      dispatch(reportActions.resetReportActions() as unknown as UnknownAction);
+      dispatch(
+         reportActions.getReportActions({ id: report.id }) as unknown as UnknownAction,
+      );
+   }, [dispatch, report?.id, report?.summary?.complaintStatus, report?.summary?.assignedToUserId]);
 
    /**
     * Assignee pool = every user with role=MEMBER on the app, plus the

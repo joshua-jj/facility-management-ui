@@ -31,6 +31,16 @@ export interface RequestConstants {
   RETURN_REQUEST_ITEMS_SUCCESS: string;
   RETURN_REQUEST_ITEMS_ERROR: string;
 
+  // Workflow Rules Module (Phase 3): server-driven action gates.
+  // The detail response embeds the same array under `availableActions`,
+  // so most pages don't need to dispatch the explicit fetch — it's
+  // here for post-mutation refreshes and standalone callers.
+  GET_REQUEST_ACTIONS: string;
+  REQUEST_GET_REQUEST_ACTIONS: string;
+  GET_REQUEST_ACTIONS_SUCCESS: string;
+  GET_REQUEST_ACTIONS_FAILURE: string;
+  RESET_REQUEST_ACTIONS: string;
+
   CREATE_REQUEST: string;
   GET_ALL_REQUESTS: string;
   GET_DEPARTMENT_REQUESTS: string;
