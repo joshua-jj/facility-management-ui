@@ -35,19 +35,25 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
     */
    const [pendingPermissions, setPendingPermissions] = useState<number[] | null>(null);
 
-   /** On open: load permissions + role (edit) or reset (create) */
+   /**
+    * On open: reset form state, then load permissions + (in edit mode)
+    * the role data. Resetting on every open — not just create — is what
+    * prevents the previously-edited role's name / description / checked
+    * permissions from flashing into the form while the next role is in
+    * flight. The second useEffect below repopulates from the freshly
+    * loaded `selectedRole` once it arrives.
+    */
    useEffect(() => {
       if (!isOpen) return;
+      setName('');
+      setDescription('');
+      setCheckedIds(new Set());
+      setPendingPermissions(null);
       if (!permissions || permissions.length === 0) {
          dispatch(permissionActions.getPermissions() as unknown as UnknownAction);
       }
       if (roleId != null) {
          dispatch(roleActions.getRole(roleId) as unknown as UnknownAction);
-      } else {
-         setName('');
-         setDescription('');
-         setCheckedIds(new Set());
-         setPendingPermissions(null);
       }
    }, [isOpen, roleId, dispatch, permissions]);
 

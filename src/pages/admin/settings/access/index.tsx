@@ -232,18 +232,19 @@ const RolesAndPermissions: FC = () => {
                                                       onClick: () =>
                                                          setPreviewingRoleId(role.id),
                                                    },
-                                                   // Edit is hidden for preset roles —
-                                                   // the seeder is the source of truth
-                                                   // for those, and any UI edit gets
-                                                   // reconciled away on the next
-                                                   // `npm run db:seed`. Custom roles
-                                                   // remain freely editable.
+                                                   // Edit is available for every role,
+                                                   // preset or custom. The Super Admin
+                                                   // is the source of truth for what
+                                                   // each role can do — the seeder only
+                                                   // bootstraps preset roles on initial
+                                                   // create and won't rewrite their
+                                                   // permission lists on subsequent
+                                                   // runs (so UI edits stick).
                                                    {
                                                       label: 'Edit',
                                                       icon: EDIT_ICON,
                                                       onClick: () =>
                                                          setEditingRoleId(role.id),
-                                                      hidden: role.preset,
                                                    },
                                                 ] satisfies ActionMenuItem[]
                                              }
