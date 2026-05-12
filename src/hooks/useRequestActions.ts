@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Permission } from '@/constants/permissions.enum';
 
 /**
  * Single source of truth for the request-detail page's gate flags.
@@ -124,11 +125,11 @@ export function useRequestActions({
       // Capability flags — feed directly from the permission service.
       // These aren't engine-gated; they're subject-level grants that
       // ride on the JWT.
-      const canApproveRequest = can('requests:approve');
-      const canAssignRequest = can('requests:assign');
-      const canReleaseRequest = can('requests:release');
-      const canReturnRequest = can('requests:return');
-      const canManageRequests = can('requests:manage');
+      const canApproveRequest = can(Permission.REQUESTS_APPROVE);
+      const canAssignRequest = can(Permission.REQUESTS_ASSIGN);
+      const canReleaseRequest = can(Permission.REQUESTS_RELEASE);
+      const canReturnRequest = can(Permission.REQUESTS_RETURN);
+      const canManageRequests = can(Permission.REQUESTS_MANAGE);
 
       // Pure data derivations — no engine involvement.
       const hasChildren = isParentRow(requestDetails);

@@ -19,6 +19,7 @@ import { getObjectFromStorage } from '@/utilities/helpers';
 import { authConstants, requestConstants } from '@/constants';
 import axios from 'axios';
 import type { Request } from '@/types';
+import { Permission } from '@/constants/permissions.enum';
 
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
@@ -45,9 +46,9 @@ const Requests = () => {
    // - dept lead   (`requests:approve`, no manage)-> dept-scoped
    // - assignee    (`requests:release`, no above) -> assigned-to-me
    const { can } = usePermission();
-   const isBackOffice = can('requests:manage');
-   const canApproveRequests = can('requests:approve');
-   const canReleaseRequests = can('requests:release');
+   const isBackOffice = can(Permission.REQUESTS_MANAGE);
+   const canApproveRequests = can(Permission.REQUESTS_APPROVE);
+   const canReleaseRequests = can(Permission.REQUESTS_RELEASE);
    const isAdminView = isBackOffice;
    const isDeptScoped = !isBackOffice && canApproveRequests;
    const isAssigneeScoped = !isBackOffice && !canApproveRequests && canReleaseRequests;
@@ -359,7 +360,7 @@ const Requests = () => {
    ];
 
    return (
-      <PrivateRoute permissions={['requests:read']}>
+      <PrivateRoute permissions={[Permission.REQUESTS_READ]}>
          <Layout title="Requests">
             <div className="space-y-6">
                <PageHeader />

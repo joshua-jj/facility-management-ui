@@ -18,6 +18,7 @@ import {
    YAxis,
 } from 'recharts';
 import { UnknownAction } from 'redux';
+import { Permission } from '@/constants/permissions.enum';
 
 /* ── Surface tokens (mirrored from Dashboard for visual consistency) ── */
 const CARD_STYLE: React.CSSProperties = {
@@ -95,7 +96,7 @@ const Analytics = () => {
    // SA / ADMIN automatically; granted to specific HODs (Facility,
    // Logistics) by the seeder. No more role-id branching.
    const { can } = usePermission();
-   const canViewAnalytics = can('analytics:read');
+   const canViewAnalytics = can(Permission.ANALYTICS_READ);
    const [period, setPeriod] = useState<TrendPeriod>('month');
    const { dashboardAnalytics, IsFetchingDashboardStats } = useSelector(
       (s: RootState) => s.dashboard,
@@ -198,7 +199,7 @@ const Analytics = () => {
    const isLoading = IsFetchingDashboardStats && !dashboardAnalytics;
 
    return (
-      <PrivateRoute permissions={['analytics:read']}>
+      <PrivateRoute permissions={[Permission.ANALYTICS_READ]}>
          <Layout title="Analytics">
             <div className="max-w-7xl mx-auto space-y-5">
                {/* Header + period selector */}

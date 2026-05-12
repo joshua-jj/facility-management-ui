@@ -12,6 +12,7 @@ import { dashboardConstants, authConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
 import { exportToCsv } from '@/utilities/exportCsv';
 import axios from 'axios';
+import { Permission } from '@/constants/permissions.enum';
 // Trend charts + sparklines now live on /admin/analytics; dashboard
 // is the operational at-a-glance surface and no longer depends on
 // recharts or Sparkline.
@@ -132,9 +133,9 @@ const Dashboard = () => {
    // expressed as the union `requests:manage`. Member-shape is "you
    // hold release/return but not approve" — i.e. the assignee track.
    const { can } = usePermission();
-   const isBackOffice = can('requests:manage');
-   const canApproveRequests = can('requests:approve');
-   const canReleaseRequests = can('requests:release');
+   const isBackOffice = can(Permission.REQUESTS_MANAGE);
+   const canApproveRequests = can(Permission.REQUESTS_APPROVE);
+   const canReleaseRequests = can(Permission.REQUESTS_RELEASE);
 
    const isLoading = IsFetchingDashboardStats && !dashboardStats;
 
@@ -484,7 +485,7 @@ const Dashboard = () => {
    const totalActionCount = actionItems.reduce((s, i) => s + i.count, 0);
 
    return (
-      <PrivateRoute permissions={['dashboard:read']}>
+      <PrivateRoute permissions={[Permission.DASHBOARD_READ]}>
          <Layout title="Dashboard">
             {/* Greeting bar */}
             <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Permission } from '@/constants/permissions.enum';
 
 /**
  * Single source of truth for the complaint-detail page's gate flags.
@@ -93,9 +94,9 @@ export function useComplaintActions({
       // Capability flags — feed directly from the permission service.
       // These aren't engine-gated; they're subject-level grants that
       // ride on the JWT.
-      const canAssignComplaint = can('complaints:assign');
-      const canResolveComplaint = can('complaints:resolve');
-      const canManageComplaints = can('complaints:manage');
+      const canAssignComplaint = can(Permission.COMPLAINTS_ASSIGN);
+      const canResolveComplaint = can(Permission.COMPLAINTS_RESOLVE);
+      const canManageComplaints = can(Permission.COMPLAINTS_MANAGE);
 
       // Pure data derivations — no engine involvement.
       const status = complaintDetails?.status ?? 'Pending';
