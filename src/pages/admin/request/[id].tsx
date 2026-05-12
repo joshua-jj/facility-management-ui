@@ -1462,18 +1462,17 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                               borderColor: 'var(--border-default, rgba(15,37,82,0.12))',
                            }}
                         >
+                           {/* Type pill — no row id; the user can read the
+                               parent's requester + ministry from the
+                               summary block below. Showing raw numeric
+                               ids on a reference card surfaces internal
+                               db state that doesn't help them. */}
                            <div className="flex items-center gap-2 mb-2">
                               <span
                                  className="inline-flex items-center rounded-md text-[0.6rem] font-bold uppercase tracking-wider px-2 py-0.5"
                                  style={pillStyle}
                               >
                                  {typeLabel}
-                              </span>
-                              <span
-                                 className="font-mono text-xs font-semibold ml-auto"
-                                 style={{ color: 'var(--text-secondary, #5a6478)' }}
-                              >
-                                 #{requestDetails?.id ?? '—'}
                               </span>
                            </div>
                            <p
@@ -1488,10 +1487,9 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                                  onClick={goToParent}
                                  className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
                                  style={{ background: '#B28309', color: '#fff' }}
-                                 title={`Open parent request #${parentId}`}
+                                 title="Open the parent request"
                               >
-                                 View parent
-                                 <span className="font-mono">#{parentId}</span>
+                                 View parent request
                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                  </svg>
