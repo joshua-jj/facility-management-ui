@@ -19,6 +19,7 @@ import auditLogRootSaga from './auditLog.saga';
 import securityRootSaga from './security.saga';
 import incidenceLogRootSaga from './incidenceLog.saga';
 import notificationSaga from './notification.saga';
+import workflowRootSaga from './workflow.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -42,5 +43,6 @@ export default function* rootSaga() {
     securityRootSaga(),
     incidenceLogRootSaga(),
     notificationSaga(),
+    workflowRootSaga(),
   ]);
 }

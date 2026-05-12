@@ -20,6 +20,23 @@ interface AllRequestsAction extends Action {
   request: Request[];
 }
 
+// Workflow Rules Module (Phase 3) — server-side action gates.
+// `null` is the load-bearing sentinel: the hook treats it as "no
+// server verdict yet, fall back to local computation". An empty
+// array means "engine evaluated and returned no available actions"
+// (e.g. terminal states like Completed) — semantically different
+// from "haven't asked yet".
+type ServerActionRow = {
+  action: string;
+  toState?: string;
+  transitionId?: number;
+};
+type ServerActionsState = ServerActionRow[] | null;
+
+interface ServerActionsAction extends Action {
+  actions?: ServerActionRow[];
+}
+
 const IsCreatingRequest = (
   state: LoadingState = false,
   action: Action
@@ -183,6 +200,27 @@ const pagination = (
   }
 };
 
+const serverActions = (
+  state: ServerActionsState = null,
+  action: ServerActionsAction
+): ServerActionsState => {
+  switch (action.type) {
+    case requestConstants.GET_REQUEST_ACTIONS_SUCCESS:
+      // Server has spoken — store the array verbatim (may be empty).
+      return action.actions ?? [];
+    case requestConstants.GET_REQUEST_ACTIONS_FAILURE:
+    case requestConstants.RESET_REQUEST_ACTIONS:
+    // Reset when a new detail-page load starts so the hook falls
+    // back to local computation until the fresh fetch lands. The
+    // page dispatches getRequestActions immediately after, so the
+    // null window is only one render frame in practice.
+    case requestConstants.REQUEST_GET_REQUEST_ACTIONS:
+      return null;
+    default:
+      return state;
+  }
+};
+
 export interface RootState {
   IsCreatingRequest: (
     state: LoadingState | undefined,
@@ -216,6 +254,10 @@ export interface RootState {
     state: PaginationState | undefined,
     action: AllRequestsAction
   ) => PaginationState;
+  serverActions: (
+    state: ServerActionsState | undefined,
+    action: ServerActionsAction
+  ) => ServerActionsState;
 }
 
 const rootReducer = combineReducers<RootState>({
@@ -227,6 +269,7 @@ const rootReducer = combineReducers<RootState>({
   IsRequestingRequests,
   allRequestsList,
   pagination,
+  serverActions,
 });
 
 export default rootReducer;
