@@ -80,7 +80,11 @@ const RolePreview: FC<Props> = ({ roleId, isOpen, onClose }) => {
                </button>
             </div>
 
-            {selectedRole ? (
+            {/* Only render the body when the loaded role matches the one
+                we were asked to preview. Otherwise the modal would
+                briefly show the previously-previewed role while the new
+                fetch is in flight. */}
+            {selectedRole && selectedRole.id === roleId ? (
                <>
                   {/* Sticky role card */}
                   <div className="px-6 pt-6 pb-4 shrink-0">

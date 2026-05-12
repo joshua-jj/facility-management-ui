@@ -19,5 +19,35 @@ export const RBAC_MODULES = [
 
 export type ModuleSlug = (typeof RBAC_MODULES)[number]['slug'];
 
-export type PermissionAction = 'read' | 'write' | 'delete';
-export const PERMISSION_ACTIONS: PermissionAction[] = ['read', 'write', 'delete'];
+/**
+ * Every action the API recognises. Kept in lockstep with the API's
+ * `PermissionAction` enum at `src/common/enums/permission-action.enum.ts`.
+ *
+ * The order here drives the on-screen left-to-right order of the
+ * action chips in the Roles editor — keep the read/write/delete CRUD
+ * trio first (they're universal), then the workflow verbs.
+ */
+export type PermissionAction =
+   | 'read'
+   | 'write'
+   | 'delete'
+   | 'approve'
+   | 'decline'
+   | 'assign'
+   | 'release'
+   | 'return'
+   | 'resolve'
+   | 'manage';
+
+export const PERMISSION_ACTIONS: PermissionAction[] = [
+   'read',
+   'write',
+   'delete',
+   'approve',
+   'decline',
+   'assign',
+   'release',
+   'return',
+   'resolve',
+   'manage',
+];
