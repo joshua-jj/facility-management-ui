@@ -23,6 +23,7 @@ import { PhoneDisplay } from '@/components/FormatValue';
 import { authConstants, userConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
+import { Permission } from '@/constants/permissions.enum';
 
 const PAGE_LIMIT = 10;
 
@@ -43,8 +44,8 @@ const Users = () => {
    // `users:write` covers add / edit / role-change. `users:delete`
    // covers activate / deactivate (a soft delete in this app).
    // SUPER_ADMIN holds both via `users:manage`; ADMIN holds neither.
-   const canWriteUsers = can('users:write');
-   const canDeleteUsers = can('users:delete');
+   const canWriteUsers = can(Permission.USERS_WRITE);
+   const canDeleteUsers = can(Permission.USERS_DELETE);
    const router = useRouter();
    const [showAddUserModal, setShowAddUserModal] = useState(false);
    const [showEditUserModal, setShowEditUserModal] = useState(false);
@@ -352,7 +353,7 @@ const Users = () => {
    ];
 
    return (
-      <PrivateRoute permissions={['users:read']}>
+      <PrivateRoute permissions={[Permission.USERS_READ]}>
          <Layout title="Users">
             <PageHeader
                action={

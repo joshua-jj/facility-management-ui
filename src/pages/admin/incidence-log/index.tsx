@@ -20,6 +20,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { usePermission } from '@/hooks/usePermission';
 import { incidenceLogConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
+import { Permission } from '@/constants/permissions.enum';
 
 const VIEW_ICON = (
    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,8 +70,8 @@ const IncidenceLogsPage = () => {
    // permission service.
    const { isFacilityTeam, userId } = usePermissions();
    const { can } = usePermission();
-   const canWriteIncidence = can('incidence-logs:write');
-   const canManageIncidence = can('incidence-logs:manage');
+   const canWriteIncidence = can(Permission.INCIDENCE_LOGS_WRITE);
+   const canManageIncidence = can(Permission.INCIDENCE_LOGS_MANAGE);
    // Filing requires write capability + Facility membership (or
    // back-office's `:manage`). Mirrors the maintenance / generator log
    // pattern — the dept gate is identity, the verb is capability.
@@ -241,7 +242,7 @@ const IncidenceLogsPage = () => {
    ).size;
 
    return (
-      <PrivateRoute permissions={['incidence-logs:read']}>
+      <PrivateRoute permissions={[Permission.INCIDENCE_LOGS_READ]}>
          <Layout title="Incidence Logs">
             <PageHeader
                action={

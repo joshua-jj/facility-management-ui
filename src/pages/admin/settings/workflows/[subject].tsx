@@ -9,6 +9,7 @@ import WorkflowEditor from '@/components/WorkflowEditor';
 import { RootState } from '@/redux/reducers';
 import { workflowActions } from '@/actions/workflow.actions';
 import { WorkflowDetail, WorkflowTransition } from '@/types/workflow';
+import { Permission } from '@/constants/permissions.enum';
 
 /**
  * Detail / editor view for one workflow. Fetches the head definition
@@ -80,7 +81,7 @@ const WorkflowDetailPage: FC = () => {
    };
 
    return (
-      <PrivateRoute permissions={['roles:manage']}>
+      <PrivateRoute permissions={[Permission.ROLES_MANAGE]}>
          <Layout title={`Workflow: ${subject}`}>
             <div className="space-y-4 px-4 md:px-6 -mb-16">
                <div className="flex items-center justify-between">

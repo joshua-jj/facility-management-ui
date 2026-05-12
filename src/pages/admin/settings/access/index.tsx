@@ -232,11 +232,18 @@ const RolesAndPermissions: FC = () => {
                                                       onClick: () =>
                                                          setPreviewingRoleId(role.id),
                                                    },
+                                                   // Edit is hidden for preset roles —
+                                                   // the seeder is the source of truth
+                                                   // for those, and any UI edit gets
+                                                   // reconciled away on the next
+                                                   // `npm run db:seed`. Custom roles
+                                                   // remain freely editable.
                                                    {
                                                       label: 'Edit',
                                                       icon: EDIT_ICON,
                                                       onClick: () =>
                                                          setEditingRoleId(role.id),
+                                                      hidden: role.preset,
                                                    },
                                                 ] satisfies ActionMenuItem[]
                                              }

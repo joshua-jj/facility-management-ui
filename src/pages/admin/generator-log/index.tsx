@@ -22,6 +22,7 @@ import { getObjectFromStorage } from '@/utilities/helpers';
 import { authConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
+import { Permission } from '@/constants/permissions.enum';
 
 // Converts a preset range label to { dateFrom, dateTo } ISO strings
 const resolveDateRange = (preset: string): { dateFrom?: string; dateTo?: string } => {
@@ -57,8 +58,8 @@ const GeneratorLogs = () => {
    // capability comes from the permission service.
    const { isFacilityTeam, isAuthor } = usePermissions();
    const { can } = usePermission();
-   const canWriteLogs = can('generator-logs:write');
-   const canManageLogs = can('generator-logs:manage');
+   const canWriteLogs = can(Permission.GENERATOR_LOGS_WRITE);
+   const canManageLogs = can(Permission.GENERATOR_LOGS_MANAGE);
    const [showAddModal, setShowAddModal] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
    const [editData, setEditData] = useState<GeneratorLog | null>(null);
@@ -387,7 +388,7 @@ const GeneratorLogs = () => {
    ];
 
    return (
-      <PrivateRoute permissions={['generator-logs:read']}>
+      <PrivateRoute permissions={[Permission.GENERATOR_LOGS_READ]}>
          <Layout title="Generator Logs">
             <PageHeader
                action={
