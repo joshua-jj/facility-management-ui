@@ -12,6 +12,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { itemConstants } from '@/constants';
 import Router from 'next/router';
+import { Permission } from '@/constants/permissions.enum';
 
 interface AddItemModalProps {
    children?: ReactNode;
@@ -31,7 +32,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    // office. Otherwise we silently scope the new item to their dept.
    // Mirrors the page-level isDepartmentScoped flag on /admin/items.
    const { can } = usePermission();
-   const canManageItems = can('items:manage');
+   const canManageItems = can(Permission.ITEMS_MANAGE);
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
+import { Permission } from '@/constants/permissions.enum';
 
 /**
  * Identity-context helpers: department membership, current user id /
@@ -10,7 +11,7 @@ import { RootState } from '@/redux/reducers';
  * What used to live here (`isHod`, `isBackOffice`, `isFacilityHod`,
  * `isMember`, `isSuperAdmin`, `isAdmin`, `isOffice`, `isAnalyticsAccess`)
  * has been migrated out. Those were role-id flags and consumers should
- * now check the underlying capability — e.g. `can('requests:approve')`
+ * now check the underlying capability — e.g. `can(Permission.REQUESTS_APPROVE)`
  * instead of `isHod`. See the migration to permission-string-based
  * authorization landed across this branch.
  */

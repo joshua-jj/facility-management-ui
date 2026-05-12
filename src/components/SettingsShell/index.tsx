@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
 import { usePermission } from '@/hooks/usePermission';
+import { Permission } from '@/constants/permissions.enum';
 
 export type SettingsPanelKey =
    | 'profile'
@@ -47,14 +48,14 @@ const PANELS: PanelEntry[] = [
       // Anyone who can read roles AND users belongs here. Use the
       // wider read on roles as the gate — managing roles is what this
       // panel is for, and `roles:read` lines up with that.
-      permissions: ['roles:read'],
+      permissions: [Permission.ROLES_READ],
    },
    {
       key: 'audit-logs',
       label: 'Audit Logs',
       href: '/admin/settings/audit-logs',
       description: 'Who did what, when',
-      permissions: ['audit-logs:read'],
+      permissions: [Permission.AUDIT_LOGS_READ],
    },
    {
       key: 'workflows',
@@ -63,7 +64,7 @@ const PANELS: PanelEntry[] = [
       description: 'Edit state-machine rules per subject',
       // Workflows admin sits at the SUPER ADMIN tier — same gate as
       // roles management. ADMIN doesn't hold it; SA does.
-      permissions: ['roles:manage'],
+      permissions: [Permission.ROLES_MANAGE],
    },
 ];
 

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { DotsIcon } from '../Icons';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { usePermission } from '@/hooks/usePermission';
+import { Permission } from '@/constants/permissions.enum';
 
 type Props = {
   // row: object;
@@ -26,7 +27,7 @@ const ActionDropDown = (props: Props) => {
   // The "open" entry is for editing the row's items in place — only
   // make sense for users who can write to the items module.
   const { can } = usePermission();
-  const canWriteItems = can('items:write');
+  const canWriteItems = can(Permission.ITEMS_WRITE);
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [position, setPosition] = useState<DropdownPosition>({ right: 0 });

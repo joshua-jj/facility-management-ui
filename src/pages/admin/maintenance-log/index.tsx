@@ -22,6 +22,7 @@ import ExportModal from '@/components/ExportModal';
 import { maintenanceConstants, authConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import axios from 'axios';
+import { Permission } from '@/constants/permissions.enum';
 
 const EDIT_ICON = (
    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -82,8 +83,8 @@ const MaintenanceLogs = () => {
    // Capability comes from the permission service.
    const { isFacilityTeam, isAuthor } = usePermissions();
    const { can } = usePermission();
-   const canWriteLogs = can('maintenance-logs:write');
-   const canManageLogs = can('maintenance-logs:manage');
+   const canWriteLogs = can(Permission.MAINTENANCE_LOGS_WRITE);
+   const canManageLogs = can(Permission.MAINTENANCE_LOGS_MANAGE);
    // Per spec, HODs of other departments are read-only on maintenance
    // logs — but the Facility HOD owns the workflow and must be able to
    // create. Capability + dept context: write requires the cap, AND
@@ -286,7 +287,7 @@ const MaintenanceLogs = () => {
    ];
 
    return (
-      <PrivateRoute permissions={['maintenance-logs:read']}>
+      <PrivateRoute permissions={[Permission.MAINTENANCE_LOGS_READ]}>
          <Layout title="Maintenance Logs">
             <PageHeader
                action={

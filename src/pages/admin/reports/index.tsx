@@ -21,6 +21,7 @@ import { PhoneDisplay } from '@/components/FormatValue';
 import { authConstants, reportConstants } from '@/constants';
 import axios from 'axios';
 import { AppEmitter } from '@/controllers/EventEmitter';
+import { Permission } from '@/constants/permissions.enum';
 
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
@@ -31,7 +32,7 @@ const Reports = () => {
    const { can } = usePermission();
    // Delete is gated on `complaints:manage` (back-office). The page
    // visibility itself is `complaints:read`.
-   const canDeleteComplaints = can('complaints:manage');
+   const canDeleteComplaints = can(Permission.COMPLAINTS_MANAGE);
    const [showExportModal, setShowExportModal] = useState(false);
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
@@ -266,7 +267,7 @@ const Reports = () => {
    ];
 
    return (
-      <PrivateRoute permissions={['complaints:read']}>
+      <PrivateRoute permissions={[Permission.COMPLAINTS_READ]}>
          <Layout title="Complaints">
             <PageHeader />
 

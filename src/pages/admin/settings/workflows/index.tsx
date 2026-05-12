@@ -10,6 +10,7 @@ import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { RootState } from '@/redux/reducers';
 import { workflowActions } from '@/actions/workflow.actions';
 import { WorkflowSummary } from '@/types/workflow';
+import { Permission } from '@/constants/permissions.enum';
 
 // Match the inline SVG icons used by the other row-action menus across
 // the app (see `pages/admin/requests.tsx`).
@@ -97,7 +98,7 @@ const WorkflowsList: FC = () => {
    };
 
    return (
-      <PrivateRoute permissions={['roles:manage']}>
+      <PrivateRoute permissions={[Permission.ROLES_MANAGE]}>
          <Layout title="Workflows">
             <SettingsShell active="workflows">
                <div className="space-y-6">

@@ -25,6 +25,7 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 import { usePermission } from '@/hooks/usePermission';
 import axios from 'axios';
 import { format, parseISO } from 'date-fns';
+import { Permission } from '@/constants/permissions.enum';
 
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
@@ -37,8 +38,8 @@ const Items = () => {
    // covers row deletion. `items:manage` (which SA / ADMIN hold)
    // implicitly satisfies both via expandPermissions.
    const { can } = usePermission();
-   const canWriteItems = can('items:write');
-   const canDeleteItems = can('items:delete');
+   const canWriteItems = can(Permission.ITEMS_WRITE);
+   const canDeleteItems = can(Permission.ITEMS_DELETE);
 
    const [showAddModal, setShowAddModal] = useState(false);
    const [editItemData, setEditItemData] = useState<Item | null>(null);
@@ -71,7 +72,7 @@ const Items = () => {
    // their department's stock. Capability tells us "are you back-
    // office?"; the route filter is a data-shape decision, not a
    // capability check.
-   const canManageItems = can('items:manage');
+   const canManageItems = can(Permission.ITEMS_MANAGE);
    const isDepartmentScoped = !canManageItems;
 
    // ── Fetch filter list data on mount ──
@@ -419,7 +420,7 @@ const Items = () => {
    // ── Render ──
 
    return (
-      <PrivateRoute permissions={['items:read']}>
+      <PrivateRoute permissions={[Permission.ITEMS_READ]}>
          <Layout title="Items">
             <PageHeader
                action={

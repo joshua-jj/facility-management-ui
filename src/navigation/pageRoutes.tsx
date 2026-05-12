@@ -12,6 +12,7 @@ import {
   StoreIcon,
   UsersIcon,
 } from '@/components/Icons';
+import { Permission } from '@/constants/permissions.enum';
 
 export interface PageRoute {
   id: number;
@@ -53,63 +54,63 @@ export const pageRoutes: PageRoute[] = [
     label: 'dashboard',
     link: '/admin/dashboard',
     icon: <DashboardIcon />,
-    permissions: ['dashboard:read'],
+    permissions: [Permission.DASHBOARD_READ],
   },
   {
     id: 13,
     label: 'analytics',
     link: '/admin/analytics',
     icon: <DashboardIcon />,
-    permissions: ['analytics:read'],
+    permissions: [Permission.ANALYTICS_READ],
   },
   {
     id: 2,
     label: 'requests',
     link: '/admin/requests',
     icon: <RequestsIcon />,
-    permissions: ['requests:read'],
+    permissions: [Permission.REQUESTS_READ],
   },
   {
     id: 3,
     label: 'items',
     link: '/admin/items',
     icon: <ItemsIcon />,
-    permissions: ['items:read'],
+    permissions: [Permission.ITEMS_READ],
   },
   {
     id: 4,
     label: 'stores',
     link: '/admin/store',
     icon: <StoreIcon />,
-    permissions: ['stores:read'],
+    permissions: [Permission.STORES_READ],
   },
   {
     id: 5,
     label: 'departments',
     link: '/admin/departments',
     icon: <DepartmentsIcon />,
-    permissions: ['departments:read'],
+    permissions: [Permission.DEPARTMENTS_READ],
   },
   {
     id: 6,
     label: 'meeting locations',
     link: '/admin/meeting-locations',
     icon: <MapPinIcon />,
-    permissions: ['meeting-locations:read'],
+    permissions: [Permission.MEETING_LOCATIONS_READ],
   },
   {
     id: 12,
     label: 'meetings',
     link: '/admin/meetings',
     icon: <CalendarIcon />,
-    permissions: ['meetings:read'],
+    permissions: [Permission.MEETINGS_READ],
   },
   {
     id: 7,
     label: 'maintenance logs',
     link: '/admin/maintenance-log',
     icon: <MaintenanceLog />,
-    permissions: ['maintenance-logs:read'],
+    permissions: [Permission.MAINTENANCE_LOGS_READ],
   },
   {
     id: 8,
@@ -121,7 +122,7 @@ export const pageRoutes: PageRoute[] = [
     // operational data is Facility-owned. Back-office (any user with
     // `generator-logs:manage`) bypasses the dept check via the Sidebar
     // filter.
-    permissions: ['generator-logs:read'],
+    permissions: [Permission.GENERATOR_LOGS_READ],
     requiresFacilityTeam: true,
   },
   {
@@ -129,21 +130,21 @@ export const pageRoutes: PageRoute[] = [
     label: 'incidence logs',
     link: '/admin/incidence-log',
     icon: <ReportsIcon />,
-    permissions: ['incidence-logs:read'],
+    permissions: [Permission.INCIDENCE_LOGS_READ],
   },
   {
     id: 9,
     label: 'complaints',
     link: '/admin/reports',
     icon: <ReportsIcon />,
-    permissions: ['complaints:read'],
+    permissions: [Permission.COMPLAINTS_READ],
   },
   {
     id: 10,
     label: 'users management',
     link: '/admin/users',
     icon: <UsersIcon />,
-    permissions: ['users:read'],
+    permissions: [Permission.USERS_READ],
   },
   {
     id: 99,
@@ -153,7 +154,7 @@ export const pageRoutes: PageRoute[] = [
     // Settings is "every authenticated user" — any role lands somewhere
     // here (profile + security at minimum). Use `dashboard:read` as the
     // canonical "authenticated" gate; every preset role holds it.
-    permissions: ['dashboard:read'],
+    permissions: [Permission.DASHBOARD_READ],
     section: 'account',
   },
 ];
