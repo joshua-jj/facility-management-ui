@@ -33,6 +33,12 @@
   --text-secondary: rgba(15, 37, 82, 0.7);
   --text-disabled: rgba(15, 37, 82, 0.35);
   --text-hint: #9ca3af;
+  /* Chart accents — shared across light/dark; values tested on both backgrounds */
+  --chart-mint: #34D399;
+  --chart-coral: #E07A5F;
+  --chart-blue: #7AA7E5;
+  --chart-gold: #D4A84B;
+  --badge-warning: #F39C12;
 
   /* Border */
   --border-default: rgba(15, 37, 82, 0.06);
@@ -80,12 +86,12 @@
 }
 
 .dark {
-  --background: #0e0e1a;
+  --background: #0B1428;
   --foreground: #ededed;
-  --surface-paper: #1a1a2e;
+  --surface-paper: #131D38;
   --surface-subtle: rgba(255, 255, 255, 0.04);
-  --surface-low: rgba(255, 255, 255, 0.03);
-  --surface-medium: rgba(255, 255, 255, 0.05);
+  --surface-low: #0F1830;
+  --surface-medium: rgba(255, 255, 255, 0.04);
   --surface-high: rgba(255, 255, 255, 0.08);
 
   --color-primary: #6B8FCC;
@@ -94,19 +100,25 @@
   --color-secondary-light: #e8bc5f;
 
   --text-primary: rgba(255, 255, 255, 0.9);
-  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-secondary: rgba(255, 255, 255, 0.55);
   --text-disabled: rgba(255, 255, 255, 0.25);
   --text-hint: rgba(255, 255, 255, 0.35);
+  /* Chart accents — shared across light/dark; values tested on both backgrounds */
+  --chart-mint: #34D399;
+  --chart-coral: #E07A5F;
+  --chart-blue: #7AA7E5;
+  --chart-gold: #D4A84B;
+  --badge-warning: #F39C12;
 
-  --border-default: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.06);
   --border-strong: rgba(255, 255, 255, 0.15);
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
 
-  --header-bg: #1a1a2e;
-  --header-border: rgba(255, 255, 255, 0.1);
+  --header-bg: #0B1428;
+  --header-border: transparent;
   --header-shadow: none;
   --card: oklch(0.215 0.02 280);             /* matches --surface-paper dark */
   --card-foreground: oklch(0.95 0 0);

@@ -63,7 +63,10 @@ function buildBreadcrumbs(pathname: string): Crumb[] {
 }
 
 // ── Breadcrumbs Component ──
-
+// Retained in the file (no longer rendered) to avoid touching the
+// PageHeader export surface during the 2026-05-13 redesign. Will be
+// removed in a future cleanup pass.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Breadcrumbs: React.FC = () => {
    const router = useRouter();
    const crumbs = buildBreadcrumbs(router.pathname);
@@ -128,36 +131,39 @@ interface PageHeaderProps {
    subtitle?: string;
    action?: React.ReactNode;
    className?: string;
+   /** @deprecated breadcrumbs were removed in the 2026-05-13 redesign. Prop kept for backwards compatibility; has no effect. */
    showBreadcrumbs?: boolean;
 }
 
 /**
- * Detail pages use breadcrumbs + action only (no title/subtitle), so this
- * component lays out the header in two rows: breadcrumb + action on the top
- * row, then an optional title/subtitle row beneath. When no title is passed
- * (typical for detail pages), only the breadcrumb/action row is rendered.
+ * Two-row layout: title/subtitle on the left, action slot on the right.
+ *
+ * The `showBreadcrumbs` prop is now @deprecated and a no-op — kept in
+ * the signature so the ~25 existing consumers don't need to be edited
+ * in the same pass as the visual refresh. It will be removed in a
+ * future cleanup.
  */
 const PageHeader: React.FC<PageHeaderProps> = ({
    title,
    subtitle,
    action,
    className = '',
-   showBreadcrumbs = true,
+   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   showBreadcrumbs,
 }) => {
    return (
       <div className={`mb-6 ${className}`}>
          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-               {showBreadcrumbs && <Breadcrumbs />}
                {title && (
-                  <h1 className="text-lg font-bold text-[#0F2552] dark:text-white/90 capitalize">
+                  <h1 className="text-3xl md:text-4xl font-bold text-[#0F2552] dark:text-white/95 tracking-tight">
                      {title}
                   </h1>
                )}
                {subtitle && (
                   <p
-                     className={`text-xs text-gray-400 dark:text-white/40 ${
-                        title ? 'mt-0.5' : 'mt-1'
+                     className={`text-sm italic text-gray-500 dark:text-white/55 ${
+                        title ? 'mt-1' : 'mt-2'
                      }`}
                   >
                      {subtitle}

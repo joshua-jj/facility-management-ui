@@ -76,7 +76,7 @@ const Header = ({ onMobileMenuToggle }: HeaderProps) => {
                initial={{ y: -8, opacity: 0 }}
                animate={{ y: 0, opacity: 1 }}
                transition={{ duration: 0.25, ease: 'easeOut' }}
-               className="h-16 md:h-[4.5rem] sticky top-0 z-[5001] px-4 md:px-8 border-b border-[var(--border-default)] bg-[var(--surface-paper)] text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition-colors duration-300"
+               className="h-16 md:h-[4.5rem] sticky top-0 z-[5001] px-4 md:px-8 bg-[var(--header-bg)] text-[var(--text-primary)] transition-colors duration-300"
             >
                <div className="flex items-center h-full w-full">
                   {/* Hamburger — mobile only */}
