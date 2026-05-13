@@ -1,14 +1,18 @@
-import { dashboardActions, requestActions } from '@/actions';
+import { appActions, dashboardActions, requestActions } from '@/actions';
 import Layout from '@/components/Layout';
 import { RootState } from '@/redux/reducers';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
+import axios from 'axios';
 import PrivateRoute from '@/components/PrivateRoute';
 import { usePermission } from '@/hooks/usePermission';
 import { Permission } from '@/constants/permissions.enum';
+import { authConstants, dashboardConstants } from '@/constants';
+import { getObjectFromStorage } from '@/utilities/helpers';
+import { exportToCsv } from '@/utilities/exportCsv';
 
 import Card from '@/components/Cards/Card';
 import SectionLabel from '@/components/Cards/SectionLabel';
@@ -107,6 +111,8 @@ const Dashboard = () => {
 
    const isLoading = IsFetchingDashboardStats && !dashboardStats;
 
+   const [isExportingReport, setIsExportingReport] = useState(false);
+
    useEffect(() => {
       dispatch(dashboardActions.getDashboardStats() as unknown as UnknownAction);
       dispatch(
@@ -144,6 +150,144 @@ const Dashboard = () => {
       userDetails?.departmentId,
       userDetails?.id,
    ]);
+
+   const handleExportDailyReport = useCallback(async () => {
+      setIsExportingReport(true);
+      try {
+         const user = await getObjectFromStorage(authConstants.USER_KEY);
+         const today = format(new Date(), 'yyyy-MM-dd');
+         const uri = `${dashboardConstants.DAILY_REPORT_URI}?date=${today}`;
+
+         const resp = await axios.get(uri, {
+            headers: {
+               Accept: 'application/json',
+               Authorization: user?.token ? `Bearer ${user.token}` : '',
+            },
+         });
+
+         const report = resp.data?.data;
+         if (!report) {
+            dispatch(
+               appActions.setSnackBar({
+                  type: 'warning',
+                  message: 'No report data available.',
+                  variant: 'warning',
+               }) as unknown as UnknownAction,
+            );
+            return;
+         }
+
+         type TransactionRow = {
+            category: string;
+            name: string;
+            description: string;
+            status: string;
+            detail: string;
+            createdBy: string;
+            createdAt: string;
+         };
+         const rows: TransactionRow[] = [];
+
+         (report.requests ?? []).forEach((r: Record<string, unknown>) => {
+            rows.push({
+               category: 'Request',
+               name: String(r.requesterName ?? ''),
+               description: String(r.descriptionOfRequest ?? ''),
+               status: String(r.requestStatus ?? ''),
+               detail: `Ministry: ${r.ministryName ?? ''}`,
+               createdBy: String(r.createdBy ?? ''),
+               createdAt: r.createdAt
+                  ? format(parseISO(String(r.createdAt)), 'yyyy-MM-dd h:mm a')
+                  : '',
+            });
+         });
+
+         (report.generatorLogs ?? []).forEach((g: Record<string, unknown>) => {
+            rows.push({
+               category: 'Generator Log',
+               name: String(g.nameOfMeeting ?? ''),
+               description: `${g.generatorType ?? ''} at ${g.meetingLocation ?? ''}`,
+               status: g.faultDetected ? 'Fault Detected' : 'OK',
+               detail:
+                  g.onTime && g.offTime
+                     ? `On: ${format(parseISO(String(g.onTime)), 'h:mm a')} Off: ${format(parseISO(String(g.offTime)), 'h:mm a')}`
+                     : '',
+               createdBy: String(g.createdBy ?? ''),
+               createdAt: g.createdAt
+                  ? format(parseISO(String(g.createdAt)), 'yyyy-MM-dd h:mm a')
+                  : '',
+            });
+         });
+
+         (report.maintenanceLogs ?? []).forEach((m: Record<string, unknown>) => {
+            rows.push({
+               category: 'Maintenance',
+               name: String(m.artisanName ?? ''),
+               description: String(m.description ?? ''),
+               status: '',
+               detail: `Cost: NGN ${Number(m.costOfMaintenance ?? 0).toLocaleString()}`,
+               createdBy: String(m.createdBy ?? ''),
+               createdAt: m.createdAt
+                  ? format(parseISO(String(m.createdAt)), 'yyyy-MM-dd h:mm a')
+                  : '',
+            });
+         });
+
+         (report.complaints ?? []).forEach((c: Record<string, unknown>) => {
+            const summary = c.summary as Record<string, unknown> | undefined;
+            rows.push({
+               category: 'Complaint',
+               name: String(c.title ?? ''),
+               description: String(c.description ?? ''),
+               status: String(summary?.complaintStatus ?? ''),
+               detail: '',
+               createdBy: String(c.createdBy ?? ''),
+               createdAt: c.createdAt
+                  ? format(parseISO(String(c.createdAt)), 'yyyy-MM-dd h:mm a')
+                  : '',
+            });
+         });
+
+         if (rows.length === 0) {
+            dispatch(
+               appActions.setSnackBar({
+                  type: 'info',
+                  message: 'No transactions found for today.',
+                  variant: 'info',
+               }) as unknown as UnknownAction,
+            );
+            return;
+         }
+
+         exportToCsv('Daily Report', rows, [
+            { key: 'category', header: 'Category' },
+            { key: 'name', header: 'Name' },
+            { key: 'description', header: 'Description' },
+            { key: 'status', header: 'Status' },
+            { key: 'detail', header: 'Detail' },
+            { key: 'createdBy', header: 'Created By' },
+            { key: 'createdAt', header: 'Date/Time' },
+         ]);
+
+         dispatch(
+            appActions.setSnackBar({
+               type: 'success',
+               message: 'Daily report downloaded successfully.',
+               variant: 'success',
+            }) as unknown as UnknownAction,
+         );
+      } catch {
+         dispatch(
+            appActions.setSnackBar({
+               type: 'error',
+               message: 'Failed to export daily report. Please try again.',
+               variant: 'error',
+            }) as unknown as UnknownAction,
+         );
+      } finally {
+         setIsExportingReport(false);
+      }
+   }, [dispatch]);
 
    /* ── Approved / Declined % pills ── */
    const requestRatePills = useMemo(() => {
@@ -317,7 +461,12 @@ const Dashboard = () => {
             <PageHeader
                title="Dashboard"
                subtitle="At-a-glance view of requests, items and activity across your facilities"
-               action={<DailyReportAction />}
+               action={
+                  <DailyReportAction
+                     onExport={handleExportDailyReport}
+                     loading={isExportingReport}
+                  />
+               }
             />
 
             {isLoading && <DashboardSkeleton />}

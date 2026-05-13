@@ -1,21 +1,30 @@
 import React from 'react';
 import { format } from 'date-fns';
-import Report from '@/components/Modals/Report';
 
 /**
  * Daily Report trigger + today's date pill. Renders in the Dashboard
- * PageHeader's `action` slot. The Report modal itself is unchanged —
- * we're just pulling it into the Dashboard surface so the auth/
- * landing header doesn't have to be the only place to open it.
+ * PageHeader's `action` slot.
  *
- * The Report component renders a <button> wrapper around its children,
- * so `className` styles the trigger and `children` is its label.
+ * Purely presentational — the parent owns the export logic and passes
+ * it in via `onExport`. `loading` disables the button while a CSV
+ * export is in flight to prevent double-clicks creating duplicate
+ * downloads.
  */
-const DailyReportAction: React.FC = () => {
+interface DailyReportActionProps {
+   onExport: () => void;
+   loading?: boolean;
+}
+
+const DailyReportAction: React.FC<DailyReportActionProps> = ({ onExport, loading = false }) => {
    const today = format(new Date(), 'EEEE, MMMM d, yyyy');
    return (
       <div className="flex items-center gap-2">
-         <Report className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#0F2552] dark:text-white/85 bg-[var(--surface-medium)] hover:bg-[var(--surface-high)] px-3 py-2 rounded-md transition-colors cursor-pointer">
+         <button
+            type="button"
+            onClick={onExport}
+            disabled={loading}
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#0F2552] dark:text-white/85 bg-[var(--surface-medium)] hover:bg-[var(--surface-high)] disabled:opacity-60 disabled:cursor-not-allowed px-3 py-2 rounded-md transition-colors cursor-pointer"
+         >
             <svg
                width="14"
                height="14"
@@ -30,8 +39,8 @@ const DailyReportAction: React.FC = () => {
                <polyline points="7 10 12 15 17 10" />
                <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Daily Report
-         </Report>
+            {loading ? 'Exporting…' : 'Daily Report'}
+         </button>
          <span className="text-xs font-semibold uppercase tracking-wider text-[#0F2552]/70 dark:text-white/70 bg-[var(--surface-medium)] px-3 py-2 rounded-md tabular-nums">
             {today.toUpperCase()}
          </span>
