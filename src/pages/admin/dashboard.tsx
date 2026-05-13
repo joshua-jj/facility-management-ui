@@ -24,11 +24,6 @@ import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import RequestTrendsCard from '@/components/dashboard/RequestTrendsCard';
 import DailyReportAction from '@/components/dashboard/DailyReportAction';
 
-const CARD_STYLE: React.CSSProperties = {
-   background: 'var(--surface-low, rgba(255,255,255,0.02))',
-   border: '1px solid var(--border-default)',
-};
-
 const fmtNumber = (n: number | string | undefined) =>
    (Number(n ?? 0) || 0).toLocaleString('en-US');
 
@@ -49,7 +44,7 @@ const SkeletonBar: React.FC<{ width?: string; height?: string; className?: strin
 );
 
 const SkeletonCard: React.FC<{ height?: string }> = ({ height = 'auto' }) => (
-   <div className="rounded-2xl p-5 md:p-6" style={{ ...CARD_STYLE, minHeight: height }}>
+   <Card style={{ minHeight: height }}>
       <SkeletonBar width="30%" height="10px" />
       <div className="mt-5 space-y-3">
          <SkeletonBar width="40%" height="28px" />
@@ -58,7 +53,7 @@ const SkeletonCard: React.FC<{ height?: string }> = ({ height = 'auto' }) => (
       <div className="mt-6">
          <SkeletonBar width="100%" height="80px" />
       </div>
-   </div>
+   </Card>
 );
 
 const DashboardSkeleton: React.FC = () => (
