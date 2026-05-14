@@ -29,7 +29,7 @@ import {
  */
 const NotificationsAdminPage: NextPage = () => {
    const dispatch = useDispatch();
-   const { page, isLoading, isMutating } = useSelector(
+   const { page, isLoading, isMutating, error } = useSelector(
       (s: RootState) => s.notificationsAdmin,
    );
 
@@ -92,6 +92,19 @@ const NotificationsAdminPage: NextPage = () => {
 
             <NotificationFiltersBar query={query} onChange={setQuery} />
 
+            {error && !isLoading && (
+               <div className="mb-4 px-4 py-3 rounded-md bg-[color-mix(in_srgb,var(--chart-coral)_12%,transparent)] border border-[var(--chart-coral)] text-sm text-[#0F2552] dark:text-white flex items-center justify-between gap-3">
+                  <span>Couldn&apos;t load notifications: {error}</span>
+                  <button
+                     type="button"
+                     onClick={refetch}
+                     className="text-xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded-md bg-[var(--chart-coral)] text-white hover:opacity-90 transition-opacity cursor-pointer"
+                  >
+                     Retry
+                  </button>
+               </div>
+            )}
+
             {isLoading && rows.length === 0 ? (
                <div className="text-sm italic text-[#0F2552]/45 dark:text-white/45 py-8 text-center">
                   Loading notifications...
@@ -99,6 +112,7 @@ const NotificationsAdminPage: NextPage = () => {
             ) : (
                <NotificationDeliveriesTable
                   rows={rows}
+                  activeStatusFilter={query.status ?? []}
                   onRetry={handleRetry}
                   onAbandon={handleAbandon}
                   isMutating={isMutating}

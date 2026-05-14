@@ -67,7 +67,6 @@ function* getNotificationsAdmin({ payload }: GetAction) {
       yield* handleSagaError(
          error,
          notificationsAdminConstants.GET_NOTIFICATIONS_ADMIN_FAILURE,
-         false,
       );
    }
 }

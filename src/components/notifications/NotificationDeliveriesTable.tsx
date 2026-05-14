@@ -21,6 +21,7 @@ import {
  */
 interface NotificationDeliveriesTableProps {
    rows: NotificationDelivery[];
+   activeStatusFilter: EmailStatus[];
    onRetry: (id: number) => void;
    onAbandon: (id: number) => void;
    isMutating: boolean;
@@ -34,23 +35,23 @@ interface ChipStyle {
 
 const STATUS_CHIP: Record<EmailStatus, ChipStyle> = {
    [EmailStatus.SENT]: {
-      background: 'rgba(52, 211, 153, 0.16)',
-      color: 'rgb(15, 118, 86)',
+      background: 'color-mix(in srgb, var(--chart-mint) 16%, transparent)',
+      color: 'var(--chart-mint)',
       label: 'Sent',
    },
    [EmailStatus.FAILED]: {
-      background: 'rgba(243, 156, 18, 0.16)',
-      color: 'rgb(176, 95, 0)',
+      background: 'color-mix(in srgb, var(--badge-warning) 16%, transparent)',
+      color: 'var(--badge-warning)',
       label: 'Failed',
    },
    [EmailStatus.PERMANENTLY_FAILED]: {
-      background: 'rgba(224, 122, 95, 0.18)',
-      color: 'rgb(170, 65, 40)',
+      background: 'color-mix(in srgb, var(--chart-coral) 18%, transparent)',
+      color: 'var(--chart-coral)',
       label: 'Permanently failed',
    },
    [EmailStatus.ABANDONED]: {
-      background: 'rgba(127, 127, 127, 0.15)',
-      color: 'rgb(95, 95, 95)',
+      background: 'rgba(255, 255, 255, 0.05)',
+      color: 'var(--text-secondary)',
       label: 'Abandoned',
    },
 };
@@ -97,15 +98,32 @@ const formatEntityLabel = (
 
 const NotificationDeliveriesTable: React.FC<NotificationDeliveriesTableProps> = ({
    rows,
+   activeStatusFilter,
    onRetry,
    onAbandon,
    isMutating,
 }) => {
    if (rows.length === 0) {
+      const isOnlySent =
+         activeStatusFilter.length === 1 &&
+         activeStatusFilter[0] === EmailStatus.SENT;
+      const isOnlyFailures =
+         activeStatusFilter.length > 0 &&
+         activeStatusFilter.every(
+            (s) =>
+               s === EmailStatus.FAILED || s === EmailStatus.PERMANENTLY_FAILED,
+         );
+
+      const message = isOnlySent
+         ? 'No sent notifications in this range.'
+         : isOnlyFailures
+            ? "Everything's been delivered. ✓"
+            : 'No notifications match the current filters.';
+
       return (
          <Card>
             <div className="py-12 text-center text-sm italic text-[#0F2552]/45 dark:text-white/45">
-               No notifications match the current filters.
+               {message}
             </div>
          </Card>
       );
@@ -132,8 +150,8 @@ const NotificationDeliveriesTable: React.FC<NotificationDeliveriesTableProps> = 
                <tbody>
                   {rows.map((row) => {
                      const chip = STATUS_CHIP[row.emailStatus] ?? {
-                        background: 'rgba(127,127,127,0.15)',
-                        color: 'rgb(95,95,95)',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'var(--text-secondary)',
                         label: row.emailStatus,
                      };
                      const showAttempts =

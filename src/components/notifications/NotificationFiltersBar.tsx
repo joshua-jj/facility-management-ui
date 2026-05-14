@@ -24,23 +24,39 @@ interface NotificationFiltersBarProps {
 }
 
 const STATUS_OPTIONS: { value: EmailStatus; label: string; dot: string }[] = [
-   { value: EmailStatus.SENT, label: 'Sent', dot: 'rgb(52, 211, 153)' },
-   { value: EmailStatus.FAILED, label: 'Failed', dot: 'rgb(243, 156, 18)' },
+   { value: EmailStatus.SENT, label: 'Sent', dot: 'var(--chart-mint)' },
+   { value: EmailStatus.FAILED, label: 'Failed', dot: 'var(--badge-warning)' },
    {
       value: EmailStatus.PERMANENTLY_FAILED,
       label: 'Permanently failed',
-      dot: 'rgb(224, 122, 95)',
+      dot: 'var(--chart-coral)',
    },
    {
       value: EmailStatus.ABANDONED,
       label: 'Abandoned',
-      dot: 'rgba(127, 127, 127, 0.7)',
+      dot: 'var(--text-secondary)',
    },
 ];
 
 const DATE_RANGE_OPTIONS: { label: string; days: number }[] = [
    { label: 'Last 7 days', days: 7 },
    { label: 'Last 30 days', days: 30 },
+];
+
+/**
+ * Curated list of entity types the system fires emails for today (per
+ * the audit). Static rather than fetched because the option set is small
+ * and rarely changes; new entity types added in the future will silently
+ * miss filtering until added here, but the empty-string "All event
+ * types" option keeps the page functional in the meantime.
+ */
+const ENTITY_TYPE_OPTIONS: { value: string; label: string }[] = [
+   { value: '', label: 'All event types' },
+   { value: 'maintenance-log', label: 'Maintenance log' },
+   { value: 'generator-log', label: 'Generator log' },
+   { value: 'incidence-log', label: 'Incidence log' },
+   { value: 'request', label: 'Request' },
+   { value: 'complaint', label: 'Complaint' },
 ];
 
 const NotificationFiltersBar: React.FC<NotificationFiltersBarProps> = ({
@@ -141,14 +157,34 @@ const NotificationFiltersBar: React.FC<NotificationFiltersBarProps> = ({
                   )}
                </div>
 
-               <div className="flex-1 min-w-[200px] max-w-[360px] ml-auto">
-                  <input
-                     type="search"
-                     placeholder="Search recipient email..."
-                     value={query.search ?? ''}
-                     onChange={handleSearch}
-                     className="w-full text-sm px-3 py-2 rounded-md border border-[var(--border-default)] bg-transparent text-[#0F2552] dark:text-white placeholder:text-[#0F2552]/35 dark:placeholder:text-white/30 outline-none focus:border-[#B28309]/60 transition-colors"
-                  />
+               <div className="ml-auto flex items-center gap-2">
+                  <select
+                     value={query.entityType ?? ''}
+                     onChange={(e) =>
+                        onChange({
+                           ...query,
+                           entityType: e.target.value || undefined,
+                           page: 1,
+                        })
+                     }
+                     className="text-sm px-3 py-2 rounded-md border border-[var(--border-default)] bg-transparent text-[#0F2552] dark:text-white outline-none focus:border-[#B28309]/60 transition-colors cursor-pointer"
+                  >
+                     {ENTITY_TYPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                           {opt.label}
+                        </option>
+                     ))}
+                  </select>
+
+                  <div className="min-w-[200px] max-w-[360px]">
+                     <input
+                        type="search"
+                        placeholder="Search recipient email..."
+                        value={query.search ?? ''}
+                        onChange={handleSearch}
+                        className="w-full text-sm px-3 py-2 rounded-md border border-[var(--border-default)] bg-transparent text-[#0F2552] dark:text-white placeholder:text-[#0F2552]/35 dark:placeholder:text-white/30 outline-none focus:border-[#B28309]/60 transition-colors"
+                     />
+                  </div>
                </div>
             </div>
          </div>
