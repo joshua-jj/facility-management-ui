@@ -50,7 +50,7 @@ const STATUS_CHIP: Record<EmailStatus, ChipStyle> = {
       label: 'Permanently failed',
    },
    [EmailStatus.ABANDONED]: {
-      background: 'rgba(255, 255, 255, 0.05)',
+      background: 'color-mix(in srgb, var(--text-secondary) 12%, transparent)',
       color: 'var(--text-secondary)',
       label: 'Abandoned',
    },
@@ -150,7 +150,7 @@ const NotificationDeliveriesTable: React.FC<NotificationDeliveriesTableProps> = 
                <tbody>
                   {rows.map((row) => {
                      const chip = STATUS_CHIP[row.emailStatus] ?? {
-                        background: 'rgba(255, 255, 255, 0.05)',
+                        background: 'color-mix(in srgb, var(--text-secondary) 12%, transparent)',
                         color: 'var(--text-secondary)',
                         label: row.emailStatus,
                      };
@@ -188,7 +188,7 @@ const NotificationDeliveriesTable: React.FC<NotificationDeliveriesTableProps> = 
                               {detailHref ? (
                                  <Link
                                     href={detailHref}
-                                    className="hover:text-[#B28309] dark:hover:text-[#D4A84B] transition-colors"
+                                    className="hover:text-[var(--color-secondary)] transition-colors"
                                  >
                                     {entityLabel}
                                  </Link>
@@ -255,7 +255,10 @@ const NotificationDeliveriesTable: React.FC<NotificationDeliveriesTableProps> = 
                                                 onRetry(row.id);
                                              }
                                           }}
-                                          className="text-xs font-semibold px-3 py-1.5 rounded-md bg-[#B28309] text-white hover:bg-[#9a7208] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                          style={{
+                                             background: 'var(--color-secondary)',
+                                          }}
+                                          className="text-xs font-semibold px-3 py-1.5 rounded-md text-white hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                        >
                                           Retry
                                        </button>

@@ -116,8 +116,8 @@ const NotificationFiltersBar: React.FC<NotificationFiltersBarProps> = ({
                         onClick={() => toggleStatus(opt.value)}
                         className={`inline-flex items-center text-xs font-medium px-3 py-1.5 rounded-md border transition-colors cursor-pointer ${
                            active
-                              ? 'border-[#B28309] bg-[#B28309]/10 text-[#0F2552] dark:text-white'
-                              : 'border-[var(--border-default)] bg-transparent text-[#0F2552]/65 dark:text-white/55 hover:text-[#0F2552] dark:hover:text-white hover:border-[#B28309]/40'
+                              ? 'border-[var(--color-secondary)] bg-[var(--color-secondary)]/10 text-[#0F2552] dark:text-white'
+                              : 'border-[var(--border-default)] bg-transparent text-[#0F2552]/65 dark:text-white/55 hover:text-[#0F2552] dark:hover:text-white hover:border-[var(--color-secondary)]/40'
                         }`}
                      >
                         <span
@@ -141,7 +141,7 @@ const NotificationFiltersBar: React.FC<NotificationFiltersBarProps> = ({
                         key={opt.days}
                         type="button"
                         onClick={() => setDateRange(opt.days)}
-                        className="text-xs font-medium px-3 py-1.5 rounded-md border border-[var(--border-default)] text-[#0F2552]/70 dark:text-white/65 hover:text-[#0F2552] dark:hover:text-white hover:border-[#B28309]/40 transition-colors cursor-pointer"
+                        className="text-xs font-medium px-3 py-1.5 rounded-md border border-[var(--border-default)] text-[#0F2552]/70 dark:text-white/65 hover:text-[#0F2552] dark:hover:text-white hover:border-[var(--color-secondary)]/40 transition-colors cursor-pointer"
                      >
                         {opt.label}
                      </button>
@@ -167,7 +167,7 @@ const NotificationFiltersBar: React.FC<NotificationFiltersBarProps> = ({
                            page: 1,
                         })
                      }
-                     className="text-sm px-3 py-2 rounded-md border border-[var(--border-default)] bg-transparent text-[#0F2552] dark:text-white outline-none focus:border-[#B28309]/60 transition-colors cursor-pointer"
+                     className="text-sm px-3 py-2 rounded-md border border-[var(--border-default)] bg-transparent text-[#0F2552] dark:text-white outline-none focus:border-[var(--color-secondary)]/60 transition-colors cursor-pointer"
                   >
                      {ENTITY_TYPE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -182,7 +182,7 @@ const NotificationFiltersBar: React.FC<NotificationFiltersBarProps> = ({
                         placeholder="Search recipient email..."
                         value={query.search ?? ''}
                         onChange={handleSearch}
-                        className="w-full text-sm px-3 py-2 rounded-md border border-[var(--border-default)] bg-transparent text-[#0F2552] dark:text-white placeholder:text-[#0F2552]/35 dark:placeholder:text-white/30 outline-none focus:border-[#B28309]/60 transition-colors"
+                        className="w-full text-sm px-3 py-2 rounded-md border border-[var(--border-default)] bg-transparent text-[#0F2552] dark:text-white placeholder:text-[#0F2552]/35 dark:placeholder:text-white/30 outline-none focus:border-[var(--color-secondary)]/60 transition-colors"
                      />
                   </div>
                </div>
