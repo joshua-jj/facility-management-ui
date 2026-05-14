@@ -31,10 +31,16 @@ import { Permission } from '@/constants/permissions.enum';
 
 const formatTrendLabel = (raw: string, period: AnalyticsPeriod): string => {
    try {
-      const daily = raw.length === 10;
+      // Year period payloads from the API are `YYYY-MM` (12 monthly
+      // buckets). Week/month payloads are `YYYY-MM-DD` (daily buckets).
+      // Format each axis tick to the most readable form for its bucket
+      // size — full year for the annual view, day-of-month for daily.
       if (period === 'year') {
-         return format(daily ? parseISO(raw) : parseISO(`${raw}-01`), 'MMM yy');
+         const [year, month] = raw.split('-');
+         const d = new Date(Number(year), Number(month) - 1, 1);
+         return format(d, 'MMM yyyy');
       }
+      const daily = raw.length === 10;
       if (daily) return format(parseISO(raw), 'MMM d');
       return format(parseISO(`${raw}-01`), 'MMM');
    } catch {
@@ -151,9 +157,15 @@ const Analytics = () => {
       () => requestsSparkline.reduce((sum, p) => sum + p.value, 0),
       [requestsSparkline],
    );
+   // Items Tracked: read the authoritative scalar from the API
+   // (`itemsTracked` = sum of `actualQuantity` for ACTIVE items as of
+   // the period end). Previously this was derived from the last point
+   // of `itemsSparkline`, which broke after Phase 1 made the sparkline
+   // cumulative AND broke earlier when the sparkline was per-day-new
+   // (it would read 0 on quiet days even when stock existed).
    const itemsTracked = useMemo(
-      () => itemsSparkline[itemsSparkline.length - 1]?.value ?? 0,
-      [itemsSparkline],
+      () => Number(dashboardAnalytics?.itemsTracked ?? 0),
+      [dashboardAnalytics?.itemsTracked],
    );
    const generatorLogs = useMemo(
       () => generatorTrend.reduce((sum, p) => sum + p.value, 0),

@@ -59,6 +59,33 @@ const Reports = () => {
       fetchReports();
    }, [fetchReports]);
 
+   // Deep-link from the dashboard's Action Items (spec §6.2). When the
+   // page is opened with `?status=NEW` or `?status=ASSIGNED`, seed the
+   // `complaintStatus` filter so the table lands pre-filtered. The
+   // dashboard sends raw upper-case API values; the filter dropdown
+   // here uses title-case labels ("Pending", "In Progress", …). We
+   // normalise the inbound value before seeding so the dropdown shows
+   // the right active option.
+   useEffect(() => {
+      if (!router.isReady) return;
+      const statusParam = router.query.status;
+      if (typeof statusParam !== 'string' || statusParam.length === 0) return;
+      const normalized: Record<string, string> = {
+         NEW: 'Pending',
+         PENDING: 'Pending',
+         IN_PROGRESS: 'In Progress',
+         RESOLVED: 'Resolved',
+         CLOSED: 'Closed',
+         ASSIGNED: 'In Progress',
+      };
+      const next = normalized[statusParam.toUpperCase()] ?? statusParam;
+      setFilterValues((prev) =>
+         prev.complaintStatus === next ? prev : { ...prev, complaintStatus: next },
+      );
+      setCurrentPage(1);
+      // Only react to router readiness + the initial status value.
+   }, [router.isReady, router.query.status]);
+
    // Re-fetch when any complaint is resolved or assigned on the detail page,
    // so the Status column in this list reflects the new state.
    useEffect(() => {

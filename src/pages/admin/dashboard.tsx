@@ -296,16 +296,6 @@ const Dashboard = () => {
       };
    }, [dashboardStats]);
 
-   /* ── Sparkline series adapter: `{date,count}` -> `{date,value}` ── */
-   const requestsSparkline = useMemo(
-      () =>
-         (dashboardAnalytics?.requestsSparkline ?? []).map((p) => ({
-            date: p.date,
-            value: p.count,
-         })),
-      [dashboardAnalytics?.requestsSparkline],
-   );
-
    /* ── Trend series for RequestTrendsCard (keeps the {date,count} shape) ── */
    const requestTrendSeries = useMemo(
       () => dashboardAnalytics?.requestsSparkline ?? [],
@@ -376,17 +366,21 @@ const Dashboard = () => {
       // strongest hat: back-office (manage) > approve > release. Each
       // branch is independent so SA+HOD users see the back-office
       // shape (more useful at a glance).
+      // Action Items deep-link to the filtered list (spec §6.2). The
+      // target page reads `?status=` on mount and seeds its existing
+      // filter state, so jumping in lands directly on the row set the
+      // counter promised.
       if (isBackOffice) {
          items.push({
             label: 'Requests pending assignment',
             count: reqByStatus('APPROVED'),
-            href: '/admin/requests',
+            href: '/admin/requests?status=Approved',
             accent: '#6B8FCC',
          });
          items.push({
             label: 'New complaints to triage',
             count: complaintByStatus('NEW'),
-            href: '/admin/reports',
+            href: '/admin/reports?status=NEW',
             accent: '#F59E0B',
          });
          const overdue = dashboardStats?.dueReturns ?? 0;
@@ -394,7 +388,7 @@ const Dashboard = () => {
             items.push({
                label: 'Overdue returns',
                count: overdue,
-               href: '/admin/requests',
+               href: '/admin/requests?status=Assigned',
                accent: '#EF4444',
             });
          }
@@ -402,7 +396,7 @@ const Dashboard = () => {
          items.push({
             label: 'Requests awaiting your approval',
             count: reqByStatus('PENDING'),
-            href: '/admin/requests',
+            href: '/admin/requests?status=Pending',
             accent: '#6B8FCC',
          });
          const overdue = dashboardStats?.dueReturns ?? 0;
@@ -410,7 +404,7 @@ const Dashboard = () => {
             items.push({
                label: "Department's overdue returns",
                count: overdue,
-               href: '/admin/requests',
+               href: '/admin/requests?status=Assigned',
                accent: '#EF4444',
             });
          }
@@ -418,19 +412,19 @@ const Dashboard = () => {
          items.push({
             label: 'Assigned to you — release pending',
             count: reqByStatus('ASSIGNED'),
-            href: '/admin/requests',
+            href: '/admin/requests?status=Assigned',
             accent: '#6B8FCC',
          });
          items.push({
             label: 'Collected — awaiting return',
             count: reqByStatus('COLLECTED'),
-            href: '/admin/requests',
+            href: '/admin/requests?status=Collected',
             accent: '#F59E0B',
          });
          items.push({
             label: 'Complaints assigned to you',
             count: complaintByStatus('ASSIGNED'),
-            href: '/admin/reports',
+            href: '/admin/reports?status=ASSIGNED',
             accent: '#10B981',
          });
       }
@@ -542,14 +536,12 @@ const Dashboard = () => {
                               label: 'Approved Rate',
                               percent: requestRatePills.approved,
                               trend: 'up',
-                              sparklineData: requestsSparkline,
                               color: 'mint',
                            }}
                            declined={{
                               label: 'Declined Rate',
                               percent: requestRatePills.declined,
                               trend: 'down',
-                              sparklineData: requestsSparkline,
                               color: 'coral',
                            }}
                         />

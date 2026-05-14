@@ -1,13 +1,11 @@
 import React from 'react';
 import Card from '@/components/Cards/Card';
 import SectionLabel from '@/components/Cards/SectionLabel';
-import Sparkline from '@/components/dashboard/Sparkline';
 
 interface MiniStat {
    label: string;
    percent: number;
    trend: 'up' | 'down';
-   sparklineData: Array<{ date: string; value: number }>;
    color: 'mint' | 'coral';
 }
 
@@ -24,10 +22,13 @@ const COLOR_TOKEN: Record<MiniStat['color'], string> = {
 
 /**
  * "Total Requests" headline card. Big number on top, two mini-stats
- * underneath (Approved / Declined). Each mini-stat uses the shared
- * Sparkline component — Sparkline expects `{date, value}` data so the
- * caller is responsible for reshaping the raw `{date, count}` time
- * series before passing it in.
+ * underneath (Approved / Declined). Per the 2026-05-14 dashboard
+ * data-defects fix (spec §6.1) the mini-stats no longer render a
+ * sparkline — both rows previously drew the same total-volume series,
+ * which was misleading since the series was the overall request total
+ * rather than approved-only / declined-only deltas. The colored dot
+ * (mint / coral) keeps the visual distinction without implying a trend
+ * the data doesn't actually support.
  */
 const TotalRequestsCard: React.FC<TotalRequestsCardProps> = ({ total, approved, declined }) => {
    const renderMini = (stat: MiniStat) => (
@@ -43,14 +44,6 @@ const TotalRequestsCard: React.FC<TotalRequestsCardProps> = ({ total, approved, 
             <div className="text-[0.65rem] uppercase tracking-wider text-[#0F2552]/40 dark:text-white/35">
                {stat.label}
             </div>
-         </div>
-         <div className="ml-auto h-10 w-24 shrink-0">
-            <Sparkline
-               data={stat.sparklineData}
-               color={COLOR_TOKEN[stat.color]}
-               height={40}
-               showDelta={false}
-            />
          </div>
       </div>
    );
