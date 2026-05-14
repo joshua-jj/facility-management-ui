@@ -196,7 +196,8 @@ const Dashboard = () => {
                variant: 'success',
             }) as unknown as UnknownAction,
          );
-      } catch {
+      } catch (err) {
+         console.error('[dashboard] Daily report download failed:', err);
          dispatch(
             appActions.setSnackBar({
                type: 'error',
