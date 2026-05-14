@@ -104,4 +104,7 @@ export enum Permission {
    // ── Audit logs ────────────────────────────────────────────────────
    AUDIT_LOGS_READ = 'audit-logs:read',
    AUDIT_LOGS_MANAGE = 'audit-logs:manage',
+
+   // ── Notifications admin (SA delivery tracking + retry surface) ────
+   NOTIFICATIONS_ADMIN = 'notifications:admin',
 }
