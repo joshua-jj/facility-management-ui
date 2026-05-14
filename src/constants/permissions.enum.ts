@@ -90,6 +90,7 @@ export enum Permission {
    ANALYTICS_MANAGE = 'analytics:manage',
    REPORTS_READ = 'reports:read',
    REPORTS_MANAGE = 'reports:manage',
+   REPORTS_DOWNLOAD = 'reports:download',
 
    // ── User & role administration ────────────────────────────────────
    USERS_READ = 'users:read',

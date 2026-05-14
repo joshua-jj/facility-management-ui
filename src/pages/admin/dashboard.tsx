@@ -12,8 +12,6 @@ import { usePermission } from '@/hooks/usePermission';
 import { Permission } from '@/constants/permissions.enum';
 import { authConstants, dashboardConstants } from '@/constants';
 import { getObjectFromStorage } from '@/utilities/helpers';
-import { exportToCsv } from '@/utilities/exportCsv';
-
 import Card from '@/components/Cards/Card';
 import SectionLabel from '@/components/Cards/SectionLabel';
 import PageHeader from '@/components/PageHeader';
@@ -103,6 +101,9 @@ const Dashboard = () => {
    const isBackOffice = can(Permission.REQUESTS_MANAGE);
    const canApproveRequests = can(Permission.REQUESTS_APPROVE);
    const canReleaseRequests = can(Permission.REQUESTS_RELEASE);
+   // Phase 2 daily-report PDF: SA-only at seed, capability-gated so the
+   // download surface mirrors the API's `reports:download` enforcement.
+   const canDownloadReports = can(Permission.REPORTS_DOWNLOAD);
 
    const isLoading = IsFetchingDashboardStats && !dashboardStats;
 
@@ -153,15 +154,22 @@ const Dashboard = () => {
          const today = format(new Date(), 'yyyy-MM-dd');
          const uri = `${dashboardConstants.DAILY_REPORT_URI}?date=${today}`;
 
+         // Phase 2: endpoint now returns application/pdf (binary). Pull
+         // the response as a blob and trigger a browser download via the
+         // standard `<a download>` pattern. The API gates this on the
+         // `reports:download` capability (SA-only at seed) — the button
+         // is also capability-gated below so users without the perm
+         // never see this code path.
          const resp = await axios.get(uri, {
             headers: {
-               Accept: 'application/json',
+               Accept: 'application/pdf',
                Authorization: user?.token ? `Bearer ${user.token}` : '',
             },
+            responseType: 'blob',
          });
 
-         const report = resp.data?.data;
-         if (!report) {
+         const blob = resp.data as Blob;
+         if (!blob || blob.size === 0) {
             dispatch(
                appActions.setSnackBar({
                   type: 'warning',
@@ -172,97 +180,14 @@ const Dashboard = () => {
             return;
          }
 
-         type TransactionRow = {
-            category: string;
-            name: string;
-            description: string;
-            status: string;
-            detail: string;
-            createdBy: string;
-            createdAt: string;
-         };
-         const rows: TransactionRow[] = [];
-
-         (report.requests ?? []).forEach((r: Record<string, unknown>) => {
-            rows.push({
-               category: 'Request',
-               name: String(r.requesterName ?? ''),
-               description: String(r.descriptionOfRequest ?? ''),
-               status: String(r.requestStatus ?? ''),
-               detail: `Ministry: ${r.ministryName ?? ''}`,
-               createdBy: String(r.createdBy ?? ''),
-               createdAt: r.createdAt
-                  ? format(parseISO(String(r.createdAt)), 'yyyy-MM-dd h:mm a')
-                  : '',
-            });
-         });
-
-         (report.generatorLogs ?? []).forEach((g: Record<string, unknown>) => {
-            rows.push({
-               category: 'Generator Log',
-               name: String(g.nameOfMeeting ?? ''),
-               description: `${g.generatorType ?? ''} at ${g.meetingLocation ?? ''}`,
-               status: g.faultDetected ? 'Fault Detected' : 'OK',
-               detail:
-                  g.onTime && g.offTime
-                     ? `On: ${format(parseISO(String(g.onTime)), 'h:mm a')} Off: ${format(parseISO(String(g.offTime)), 'h:mm a')}`
-                     : '',
-               createdBy: String(g.createdBy ?? ''),
-               createdAt: g.createdAt
-                  ? format(parseISO(String(g.createdAt)), 'yyyy-MM-dd h:mm a')
-                  : '',
-            });
-         });
-
-         (report.maintenanceLogs ?? []).forEach((m: Record<string, unknown>) => {
-            rows.push({
-               category: 'Maintenance',
-               name: String(m.artisanName ?? ''),
-               description: String(m.description ?? ''),
-               status: '',
-               detail: `Cost: NGN ${Number(m.costOfMaintenance ?? 0).toLocaleString()}`,
-               createdBy: String(m.createdBy ?? ''),
-               createdAt: m.createdAt
-                  ? format(parseISO(String(m.createdAt)), 'yyyy-MM-dd h:mm a')
-                  : '',
-            });
-         });
-
-         (report.complaints ?? []).forEach((c: Record<string, unknown>) => {
-            const summary = c.summary as Record<string, unknown> | undefined;
-            rows.push({
-               category: 'Complaint',
-               name: String(c.title ?? ''),
-               description: String(c.description ?? ''),
-               status: String(summary?.complaintStatus ?? ''),
-               detail: '',
-               createdBy: String(c.createdBy ?? ''),
-               createdAt: c.createdAt
-                  ? format(parseISO(String(c.createdAt)), 'yyyy-MM-dd h:mm a')
-                  : '',
-            });
-         });
-
-         if (rows.length === 0) {
-            dispatch(
-               appActions.setSnackBar({
-                  type: 'info',
-                  message: 'No transactions found for today.',
-                  variant: 'info',
-               }) as unknown as UnknownAction,
-            );
-            return;
-         }
-
-         exportToCsv('Daily Report', rows, [
-            { key: 'category', header: 'Category' },
-            { key: 'name', header: 'Name' },
-            { key: 'description', header: 'Description' },
-            { key: 'status', header: 'Status' },
-            { key: 'detail', header: 'Detail' },
-            { key: 'createdBy', header: 'Created By' },
-            { key: 'createdAt', header: 'Date/Time' },
-         ]);
+         const url = window.URL.createObjectURL(blob);
+         const link = document.createElement('a');
+         link.href = url;
+         link.download = `daily-report-${today}.pdf`;
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+         window.URL.revokeObjectURL(url);
 
          dispatch(
             appActions.setSnackBar({
@@ -451,10 +376,12 @@ const Dashboard = () => {
                title="Dashboard"
                subtitle="At-a-glance view of requests, items and activity across your facilities"
                action={
-                  <DailyReportAction
-                     onExport={handleExportDailyReport}
-                     loading={isExportingReport}
-                  />
+                  canDownloadReports ? (
+                     <DailyReportAction
+                        onExport={handleExportDailyReport}
+                        loading={isExportingReport}
+                     />
+                  ) : undefined
                }
             />
 
