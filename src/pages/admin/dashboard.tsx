@@ -379,8 +379,8 @@ const Dashboard = () => {
          });
          items.push({
             label: 'New complaints to triage',
-            count: complaintByStatus('NEW'),
-            href: '/admin/reports?status=NEW',
+            count: complaintByStatus('Pending'),
+            href: '/admin/reports?status=Pending',
             accent: '#F59E0B',
          });
          const overdue = dashboardStats?.dueReturns ?? 0;

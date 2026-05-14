@@ -76,7 +76,7 @@ const Reports = () => {
          IN_PROGRESS: 'In Progress',
          RESOLVED: 'Resolved',
          CLOSED: 'Closed',
-         ASSIGNED: 'In Progress',
+         ASSIGNED: 'Assigned',
       };
       const next = normalized[statusParam.toUpperCase()] ?? statusParam;
       setFilterValues((prev) =>
@@ -152,6 +152,7 @@ const Reports = () => {
             label: 'Status',
             options: [
                { value: 'Pending', label: 'Pending' },
+               { value: 'Assigned', label: 'Assigned' },
                { value: 'In Progress', label: 'In Progress' },
                { value: 'Resolved', label: 'Resolved' },
                { value: 'Closed', label: 'Closed' },
