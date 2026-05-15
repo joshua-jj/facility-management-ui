@@ -63,10 +63,7 @@ function buildBreadcrumbs(pathname: string): Crumb[] {
 }
 
 // ── Breadcrumbs Component ──
-// Retained in the file (no longer rendered) to avoid touching the
-// PageHeader export surface during the 2026-05-13 redesign. Will be
-// removed in a future cleanup pass.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 const Breadcrumbs: React.FC = () => {
    const router = useRouter();
    const crumbs = buildBreadcrumbs(router.pathname);
@@ -131,30 +128,29 @@ interface PageHeaderProps {
    subtitle?: string;
    action?: React.ReactNode;
    className?: string;
-   /** @deprecated breadcrumbs were removed in the 2026-05-13 redesign. Prop kept for backwards compatibility; has no effect. */
+   /** Render the auto-generated breadcrumb row above the title. Defaults to true. */
    showBreadcrumbs?: boolean;
 }
 
 /**
- * Two-row layout: title/subtitle on the left, action slot on the right.
- *
- * The `showBreadcrumbs` prop is now @deprecated and a no-op — kept in
- * the signature so the ~25 existing consumers don't need to be edited
- * in the same pass as the visual refresh. It will be removed in a
- * future cleanup.
+ * Two-row layout: optional breadcrumb row + title/subtitle on the left,
+ * action slot on the right. Breadcrumbs auto-derive from the current
+ * route via `buildBreadcrumbs(router.pathname)`. Pass
+ * `showBreadcrumbs={false}` to suppress (e.g. on the dashboard landing
+ * where the route depth is 1 and a single-crumb trail is noise).
  */
 const PageHeader: React.FC<PageHeaderProps> = ({
    title,
    subtitle,
    action,
    className = '',
-   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-   showBreadcrumbs,
+   showBreadcrumbs = true,
 }) => {
    return (
       <div className={`mb-6 ${className}`}>
          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
+               {showBreadcrumbs && <Breadcrumbs />}
                {title && (
                   <h1 className="text-3xl md:text-4xl font-bold text-[#0F2552] dark:text-white/95 tracking-tight">
                      {title}
