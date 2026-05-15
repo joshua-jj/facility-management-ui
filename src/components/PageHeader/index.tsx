@@ -64,7 +64,7 @@ function buildBreadcrumbs(pathname: string): Crumb[] {
 
 // ── Breadcrumbs Component ──
 
-const Breadcrumbs: React.FC = () => {
+export const Breadcrumbs: React.FC = () => {
    const router = useRouter();
    const crumbs = buildBreadcrumbs(router.pathname);
 
@@ -128,14 +128,16 @@ interface PageHeaderProps {
    subtitle?: string;
    action?: React.ReactNode;
    className?: string;
+   /** Render the auto-generated breadcrumb row above the title. Defaults to true. */
    showBreadcrumbs?: boolean;
 }
 
 /**
- * Detail pages use breadcrumbs + action only (no title/subtitle), so this
- * component lays out the header in two rows: breadcrumb + action on the top
- * row, then an optional title/subtitle row beneath. When no title is passed
- * (typical for detail pages), only the breadcrumb/action row is rendered.
+ * Two-row layout: optional breadcrumb row + title/subtitle on the left,
+ * action slot on the right. Breadcrumbs auto-derive from the current
+ * route via `buildBreadcrumbs(router.pathname)`. Pass
+ * `showBreadcrumbs={false}` to suppress (e.g. on the dashboard landing
+ * where the route depth is 1 and a single-crumb trail is noise).
  */
 const PageHeader: React.FC<PageHeaderProps> = ({
    title,
@@ -150,14 +152,14 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             <div className="min-w-0 flex-1">
                {showBreadcrumbs && <Breadcrumbs />}
                {title && (
-                  <h1 className="text-lg font-bold text-[#0F2552] dark:text-white/90 capitalize">
+                  <h1 className="text-3xl md:text-4xl font-bold text-[#0F2552] dark:text-white/95 tracking-tight">
                      {title}
                   </h1>
                )}
                {subtitle && (
                   <p
-                     className={`text-xs text-gray-400 dark:text-white/40 ${
-                        title ? 'mt-0.5' : 'mt-1'
+                     className={`text-sm italic text-gray-500 dark:text-white/55 ${
+                        title ? 'mt-1' : 'mt-2'
                      }`}
                   >
                      {subtitle}

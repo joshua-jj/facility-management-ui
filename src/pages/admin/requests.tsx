@@ -60,6 +60,27 @@ const Requests = () => {
       }
    }, [dispatch, isAdminView]);
 
+   // Deep-link from the dashboard's Action Items (spec §6.2). When the
+   // page is opened with `?status=Approved`, seed the existing
+   // `requestStatus` filter so the table lands pre-filtered. We only
+   // honor it once router params are ready, and only the first time —
+   // subsequent in-page filter changes are owned by the user.
+   useEffect(() => {
+      if (!router.isReady) return;
+      const statusParam = router.query.status;
+      if (typeof statusParam === 'string' && statusParam.length > 0) {
+         setFilterValues((prev) =>
+            prev.requestStatus === statusParam
+               ? prev
+               : { ...prev, requestStatus: statusParam },
+         );
+         setCurrentPage(1);
+      }
+      // Intentionally only react to router readiness + the initial
+      // status value — we don't want to re-seed when filterValues
+      // changes via user interaction.
+   }, [router.isReady, router.query.status]);
+
    useEffect(() => {
       if (isDeptScoped) {
          dispatch(

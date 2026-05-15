@@ -1,4 +1,5 @@
 import {
+  BellIcon,
   CalendarIcon,
   DashboardIcon,
   DepartmentsIcon,
@@ -148,6 +149,19 @@ export const pageRoutes: PageRoute[] = [
     permissions: [Permission.USERS_READ],
   },
   {
+    id: 14,
+    label: 'notifications',
+    link: '/admin/notifications',
+    icon: <BellIcon />,
+    // SA-only delivery tracking + retry surface (spec
+    // 2026-05-14-notification-tracking-and-retry-design §6.7). The
+    // capability is seeded to SUPER_ADMIN by default; grant via the
+    // settings/access UI rather than a code change here when other
+    // roles need it.
+    permissions: [Permission.NOTIFICATIONS_ADMIN],
+    section: 'account',
+  },
+  {
     id: 99,
     label: 'settings',
     link: '/admin/settings/profile',
@@ -190,6 +204,8 @@ export const getPageNames = (link: string) => {
       return 'reports';
     case '/admin/users':
       return 'user management';
+    case '/admin/notifications':
+      return 'notifications';
     case '/admin/settings/access':
       return 'roles & permissions';
     case '/admin/settings/access/roles/new':

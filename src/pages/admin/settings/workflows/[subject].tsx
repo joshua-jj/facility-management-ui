@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Layout from '@/components/Layout';
+import { Breadcrumbs } from '@/components/PageHeader';
 import PrivateRoute from '@/components/PrivateRoute';
 import WorkflowEditor from '@/components/WorkflowEditor';
 import { RootState } from '@/redux/reducers';
@@ -84,6 +85,7 @@ const WorkflowDetailPage: FC = () => {
       <PrivateRoute permissions={[Permission.ROLES_MANAGE]}>
          <Layout title={`Workflow: ${subject}`}>
             <div className="space-y-4 px-4 md:px-6 -mb-16">
+               <Breadcrumbs />
                <div className="flex items-center justify-between">
                   <div>
                      <Link
