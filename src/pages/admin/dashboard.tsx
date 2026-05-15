@@ -375,6 +375,7 @@ const Dashboard = () => {
          <Layout title="Dashboard">
             <PageHeader
                title="Dashboard"
+               showBreadcrumbs={false}
                subtitle="At-a-glance view of requests, items and activity across your facilities"
                action={
                   canDownloadReports ? (

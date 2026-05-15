@@ -64,7 +64,7 @@ function buildBreadcrumbs(pathname: string): Crumb[] {
 
 // ── Breadcrumbs Component ──
 
-const Breadcrumbs: React.FC = () => {
+export const Breadcrumbs: React.FC = () => {
    const router = useRouter();
    const crumbs = buildBreadcrumbs(router.pathname);
 

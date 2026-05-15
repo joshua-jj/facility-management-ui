@@ -182,6 +182,7 @@ const Analytics = () => {
          <Layout title="Analytics">
             <PageHeader
                title="Analytics"
+               showBreadcrumbs={false}
                subtitle="Operational telemetry across requests, inventory, and facility maintenance. Charts respond to the selected period."
                action={<PeriodToggle value={period} onChange={setPeriod} />}
             />
