@@ -5,7 +5,6 @@ import PrivateRoute from '@/components/PrivateRoute';
 import Card from '@/components/Cards/Card';
 import SectionLabel from '@/components/Cards/SectionLabel';
 import CalendarHeatmap from '@/components/dashboard/CalendarHeatmap';
-import TopNList from '@/components/dashboard/TopNList';
 import PeriodToggle, { AnalyticsPeriod } from '@/components/analytics/PeriodToggle';
 import KpiSparklineCard from '@/components/analytics/KpiSparklineCard';
 import { usePermission } from '@/hooks/usePermission';
@@ -127,21 +126,6 @@ const Analytics = () => {
    const itemsDelta = useMemo(() => wowDelta(itemsSparkline), [itemsSparkline]);
    const generatorDelta = useMemo(() => wowDelta(generatorTrend), [generatorTrend]);
 
-   const topItems = useMemo(
-      () => (dashboardAnalytics?.topRequestedItems ?? []).slice(0, 5),
-      [dashboardAnalytics?.topRequestedItems],
-   );
-
-   const topDepartments = useMemo(
-      () => (dashboardAnalytics?.topDepartmentsByRequests ?? []).slice(0, 5),
-      [dashboardAnalytics?.topDepartmentsByRequests],
-   );
-
-   const topArtisans = useMemo(
-      () => (dashboardAnalytics?.topArtisansByCost ?? []).slice(0, 5),
-      [dashboardAnalytics?.topArtisansByCost],
-   );
-
    // CalendarHeatmap consumes `{date, count}` pairs directly.
    const heatmap = useMemo(
       () =>
@@ -188,9 +172,6 @@ const Analytics = () => {
       () => generatorTrend.map((p) => p.value),
       [generatorTrend],
    );
-
-   const fmtCurrency = (n: number): string =>
-      `₦${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
    if (!canViewAnalytics) return null;
 
@@ -426,7 +407,7 @@ const Analytics = () => {
                   <SectionLabel>Activity Heatmap</SectionLabel>
                   <div className="mt-3">
                      <div className="text-xl font-bold text-[#0F2552] dark:text-white">
-                        Request volume — last year
+                        Request volume — {new Date().getFullYear()}
                      </div>
                      <div className="text-xs text-[#0F2552]/45 dark:text-white/45 mt-1">
                         Each square is one day. Darker = more requests filed.
@@ -437,50 +418,6 @@ const Analytics = () => {
                   </div>
                </Card>
             )}
-
-            {/* Leaderboards — preserved, restyled */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-               <Card>
-                  <SectionLabel>Top Requesters</SectionLabel>
-                  <div className="mt-3">
-                     <TopNList
-                        title="Top 5 departments by requests"
-                        rows={topDepartments.map((d) => ({
-                           label: d.departmentName,
-                           value: Number(d.count ?? 0),
-                        }))}
-                        emptyText="No department data yet."
-                     />
-                  </div>
-               </Card>
-               <Card>
-                  <SectionLabel>Top Items</SectionLabel>
-                  <div className="mt-3">
-                     <TopNList
-                        title="Top 5 requested items"
-                        rows={topItems.map((it) => ({
-                           label: it.itemName,
-                           value: Number(it.count ?? 0),
-                        }))}
-                        emptyText="No item data yet."
-                     />
-                  </div>
-               </Card>
-               <Card>
-                  <SectionLabel>Top Artisans</SectionLabel>
-                  <div className="mt-3">
-                     <TopNList
-                        title="Top 5 artisans by maintenance cost"
-                        rows={topArtisans.map((a) => ({
-                           label: a.artisanName,
-                           value: Number(a.totalCost ?? 0),
-                        }))}
-                        valueFormat={fmtCurrency}
-                        emptyText="No artisan data yet."
-                     />
-                  </div>
-               </Card>
-            </div>
          </Layout>
       </PrivateRoute>
    );

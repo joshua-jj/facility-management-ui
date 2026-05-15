@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { format, startOfDay, subDays, eachDayOfInterval } from 'date-fns';
+import { format, startOfDay, startOfYear, endOfYear, eachDayOfInterval } from 'date-fns';
 
 const DEFAULT_COLOR_RAMP = ['#FDF6E3', '#F4D58D', '#DFA94D', '#B28309', '#7A5A06'];
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -55,10 +55,16 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
       return m;
    }, [data]);
 
-   // Full year back from today (like GitLab activity graph)
+   // Full current calendar year: Jan 1 → Dec 31. Past + future cells
+   // both render — future days fall through to the count===0 empty
+   // color since the API doesn't return data for them. Going full-year
+   // keeps the grid at ~53 weeks so cells size cleanly to fit the
+   // tile width (an Jan→today partial year leaves only ~20 weeks and
+   // bloats each cell to fill the same horizontal space).
    const today = startOfDay(new Date());
-   const startDate = subDays(today, 364);
-   const allDays = eachDayOfInterval({ start: startDate, end: today });
+   const startDate = startOfYear(today);
+   const endDate = endOfYear(today);
+   const allDays = eachDayOfInterval({ start: startDate, end: endDate });
 
    // Compute quintile thresholds from non-zero values
    const quintiles = useMemo(() => {
