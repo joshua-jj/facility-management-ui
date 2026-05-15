@@ -85,7 +85,8 @@ export const NotificationBell: React.FC = () => {
                   <BellIcon />
                   {unreadCount > 0 && (
                      <span
-                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold leading-none flex items-center justify-center tabular-nums shadow-sm ring-2 ring-[var(--surface-paper)]"
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-semibold leading-none flex items-center justify-center tabular-nums shadow-sm ring-2 ring-[var(--surface-paper)]"
+                        style={{ background: 'var(--badge-warning)' }}
                         aria-hidden
                      >
                         {unreadCount > 99 ? '99+' : unreadCount}

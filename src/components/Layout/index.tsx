@@ -1,5 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import Header from '@/navigation/Header';
+import AdminTopBar from '@/navigation/AdminTopBar';
 import Sidebar from '@/navigation/Sidebar';
 import { useIsAuthRoute } from '@/hooks';
 import { useRouter } from 'next/router';
@@ -40,11 +41,16 @@ const Layout: React.FC<LayoutProps> = ({ children, className, title }) => {
                </Head>
                <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
                <div className="flex-1 overflow-y-auto min-w-0">
-                  <Header onMobileMenuToggle={() => setMobileOpen((prev) => !prev)} />
+                  <Header />
                   <main
-                     className={`text-[#0F2552] dark:text-white/90 p-2 md:p-4 lg:p-8 pb-20 animate-page-enter transition-colors duration-300 ${className}`}
+                     className="text-[#0F2552] dark:text-white/90 p-2 md:p-4 lg:p-8 pb-20 animate-page-enter transition-colors duration-300"
                   >
-                     {children}
+                     <AdminTopBar onMobileMenuToggle={() => setMobileOpen((prev) => !prev)} />
+                     {/* Page-supplied className wraps {children} only, not the
+                       * AdminTopBar. When a page passes e.g. "grid grid-cols-12",
+                       * the grid context applies to its content rows; the bell +
+                       * avatar at the top of <main> stay in normal block flow. */}
+                     <div className={className}>{children}</div>
                   </main>
                </div>
             </div>

@@ -20,6 +20,7 @@ import auditLogRootReducer from './auditLog.reducer';
 import securityRootReducer from './security.reducer';
 import incidenceLogRootReducer from './incidenceLog.reducer';
 import notificationRootReducer from './notification.reducer';
+import notificationsAdminReducer from './notificationsAdmin.reducer';
 import workflowRootReducer from './workflow.reducer';
 
 const rootReducer = combineReducers({
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
   security: securityRootReducer,
   incidenceLog: incidenceLogRootReducer,
   notification: notificationRootReducer,
+  notificationsAdmin: notificationsAdminReducer,
   workflow: workflowRootReducer,
 });
 

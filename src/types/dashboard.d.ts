@@ -118,11 +118,22 @@ export interface DashboardAnalytics {
    complaintsByStatus: ComplaintByStatus[];
    maintenanceCostTrend: MaintenanceCostTrendItem[];
    recentMaintenanceLogs: DashboardMaintenanceLog[];
-   // New sparkline fields (14-day)
+   // Sparkline fields — period-aware (week=7d, month=30d, year=12mo).
+   // `requestsSparkline` is per-bucket request counts.
+   // `itemsSparkline` is the cumulative ACTIVE item stock at end of bucket
+   //    (running total, not per-bucket new-items count).
    requestsSparkline?: SparklinePoint[];
    itemsSparkline?: SparklinePoint[];
    reportsSparkline?: SparklinePoint[];
    usersSparkline?: SparklinePoint[];
+   /**
+    * Sum of `actualQuantity` for ACTIVE items as of the end of the
+    * selected period — the authoritative "Items Tracked" KPI scalar.
+    * Prefer this over deriving from `itemsSparkline` since the
+    * sparkline may be empty/zeroed when no items were created in
+    * the window even though stock exists.
+    */
+   itemsTracked?: number;
    // Top-N leaderboards
    topDepartmentsByRequests?: TopDepartmentByRequests[];
    topRequestedItems?: TopRequestedItem[];

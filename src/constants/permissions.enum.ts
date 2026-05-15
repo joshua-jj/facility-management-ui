@@ -90,6 +90,7 @@ export enum Permission {
    ANALYTICS_MANAGE = 'analytics:manage',
    REPORTS_READ = 'reports:read',
    REPORTS_MANAGE = 'reports:manage',
+   REPORTS_DOWNLOAD = 'reports:download',
 
    // ── User & role administration ────────────────────────────────────
    USERS_READ = 'users:read',
@@ -104,4 +105,7 @@ export enum Permission {
    // ── Audit logs ────────────────────────────────────────────────────
    AUDIT_LOGS_READ = 'audit-logs:read',
    AUDIT_LOGS_MANAGE = 'audit-logs:manage',
+
+   // ── Notifications admin (SA delivery tracking + retry surface) ────
+   NOTIFICATIONS_ADMIN = 'notifications:admin',
 }

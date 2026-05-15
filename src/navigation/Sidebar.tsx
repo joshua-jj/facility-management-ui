@@ -189,13 +189,13 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                         'group relative flex items-center rounded-md transition-all duration-200',
                         isCollapsed ? 'justify-center py-3 px-0' : 'gap-x-3 py-2.5 px-3',
                         isActive
-                           ? isDark ? 'bg-white/10 text-[#D4A84B]' : 'bg-[#0F2552]/8 text-[#B28309]'
+                           ? isDark ? 'bg-white/8 text-white' : 'bg-[#0F2552]/8 text-[#B28309]'
                            : isDark ? 'text-white/60 hover:text-white hover:bg-white/5' : 'text-[#0F2552]/60 hover:text-[#0F2552] hover:bg-[#0F2552]/5',
                      )}
                   >
-                     {isActive && (
+                     {isActive && !isDark && (
                         <span
-                           className={classNames('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full', isDark ? 'bg-[#D4A84B]' : 'bg-[#B28309]')}
+                           className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-[#B28309]"
                            style={{ height: '60%' }}
                         />
                      )}
