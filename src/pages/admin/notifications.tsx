@@ -1,4 +1,5 @@
 import { NextPage } from 'next';
+import { useRouter } from 'next/router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
@@ -77,6 +78,7 @@ const STATUS_FILTER_DEF: FilterDef = {
 const DEFAULT_LIMIT = 10;
 
 const NotificationsAdminPage: NextPage = () => {
+   const router = useRouter();
    const dispatch = useDispatch();
    const { page, isLoading, isMutating, error } = useSelector(
       (s: RootState) => s.notificationsAdmin,
@@ -326,6 +328,7 @@ const NotificationsAdminPage: NextPage = () => {
                onRefresh={refetch}
                searchPlaceholder="Search recipient email…"
                onSearch={(q) => setQuery((qry) => ({ ...qry, page: 1, search: q }))}
+               onRowClick={(row) => router.push(`/admin/notifications/${row.id}`)}
                emptyTitle="No notifications"
                emptyDescription="No delivery records match the current filters."
                getRowId={(row) => row.id}

@@ -1,17 +1,28 @@
 import { notificationsAdminConstants } from '@/constants/notifications-admin.constant';
-import { NotificationDeliveriesPage } from '@/types/notificationsAdmin.types';
+import {
+   NotificationDelivery,
+   NotificationDeliveriesPage,
+} from '@/types/notificationsAdmin.types';
 
 /**
  * Slice for the SA-only notification delivery admin page. Separate from
  * the per-user `notification` slice (bell-icon) because the data model
  * and lifecycle are different — this one is server-paginated, gated on
  * `notifications:admin`, and persists no client cache between visits.
+ *
+ * `selected` is the single-row state used by the detail page
+ * (/admin/notifications/[id]). Loaded via the GET_NOTIFICATION_ADMIN
+ * saga; cleared on each detail-page mount so we don't render stale
+ * data for one notification while we fetch another.
  */
 export interface NotificationsAdminState {
    page: NotificationDeliveriesPage | null;
    isLoading: boolean;
    error: string | null;
    isMutating: boolean;
+   selected: NotificationDelivery | null;
+   isLoadingSelected: boolean;
+   selectedError: string | null;
 }
 
 const initialState: NotificationsAdminState = {
@@ -19,6 +30,9 @@ const initialState: NotificationsAdminState = {
    isLoading: false,
    error: null,
    isMutating: false,
+   selected: null,
+   isLoadingSelected: false,
+   selectedError: null,
 };
 
 interface ReducerAction {
@@ -49,6 +63,32 @@ export default function notificationsAdminReducer(
                (typeof action.payload === 'string'
                   ? action.payload
                   : 'Failed to load notifications'),
+         };
+
+      case notificationsAdminConstants.GET_NOTIFICATION_ADMIN:
+         return {
+            ...state,
+            isLoadingSelected: true,
+            selectedError: null,
+            // Clear previous selection so the UI doesn't briefly render
+            // the wrong row while the new one is in flight.
+            selected: null,
+         };
+      case notificationsAdminConstants.GET_NOTIFICATION_ADMIN_SUCCESS:
+         return {
+            ...state,
+            isLoadingSelected: false,
+            selected: action.payload as NotificationDelivery,
+         };
+      case notificationsAdminConstants.GET_NOTIFICATION_ADMIN_FAILURE:
+         return {
+            ...state,
+            isLoadingSelected: false,
+            selectedError:
+               action.error ??
+               (typeof action.payload === 'string'
+                  ? action.payload
+                  : 'Failed to load notification'),
          };
 
       case notificationsAdminConstants.RETRY_NOTIFICATION:

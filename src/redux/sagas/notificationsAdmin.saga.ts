@@ -71,6 +71,25 @@ function* getNotificationsAdmin({ payload }: GetAction) {
    }
 }
 
+function* getNotificationAdmin({ payload }: MutateAction) {
+   try {
+      const resp = yield* authenticatedRequest(
+         notificationsAdminConstants.ADMIN_DETAIL_URI(payload.id),
+         { method: 'GET' },
+      );
+      if (!resp) return;
+      yield put({
+         type: notificationsAdminConstants.GET_NOTIFICATION_ADMIN_SUCCESS,
+         payload: resp.data ?? null,
+      });
+   } catch (error: unknown) {
+      yield* handleSagaError(
+         error,
+         notificationsAdminConstants.GET_NOTIFICATION_ADMIN_FAILURE,
+      );
+   }
+}
+
 function* retryNotification({ payload }: MutateAction) {
    try {
       const resp = yield* authenticatedRequest(
@@ -130,6 +149,10 @@ export default function* notificationsAdminSaga() {
       takeLatest(
          notificationsAdminConstants.GET_NOTIFICATIONS_ADMIN,
          getNotificationsAdmin,
+      ),
+      takeLatest(
+         notificationsAdminConstants.GET_NOTIFICATION_ADMIN,
+         getNotificationAdmin,
       ),
       takeLatest(
          notificationsAdminConstants.RETRY_NOTIFICATION,
