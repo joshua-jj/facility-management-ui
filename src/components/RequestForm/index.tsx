@@ -7,7 +7,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { appActions, departmentActions, requestActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
-import SuccessModal from '../Modals/SuccessModal';
 import { itemConstants, requestConstants } from '@/constants';
 import { AppEmitter } from '@/controllers/EventEmitter';
 import { Item, RequestForm as RequestFormPayload } from '@/types';
@@ -58,7 +57,6 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
    const { IsCreatingRequest } = useSelector((s: RootState) => s.request);
    const { userDetails } = useSelector((s: RootState) => s.user);
    const [currentStep, setCurrentStep] = useState(0);
-   const [showSuccessModal, setShowSuccessModal] = useState(false);
    const [isFormValid, setIsFormValid] = useState(true);
    const [showDescriptionError, setShowDescriptionError] = useState(false);
    const [showItemRowErrors, setShowItemRowErrors] = useState(false);
@@ -182,7 +180,18 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            setShowSuccessModal(true);
+            // Success feedback via the shared snackbar (matches the error
+            // path in `handleSagaError` and keeps a single feedback channel
+            // across all forms). The full SuccessModal was removed; the
+            // form is a full-page wizard so there's no modal to close —
+            // the field reset above is what "closing" means here.
+            dispatch(
+               appActions.setSnackBar({
+                  type: 'success',
+                  message: 'Request submitted successfully. A ticket has been sent to your mail.',
+                  variant: 'success',
+               }) as unknown as UnknownAction,
+            );
          },
       );
 
@@ -538,12 +547,6 @@ const RequestForm: FC<RequestFormProps> = ({ route }) => {
                )}
             </div>
          </div>
-         <SuccessModal
-            setShowSuccessModal={setShowSuccessModal}
-            showSuccessModal={showSuccessModal}
-            subMessage="A ticket has been sent to your mail."
-            message="Request submitted successfully"
-         />
       </>
    );
 };
