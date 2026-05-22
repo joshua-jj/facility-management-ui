@@ -340,6 +340,18 @@ function* replaceRolePermissions({ data }: ReplaceRolePermissionsAction) {
          role: jsonResponse?.data,
       });
 
+      // Emit via AppEmitter so the RoleEdit modal's
+      // handleReplaceSuccess listener fires and calls onClose(). The
+      // Redux dispatch above is not enough — the modal subscribes via
+      // AppEmitter for this transition, not via Redux state. Mirrors
+      // the CREATE_ROLE_SUCCESS / UPDATE_ROLE_SUCCESS emits earlier in
+      // this file. Without this, the modal stayed open on "Saving..."
+      // forever after a successful save (defect 2026-05-22).
+      AppEmitter.emit(
+         roleConstants.REPLACE_ROLE_PERMISSIONS_SUCCESS,
+         jsonResponse,
+      );
+
       const payload: SetSnackBarPayload = {
          type: 'success',
          message: (jsonResponse?.message as string) ?? 'Role permissions updated successfully',
