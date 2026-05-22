@@ -126,9 +126,16 @@ const NotificationsAdminPage: NextPage = () => {
    };
 
    const getActions = (row: NotificationDelivery): ActionMenuItem[] => {
-      // Only PERMANENTLY_FAILED rows expose actions per spec §6.4.
+      // Only PERMANENTLY_FAILED rows expose retry/abandon per spec §6.4.
       const terminal = row.emailStatus === EmailStatus.PERMANENTLY_FAILED;
       return [
+         {
+            // Always available — the detail page works for every status.
+            // Placed first so it's the discoverable default action when
+            // users haven't realized rows are also clickable.
+            label: 'View details',
+            onClick: () => router.push(`/admin/notifications/${row.id}`),
+         },
          {
             label: 'Retry',
             onClick: () => handleRetry(row.id),
