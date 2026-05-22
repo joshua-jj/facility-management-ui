@@ -15,6 +15,12 @@ export const RBAC_MODULES = [
    { slug: 'roles', label: 'Roles & Permissions' },
    { slug: 'audit-logs', label: 'Audit Logs' },
    { slug: 'complaints', label: 'Complaints' },
+   // Sync with API's RBAC_MODULES (api: src/common/constants/rbac-modules.constant.ts).
+   // Added 2026-05-22 after the role customizer showed no Notifications/Outbox
+   // sections — the API has these modules but the UI's parallel copy
+   // was never updated.
+   { slug: 'notifications', label: 'Notifications' },
+   { slug: 'outbox', label: 'Outbox' },
 ] as const;
 
 export type ModuleSlug = (typeof RBAC_MODULES)[number]['slug'];
@@ -37,7 +43,14 @@ export type PermissionAction =
    | 'release'
    | 'return'
    | 'resolve'
-   | 'manage';
+   | 'manage'
+   // Module-specific verbs the API exposes only for certain subjects.
+   // PermissionGrid skips actions that don't have a matching permission
+   // row, so these don't pollute other modules' chip strips:
+   //   - 'admin'    : notifications:admin (notification delivery ops UI)
+   //   - 'download' : reports:download    (Daily Report PDF export)
+   | 'admin'
+   | 'download';
 
 export const PERMISSION_ACTIONS: PermissionAction[] = [
    'read',
@@ -50,4 +63,6 @@ export const PERMISSION_ACTIONS: PermissionAction[] = [
    'return',
    'resolve',
    'manage',
+   'admin',
+   'download',
 ];
