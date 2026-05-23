@@ -10,6 +10,10 @@ export const notificationsAdminActions = {
       type: notificationsAdminConstants.GET_NOTIFICATIONS_ADMIN,
       payload: query,
    }),
+   getNotificationAdmin: (id: number) => ({
+      type: notificationsAdminConstants.GET_NOTIFICATION_ADMIN,
+      payload: { id },
+   }),
    retryNotification: (id: number) => ({
       type: notificationsAdminConstants.RETRY_NOTIFICATION,
       payload: { id },

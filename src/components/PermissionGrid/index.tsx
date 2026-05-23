@@ -26,6 +26,10 @@ const ACTION_COLOR: Record<PermissionAction, string> = {
    return: 'bg-[#B28309]/10 border-[#B28309]/40 text-[#B28309]',
    resolve: 'bg-[#B28309]/10 border-[#B28309]/40 text-[#B28309]',
    manage: 'bg-purple-50 border-purple-300 text-purple-700',
+   // Module-specific verbs — render the same purple/blue family as their
+   // semantic cousins (admin ≈ manage, download ≈ write).
+   admin: 'bg-purple-50 border-purple-300 text-purple-700',
+   download: 'bg-blue-50 border-blue-300 text-blue-700',
 };
 
 const PREVIEW_ACTION_COLOR: Record<PermissionAction, string> = {
@@ -39,6 +43,8 @@ const PREVIEW_ACTION_COLOR: Record<PermissionAction, string> = {
    return: 'bg-[#B28309]/20 text-[#D8A12C] border-[#B28309]/40',
    resolve: 'bg-[#B28309]/20 text-[#D8A12C] border-[#B28309]/40',
    manage: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+   admin: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+   download: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
 };
 
 type Props = {

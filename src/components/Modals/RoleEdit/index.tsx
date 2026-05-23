@@ -20,9 +20,25 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
    const dispatch = useDispatch();
    const { selectedRole, IsCreatingRole, IsUpdatingRole, IsReplacingPermissions, error } =
       useSelector((s: RootState) => s.role);
-   const { allPermissionsList: permissions } = useSelector((s: RootState) => s.permission);
+   const { allPermissionsList: permissions, IsRequestingPermissions } =
+      useSelector((s: RootState) => s.permission);
 
    const loading = IsCreatingRole || IsUpdatingRole || IsReplacingPermissions;
+
+   // Show skeleton while the modal's initial data is in flight:
+   //   - permissions list hasn't loaded yet (any mode), OR
+   //   - in edit mode, the selectedRole isn't yet the one we're editing
+   //     (either still null from a previous open, stale from another
+   //     row, or genuinely in flight). Using id !== roleId rather than
+   //     a `null` check keeps a stale previously-edited role from
+   //     briefly flashing into the form.
+   // No dedicated GET_ROLE loading flag exists in the reducer; the
+   // selectedRole identity comparison is the source of truth.
+   const isInitialFetch =
+      isOpen &&
+      ((!permissions || permissions.length === 0 || IsRequestingPermissions) ||
+         (roleId != null &&
+            (!selectedRole || selectedRole.id !== roleId)));
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
@@ -215,81 +231,85 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
                </button>
             </div>
 
-            <Formsy
-               onValidSubmit={handleSubmit}
-               onValid={() => setCanSubmit(true)}
-               onInvalid={() => setCanSubmit(false)}
-               className="flex-1 flex flex-col min-h-0"
-            >
-               {/* Pinned form fields + Permission Preview header */}
-               <div className="px-6 pt-6 pb-4 space-y-4 shrink-0">
-                  <TextInput
-                     name="name"
-                     label="Role Name"
-                     type="text"
-                     required
-                     value={name}
-                     onValueChange={(val: string) => setName(val)}
-                  />
-                  <TextInput
-                     name="description"
-                     label="Description"
-                     type="text"
-                     value={description}
-                     onValueChange={(val: string) => setDescription(val)}
-                  />
-                  <div className="flex items-center justify-between pt-1">
-                     <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
-                           Permission Preview
-                        </h4>
-                        <span className="text-[0.65rem] text-gray-400 dark:text-white/35 uppercase tracking-wider">
-                           ({permissions?.length ?? 0} modules loaded)
-                        </span>
+            {isInitialFetch ? (
+               <RoleEditSkeleton onClose={onClose} />
+            ) : (
+               <Formsy
+                  onValidSubmit={handleSubmit}
+                  onValid={() => setCanSubmit(true)}
+                  onInvalid={() => setCanSubmit(false)}
+                  className="flex-1 flex flex-col min-h-0"
+               >
+                  {/* Pinned form fields + Permission Preview header */}
+                  <div className="px-6 pt-6 pb-4 space-y-4 shrink-0">
+                     <TextInput
+                        name="name"
+                        label="Role Name"
+                        type="text"
+                        required
+                        value={name}
+                        onValueChange={(val: string) => setName(val)}
+                     />
+                     <TextInput
+                        name="description"
+                        label="Description"
+                        type="text"
+                        value={description}
+                        onValueChange={(val: string) => setDescription(val)}
+                     />
+                     <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center gap-2">
+                           <h4 className="text-sm font-semibold text-[#0F2552] dark:text-white/90">
+                              Permission Preview
+                           </h4>
+                           <span className="text-[0.65rem] text-gray-400 dark:text-white/35 uppercase tracking-wider">
+                              ({permissions?.length ?? 0} modules loaded)
+                           </span>
+                        </div>
+                        <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F2552] dark:text-white/80 cursor-pointer">
+                           <input
+                              type="checkbox"
+                              checked={allSelected}
+                              onChange={(e) => toggleSelectAll(e.target.checked)}
+                              className="accent-[#B28309]"
+                           />
+                           Select all
+                        </label>
                      </div>
-                     <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F2552] dark:text-white/80 cursor-pointer">
-                        <input
-                           type="checkbox"
-                           checked={allSelected}
-                           onChange={(e) => toggleSelectAll(e.target.checked)}
-                           className="accent-[#B28309]"
-                        />
-                        Select all
-                     </label>
                   </div>
-               </div>
 
-               {/* Scrollable grid — only the permission modules scroll */}
-               <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
-                  <PermissionGrid
-                     permissions={permissions ?? []}
-                     value={checkedIds}
-                     onChange={setCheckedIds}
-                  />
-               </div>
+                  {/* Scrollable grid — only the permission modules scroll */}
+                  <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
+                     <PermissionGrid
+                        permissions={permissions ?? []}
+                        value={checkedIds}
+                        onChange={setCheckedIds}
+                     />
+                  </div>
 
-               {/* Sticky footer */}
-               <div className="px-6 py-4 border-t border-gray-100 dark:border-white/10 flex justify-end gap-2 shrink-0">
-                  <button
-                     type="button"
-                     onClick={onClose}
-                     className="px-4 py-2 text-xs font-semibold text-[#0F2552]/70 dark:text-white/70 cursor-pointer"
-                  >
-                     Cancel
-                  </button>
-                  <button
-                     type="submit"
-                     disabled={!canSubmit || loading}
-                     className="bg-[#B28309] text-white px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#9a7208] disabled:opacity-50 cursor-pointer"
-                  >
-                     {loading
-                        ? 'Saving…'
-                        : roleId == null
-                        ? 'Create Role'
-                        : 'Update Role'}
-                  </button>
-               </div>
-            </Formsy>
+                  {/* Sticky footer */}
+                  <div className="px-6 py-4 border-t border-gray-100 dark:border-white/10 flex justify-end gap-2 shrink-0">
+                     <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-xs font-semibold text-[#0F2552]/70 dark:text-white/70 cursor-pointer"
+                     >
+                        Cancel
+                     </button>
+                     <button
+                        type="submit"
+                        disabled={!canSubmit || loading}
+                        className="bg-[#B28309] text-white px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#9a7208] disabled:opacity-50 cursor-pointer"
+                     >
+                        {loading
+                           ? 'Saving…'
+                           : roleId == null
+                           ? 'Create Role'
+                           : 'Update Role'}
+                     </button>
+                  </div>
+               </Formsy>
+            )}
          </div>
       </div>,
       document.body,
@@ -297,3 +317,84 @@ const RoleEdit: FC<Props> = ({ roleId, isOpen, onClose }) => {
 };
 
 export default RoleEdit;
+
+/**
+ * Skeleton placeholder shown while the modal's initial fetch is in
+ * flight (permissions list + role-by-id in edit mode). Mirrors the
+ * real layout — two stacked input rows pinned at the top, three
+ * scrollable module-section placeholders below, sticky footer with
+ * disabled buttons — so the swap to the real form on data arrival
+ * doesn't visibly shift the layout.
+ *
+ * Cancel stays clickable so a user who realises they opened the
+ * wrong row can dismiss without waiting for the request to land.
+ */
+const SkeletonBar: FC<{ widthClass: string; heightClass?: string }> = ({
+   widthClass,
+   heightClass = 'h-4',
+}) => (
+   <div
+      className={`${widthClass} ${heightClass} rounded bg-gray-200 dark:bg-white/10 animate-pulse`}
+   />
+);
+
+// Literal Tailwind class names so JIT detects them. Repeating a small
+// palette of widths gives a chip-strip silhouette without leaking into
+// the JIT safelist.
+const CHIP_WIDTHS = ['w-14', 'w-14', 'w-16', 'w-20', 'w-16', 'w-12', 'w-14', 'w-20'];
+
+const SkeletonModuleRow: FC = () => (
+   <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 p-4">
+      <div className="flex items-center justify-between mb-3">
+         <SkeletonBar widthClass="w-32" />
+         <SkeletonBar widthClass="w-10" heightClass="h-3" />
+      </div>
+      <div className="flex flex-wrap gap-2">
+         {CHIP_WIDTHS.map((w, i) => (
+            <SkeletonBar key={i} widthClass={w} heightClass="h-6" />
+         ))}
+      </div>
+   </div>
+);
+
+const RoleEditSkeleton: FC<{ onClose: () => void }> = ({ onClose }) => (
+   <div className="flex-1 flex flex-col min-h-0">
+      <div className="px-6 pt-6 pb-4 space-y-4 shrink-0">
+         <div className="space-y-2">
+            <SkeletonBar widthClass="w-20" heightClass="h-3" />
+            <SkeletonBar widthClass="w-full" heightClass="h-10" />
+         </div>
+         <div className="space-y-2">
+            <SkeletonBar widthClass="w-20" heightClass="h-3" />
+            <SkeletonBar widthClass="w-full" heightClass="h-10" />
+         </div>
+         <div className="flex items-center justify-between pt-1">
+            <SkeletonBar widthClass="w-48" />
+            <SkeletonBar widthClass="w-20" heightClass="h-3" />
+         </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0 space-y-3">
+         <SkeletonModuleRow />
+         <SkeletonModuleRow />
+         <SkeletonModuleRow />
+      </div>
+
+      <div className="px-6 py-4 border-t border-gray-100 dark:border-white/10 flex justify-end gap-2 shrink-0">
+         <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-semibold text-[#0F2552]/70 dark:text-white/70 cursor-pointer"
+         >
+            Cancel
+         </button>
+         <button
+            type="button"
+            disabled
+            className="bg-[#B28309] text-white px-5 py-2.5 rounded-lg text-xs font-semibold opacity-50 cursor-not-allowed"
+         >
+            Loading…
+         </button>
+      </div>
+   </div>
+);
