@@ -2,6 +2,7 @@ import React, { FC, useEffect, useState } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import Formsy from 'formsy-react';
@@ -41,7 +42,7 @@ const MoonIcon: FC = () => (
    </svg>
 );
 
-const Profile: FC = () => {
+const Profile: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
    const allDepartmentsList = useSelector(
@@ -124,9 +125,7 @@ const Profile: FC = () => {
    }, [userDetails?.id, memberSinceIso]);
 
    return (
-      <PrivateRoute>
-         <Layout title="Profile Settings">
-            <SettingsShell active="profile">
+      <SettingsShell active="profile">
                <div className="space-y-6">
                   {/* Hero card — identity + work context inline */}
                   <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 shadow-sm overflow-hidden">
@@ -272,10 +271,14 @@ const Profile: FC = () => {
                      </div>
                   </div>
                </div>
-            </SettingsShell>
-         </Layout>
-      </PrivateRoute>
+      </SettingsShell>
    );
 };
+
+Profile.getLayout = (page) => (
+   <PrivateRoute>
+      <Layout title="Profile Settings">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Profile;

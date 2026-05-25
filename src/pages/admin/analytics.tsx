@@ -2,6 +2,7 @@ import { dashboardActions } from '@/actions';
 import Layout from '@/components/Layout';
 import PageHeader from '@/components/PageHeader';
 import PrivateRoute from '@/components/PrivateRoute';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import Card from '@/components/Cards/Card';
 import SectionLabel from '@/components/Cards/SectionLabel';
 import CalendarHeatmap from '@/components/dashboard/CalendarHeatmap';
@@ -57,7 +58,7 @@ const wowDelta = (
    return { pct: Math.abs(change), up: last >= first };
 };
 
-const Analytics = () => {
+const Analytics: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    // Capability gate. Whoever has analytics:read sees this — granted to
@@ -178,14 +179,13 @@ const Analytics = () => {
    const isLoading = IsFetchingDashboardStats && !dashboardAnalytics;
 
    return (
-      <PrivateRoute permissions={[Permission.ANALYTICS_READ]}>
-         <Layout title="Analytics">
-            <PageHeader
-               title="Analytics"
-               showBreadcrumbs={false}
-               subtitle="Operational telemetry across requests, inventory, and facility maintenance. Charts respond to the selected period."
-               action={<PeriodToggle value={period} onChange={setPeriod} />}
-            />
+      <>
+         <PageHeader
+            title="Analytics"
+            showBreadcrumbs={false}
+            subtitle="Operational telemetry across requests, inventory, and facility maintenance. Charts respond to the selected period."
+            action={<PeriodToggle value={period} onChange={setPeriod} />}
+         />
 
             {/* KPI strip — three sparkline cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-5">
@@ -402,26 +402,31 @@ const Analytics = () => {
                </Card>
             </div>
 
-            {/* Activity Heatmap — preserved, restyled */}
-            {heatmap.length > 0 && (
-               <Card className="mb-5">
-                  <SectionLabel>Activity Heatmap</SectionLabel>
-                  <div className="mt-3">
-                     <div className="text-xl font-bold text-[#0F2552] dark:text-white">
-                        Request volume — {new Date().getFullYear()}
-                     </div>
-                     <div className="text-xs text-[#0F2552]/45 dark:text-white/45 mt-1">
-                        Each square is one day. Darker = more requests filed.
-                     </div>
+         {/* Activity Heatmap — preserved, restyled */}
+         {heatmap.length > 0 && (
+            <Card className="mb-5">
+               <SectionLabel>Activity Heatmap</SectionLabel>
+               <div className="mt-3">
+                  <div className="text-xl font-bold text-[#0F2552] dark:text-white">
+                     Request volume — {new Date().getFullYear()}
                   </div>
-                  <div className="mt-4">
-                     <CalendarHeatmap data={heatmap} />
+                  <div className="text-xs text-[#0F2552]/45 dark:text-white/45 mt-1">
+                     Each square is one day. Darker = more requests filed.
                   </div>
-               </Card>
-            )}
-         </Layout>
-      </PrivateRoute>
+               </div>
+               <div className="mt-4">
+                  <CalendarHeatmap data={heatmap} />
+               </div>
+            </Card>
+         )}
+      </>
    );
 };
+
+Analytics.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.ANALYTICS_READ]}>
+      <Layout title="Analytics">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Analytics;

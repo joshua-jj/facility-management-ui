@@ -1,5 +1,6 @@
-import { GetServerSideProps, NextPage } from 'next';
+import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { meetingConstants } from '@/constants/meeting.constant';
 import { meetingLocationConstants } from '@/constants/meetingLocation.constant';
 import axios from 'axios';
@@ -118,24 +119,21 @@ const PinIcon = (
    </svg>
 );
 
-const MeetingLocationDetailPage: NextPage<Props> = ({ location, meetings }) => {
+const MeetingLocationDetailPage: NextPageWithLayout<Props> = ({ location, meetings }) => {
    const router = useRouter();
 
    if (!location) {
       return (
-         <Layout title="Meeting Location">
-            <div className="flex items-center justify-center h-64">
-               <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
-                  Meeting location not found.
-               </p>
-            </div>
-         </Layout>
+         <div className="flex items-center justify-center h-64">
+            <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
+               Meeting location not found.
+            </p>
+         </div>
       );
    }
 
    return (
-      <Layout title="Meeting Location">
-         <div className="max-w-6xl mx-auto space-y-5">
+      <div className="max-w-6xl mx-auto space-y-5">
             <PageHeader
                action={
                   <ActionButton variant="outline" onClick={() => router.back()}>
@@ -374,8 +372,11 @@ const MeetingLocationDetailPage: NextPage<Props> = ({ location, meetings }) => {
                </div>
             </div>
          </div>
-      </Layout>
    );
 };
+
+MeetingLocationDetailPage.getLayout = (page) => (
+   <Layout title="Meeting Location">{page}</Layout>
+);
 
 export default MeetingLocationDetailPage;

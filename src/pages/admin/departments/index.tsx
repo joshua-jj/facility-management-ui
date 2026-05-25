@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
@@ -51,7 +52,7 @@ const ACTIVATE_ICON = (
    </svg>
 );
 
-const Departments = () => {
+const Departments: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    const [searchQuery, setSearchQuery] = useState('');
@@ -259,9 +260,8 @@ const Departments = () => {
    const hodCount = filteredDepartments.filter((d) => !!d.hodName).length;
 
    return (
-      <PrivateRoute permissions={['departments:read']}>
-         <Layout title="Departments">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   <AddDepartment className="text-start w-full cursor-pointer">
                      <ActionButton variant="primary">+ Add Department</ActionButton>
@@ -322,16 +322,21 @@ const Departments = () => {
                tone="danger"
             />
 
-            {editDepartment && (
-               <AddDepartment
-                  initialData={editDepartment}
-                  open={showEditModal}
-                  onClose={() => { setShowEditModal(false); setEditDepartment(null); }}
-               />
-            )}
-         </Layout>
-      </PrivateRoute>
+         {editDepartment && (
+            <AddDepartment
+               initialData={editDepartment}
+               open={showEditModal}
+               onClose={() => { setShowEditModal(false); setEditDepartment(null); }}
+            />
+         )}
+      </>
    );
 };
+
+Departments.getLayout = (page) => (
+   <PrivateRoute permissions={['departments:read']}>
+      <Layout title="Departments">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Departments;
