@@ -1,4 +1,4 @@
-import { NextPage } from 'next';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import React, { useEffect } from 'react';
@@ -75,7 +75,7 @@ const formatAbsolute = (iso: string | null | undefined) =>
 const formatRelative = (iso: string | null | undefined) =>
    iso ? formatDistanceToNow(parseISO(iso), { addSuffix: true }) : '—';
 
-const NotificationAdminDetailPage: NextPage = () => {
+const NotificationAdminDetailPage: NextPageWithLayout = () => {
    const router = useRouter();
    const dispatch = useDispatch();
    const { selected, isLoadingSelected, selectedError, isMutating } = useSelector(
@@ -132,9 +132,8 @@ const NotificationAdminDetailPage: NextPage = () => {
    const chip = selected ? STATUS_CHIP_STYLE[selected.emailStatus] : null;
 
    return (
-      <PrivateRoute permissions={[Permission.NOTIFICATIONS_ADMIN]}>
-         <Layout title="Notification detail">
-            <div className="mb-4">
+      <>
+         <div className="mb-4">
                <Link
                   href="/admin/notifications"
                   className="text-xs font-semibold uppercase tracking-wider text-[#0F2552]/65 dark:text-white/65 hover:text-[#0F2552] dark:hover:text-white transition-colors"
@@ -306,12 +305,17 @@ const NotificationAdminDetailPage: NextPage = () => {
                            <span className="text-[#0F2552]/40 dark:text-white/40">—</span>
                         )}
                      </Field>
-                  </div>
                </div>
-            )}
-         </Layout>
-      </PrivateRoute>
+            </div>
+         )}
+      </>
    );
 };
+
+NotificationAdminDetailPage.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.NOTIFICATIONS_ADMIN]}>
+      <Layout title="Notification detail">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default NotificationAdminDetailPage;

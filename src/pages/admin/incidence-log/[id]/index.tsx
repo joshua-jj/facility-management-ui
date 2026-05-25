@@ -1,5 +1,6 @@
-import { GetServerSideProps, NextPage } from 'next';
+import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { incidenceLogConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
@@ -290,7 +291,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
-const IncidenceLogDetailPage: NextPage<Props> = ({ log }) => {
+const IncidenceLogDetailPage: NextPageWithLayout<Props> = ({ log }) => {
    const router = useRouter();
    const [pdfOpen, setPdfOpen] = useState(false);
    const [pdfReady, setPdfReady] = useState(false);
@@ -332,13 +333,11 @@ const IncidenceLogDetailPage: NextPage<Props> = ({ log }) => {
 
    if (!log) {
       return (
-         <Layout title="Incidence Log Details">
-            <div className="flex items-center justify-center h-64">
-               <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
-                  Incidence log not found.
-               </p>
-            </div>
-         </Layout>
+         <div className="flex items-center justify-center h-64">
+            <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
+               Incidence log not found.
+            </p>
+         </div>
       );
    }
 
@@ -348,7 +347,7 @@ const IncidenceLogDetailPage: NextPage<Props> = ({ log }) => {
       (log.actionsTaken?.length ?? 0);
 
    return (
-      <Layout title="Incidence Log Details">
+      <>
          <div className="max-w-6xl mx-auto space-y-5">
             <PageHeader
                action={
@@ -723,8 +722,12 @@ const IncidenceLogDetailPage: NextPage<Props> = ({ log }) => {
                }
             }
          `}</style>
-      </Layout>
+      </>
    );
 };
+
+IncidenceLogDetailPage.getLayout = (page) => (
+   <Layout title="Incidence Log Details">{page}</Layout>
+);
 
 export default IncidenceLogDetailPage;

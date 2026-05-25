@@ -1,5 +1,6 @@
 import { appActions, dashboardActions, requestActions } from '@/actions';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { RootState } from '@/redux/reducers';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
@@ -87,7 +88,7 @@ type ActionItem = {
    accent: string;
 };
 
-const Dashboard = () => {
+const Dashboard: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { dashboardStats, dashboardAnalytics, IsFetchingDashboardStats } = useSelector(
@@ -371,8 +372,7 @@ const Dashboard = () => {
    const totalItems = Number(dashboardStats?.totalItems ?? 0) || 0;
 
    return (
-      <PrivateRoute permissions={[Permission.DASHBOARD_READ]}>
-         <Layout title="Dashboard">
+      <>
             <PageHeader
                title="Dashboard"
                showBreadcrumbs={false}
@@ -484,9 +484,14 @@ const Dashboard = () => {
                   </div>
                </>
             )}
-         </Layout>
-      </PrivateRoute>
+      </>
    );
 };
+
+Dashboard.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.DASHBOARD_READ]}>
+      <Layout title="Dashboard">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Dashboard;

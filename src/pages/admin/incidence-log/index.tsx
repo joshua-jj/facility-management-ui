@@ -13,6 +13,7 @@ import PageHeader, { ActionButton } from '@/components/PageHeader';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddIncidenceLog from '@/components/Modals/AddIncidenceLog';
 import ListStatsStrip from '@/components/ListStatsStrip';
@@ -52,7 +53,7 @@ const filters: FilterDef[] = [
    },
 ];
 
-const IncidenceLogsPage = () => {
+const IncidenceLogsPage: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    const [editLog, setEditLog] = useState<IncidenceLog | null>(null);
@@ -242,9 +243,8 @@ const IncidenceLogsPage = () => {
    ).size;
 
    return (
-      <PrivateRoute permissions={[Permission.INCIDENCE_LOGS_READ]}>
-         <Layout title="Incidence Logs">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   canFileIncidence ? (
                      <AddIncidenceLog className="text-start w-full cursor-pointer">
@@ -298,22 +298,27 @@ const IncidenceLogsPage = () => {
                />
             )}
 
-            <ConfirmDialog
-               open={pendingDeactivate !== null}
-               onClose={() => setPendingDeactivate(null)}
-               onConfirm={confirmDeactivate}
-               title={
-                  pendingDeactivate
-                     ? `Deactivate incidence report #${pendingDeactivate.id}?`
-                     : ''
-               }
-               description="The report will be moved to inactive status."
-               confirmLabel="Deactivate"
-               tone="danger"
-            />
-         </Layout>
-      </PrivateRoute>
+         <ConfirmDialog
+            open={pendingDeactivate !== null}
+            onClose={() => setPendingDeactivate(null)}
+            onConfirm={confirmDeactivate}
+            title={
+               pendingDeactivate
+                  ? `Deactivate incidence report #${pendingDeactivate.id}?`
+                  : ''
+            }
+            description="The report will be moved to inactive status."
+            confirmLabel="Deactivate"
+            tone="danger"
+         />
+      </>
    );
 };
+
+IncidenceLogsPage.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.INCIDENCE_LOGS_READ]}>
+      <Layout title="Incidence Logs">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default IncidenceLogsPage;

@@ -1,5 +1,6 @@
-import { GetServerSideProps, NextPage } from 'next';
+import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { generatorConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
@@ -158,16 +159,14 @@ const Field: React.FC<{
    </div>
 );
 
-const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
+const GeneratorLogDetailPage: NextPageWithLayout<GeneratorLogDetailProps> = ({ log }) => {
    if (!log) {
       return (
-         <Layout title="Generator Log Details">
-            <div className="flex items-center justify-center h-64">
-               <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
-                  Generator log not found.
-               </p>
-            </div>
-         </Layout>
+         <div className="flex items-center justify-center h-64">
+            <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
+               Generator log not found.
+            </p>
+         </div>
       );
    }
 
@@ -247,9 +246,8 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
         : '#10B981';
 
    return (
-      <Layout title="Generator Log Details">
-         <div className="max-w-6xl mx-auto space-y-5">
-            <PageHeader />
+      <div className="max-w-6xl mx-auto space-y-5">
+         <PageHeader />
 
             {/* ── Hero card ── */}
             <div className="rounded-2xl p-6 md:p-7" style={CARD_STYLE}>
@@ -554,8 +552,11 @@ const GeneratorLogDetailPage: NextPage<GeneratorLogDetailProps> = ({ log }) => {
                </div>
             </div>
          </div>
-      </Layout>
    );
 };
+
+GeneratorLogDetailPage.getLayout = (page) => (
+   <Layout title="Generator Log Details">{page}</Layout>
+);
 
 export default GeneratorLogDetailPage;

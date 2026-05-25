@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
@@ -31,7 +32,7 @@ const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" st
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>;
 
-const Items = () => {
+const Items: NextPageWithLayout = () => {
    const router = useRouter();
    const dispatch = useDispatch();
    // Capability gates. `items:write` covers add/edit; `items:delete`
@@ -420,9 +421,8 @@ const Items = () => {
    // ── Render ──
 
    return (
-      <PrivateRoute permissions={[Permission.ITEMS_READ]}>
-         <Layout title="Items">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   canWriteItems ? (
                   <ActionButton
@@ -487,16 +487,21 @@ const Items = () => {
                />
             )}
 
-            <ExportModal
-               open={showExportModal}
-               onClose={() => setShowExportModal(false)}
-               onExport={handleExport}
-               loading={isExporting}
-               title="Export Items"
-            />
-         </Layout>
-      </PrivateRoute>
+         <ExportModal
+            open={showExportModal}
+            onClose={() => setShowExportModal(false)}
+            onExport={handleExport}
+            loading={isExporting}
+            title="Export Items"
+         />
+      </>
    );
 };
+
+Items.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.ITEMS_READ]}>
+      <Layout title="Items">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Items;

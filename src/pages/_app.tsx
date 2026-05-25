@@ -4,7 +4,6 @@ import '@/styles/globals.css';
 // so the workflow editor canvas has the controls / handles styling
 // it relies on. Skin overrides live in components/WorkflowEditor.
 import '@xyflow/react/dist/style.css';
-import type { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
@@ -16,6 +15,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/Toast';
 import RouteProgress from '@/components/RouteProgress';
 import UserDetailsRefresher from '@/components/UserDetailsRefresher';
+import type { AppPropsWithLayout } from '@/types/next-page-with-layout';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -23,10 +23,17 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-export default function App({ Component, pageProps, ...rest }: AppProps) {
+export default function App({ Component, pageProps, ...rest }: AppPropsWithLayout) {
   const { store } = wrapper.useWrappedStore(rest);
 
   const persistor: Persistor = store.__PERSISTOR || ({} as Persistor);
+
+  // Pages declare their own shell via `getLayout`. Hoisting the shell
+  // here means Sidebar / Header / PrivateRoute are rendered once and
+  // persist across <Link> navigations — only the page content swaps.
+  // Pages without `getLayout` (redirect-only or bespoke screens) render
+  // bare. See src/types/next-page-with-layout.d.ts.
+  const getLayout = Component.getLayout ?? ((page) => page);
 
   // Promote Inter's classes onto <html> so the --font-inter variable is
   // visible to elements that escape this React tree (e.g., Radix/Base UI
@@ -46,7 +53,7 @@ export default function App({ Component, pageProps, ...rest }: AppProps) {
             <RouteProgress />
             <UserDetailsRefresher />
             <ToastContainer />
-            <Component {...pageProps} />
+            {getLayout(<Component {...pageProps} />)}
           </ErrorBoundary>
         </PersistGate>
       </Provider>

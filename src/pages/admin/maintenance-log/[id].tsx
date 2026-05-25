@@ -1,5 +1,6 @@
-import { GetServerSideProps, NextPage } from 'next';
+import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { maintenanceConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
@@ -110,22 +111,19 @@ const initials = (name: string) =>
       .join('')
       .toUpperCase();
 
-const MaintenanceLogDetailPage: NextPage<MaintenanceLogDetailProps> = ({ log }) => {
+const MaintenanceLogDetailPage: NextPageWithLayout<MaintenanceLogDetailProps> = ({ log }) => {
    if (!log) {
       return (
-         <Layout title="Maintenance Log Details">
-            <div className="flex items-center justify-center h-64">
-               <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
-                  Maintenance log not found.
-               </p>
-            </div>
-         </Layout>
+         <div className="flex items-center justify-center h-64">
+            <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
+               Maintenance log not found.
+            </p>
+         </div>
       );
    }
 
    return (
-      <Layout title="Maintenance Log Details">
-         <div className="max-w-6xl mx-auto space-y-5">
+      <div className="max-w-6xl mx-auto space-y-5">
             <PageHeader />
 
             {/* Hero card with cost as prominent metric */}
@@ -303,8 +301,11 @@ const MaintenanceLogDetailPage: NextPage<MaintenanceLogDetailProps> = ({ log }) 
                </div>
             </div>
          </div>
-      </Layout>
    );
 };
+
+MaintenanceLogDetailPage.getLayout = (page) => (
+   <Layout title="Maintenance Log Details">{page}</Layout>
+);
 
 export default MaintenanceLogDetailPage;

@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
@@ -28,7 +29,7 @@ const EDIT_ICON = (
    </svg>
 );
 
-const RoleUsers = () => {
+const RoleUsers: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    const { id } = router.query;
@@ -205,9 +206,8 @@ const RoleUsers = () => {
    ];
 
    return (
-      <PrivateRoute permissions={['roles:read']}>
-         <Layout title="Role Users">
-            <PageHeader
+      <>
+         <PageHeader
                title="Users in Role"
                action={
                   <div className="flex items-center gap-2">
@@ -237,15 +237,20 @@ const RoleUsers = () => {
                emptyDescription="No users are currently assigned to this role."
             />
 
-            <UpdateRole
-               className=""
-               user={editRoleUser}
-               open={!!editRoleUser}
-               onClose={() => setEditRoleUser(null)}
-            />
-         </Layout>
-      </PrivateRoute>
+         <UpdateRole
+            className=""
+            user={editRoleUser}
+            open={!!editRoleUser}
+            onClose={() => setEditRoleUser(null)}
+         />
+      </>
    );
 };
+
+RoleUsers.getLayout = (page) => (
+   <PrivateRoute permissions={['roles:read']}>
+      <Layout title="Role Users">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default RoleUsers;

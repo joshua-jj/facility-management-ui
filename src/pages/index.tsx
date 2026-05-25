@@ -1,7 +1,9 @@
 import Head from 'next/head';
+import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import LandingPage from './landing';
 
-export default function Home() {
+const Home: NextPageWithLayout = () => {
   return (
     <>
       <Head>
@@ -14,4 +16,8 @@ export default function Home() {
       <LandingPage />
     </>
   );
-}
+};
+
+Home.getLayout = (page) => <Layout>{page}</Layout>;
+
+export default Home;

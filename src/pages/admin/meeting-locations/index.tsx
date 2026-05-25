@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { format, parseISO } from 'date-fns';
@@ -41,7 +42,7 @@ const DEACTIVATE_ICON = (
    </svg>
 );
 
-const MeetingLocations = () => {
+const MeetingLocations: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    const [searchQuery, setSearchQuery] = useState('');
@@ -228,9 +229,8 @@ const MeetingLocations = () => {
    const inactiveLocationCount = filteredLocations.length - activeLocationCount;
 
    return (
-      <PrivateRoute permissions={['meeting-locations:read']}>
-         <Layout title="Meeting Locations">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   <ActionButton variant="primary" onClick={openCreate}>
                      + Add Location
@@ -271,22 +271,27 @@ const MeetingLocations = () => {
 
             <AddMeetingLocation open={modalOpen} onClose={closeModal} initialData={editTarget} />
 
-            <ConfirmDialog
-               open={pendingDeactivate !== null}
-               onClose={() => setPendingDeactivate(null)}
-               onConfirm={confirmDeactivate}
-               title={
-                  pendingDeactivate
-                     ? `Deactivate meeting location "${pendingDeactivate.name}"?`
-                     : ''
-               }
-               description="It will be moved to inactive status. You can reactivate it later."
-               confirmLabel="Deactivate"
-               tone="danger"
-            />
-         </Layout>
-      </PrivateRoute>
+         <ConfirmDialog
+            open={pendingDeactivate !== null}
+            onClose={() => setPendingDeactivate(null)}
+            onConfirm={confirmDeactivate}
+            title={
+               pendingDeactivate
+                  ? `Deactivate meeting location "${pendingDeactivate.name}"?`
+                  : ''
+            }
+            description="It will be moved to inactive status. You can reactivate it later."
+            confirmLabel="Deactivate"
+            tone="danger"
+         />
+      </>
    );
 };
+
+MeetingLocations.getLayout = (page) => (
+   <PrivateRoute permissions={['meeting-locations:read']}>
+      <Layout title="Meeting Locations">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default MeetingLocations;
