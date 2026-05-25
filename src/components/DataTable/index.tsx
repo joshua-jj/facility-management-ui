@@ -70,6 +70,15 @@ interface DataTableProps<T> {
    emptyAction?: React.ReactNode;
    className?: string;
    getRowId?: (row: T) => string | number;
+   /**
+    * Prepend an auto-generated serial-number column ("SN"). The value is
+    * a sequential row number across the paginated result set — page 2
+    * with 10 items starts at 11, not 1. NOT the record id. Defaults to
+    * true; pass `false` for tables where a row counter would be noise
+    * (e.g. card-style or wide grids that are already at the edge of the
+    * viewport).
+    */
+   showSerialNumber?: boolean;
 }
 
 // ── Skeleton ──
@@ -126,6 +135,7 @@ export function DataTable<T extends Record<string, any>>({
    emptyAction,
    className = '',
    getRowId,
+   showSerialNumber = true,
 }: DataTableProps<T>) {
    const [searchValue, setSearchValue] = useState('');
    const [showFilters, setShowFilters] = useState(false);
@@ -133,7 +143,7 @@ export function DataTable<T extends Record<string, any>>({
    const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
    const onSearchRef = useRef(onSearch);
    const isInitialSearchRef = useRef(true);
-   const visibleColumns = columns.filter((c) => !c.hidden);
+   const userColumns = columns.filter((c) => !c.hidden);
 
    // Keep the latest onSearch without re-triggering the debounce effect when
    // the parent re-renders and hands us a new function identity.
@@ -185,6 +195,26 @@ export function DataTable<T extends Record<string, any>>({
    const itemsPerPage = pagination?.itemsPerPage ?? (data.length || 10);
    const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+   // Prepend a serial-number column when enabled. The render closure
+   // reads currentPage/itemsPerPage so the index continues across pages
+   // — page 2 with 10 per page starts at 11, not 1.
+   const visibleColumns: Column<T>[] = showSerialNumber
+      ? [
+           {
+              key: '__sn__',
+              header: 'SN',
+              width: '60px',
+              align: 'center',
+              render: (_value, _row, index) => (
+                 <span style={{ color: 'var(--text-hint)' }}>
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                 </span>
+              ),
+           } as Column<T>,
+           ...userColumns,
+        ]
+      : userColumns;
 
    const getPageNumbers = () => {
       const pages: (number | 'ellipsis')[] = [];
