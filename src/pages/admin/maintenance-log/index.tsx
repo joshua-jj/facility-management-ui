@@ -11,6 +11,7 @@ import StatusChip from '@/components/StatusChip';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddMaintenanceLog from '@/components/Modals/AddMaintenanceLog';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -77,7 +78,7 @@ const filters: FilterDef[] = [
    },
 ];
 
-const MaintenanceLogs = () => {
+const MaintenanceLogs: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    // Identity helpers (department membership, row-author) only.
    // Capability comes from the permission service.
@@ -287,9 +288,8 @@ const MaintenanceLogs = () => {
    ];
 
    return (
-      <PrivateRoute permissions={[Permission.MAINTENANCE_LOGS_READ]}>
-         <Layout title="Maintenance Logs">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   canCreateMaintenance ? (
                      <ActionButton onClick={() => setShowAddModal(true)}>Add Log</ActionButton>
@@ -322,15 +322,20 @@ const MaintenanceLogs = () => {
                title="Export Maintenance Logs"
             />
 
-            {showAddModal && (
-               <AddMaintenanceLog className="hidden" open={showAddModal} onClose={() => setShowAddModal(false)} />
-            )}
-            {showEditModal && (
-               <AddMaintenanceLog className="hidden" maintenanceData={editData} open={showEditModal} onClose={() => setShowEditModal(false)} />
-            )}
-         </Layout>
-      </PrivateRoute>
+         {showAddModal && (
+            <AddMaintenanceLog className="hidden" open={showAddModal} onClose={() => setShowAddModal(false)} />
+         )}
+         {showEditModal && (
+            <AddMaintenanceLog className="hidden" maintenanceData={editData} open={showEditModal} onClose={() => setShowEditModal(false)} />
+         )}
+      </>
    );
 };
+
+MaintenanceLogs.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.MAINTENANCE_LOGS_READ]}>
+      <Layout title="Maintenance Logs">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default MaintenanceLogs;

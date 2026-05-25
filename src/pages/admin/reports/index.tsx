@@ -10,6 +10,7 @@ import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import PageHeader from '@/components/PageHeader';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -26,7 +27,7 @@ import { Permission } from '@/constants/permissions.enum';
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
 
-const Reports = () => {
+const Reports: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    const { can } = usePermission();
@@ -295,9 +296,8 @@ const Reports = () => {
    ];
 
    return (
-      <PrivateRoute permissions={[Permission.COMPLAINTS_READ]}>
-         <Layout title="Complaints">
-            <PageHeader />
+      <>
+         <PageHeader />
 
             <DataTable
                columns={columns}
@@ -341,13 +341,18 @@ const Reports = () => {
                      ? `Subject: "${pendingDelete.complaintSubject}". The complaint will be moved to inactive status — you can reactivate it later from the filters.`
                      : 'The complaint will be moved to inactive status. You can reactivate it later from the filters.'
                }
-               confirmLabel="Deactivate"
-               tone="danger"
-               loading={isDeleting}
-            />
-         </Layout>
-      </PrivateRoute>
+            confirmLabel="Deactivate"
+            tone="danger"
+            loading={isDeleting}
+         />
+      </>
    );
 };
+
+Reports.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.COMPLAINTS_READ]}>
+      <Layout title="Complaints">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Reports;

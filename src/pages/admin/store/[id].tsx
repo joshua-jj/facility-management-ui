@@ -1,5 +1,6 @@
-import { GetServerSideProps, NextPage } from 'next';
+import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { storeConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
@@ -119,18 +120,16 @@ const PinIcon = (
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
-const StoreDetailPage: NextPage<StoreDetailProps> = ({ store }) => {
+const StoreDetailPage: NextPageWithLayout<StoreDetailProps> = ({ store }) => {
    const router = useRouter();
 
    if (!store) {
       return (
-         <Layout title="Store">
-            <div className="flex items-center justify-center h-64">
-               <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
-                  Store not found.
-               </p>
-            </div>
-         </Layout>
+         <div className="flex items-center justify-center h-64">
+            <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
+               Store not found.
+            </p>
+         </div>
       );
    }
 
@@ -144,9 +143,9 @@ const StoreDetailPage: NextPage<StoreDetailProps> = ({ store }) => {
    const address = formatAddress(store.location);
 
    return (
-      <Layout title="Store">
+      <>
          <div className="max-w-6xl mx-auto space-y-5">
-            <PageHeader
+         <PageHeader
                action={
                   <ActionButton variant="outline" onClick={() => router.back()}>
                      Back
@@ -392,8 +391,12 @@ const StoreDetailPage: NextPage<StoreDetailProps> = ({ store }) => {
                }
             }
          `}</style>
-      </Layout>
+      </>
    );
 };
+
+StoreDetailPage.getLayout = (page) => (
+   <Layout title="Store">{page}</Layout>
+);
 
 export default StoreDetailPage;

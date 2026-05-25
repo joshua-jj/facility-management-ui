@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { Breadcrumbs } from '@/components/PageHeader';
 import PrivateRoute from '@/components/PrivateRoute';
 import WorkflowEditor from '@/components/WorkflowEditor';
@@ -22,7 +23,7 @@ import { Permission } from '@/constants/permissions.enum';
  * success, which trickles back into Redux and re-renders the canvas
  * with the new version + transition list.
  */
-const WorkflowDetailPage: FC = () => {
+const WorkflowDetailPage: NextPageWithLayout = () => {
    const router = useRouter();
    const dispatch = useDispatch();
    const subject = (router.query.subject as string | undefined) ?? '';
@@ -82,10 +83,8 @@ const WorkflowDetailPage: FC = () => {
    };
 
    return (
-      <PrivateRoute permissions={[Permission.ROLES_MANAGE]}>
-         <Layout title={`Workflow: ${subject}`}>
-            <div className="space-y-4 px-4 md:px-6 -mb-16">
-               <Breadcrumbs />
+      <div className="space-y-4 px-4 md:px-6 -mb-16">
+         <Breadcrumbs />
                <div className="flex items-center justify-between">
                   <div>
                      <Link
@@ -110,11 +109,15 @@ const WorkflowDetailPage: FC = () => {
                   </div>
                </div>
 
-               {renderBody()}
-            </div>
-         </Layout>
-      </PrivateRoute>
+         {renderBody()}
+      </div>
    );
 };
+
+WorkflowDetailPage.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.ROLES_MANAGE]}>
+      <Layout title="Workflow">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default WorkflowDetailPage;

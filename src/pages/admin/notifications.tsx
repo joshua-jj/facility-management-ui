@@ -1,4 +1,4 @@
-import { NextPage } from 'next';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { useRouter } from 'next/router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -77,7 +77,7 @@ const STATUS_FILTER_DEF: FilterDef = {
 
 const DEFAULT_LIMIT = 10;
 
-const NotificationsAdminPage: NextPage = () => {
+const NotificationsAdminPage: NextPageWithLayout = () => {
    const router = useRouter();
    const dispatch = useDispatch();
    const { page, isLoading, isMutating, error } = useSelector(
@@ -303,12 +303,11 @@ const NotificationsAdminPage: NextPage = () => {
       : undefined;
 
    return (
-      <PrivateRoute permissions={[Permission.NOTIFICATIONS_ADMIN]}>
-         <Layout title="Notifications">
-            <PageHeader
-               title="Notifications"
-               subtitle="Email delivery records and retry status across all notifications fired by the system."
-            />
+      <>
+         <PageHeader
+            title="Notifications"
+            subtitle="Email delivery records and retry status across all notifications fired by the system."
+         />
 
             {error && !isLoading && (
                <div className="mb-4 px-4 py-3 rounded-md bg-[color-mix(in_srgb,var(--chart-coral)_12%,transparent)] border border-[var(--chart-coral)] text-sm text-[#0F2552] dark:text-white flex items-center justify-between gap-3">
@@ -338,11 +337,16 @@ const NotificationsAdminPage: NextPage = () => {
                onRowClick={(row) => router.push(`/admin/notifications/${row.id}`)}
                emptyTitle="No notifications"
                emptyDescription="No delivery records match the current filters."
-               getRowId={(row) => row.id}
-            />
-         </Layout>
-      </PrivateRoute>
+            getRowId={(row) => row.id}
+         />
+      </>
    );
 };
+
+NotificationsAdminPage.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.NOTIFICATIONS_ADMIN]}>
+      <Layout title="Notifications">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default NotificationsAdminPage;

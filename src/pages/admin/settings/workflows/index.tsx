@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import TableSkeletonRow from '@/components/TableSkeletonRow';
@@ -83,7 +84,7 @@ const LetterAvatar: FC<{ name: string }> = ({ name }) => {
    );
 };
 
-const WorkflowsList: FC = () => {
+const WorkflowsList: NextPageWithLayout = () => {
    const router = useRouter();
    const dispatch = useDispatch();
    const workflows = useSelector((s: RootState) => s.workflow.list) as WorkflowSummary[];
@@ -98,9 +99,7 @@ const WorkflowsList: FC = () => {
    };
 
    return (
-      <PrivateRoute permissions={[Permission.ROLES_MANAGE]}>
-         <Layout title="Workflows">
-            <SettingsShell active="workflows">
+      <SettingsShell active="workflows">
                <div className="space-y-6">
                   {/* Header */}
                   <div className="flex items-center justify-between">
@@ -234,10 +233,14 @@ const WorkflowsList: FC = () => {
                      </div>
                   </div>
                </div>
-            </SettingsShell>
-         </Layout>
-      </PrivateRoute>
+      </SettingsShell>
    );
 };
+
+WorkflowsList.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.ROLES_MANAGE]}>
+      <Layout title="Workflows">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default WorkflowsList;

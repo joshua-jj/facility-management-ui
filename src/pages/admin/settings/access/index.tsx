@@ -2,6 +2,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import RolePreview from '@/components/Modals/RolePreview';
@@ -71,7 +72,7 @@ const formatDate = (iso: string | undefined | null) => {
    }
 };
 
-const RolesAndPermissions: FC = () => {
+const RolesAndPermissions: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const pagedRoles = useSelector((s: RootState) => s.role.allRolesList) as Role[];
    const meta = useSelector((s: RootState) => s.role.pagination.meta);
@@ -123,9 +124,7 @@ const RolesAndPermissions: FC = () => {
    };
 
    return (
-      <PrivateRoute>
-         <Layout title="Roles and Permissions">
-            <SettingsShell active="access">
+      <SettingsShell active="access">
                <div className="space-y-6">
                   {/* Header */}
                   <div className="flex items-center justify-between">
@@ -312,15 +311,19 @@ const RolesAndPermissions: FC = () => {
                      setEditingRoleId(null);
                   }}
                />
-               <RolePreview
-                  roleId={previewingRoleId}
-                  isOpen={previewingRoleId != null}
-                  onClose={() => setPreviewingRoleId(null)}
-               />
-            </SettingsShell>
-         </Layout>
-      </PrivateRoute>
+            <RolePreview
+               roleId={previewingRoleId}
+               isOpen={previewingRoleId != null}
+               onClose={() => setPreviewingRoleId(null)}
+            />
+         </SettingsShell>
    );
 };
+
+RolesAndPermissions.getLayout = (page) => (
+   <PrivateRoute>
+      <Layout title="Roles and Permissions">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default RolesAndPermissions;
