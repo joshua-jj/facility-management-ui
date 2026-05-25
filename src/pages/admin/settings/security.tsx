@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import Formsy from 'formsy-react';
@@ -76,7 +77,7 @@ const ShieldIcon: FC = () => (
    </svg>
 );
 
-const Security: FC = () => {
+const Security: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const { IsChangingPassword } = useSelector((s: RootState) => s.auth);
    const sessions = useSelector((s: RootState) => s.security.sessions);
@@ -122,9 +123,7 @@ const Security: FC = () => {
    }, [loginHistory]);
 
    return (
-      <PrivateRoute>
-         <Layout title="Security Settings">
-            <SettingsShell active="security">
+      <SettingsShell active="security">
                <div className="space-y-6">
                   {/* Hero card — security overview */}
                   <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 shadow-sm overflow-hidden">
@@ -402,10 +401,14 @@ const Security: FC = () => {
                      </div>
                   </div>
                </div>
-            </SettingsShell>
-         </Layout>
-      </PrivateRoute>
+      </SettingsShell>
    );
 };
+
+Security.getLayout = (page) => (
+   <PrivateRoute>
+      <Layout title="Security Settings">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Security;

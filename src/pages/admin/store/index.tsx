@@ -10,6 +10,7 @@ import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddStore from '@/components/Modals/AddStore';
 import ListStatsStrip from '@/components/ListStatsStrip';
@@ -34,7 +35,7 @@ const VIEW_ICON = (
    </svg>
 );
 
-const Stores = () => {
+const Stores: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    const [showAddModal, setShowAddModal] = useState(false);
@@ -230,9 +231,8 @@ const Stores = () => {
    const inactiveStoreCount = filteredStores.length - activeStoreCount;
 
    return (
-      <PrivateRoute permissions={['stores:read']}>
-         <Layout title="Stores">
-            <PageHeader
+      <>
+         <PageHeader
                action={<ActionButton onClick={() => setShowAddModal(true)}>Add Store</ActionButton>}
             />
 
@@ -292,22 +292,27 @@ const Stores = () => {
                title="Export Stores"
             />
 
-            <ConfirmDialog
-               open={pendingDeactivate !== null}
-               onClose={() => setPendingDeactivate(null)}
-               onConfirm={confirmDeactivate}
-               title={
-                  pendingDeactivate
-                     ? `Deactivate store "${pendingDeactivate.name}"?`
-                     : ''
-               }
-               description="It will no longer be available for item assignments. You can reactivate it later."
-               confirmLabel="Deactivate"
-               tone="danger"
-            />
-         </Layout>
-      </PrivateRoute>
+         <ConfirmDialog
+            open={pendingDeactivate !== null}
+            onClose={() => setPendingDeactivate(null)}
+            onConfirm={confirmDeactivate}
+            title={
+               pendingDeactivate
+                  ? `Deactivate store "${pendingDeactivate.name}"?`
+                  : ''
+            }
+            description="It will no longer be available for item assignments. You can reactivate it later."
+            confirmLabel="Deactivate"
+            tone="danger"
+         />
+      </>
    );
 };
+
+Stores.getLayout = (page) => (
+   <PrivateRoute permissions={['stores:read']}>
+      <Layout title="Stores">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Stores;

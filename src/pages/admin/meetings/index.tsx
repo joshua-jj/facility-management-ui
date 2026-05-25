@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { format, parseISO } from 'date-fns';
@@ -42,7 +43,7 @@ const DEACTIVATE_ICON = (
    </svg>
 );
 
-const Meetings = () => {
+const Meetings: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    const [searchQuery, setSearchQuery] = useState('');
@@ -254,9 +255,8 @@ const Meetings = () => {
    ).size;
 
    return (
-      <PrivateRoute permissions={['meetings:read']}>
-         <Layout title="Meetings">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   <ActionButton variant="primary" onClick={openCreate}>
                      + Add Meeting
@@ -297,22 +297,27 @@ const Meetings = () => {
 
             <AddMeeting open={modalOpen} onClose={closeModal} initialData={editTarget} />
 
-            <ConfirmDialog
-               open={pendingDeactivate !== null}
-               onClose={() => setPendingDeactivate(null)}
-               onConfirm={confirmDeactivate}
-               title={
-                  pendingDeactivate
-                     ? `Deactivate meeting "${pendingDeactivate.name}"?`
-                     : ''
-               }
-               description="It will be moved to inactive status. You can reactivate it later."
-               confirmLabel="Deactivate"
-               tone="danger"
-            />
-         </Layout>
-      </PrivateRoute>
+         <ConfirmDialog
+            open={pendingDeactivate !== null}
+            onClose={() => setPendingDeactivate(null)}
+            onConfirm={confirmDeactivate}
+            title={
+               pendingDeactivate
+                  ? `Deactivate meeting "${pendingDeactivate.name}"?`
+                  : ''
+            }
+            description="It will be moved to inactive status. You can reactivate it later."
+            confirmLabel="Deactivate"
+            tone="danger"
+         />
+      </>
    );
 };
+
+Meetings.getLayout = (page) => (
+   <PrivateRoute permissions={['meetings:read']}>
+      <Layout title="Meetings">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Meetings;

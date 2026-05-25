@@ -1,8 +1,9 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
 import Formsy from 'formsy-react';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import DateInput from '@/components/Inputs/DateInput';
@@ -58,7 +59,7 @@ const actionBadgeColor = (action: string) => {
    }
 };
 
-const AuditLogs: FC = () => {
+const AuditLogs: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const items = useSelector((s: RootState) => s.auditLog.items) as AuditLogEvent[];
    const meta = useSelector((s: RootState) => s.auditLog.meta);
@@ -120,9 +121,7 @@ const AuditLogs: FC = () => {
    };
 
    return (
-      <PrivateRoute>
-         <Layout title="Audit Logs">
-            <SettingsShell active="audit-logs">
+      <SettingsShell active="audit-logs">
                <div className="space-y-6">
                   <div className="flex items-center justify-between">
                      <h2 className="text-lg font-bold text-[#0F2552] dark:text-white/90">
@@ -412,10 +411,14 @@ const AuditLogs: FC = () => {
                      </div>
                   </div>
                )}
-            </SettingsShell>
-         </Layout>
-      </PrivateRoute>
+      </SettingsShell>
    );
 };
+
+AuditLogs.getLayout = (page) => (
+   <PrivateRoute>
+      <Layout title="Audit Logs">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default AuditLogs;

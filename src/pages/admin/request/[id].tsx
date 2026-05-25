@@ -1,6 +1,7 @@
-import { GetServerSideProps, NextPage } from 'next';
+import { GetServerSideProps } from 'next';
 import CustomDropdownSelect from '@/components/CustomDropdownSelect';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { authConstants, requestConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
@@ -343,7 +344,7 @@ export const getServerSideProps: GetServerSideProps<
    }
 };
 
-const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
+const RequestViewPage: NextPageWithLayout<RequestDetailsProps> = ({ requestDetail }) => {
    const router = useRouter();
    const { id } = router.query;
 
@@ -909,8 +910,7 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
    );
 
    return (
-      <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">
-         <div className="md:col-span-10 md:col-start-2">
+      <div className="md:col-span-10 md:col-start-2">
             {/* PageHeader stays full-width above the activity split so
                 the page chrome (search / role switcher / etc.) doesn't
                 get squeezed when the right column appears. */}
@@ -1764,9 +1764,12 @@ const RequestViewPage: NextPage<RequestDetailsProps> = ({ requestDetail }) => {
                </div>
             </ModalWrapper>
             </div>
-         </div>
-      </Layout>
+      </div>
    );
 };
+
+RequestViewPage.getLayout = (page) => (
+   <Layout className="grid grid-cols-1 md:grid-cols-12 mb-12">{page}</Layout>
+);
 
 export default RequestViewPage;

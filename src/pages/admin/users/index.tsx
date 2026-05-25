@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
@@ -38,7 +39,7 @@ const VIEW_ICON = (
    </svg>
 );
 
-const Users = () => {
+const Users: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const { can } = usePermission();
    // `users:write` covers add / edit / role-change. `users:delete`
@@ -353,9 +354,8 @@ const Users = () => {
    ];
 
    return (
-      <PrivateRoute permissions={[Permission.USERS_READ]}>
-         <Layout title="Users">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   canWriteUsers ? (
                      <ActionButton variant="primary" onClick={() => setShowAddUserModal(true)}>
@@ -431,16 +431,21 @@ const Users = () => {
                />
             )}
 
-            <ExportModal
-               open={showExportModal}
-               onClose={() => setShowExportModal(false)}
-               onExport={handleExport}
-               loading={isExporting}
-               title="Export Users"
-            />
-         </Layout>
-      </PrivateRoute>
+         <ExportModal
+            open={showExportModal}
+            onClose={() => setShowExportModal(false)}
+            onExport={handleExport}
+            loading={isExporting}
+            title="Export Users"
+         />
+      </>
    );
 };
+
+Users.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.USERS_READ]}>
+      <Layout title="Users">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default Users;

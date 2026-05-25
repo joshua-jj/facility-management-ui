@@ -1,5 +1,6 @@
-import { GetServerSideProps, NextPage } from 'next';
+import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import { departmentConstants } from '@/constants';
 import axios from 'axios';
 import { parseCookies } from 'nookies';
@@ -116,26 +117,23 @@ const BoxIcon = (
    </svg>
 );
 
-const DepartmentDetailPage: NextPage<DepartmentDetailProps> = ({ department }) => {
+const DepartmentDetailPage: NextPageWithLayout<DepartmentDetailProps> = ({ department }) => {
    const router = useRouter();
 
    if (!department) {
       return (
-         <Layout title="Department Details">
-            <div className="flex items-center justify-center h-64">
-               <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
-                  Department not found.
-               </p>
-            </div>
-         </Layout>
+         <div className="flex items-center justify-center h-64">
+            <p className="text-sm" style={{ color: 'var(--text-hint)' }}>
+               Department not found.
+            </p>
+         </div>
       );
    }
 
    const itemCount = department.itemCount ?? 0;
 
    return (
-      <Layout title="Department Details">
-         <div className="max-w-6xl mx-auto space-y-5">
+      <div className="max-w-6xl mx-auto space-y-5">
             <PageHeader
                action={
                   <ActionButton variant="outline" onClick={() => router.back()}>
@@ -347,8 +345,11 @@ const DepartmentDetailPage: NextPage<DepartmentDetailProps> = ({ department }) =
                </div>
             </div>
          </div>
-      </Layout>
    );
 };
+
+DepartmentDetailPage.getLayout = (page) => (
+   <Layout title="Department Details">{page}</Layout>
+);
 
 export default DepartmentDetailPage;

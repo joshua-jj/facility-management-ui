@@ -10,6 +10,7 @@ import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import PageHeader, { ActionButton } from '@/components/PageHeader';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import AddGeneratorLog from '@/components/Modals/AddGeneratorLog';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
@@ -51,7 +52,7 @@ const VIEW_ICON = (
    </svg>
 );
 
-const GeneratorLogs = () => {
+const GeneratorLogs: NextPageWithLayout = () => {
    const dispatch = useDispatch();
    const router = useRouter();
    // Identity helpers (department membership, row-author) only;
@@ -388,9 +389,8 @@ const GeneratorLogs = () => {
    ];
 
    return (
-      <PrivateRoute permissions={[Permission.GENERATOR_LOGS_READ]}>
-         <Layout title="Generator Logs">
-            <PageHeader
+      <>
+         <PageHeader
                action={
                   <ActionButton onClick={() => setShowAddModal(true)}>Add Log</ActionButton>
                }
@@ -429,17 +429,22 @@ const GeneratorLogs = () => {
                />
             )}
 
-            {showEditModal && (
-               <AddGeneratorLog
-                  className="text-start w-full cursor-pointer"
-                  generatorLog={editData}
-                  open={showEditModal}
-                  onClose={() => setShowEditModal(false)}
-               />
-            )}
-         </Layout>
-      </PrivateRoute>
+         {showEditModal && (
+            <AddGeneratorLog
+               className="text-start w-full cursor-pointer"
+               generatorLog={editData}
+               open={showEditModal}
+               onClose={() => setShowEditModal(false)}
+            />
+         )}
+      </>
    );
 };
+
+GeneratorLogs.getLayout = (page) => (
+   <PrivateRoute permissions={[Permission.GENERATOR_LOGS_READ]}>
+      <Layout title="Generator Logs">{page}</Layout>
+   </PrivateRoute>
+);
 
 export default GeneratorLogs;

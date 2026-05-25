@@ -1,33 +1,34 @@
-import React, { FC } from 'react';
+import React from 'react';
 import IdentityCard from '@/components/Cards/IdentityCard';
 import ProfileIcon from '../../../public/assets/icons/Profile.svg';
 import ProfileBoldIcon from '../../../public/assets/icons/ProfileBold.svg';
 import HomeIcon from '../../../public/assets/icons/Home.svg';
 import HomeBoldIcon from '../../../public/assets/icons/HomeBold.svg';
 import Layout from '@/components/Layout';
+import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 
-const LandingPage: FC = () => {
+const LandingPage: NextPageWithLayout = () => {
   return (
-    <Layout>
-      <div className="flex flex-col sm:flex-row justify-start sm:justify-center items-center gap-8 sm:gap-20 w-full h-full mt-8">
-        <IdentityCard
-          title="Egfm Worker"
-          link="/request/egfm-worker"
-          icon={<ProfileIcon />}
-          filledIcon={<ProfileBoldIcon />}
-          delayIndex={1}
-        />
-        <IdentityCard
-          title="Church/Ministry"
-          link="/request/church-ministry"
-          icon={<HomeIcon />}
-          filledIcon={<HomeBoldIcon />}
-          disabled
-          delayIndex={2}
-        />
-      </div>
-    </Layout>
+    <div className="flex flex-col sm:flex-row justify-start sm:justify-center items-center gap-8 sm:gap-20 w-full h-full mt-8">
+      <IdentityCard
+        title="Egfm Worker"
+        link="/request/egfm-worker"
+        icon={<ProfileIcon />}
+        filledIcon={<ProfileBoldIcon />}
+        delayIndex={1}
+      />
+      <IdentityCard
+        title="Church/Ministry"
+        link="/request/church-ministry"
+        icon={<HomeIcon />}
+        filledIcon={<HomeBoldIcon />}
+        disabled
+        delayIndex={2}
+      />
+    </div>
   );
 };
+
+LandingPage.getLayout = (page) => <Layout>{page}</Layout>;
 
 export default LandingPage;
