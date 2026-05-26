@@ -93,12 +93,15 @@ export default function notificationsAdminReducer(
 
       case notificationsAdminConstants.RETRY_NOTIFICATION:
       case notificationsAdminConstants.ABANDON_NOTIFICATION:
+      case notificationsAdminConstants.DELETE_NOTIFICATION:
          return { ...state, isMutating: true, error: null };
       case notificationsAdminConstants.RETRY_NOTIFICATION_SUCCESS:
       case notificationsAdminConstants.ABANDON_NOTIFICATION_SUCCESS:
+      case notificationsAdminConstants.DELETE_NOTIFICATION_SUCCESS:
          return { ...state, isMutating: false };
       case notificationsAdminConstants.RETRY_NOTIFICATION_FAILURE:
       case notificationsAdminConstants.ABANDON_NOTIFICATION_FAILURE:
+      case notificationsAdminConstants.DELETE_NOTIFICATION_FAILURE:
          return {
             ...state,
             isMutating: false,

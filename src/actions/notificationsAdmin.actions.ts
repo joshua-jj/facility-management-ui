@@ -22,4 +22,8 @@ export const notificationsAdminActions = {
       type: notificationsAdminConstants.ABANDON_NOTIFICATION,
       payload: { id },
    }),
+   deleteNotification: (id: number) => ({
+      type: notificationsAdminConstants.DELETE_NOTIFICATION,
+      payload: { id },
+   }),
 };
