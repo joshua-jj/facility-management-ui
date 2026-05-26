@@ -16,12 +16,21 @@ interface MoreInformationProps {
    }) => void;
 }
 
-// Today's date in YYYY-MM-DD form. Computed at render time so a long-lived
-// tab still sees "today" as today, not the day the page loaded.
+// Today's date in YYYY-MM-DD form using LOCAL calendar components.
+// Computed at render time so a long-lived tab still sees "today" as
+// today, not the day the page loaded.
+//
+// Do NOT route through toISOString() — that converts to UTC, so for
+// users east of UTC (e.g. WAT, UTC+1) the local "midnight today" is
+// the previous UTC day, and the resulting string is yesterday. That
+// caused the date picker's minDate to be off by one, enabling
+// yesterday as a valid Collection Date.
 const todayIso = () => {
    const d = new Date();
-   d.setHours(0, 0, 0, 0);
-   return d.toISOString().split('T')[0];
+   const year = d.getFullYear();
+   const month = String(d.getMonth() + 1).padStart(2, '0');
+   const day = String(d.getDate()).padStart(2, '0');
+   return `${year}-${month}-${day}`;
 };
 
 // NOTE: The "Description" textarea was moved to Step 1 (ItemDetails) as
