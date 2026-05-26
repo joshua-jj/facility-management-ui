@@ -125,9 +125,36 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
       setTimeout(refetch, 400);
    };
 
+   const handleDelete = (id: number) => {
+      // confirm() is intentionally lightweight here — the action is a
+      // soft delete on the API side (row survives in the audit table)
+      // and is restricted to terminal statuses, so the blast radius is
+      // small. A custom dialog would be overkill for the queue-cleanup
+      // use case this serves.
+      if (typeof window !== 'undefined') {
+         const ok = window.confirm(
+            'Delete this notification from the queue? The row is soft-deleted; it will survive in the audit log but no longer appear here.',
+         );
+         if (!ok) return;
+      }
+      dispatch(
+         notificationsAdminActions.deleteNotification(
+            id,
+         ) as unknown as UnknownAction,
+      );
+      setTimeout(refetch, 400);
+   };
+
    const getActions = (row: NotificationDelivery): ActionMenuItem[] => {
-      // Only PERMANENTLY_FAILED rows expose retry/abandon per spec §6.4.
-      const terminal = row.emailStatus === EmailStatus.PERMANENTLY_FAILED;
+      // Per spec §6.4 + the DELETE endpoint contract:
+      // - PERMANENTLY_FAILED → Retry, Mark abandoned, Delete
+      // - ABANDONED         → Delete
+      // - everything else   → no mutating actions
+      const isPermanentlyFailed =
+         row.emailStatus === EmailStatus.PERMANENTLY_FAILED;
+      const isDeletable =
+         row.emailStatus === EmailStatus.PERMANENTLY_FAILED ||
+         row.emailStatus === EmailStatus.ABANDONED;
       return [
          {
             // Always available — the detail page works for every status.
@@ -139,13 +166,19 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
          {
             label: 'Retry',
             onClick: () => handleRetry(row.id),
-            hidden: !terminal || isMutating,
+            hidden: !isPermanentlyFailed || isMutating,
          },
          {
             label: 'Mark abandoned',
             variant: 'danger',
             onClick: () => handleAbandon(row.id),
-            hidden: !terminal || isMutating,
+            hidden: !isPermanentlyFailed || isMutating,
+         },
+         {
+            label: 'Delete',
+            variant: 'danger',
+            onClick: () => handleDelete(row.id),
+            hidden: !isDeletable || isMutating,
          },
          {
             label: 'View entity',
