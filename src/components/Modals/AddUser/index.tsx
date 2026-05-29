@@ -120,8 +120,39 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
             title={user ? 'Update User' : 'Create User'}
             subtitle={user ? 'Edit user profile and department assignment' : 'Add a new user to the system'}
             width="sm:w-[36rem]"
+            footer={
+               <>
+                  <button
+                     type="button"
+                     onClick={closeModal}
+                     className="px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                     style={{ color: 'var(--text-secondary)', border: '1px solid var(--border-strong)' }}
+                  >
+                     Cancel
+                  </button>
+                  <button
+                     disabled={submitDisabled}
+                     type="submit"
+                     form="add-user-form"
+                     className="px-5 py-2.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                     style={{ background: 'var(--color-secondary)' }}
+                  >
+                     {isBusy ? (
+                        <span className="flex items-center gap-2">
+                           <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                           Saving...
+                        </span>
+                     ) : user ? (
+                        'Update User'
+                     ) : (
+                        'Create User'
+                     )}
+                  </button>
+               </>
+            }
          >
             <Formsy
+               id="add-user-form"
                ref={formRef}
                onValidSubmit={handleSubmit}
                onValid={() => setCanSubmit(true)}
@@ -195,34 +226,6 @@ const AddUser: React.FC<AddItemModalProps> = ({ className, children, user, onClo
                   />
                </div>
 
-               {/* Footer */}
-               <div className="flex justify-end pt-3 mt-2" style={{ borderTop: '1px solid var(--border-default)' }}>
-                  <button
-                     type="button"
-                     onClick={closeModal}
-                     className="px-4 py-2.5 rounded-lg text-xs font-semibold mr-2 cursor-pointer transition-colors"
-                     style={{ color: 'var(--text-secondary)', border: '1px solid var(--border-strong)' }}
-                  >
-                     Cancel
-                  </button>
-                  <button
-                     disabled={submitDisabled}
-                     type="submit"
-                     className="px-5 py-2.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                     style={{ background: 'var(--color-secondary)' }}
-                  >
-                     {isBusy ? (
-                        <span className="flex items-center gap-2">
-                           <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                           Saving...
-                        </span>
-                     ) : user ? (
-                        'Update User'
-                     ) : (
-                        'Create User'
-                     )}
-                  </button>
-               </div>
             </Formsy>
          </ModalWrapper>
       </>

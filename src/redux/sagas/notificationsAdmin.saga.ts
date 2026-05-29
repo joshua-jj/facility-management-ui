@@ -144,6 +144,37 @@ function* abandonNotification({ payload }: MutateAction) {
    }
 }
 
+function* deleteNotification({ payload }: MutateAction) {
+   try {
+      const resp = yield* authenticatedRequest(
+         notificationsAdminConstants.ADMIN_DELETE_URI(payload.id),
+         { method: 'DELETE' },
+      );
+      if (!resp) return;
+      yield put({
+         type: notificationsAdminConstants.DELETE_NOTIFICATION_SUCCESS,
+         // The DELETE response carries the row's pre-deletion DTO so
+         // the reducer can render an "undo-shaped" toast referencing
+         // the recipient without a second fetch. We pass the id along
+         // so the reducer can also drop the row from the local cache.
+         payload: { id: payload.id, row: resp.data ?? null },
+      });
+      const snack: SetSnackBarPayload = {
+         type: 'success',
+         message:
+            (typeof resp.message === 'string' ? resp.message : null) ??
+            'Notification deleted',
+         variant: 'success',
+      };
+      yield put(appActions.setSnackBar(snack));
+   } catch (error: unknown) {
+      yield* handleSagaError(
+         error,
+         notificationsAdminConstants.DELETE_NOTIFICATION_FAILURE,
+      );
+   }
+}
+
 export default function* notificationsAdminSaga() {
    yield* all([
       takeLatest(
@@ -161,6 +192,10 @@ export default function* notificationsAdminSaga() {
       takeLatest(
          notificationsAdminConstants.ABANDON_NOTIFICATION,
          abandonNotification,
+      ),
+      takeLatest(
+         notificationsAdminConstants.DELETE_NOTIFICATION,
+         deleteNotification,
       ),
    ]);
 }
