@@ -8,6 +8,16 @@ interface ModalWrapperProps {
    subtitle?: string;
    children: React.ReactNode;
    width?: string;
+   /**
+    * Optional pinned footer (e.g. Cancel / Submit row). Rendered OUTSIDE
+    * the scrollable body so it stays visible regardless of how much the
+    * form scrolls. Modals that render their footer inside `children`
+    * keep working unchanged (the body scroll then includes the footer
+    * the way it did before this prop existed), but new code should
+    * prefer this slot so action buttons never scroll off-screen on
+    * short viewports.
+    */
+   footer?: React.ReactNode;
 }
 
 /**
@@ -27,11 +37,12 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
    subtitle,
    children,
    width = 'sm:w-[28rem]',
+   footer,
 }) => {
    return (
       <FullscreenModal open={open} onClickAway={onClose}>
          <div
-            className={`rounded-xl shadow-xl mx-auto w-[90vw] ${width}`}
+            className={`rounded-xl shadow-xl mx-auto w-[90vw] flex flex-col max-h-[90vh] ${width}`}
             style={{
                background: 'var(--surface-paper)',
                border: '1px solid var(--border-default)',
@@ -39,7 +50,7 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
          >
             {/* Header */}
             <div
-               className="flex items-start justify-between px-6 py-4"
+               className="flex items-start justify-between px-6 py-4 shrink-0"
                style={{ borderBottom: '1px solid var(--border-default)' }}
             >
                <div>
@@ -86,8 +97,22 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
                </button>
             </div>
 
-            {/* Body */}
-            <div className="px-6 py-5 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(90vh - 5rem)' }}>{children}</div>
+            {/* Body — flex-1 + min-h-0 lets the body claim the remaining
+                height inside the max-h-[90vh] outer flex column and scroll
+                internally when content overflows. The pinned footer (when
+                present) stays visible regardless of scroll position. */}
+            <div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+               {children}
+            </div>
+
+            {footer && (
+               <div
+                  className="px-6 py-4 shrink-0 flex justify-end gap-2"
+                  style={{ borderTop: '1px solid var(--border-default)' }}
+               >
+                  {footer}
+               </div>
+            )}
          </div>
       </FullscreenModal>
    );

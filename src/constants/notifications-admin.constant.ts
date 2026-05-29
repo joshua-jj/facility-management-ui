@@ -17,6 +17,7 @@ export const notificationsAdminConstants = {
    ADMIN_DETAIL_URI: (id: number) => `${ADMIN_BASE}/${id}`,
    ADMIN_RETRY_URI: (id: number) => `${ADMIN_BASE}/${id}/retry`,
    ADMIN_ABANDON_URI: (id: number) => `${ADMIN_BASE}/${id}/abandon`,
+   ADMIN_DELETE_URI: (id: number) => `${ADMIN_BASE}/${id}`,
 
    // ── Action types ──────────────────────────────────────────────────
    GET_NOTIFICATIONS_ADMIN: 'GET_NOTIFICATIONS_ADMIN',
@@ -34,4 +35,8 @@ export const notificationsAdminConstants = {
    ABANDON_NOTIFICATION: 'ABANDON_NOTIFICATION',
    ABANDON_NOTIFICATION_SUCCESS: 'ABANDON_NOTIFICATION_SUCCESS',
    ABANDON_NOTIFICATION_FAILURE: 'ABANDON_NOTIFICATION_FAILURE',
+
+   DELETE_NOTIFICATION: 'DELETE_NOTIFICATION',
+   DELETE_NOTIFICATION_SUCCESS: 'DELETE_NOTIFICATION_SUCCESS',
+   DELETE_NOTIFICATION_FAILURE: 'DELETE_NOTIFICATION_FAILURE',
 } as const;
