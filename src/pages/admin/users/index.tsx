@@ -15,6 +15,7 @@ import PrivateRoute from '@/components/PrivateRoute';
 import AddUser from '@/components/Modals/AddUser';
 import UpdateRole from '@/components/Modals/UpdateRole';
 import UserStatusModal from '@/components/Modals/UserStatus';
+import DeleteUserModal from '@/components/Modals/DeleteUser';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { usePermission } from '@/hooks/usePermission';
 import { exportToCsv } from '@/utilities/exportCsv';
@@ -31,6 +32,7 @@ const PAGE_LIMIT = 10;
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const ROLE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 const TOGGLE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>;
+const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>;
 
 const VIEW_ICON = (
    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -54,6 +56,8 @@ const Users: NextPageWithLayout = () => {
    const [editUserData, setEditUserData] = useState<User | null>(null);
    const [showUserStatusModal, setShowUserStatusModal] = useState(false);
    const [userStatusAction, setUserStatusAction] = useState<'activate' | 'deactivate'>('deactivate');
+   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+   const [deleteUserData, setDeleteUserData] = useState<User | null>(null);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
    const [searchQuery, setSearchQuery] = useState('');
    const [currentPage, setCurrentPage] = useState(1);
@@ -95,6 +99,7 @@ const Users: NextPageWithLayout = () => {
          userConstants.UPDATE_USER_ROLE_SUCCESS,
          userConstants.ACTIVATE_USER_SUCCESS,
          userConstants.DEACTIVATE_USER_SUCCESS,
+         userConstants.DELETE_USER_SUCCESS,
       ];
       const listeners = events.map((evt) =>
          AppEmitter.addListener(evt, () => fetchUsers(currentPage)),
@@ -130,6 +135,11 @@ const Users: NextPageWithLayout = () => {
       setEditUserData(user);
       setUserStatusAction(user.status === 'A' ? 'deactivate' : 'activate');
       setShowUserStatusModal(true);
+   };
+
+   const handleDeleteUser = (user: User) => {
+      setDeleteUserData(user);
+      setShowDeleteUserModal(true);
    };
 
    const handleExport = async (from: string, to: string) => {
@@ -205,6 +215,12 @@ const Users: NextPageWithLayout = () => {
                icon: TOGGLE_ICON,
                onClick: () => handleUserStatus(row),
                variant: row.status === 'A' ? 'danger' : 'default',
+            },
+            {
+               label: 'Delete',
+               icon: DELETE_ICON,
+               onClick: () => handleDeleteUser(row),
+               variant: 'danger',
             },
          );
       }
@@ -427,6 +443,20 @@ const Users: NextPageWithLayout = () => {
                   onClose={() => {
                      setShowUserStatusModal(false);
                      setEditUserData(null);
+                  }}
+               />
+            )}
+
+            {/* Delete User Modal */}
+            {showDeleteUserModal && deleteUserData && (
+               <DeleteUserModal
+                  className="hidden"
+                  open={showDeleteUserModal}
+                  userId={deleteUserData.id}
+                  userName={`${deleteUserData.firstName} ${deleteUserData.lastName}`}
+                  onClose={() => {
+                     setShowDeleteUserModal(false);
+                     setDeleteUserData(null);
                   }}
                />
             )}
