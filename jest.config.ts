@@ -8,7 +8,7 @@ const config: Config = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '\\.svg$': '<rootDir>/__mocks__/svgMock.tsx',
+    '^.+\\.(svg)$': '<rootDir>/__mocks__/svgMock.tsx',
   },
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
 };
