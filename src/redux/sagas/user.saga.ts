@@ -1,5 +1,4 @@
 import { put, takeLatest, all } from 'typed-redux-saga';
-import { put as effectsPut } from 'redux-saga/effects';
 import { userConstants } from '@/constants';
 import { SetSnackBarPayload } from '@/types';
 import {
@@ -240,7 +239,7 @@ function* deactivateUser({ data }: UserStatusAction) {
 }
 
 export function* deleteUser({ data }: DeleteUserAction) {
-  yield effectsPut({ type: userConstants.REQUEST_DELETE_USER });
+  yield put({ type: userConstants.REQUEST_DELETE_USER });
 
   try {
     if (data) {
@@ -251,7 +250,7 @@ export function* deleteUser({ data }: DeleteUserAction) {
       });
       if (!jsonResponse) return;
 
-      yield effectsPut({ type: userConstants.DELETE_USER_SUCCESS });
+      yield put({ type: userConstants.DELETE_USER_SUCCESS });
 
       AppEmitter.emit(userConstants.DELETE_USER_SUCCESS, jsonResponse);
       const payload: SetSnackBarPayload = {
@@ -259,7 +258,7 @@ export function* deleteUser({ data }: DeleteUserAction) {
         message: (jsonResponse.message as string) ?? 'User deleted successfully',
         variant: 'success',
       };
-      yield effectsPut(appActions.setSnackBar(payload));
+      yield put(appActions.setSnackBar(payload));
     }
   } catch (error: unknown) {
     yield* handleSagaError(error, userConstants.DELETE_USER_ERROR);

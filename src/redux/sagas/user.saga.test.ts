@@ -1,6 +1,8 @@
+import { runSaga } from 'redux-saga';
 import { userConstants } from '@/constants';
+import { DeleteUserAction } from '@/actions';
 
-// Must be prefixed `mock` so jest allows it inside the hoisted jest.mock factory.
+// Prefixed `mock` so jest allows it inside the hoisted jest.mock factory.
 const mockResponse = { authReturn: undefined as unknown };
 jest.mock('@/utilities/saga-helpers', () => ({
   authenticatedRequest: jest.fn(function* () {
@@ -18,21 +20,19 @@ import {
   handleSagaError,
 } from '@/utilities/saga-helpers';
 
-// Drain a saga generator, collecting the action types of any PUT effects.
-function drainPutTypes(gen: Generator): string[] {
-  const types: string[] = [];
-  let step = gen.next();
-  while (!step.done) {
-    const eff = step.value as {
-      type?: string;
-      payload?: { action?: { type?: string } };
-    };
-    if (eff?.type === 'PUT' && eff.payload?.action?.type) {
-      types.push(eff.payload.action.type);
-    }
-    step = gen.next();
-  }
-  return types;
+// Run the saga through redux-saga, recording dispatched action types.
+async function recordSaga(action: DeleteUserAction): Promise<string[]> {
+  const dispatched: Array<{ type: string }> = [];
+  await runSaga(
+    {
+      dispatch: (a: { type: string }) => {
+        dispatched.push(a);
+      },
+    },
+    deleteUser,
+    action,
+  ).toPromise();
+  return dispatched.map((a) => a.type);
 }
 
 describe('deleteUser saga', () => {
@@ -45,11 +45,12 @@ describe('deleteUser saga', () => {
     );
   });
 
-  it('requests, calls DELETE /user/:id, then dispatches success', () => {
+  it('requests, calls DELETE /user/:id, then dispatches success', async () => {
     mockResponse.authReturn = { message: 'User deleted successfully' };
-    const types = drainPutTypes(
-      deleteUser({ type: userConstants.DELETE_USER, data: { id: 7 } } as never),
-    );
+    const types = await recordSaga({
+      type: userConstants.DELETE_USER,
+      data: { id: 7 },
+    } as DeleteUserAction);
     expect(types).toContain(userConstants.REQUEST_DELETE_USER);
     expect(types).toContain(userConstants.DELETE_USER_SUCCESS);
     expect(authenticatedRequest).toHaveBeenCalledWith(
@@ -59,24 +60,26 @@ describe('deleteUser saga', () => {
     expect(handleSagaError).not.toHaveBeenCalled();
   });
 
-  it('returns early (no success) when the request yields null', () => {
+  it('returns early (no success) when the request yields null', async () => {
     mockResponse.authReturn = null;
-    const types = drainPutTypes(
-      deleteUser({ type: userConstants.DELETE_USER, data: { id: 5 } } as never),
-    );
+    const types = await recordSaga({
+      type: userConstants.DELETE_USER,
+      data: { id: 5 },
+    } as DeleteUserAction);
     expect(types).toContain(userConstants.REQUEST_DELETE_USER);
     expect(types).not.toContain(userConstants.DELETE_USER_SUCCESS);
   });
 
-  it('routes thrown errors to handleSagaError with DELETE_USER_ERROR', () => {
+  it('routes thrown errors to handleSagaError with DELETE_USER_ERROR', async () => {
     (authenticatedRequest as unknown as jest.Mock).mockImplementationOnce(
       function* () {
         throw new Error('boom');
       },
     );
-    drainPutTypes(
-      deleteUser({ type: userConstants.DELETE_USER, data: { id: 9 } } as never),
-    );
+    await recordSaga({
+      type: userConstants.DELETE_USER,
+      data: { id: 9 },
+    } as DeleteUserAction);
     expect(handleSagaError).toHaveBeenCalledWith(
       expect.any(Error),
       userConstants.DELETE_USER_ERROR,
