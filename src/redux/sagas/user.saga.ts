@@ -4,6 +4,7 @@ import { SetSnackBarPayload } from '@/types';
 import {
   appActions,
   CreateUserAction,
+  DeleteUserAction,
   GetUsersAction,
   GetUsersByRoleAction,
   SearchUserAction,
@@ -237,6 +238,33 @@ function* deactivateUser({ data }: UserStatusAction) {
   }
 }
 
+export function* deleteUser({ data }: DeleteUserAction) {
+  yield put({ type: userConstants.REQUEST_DELETE_USER });
+
+  try {
+    if (data) {
+      const userUri = `${userConstants.USER_URI}/${data.id}`;
+
+      const jsonResponse = yield* authenticatedRequest(userUri, {
+        method: 'DELETE',
+      });
+      if (!jsonResponse) return;
+
+      yield put({ type: userConstants.DELETE_USER_SUCCESS });
+
+      AppEmitter.emit(userConstants.DELETE_USER_SUCCESS, jsonResponse);
+      const payload: SetSnackBarPayload = {
+        type: 'success',
+        message: (jsonResponse.message as string) ?? 'User deleted successfully',
+        variant: 'success',
+      };
+      yield put(appActions.setSnackBar(payload));
+    }
+  } catch (error: unknown) {
+    yield* handleSagaError(error, userConstants.DELETE_USER_ERROR);
+  }
+}
+
 function* getUsersWatcher() {
   yield takeLatest(userConstants.GET_USERS, getUsers);
 }
@@ -268,6 +296,10 @@ function* deactivateUserWatcher() {
   yield takeLatest(userConstants.DEACTIVATE_USER, deactivateUser);
 }
 
+function* deleteUserWatcher() {
+  yield takeLatest(userConstants.DELETE_USER, deleteUser);
+}
+
 export default function* rootSaga() {
   yield all([
     getUsersWatcher(),
@@ -278,5 +310,6 @@ export default function* rootSaga() {
     updateUserRoleWatcher(),
     activateUserWatcher(),
     deactivateUserWatcher(),
+    deleteUserWatcher(),
   ]);
 }

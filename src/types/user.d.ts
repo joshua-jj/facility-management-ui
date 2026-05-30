@@ -31,6 +31,10 @@ export interface UserConstants {
   DEACTIVATE_USER_SUCCESS: string;
   DEACTIVATE_USER_ERROR: string;
 
+  REQUEST_DELETE_USER: string;
+  DELETE_USER_SUCCESS: string;
+  DELETE_USER_ERROR: string;
+
   GET_USERS: string;
   SEARCH_USER: string;
   GET_USERS_BY_ROLE: string;
@@ -40,6 +44,7 @@ export interface UserConstants {
   UPDATE_USER_ROLE: string;
   ACTIVATE_USER: string;
   DEACTIVATE_USER: string;
+  DELETE_USER: string;
 
   USER_URI: string;
 }
@@ -177,4 +182,8 @@ export interface UpdateUserRoleForm {
 
 export interface UserStatusForm {
   ids: number[];
+}
+
+export interface DeleteUserForm {
+  id: number;
 }
