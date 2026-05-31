@@ -1,6 +1,7 @@
 import { userConstants } from '@/constants';
 import {
   CreateUserForm,
+  DeleteUserForm,
   UpdateUserForm,
   UpdateUserRoleForm,
   UserStatusForm,
@@ -46,6 +47,11 @@ export interface UpdateUserRoleAction {
 export interface UserStatusAction {
   type: typeof userConstants.ACTIVATE_USER;
   data: UserStatusForm;
+}
+
+export interface DeleteUserAction {
+  type: typeof userConstants.DELETE_USER;
+  data: DeleteUserForm;
 }
 
 const getUsers = (data?: {
@@ -96,6 +102,11 @@ const deactivateUser = (data: UserStatusForm): UserStatusAction => ({
   data,
 });
 
+const deleteUser = (data: DeleteUserForm): DeleteUserAction => ({
+  type: userConstants.DELETE_USER,
+  data,
+});
+
 export const userActions = {
   getUsers,
   searchUser,
@@ -105,4 +116,5 @@ export const userActions = {
   updateUserRole,
   activateUser,
   deactivateUser,
+  deleteUser,
 };
