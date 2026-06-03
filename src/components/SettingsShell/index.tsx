@@ -10,7 +10,8 @@ export type SettingsPanelKey =
    | 'security'
    | 'access'
    | 'audit-logs'
-   | 'workflows';
+   | 'workflows'
+   | 'cron';
 
 type PanelEntry = {
    key: SettingsPanelKey;
@@ -64,6 +65,13 @@ const PANELS: PanelEntry[] = [
       description: 'Edit state-machine rules per subject',
       // Workflows admin sits at the SUPER ADMIN tier — same gate as
       // roles management. ADMIN doesn't hold it; SA does.
+      permissions: [Permission.ROLES_MANAGE],
+   },
+   {
+      key: 'cron',
+      label: 'Cron Scheduler',
+      href: '/admin/settings/cron',
+      description: 'Manage system cron jobs and execution schedules',
       permissions: [Permission.ROLES_MANAGE],
    },
 ];

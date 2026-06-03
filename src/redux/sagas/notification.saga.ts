@@ -121,7 +121,7 @@ function* fetchTicket() {
 }
 
 function* runStreamOnce(ticket: string) {
-   const channel: EventChannel<StreamEvent> = yield call(createStreamChannel, ticket);
+   const channel = (yield call(createStreamChannel, ticket)) as EventChannel<StreamEvent>;
    try {
       while (true) {
          // eslint-disable-next-line @typescript-eslint/no-explicit-any

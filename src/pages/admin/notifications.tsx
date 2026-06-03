@@ -105,32 +105,39 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
          ) as unknown as UnknownAction,
       );
 
-   const handleRetry = (id: number) => {
+   const handleRetry = (id: number, recipientEmail: string) => {
+      if (typeof window !== 'undefined') {
+         const ok = window.confirm(
+            `Retry sending to ${recipientEmail}? The notification will re-enter the auto-retry queue with a fresh attempt count.`,
+         );
+         if (!ok) return;
+      }
       dispatch(
          notificationsAdminActions.retryNotification(
             id,
          ) as unknown as UnknownAction,
       );
-      // Refetch shortly after so the row's reset state appears in the
-      // table without the operator having to refresh the page.
-      setTimeout(refetch, 800);
+      // The saga auto-refetches; schedule a list refresh after a short delay
+      // so the table reflects the new status.
+      setTimeout(refetch, 1000);
    };
 
    const handleAbandon = (id: number) => {
+      if (typeof window !== 'undefined') {
+         const ok = window.confirm(
+            'Mark this notification as abandoned? Future automatic retries will not happen and this row will be terminal in the audit log.',
+         );
+         if (!ok) return;
+      }
       dispatch(
          notificationsAdminActions.abandonNotification(
             id,
          ) as unknown as UnknownAction,
       );
-      setTimeout(refetch, 400);
+      setTimeout(refetch, 600);
    };
 
    const handleDelete = (id: number) => {
-      // confirm() is intentionally lightweight here — the action is a
-      // soft delete on the API side (row survives in the audit table)
-      // and is restricted to terminal statuses, so the blast radius is
-      // small. A custom dialog would be overkill for the queue-cleanup
-      // use case this serves.
       if (typeof window !== 'undefined') {
          const ok = window.confirm(
             'Delete this notification from the queue? The row is soft-deleted; it will survive in the audit log but no longer appear here.',
@@ -142,50 +149,50 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
             id,
          ) as unknown as UnknownAction,
       );
-      setTimeout(refetch, 400);
+      setTimeout(refetch, 600);
    };
 
    const getActions = (row: NotificationDelivery): ActionMenuItem[] => {
-      // Per spec §6.4 + the DELETE endpoint contract:
-      // - PERMANENTLY_FAILED → Retry, Mark abandoned, Delete
-      // - ABANDONED         → Delete
-      // - everything else   → no mutating actions
-      const isPermanentlyFailed =
+      // Expanded action rules:
+      // - SENT               → no mutating actions (idempotent)
+      // - FAILED             → Retry (override cron backoff)
+      // - PERMANENTLY_FAILED → Retry + Mark Abandoned + Delete
+      // - ABANDONED          → Retry (un-abandon) + Delete
+      const canRetry =
+         row.emailStatus === EmailStatus.FAILED ||
+         row.emailStatus === EmailStatus.PERMANENTLY_FAILED ||
+         row.emailStatus === EmailStatus.ABANDONED;
+      const canAbandon =
          row.emailStatus === EmailStatus.PERMANENTLY_FAILED;
-      const isDeletable =
+      const canDelete =
          row.emailStatus === EmailStatus.PERMANENTLY_FAILED ||
          row.emailStatus === EmailStatus.ABANDONED;
       return [
          {
-            // Always available — the detail page works for every status.
-            // Placed first so it's the discoverable default action when
-            // users haven't realized rows are also clickable.
             label: 'View details',
             onClick: () => router.push(`/admin/notifications/${row.id}`),
          },
          {
-            label: 'Retry',
-            onClick: () => handleRetry(row.id),
-            hidden: !isPermanentlyFailed || isMutating,
+            label: row.emailStatus === EmailStatus.ABANDONED ? 'Retry (un-abandon)' : 'Retry',
+            onClick: () => handleRetry(row.id, row.recipient.email),
+            hidden: !canRetry || isMutating,
          },
          {
             label: 'Mark abandoned',
             variant: 'danger',
             onClick: () => handleAbandon(row.id),
-            hidden: !isPermanentlyFailed || isMutating,
+            hidden: !canAbandon || isMutating,
          },
          {
             label: 'Delete',
             variant: 'danger',
             onClick: () => handleDelete(row.id),
-            hidden: !isDeletable || isMutating,
+            hidden: !canDelete || isMutating,
          },
          {
             label: 'View entity',
             onClick: () => {
                if (row.entity?.type && row.entity?.id) {
-                  // entity.type is a snake/lower-case slug; admin links
-                  // follow /admin/<slug>/<id>.
                   window.location.href = `/admin/${row.entity.type}/${row.entity.id}`;
                }
             },

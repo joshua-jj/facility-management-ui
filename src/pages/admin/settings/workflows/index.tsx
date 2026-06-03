@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { UnknownAction } from 'redux';
@@ -75,7 +75,7 @@ const subjectDisplay = (subject: string): string => {
 };
 
 /** Letter avatar — gold-tinted circle with the first letter of the subject */
-const LetterAvatar: FC<{ name: string }> = ({ name }) => {
+const LetterAvatar: React.FC<{ name: string }> = ({ name }) => {
    const letter = (name?.trim()?.[0] ?? '?').toUpperCase();
    return (
       <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#B28309]/15 text-[#B28309] text-xs font-bold">

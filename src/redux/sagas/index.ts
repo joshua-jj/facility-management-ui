@@ -21,6 +21,7 @@ import incidenceLogRootSaga from './incidenceLog.saga';
 import notificationSaga from './notification.saga';
 import notificationsAdminSaga from './notificationsAdmin.saga';
 import workflowRootSaga from './workflow.saga';
+import cronRootSaga from './cron.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -46,5 +47,6 @@ export default function* rootSaga() {
     notificationSaga(),
     notificationsAdminSaga(),
     workflowRootSaga(),
+    cronRootSaga(),
   ]);
 }
