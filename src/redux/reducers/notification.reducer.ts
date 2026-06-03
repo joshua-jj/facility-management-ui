@@ -4,7 +4,7 @@ import type { NotificationDto, NotificationListResponse } from '@/types/notifica
 
 interface ActionShape {
    type: string;
-   data?: any;
+   data?: unknown;
    error?: string;
 }
 

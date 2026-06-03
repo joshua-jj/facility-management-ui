@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
-import { Permission } from '@/constants/permissions.enum';
 
 /**
  * Identity-context helpers: department membership, current user id /

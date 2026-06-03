@@ -41,6 +41,11 @@ const Items: NextPageWithLayout = () => {
    const { can } = usePermission();
    const canWriteItems = can(Permission.ITEMS_WRITE);
    const canDeleteItems = can(Permission.ITEMS_DELETE);
+   // Presentation only: holders of `items:read-all` see items spanning
+   // every department, so the Department column is worth showing. For a
+   // department-scoped viewer every row is the same department, so we hide
+   // it. The server still owns the actual row scoping.
+   const canViewAllDepartments = can(Permission.ITEMS_READ_ALL);
 
    const [showAddModal, setShowAddModal] = useState(false);
    const [editItemData, setEditItemData] = useState<Item | null>(null);
@@ -50,7 +55,6 @@ const Items: NextPageWithLayout = () => {
    const [isExporting, setIsExporting] = useState(false);
    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 
-   const { userDetails } = useSelector((s: RootState) => s.user);
    const { IsRequestingAllItems, allItemsList, pagination } = useSelector((s: RootState) => s.item);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { allStoresList } = useSelector((s: RootState) => s.store);
@@ -67,14 +71,10 @@ const Items: NextPageWithLayout = () => {
       totalItems: 0,
       totalPages: 0,
    };
-   // Department-scoped iff the user CAN'T manage items globally.
-   // `items:manage` is the back-office cap (SA / ADMIN) — without it,
-   // we hit the per-department endpoint so HOD / Member only see
-   // their department's stock. Capability tells us "are you back-
-   // office?"; the route filter is a data-shape decision, not a
-   // capability check.
-   const canManageItems = can(Permission.ITEMS_MANAGE);
-   const isDepartmentScoped = !canManageItems;
+   // Scoping is the server's job. GET /item (getAllItems) returns exactly
+   // the rows this user may see — global for holders of `items:read-all`,
+   // own-department for everyone else — so the page makes ONE call for
+   // every role and never pre-computes scope from a capability or role.
 
    // ── Fetch filter list data on mount ──
 
@@ -90,28 +90,19 @@ const Items: NextPageWithLayout = () => {
    const fetchItems = useCallback(
       (page?: number, overrideFilters?: Record<string, string>) => {
          const active = overrideFilters ?? filterValues;
-         if (isDepartmentScoped && userDetails?.departmentId !== undefined) {
-            dispatch(
-               itemActions.getDepartmentItems({
-                  departmentId: userDetails.departmentId,
-                  ...(page && { page }),
-               }) as unknown as UnknownAction,
-            );
-         } else {
-            dispatch(
-               itemActions.getAllItems({
-                  page: page ?? 1,
-                  limit: 10,
-                  ...(searchQuery && { search: searchQuery }),
-                  ...(active.status && { status: active.status }),
-                  ...(active.departmentId && { departmentId: Number(active.departmentId) }),
-                  ...(active.storeId && { storeId: Number(active.storeId) }),
-                  ...(active.fragile && { fragile: active.fragile }),
-               }) as unknown as UnknownAction,
-            );
-         }
+         dispatch(
+            itemActions.getAllItems({
+               page: page ?? 1,
+               limit: 10,
+               ...(searchQuery && { search: searchQuery }),
+               ...(active.status && { status: active.status }),
+               ...(active.departmentId && { departmentId: Number(active.departmentId) }),
+               ...(active.storeId && { storeId: Number(active.storeId) }),
+               ...(active.fragile && { fragile: active.fragile }),
+            }) as unknown as UnknownAction,
+         );
       },
-      [dispatch, isDepartmentScoped, userDetails?.departmentId, filterValues, searchQuery],
+      [dispatch, filterValues, searchQuery],
    );
 
    useEffect(() => {
@@ -136,25 +127,17 @@ const Items: NextPageWithLayout = () => {
    // ── Search ──
 
    const debouncedFetch = useDebounce((query: string) => {
-      if (isDepartmentScoped && userDetails?.departmentId !== undefined) {
-         dispatch(
-            itemActions.searchItem(
-               { departmentId: userDetails.departmentId, text: query },
-            ) as unknown as UnknownAction,
-         );
-      } else {
-         dispatch(
-            itemActions.getAllItems({
-               page: 1,
-               limit: 10,
-               search: query,
-               ...(filterValues.status && { status: filterValues.status }),
-               ...(filterValues.departmentId && { departmentId: Number(filterValues.departmentId) }),
-               ...(filterValues.storeId && { storeId: Number(filterValues.storeId) }),
-               ...(filterValues.fragile && { fragile: filterValues.fragile }),
-            }) as unknown as UnknownAction,
-         );
-      }
+      dispatch(
+         itemActions.getAllItems({
+            page: 1,
+            limit: 10,
+            search: query,
+            ...(filterValues.status && { status: filterValues.status }),
+            ...(filterValues.departmentId && { departmentId: Number(filterValues.departmentId) }),
+            ...(filterValues.storeId && { storeId: Number(filterValues.storeId) }),
+            ...(filterValues.fragile && { fragile: filterValues.fragile }),
+         }) as unknown as UnknownAction,
+      );
    });
 
    const handleSearch = useCallback(
@@ -342,7 +325,7 @@ const Items: NextPageWithLayout = () => {
             key: 'name',
             header: 'Item Name',
          },
-         ...(!isDepartmentScoped
+         ...(canViewAllDepartments
             ? [
                  {
                     key: 'department' as keyof Item,
@@ -416,7 +399,7 @@ const Items: NextPageWithLayout = () => {
          },
       ];
       return cols;
-   }, [isDepartmentScoped, getActions]);
+   }, [canViewAllDepartments, getActions]);
 
    // ── Render ──
 
@@ -461,9 +444,11 @@ const Items: NextPageWithLayout = () => {
                emptyTitle="No items found"
                emptyDescription="Get started by adding your first inventory item."
                emptyAction={
-                  <ActionButton variant="primary" onClick={() => setShowAddModal(true)}>
-                     Add Item
-                  </ActionButton>
+                  canWriteItems ? (
+                     <ActionButton variant="primary" onClick={() => setShowAddModal(true)}>
+                        Add Item
+                     </ActionButton>
+                  ) : undefined
                }
             />
 

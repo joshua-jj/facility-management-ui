@@ -17,7 +17,7 @@ function buildListUri(query: NotificationListQuery): string {
 
 interface ActionShape {
    type: string;
-   data?: any;
+   data?: unknown;
 }
 
 function* getNotificationsWorker(action: ActionShape) {
@@ -77,7 +77,7 @@ function* markAllReadWorker() {
 
 interface StreamEvent {
    kind: 'open' | 'message' | 'error';
-   payload?: any;
+   payload?: unknown;
 }
 
 function createStreamChannel(ticket: string): EventChannel<StreamEvent> {
@@ -110,25 +110,25 @@ function createStreamChannel(ticket: string): EventChannel<StreamEvent> {
    });
 }
 
-function* fetchTicket(): Generator<any, string | null, any> {
+function* fetchTicket(): Generator<unknown, string | null, unknown> {
    try {
-      const resp: any = yield call(
-         authenticatedRequest as any,
+      const resp = (yield call(
+         authenticatedRequest,
          notificationConstants.NOTIFICATION_STREAM_TICKET_URI,
          { method: 'POST' },
-      );
+      )) as { data?: { ticket?: string } } | null;
       if (!resp) return null;
-      return (resp?.data?.ticket as string) ?? null;
+      return resp?.data?.ticket ?? null;
    } catch {
       return null;
    }
 }
 
 function* runStreamOnce(ticket: string) {
-   const channel: EventChannel<StreamEvent> = yield call(createStreamChannel, ticket);
+   const channel = (yield call(createStreamChannel, ticket)) as EventChannel<StreamEvent>;
    try {
       while (true) {
-         const ev: StreamEvent = yield take(channel as any);
+         const ev = (yield take(channel)) as StreamEvent;
          if (ev.kind === 'open') {
             yield put({ type: notificationConstants.NOTIFICATION_STREAM_OPENED });
          } else if (ev.kind === 'message') {
@@ -150,7 +150,7 @@ const BACKOFF_STEPS_MS = [1000, 2000, 4000, 8000, 16000, 30000];
 function* streamWorker() {
    let attempt = 0;
    while (true) {
-      const ticket: string | null = yield call(fetchTicket as any);
+      const ticket: string | null = yield call(fetchTicket);
       if (!ticket) {
          const delay = BACKOFF_STEPS_MS[Math.min(attempt, BACKOFF_STEPS_MS.length - 1)];
          yield call(() => new Promise<void>((r) => setTimeout(r, delay + Math.floor(Math.random() * 250))));

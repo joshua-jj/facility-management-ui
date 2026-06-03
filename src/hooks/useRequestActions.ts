@@ -44,7 +44,7 @@ export const PENDING_HOD_STATUSES: ReadonlySet<string> = new Set([
 export interface RequestRow {
    requestStatus: string;
    fulfillingDepartmentId?: number | null;
-   children?: { id: number }[];
+   children?: { id?: number }[];
    parent?: unknown;
    audit?: { assignee?: number | string | null } | null;
 }
