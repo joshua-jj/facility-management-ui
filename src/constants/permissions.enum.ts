@@ -36,6 +36,11 @@ export enum Permission {
    ITEMS_WRITE = 'items:write',
    ITEMS_DELETE = 'items:delete',
    ITEMS_MANAGE = 'items:manage',
+   // Cross-department visibility. Holders see every department's items
+   // (the server returns the global list); used here only to decide
+   // whether the Department column is worth showing. Server enforces the
+   // actual scoping — see facility-management-api item.controller.
+   ITEMS_READ_ALL = 'items:read-all',
 
    // ── Stores ────────────────────────────────────────────────────────
    STORES_READ = 'stores:read',

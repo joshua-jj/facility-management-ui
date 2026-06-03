@@ -1,0 +1,28 @@
+import { appConstants } from './app.constant';
+
+export const cronConstants = {
+  GET_CRONS: 'GET_CRONS',
+  REQUEST_GET_CRONS: 'REQUEST_GET_CRONS',
+  GET_CRONS_SUCCESS: 'GET_CRONS_SUCCESS',
+  GET_CRONS_FAILURE: 'GET_CRONS_FAILURE',
+
+  UPDATE_CRON: 'UPDATE_CRON',
+  REQUEST_UPDATE_CRON: 'REQUEST_UPDATE_CRON',
+  UPDATE_CRON_SUCCESS: 'UPDATE_CRON_SUCCESS',
+  UPDATE_CRON_FAILURE: 'UPDATE_CRON_FAILURE',
+
+  TRIGGER_CRON: 'TRIGGER_CRON',
+  REQUEST_TRIGGER_CRON: 'REQUEST_TRIGGER_CRON',
+  TRIGGER_CRON_SUCCESS: 'TRIGGER_CRON_SUCCESS',
+  TRIGGER_CRON_FAILURE: 'TRIGGER_CRON_FAILURE',
+
+  VALIDATE_CRON: 'VALIDATE_CRON',
+  REQUEST_VALIDATE_CRON: 'REQUEST_VALIDATE_CRON',
+  VALIDATE_CRON_SUCCESS: 'VALIDATE_CRON_SUCCESS',
+  VALIDATE_CRON_FAILURE: 'VALIDATE_CRON_FAILURE',
+
+  // Absolute API URL (BASE_URI already includes the /api/v<n>/ prefix).
+  // Without the base, the bare 'system-cron' path resolved relative to the
+  // current page (/admin/settings/cron) → /admin/settings/system-cron → 404.
+  CRON_URI: `${appConstants.BASE_URI}system-cron`,
+};

@@ -29,6 +29,13 @@ export interface NotificationEntityRef {
    id: number;
 }
 
+/** Single line item in an invoice-style email table. */
+export interface EmailItem {
+   name: string;
+   quantity?: number | null;
+   department?: string | null;
+}
+
 export interface NotificationDelivery {
    id: number;
    recipient: NotificationRecipient;
@@ -44,6 +51,14 @@ export interface NotificationDelivery {
    emailNextAttemptAt: string | null;
    link: string;
    createdAt: string;
+   /** Bell-notification headline for context. */
+   title: string;
+   /** Persisted email subject line; null for rows before the migration. */
+   emailSubject: string | null;
+   /** Persisted email body text; null for rows before the migration. */
+   emailBody: string | null;
+   /** Structured items rendered as an invoice-style table in the email. */
+   emailItems: EmailItem[] | null;
 }
 
 export interface NotificationDeliveriesPageMeta {
@@ -75,3 +90,4 @@ export interface NotificationDeliveriesQuery {
    search?: string;
    entityType?: string;
 }
+

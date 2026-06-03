@@ -22,6 +22,7 @@ import incidenceLogRootReducer from './incidenceLog.reducer';
 import notificationRootReducer from './notification.reducer';
 import notificationsAdminReducer from './notificationsAdmin.reducer';
 import workflowRootReducer from './workflow.reducer';
+import cronReducer from './cron.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
@@ -47,6 +48,7 @@ const rootReducer = combineReducers({
   notification: notificationRootReducer,
   notificationsAdmin: notificationsAdminReducer,
   workflow: workflowRootReducer,
+  cron: cronReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

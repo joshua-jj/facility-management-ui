@@ -96,9 +96,20 @@ export default function notificationsAdminReducer(
       case notificationsAdminConstants.DELETE_NOTIFICATION:
          return { ...state, isMutating: true, error: null };
       case notificationsAdminConstants.RETRY_NOTIFICATION_SUCCESS:
-      case notificationsAdminConstants.ABANDON_NOTIFICATION_SUCCESS:
+      case notificationsAdminConstants.ABANDON_NOTIFICATION_SUCCESS: {
+         // The saga returns the mutated row DTO. If we're on the detail
+         // page viewing this row, merge the updated state instantly so
+         // the status chip flips before the auto-refetch completes.
+         const mutated = action.payload as NotificationDelivery | null;
+         const selectedUpdated =
+            mutated && state.selected && mutated.id === state.selected.id
+               ? mutated
+               : state.selected;
+         return { ...state, isMutating: false, selected: selectedUpdated };
+      }
       case notificationsAdminConstants.DELETE_NOTIFICATION_SUCCESS:
          return { ...state, isMutating: false };
+
       case notificationsAdminConstants.RETRY_NOTIFICATION_FAILURE:
       case notificationsAdminConstants.ABANDON_NOTIFICATION_FAILURE:
       case notificationsAdminConstants.DELETE_NOTIFICATION_FAILURE:

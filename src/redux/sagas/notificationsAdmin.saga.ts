@@ -109,6 +109,12 @@ function* retryNotification({ payload }: MutateAction) {
          variant: 'success',
       };
       yield put(appActions.setSnackBar(snack));
+      // Auto-refetch the detail row so the status chip flips immediately
+      // without the page-level setTimeout(refetch, 800) race.
+      yield put({
+         type: notificationsAdminConstants.GET_NOTIFICATION_ADMIN,
+         payload: { id: payload.id },
+      });
    } catch (error: unknown) {
       yield* handleSagaError(
          error,
@@ -136,6 +142,11 @@ function* abandonNotification({ payload }: MutateAction) {
          variant: 'success',
       };
       yield put(appActions.setSnackBar(snack));
+      // Auto-refetch the detail row so the status chip reflects the new state.
+      yield put({
+         type: notificationsAdminConstants.GET_NOTIFICATION_ADMIN,
+         payload: { id: payload.id },
+      });
    } catch (error: unknown) {
       yield* handleSagaError(
          error,
