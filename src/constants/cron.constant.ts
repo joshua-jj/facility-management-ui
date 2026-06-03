@@ -1,3 +1,5 @@
+import { appConstants } from './app.constant';
+
 export const cronConstants = {
   GET_CRONS: 'GET_CRONS',
   REQUEST_GET_CRONS: 'REQUEST_GET_CRONS',
@@ -19,5 +21,8 @@ export const cronConstants = {
   VALIDATE_CRON_SUCCESS: 'VALIDATE_CRON_SUCCESS',
   VALIDATE_CRON_FAILURE: 'VALIDATE_CRON_FAILURE',
 
-  CRON_URI: 'system-cron',
+  // Absolute API URL (BASE_URI already includes the /api/v<n>/ prefix).
+  // Without the base, the bare 'system-cron' path resolved relative to the
+  // current page (/admin/settings/cron) → /admin/settings/system-cron → 404.
+  CRON_URI: `${appConstants.BASE_URI}system-cron`,
 };

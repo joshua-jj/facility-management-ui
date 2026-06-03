@@ -7,17 +7,24 @@ import type { NextPageWithLayout } from '@/types/next-page-with-layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import SettingsShell from '@/components/SettingsShell';
 import TableSkeletonRow from '@/components/TableSkeletonRow';
+import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import { RootState } from '@/redux/reducers';
 import { cronActions } from '@/actions/cron.actions';
 import { Permission } from '@/constants/permissions.enum';
 import { SystemCronConfig } from '@/types/cron.types';
+
+const TRIGGER_ICON = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+);
+const EDIT_ICON = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+);
 
 const CronList: NextPageWithLayout = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const crons = useSelector((s: RootState) => s.cron.list) as SystemCronConfig[];
   const loading = useSelector((s: RootState) => s.cron.isLoadingList) as boolean;
-  const triggering = useSelector((s: RootState) => s.cron.isTriggering) as boolean;
 
   useEffect(() => {
     dispatch(cronActions.getCrons() as unknown as UnknownAction);
@@ -27,9 +34,18 @@ const CronList: NextPageWithLayout = () => {
     dispatch(cronActions.getCrons() as unknown as UnknownAction);
   };
 
-  const handleTrigger = (key: string) => {
-    dispatch(cronActions.triggerCron(key) as unknown as UnknownAction);
-  };
+  const getActions = (job: SystemCronConfig): ActionMenuItem[] => [
+    {
+      label: 'Trigger Now',
+      icon: TRIGGER_ICON,
+      onClick: () => dispatch(cronActions.triggerCron(job.key) as unknown as UnknownAction),
+    },
+    {
+      label: 'Edit',
+      icon: EDIT_ICON,
+      onClick: () => router.push(`/admin/settings/cron/edit?key=${job.key}`),
+    },
+  ];
 
   return (
     <SettingsShell active="cron">
@@ -58,13 +74,13 @@ const CronList: NextPageWithLayout = () => {
         <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-gray-100 dark:border-white/8 overflow-hidden">
           <div className="overflow-auto" style={{ minHeight: '280px', maxHeight: '65vh' }}>
             <table className="w-full">
-              <thead>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                 <tr className="text-[0.65rem] uppercase tracking-wider text-gray-400 dark:text-white/40 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-[#0F1A33]">
-                  <th className="px-6 py-3 text-left font-semibold w-[30%] whitespace-nowrap">Task</th>
-                  <th className="px-6 py-3 text-left font-semibold w-[25%] whitespace-nowrap">Expression</th>
-                  <th className="px-6 py-3 text-center font-semibold w-[15%] whitespace-nowrap">Status</th>
-                  <th className="px-6 py-3 text-left font-semibold w-[15%] whitespace-nowrap">Last Updated</th>
-                  <th className="px-6 py-3 text-right font-semibold w-[15%] whitespace-nowrap">Actions</th>
+                  <th className="px-6 py-3 text-left font-semibold w-[30%] whitespace-nowrap bg-inherit">Task</th>
+                  <th className="px-6 py-3 text-left font-semibold w-[25%] whitespace-nowrap bg-inherit">Expression</th>
+                  <th className="px-6 py-3 text-center font-semibold w-[15%] whitespace-nowrap bg-inherit">Status</th>
+                  <th className="px-6 py-3 text-left font-semibold w-[15%] whitespace-nowrap bg-inherit">Last Updated</th>
+                  <th className="px-6 py-3 text-right font-semibold w-[15%] whitespace-nowrap bg-inherit">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -117,29 +133,22 @@ const CronList: NextPageWithLayout = () => {
                           {job.isActive ? 'Active' : 'Disabled'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-left align-middle text-xs text-gray-500 dark:text-white/60 whitespace-nowrap">
-                        {new Date(job.updatedAt).toLocaleString('en-US', {
-                          month: 'short',
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <td className="px-6 py-4 text-left align-middle whitespace-nowrap">
+                        <div className="text-xs text-gray-500 dark:text-white/60">
+                          {new Date(job.updatedAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <div className="text-[0.65rem] text-gray-400 dark:text-white/40 mt-0.5">
+                          by {job.updatedBy || 'SYSTEM'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right align-middle whitespace-nowrap">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleTrigger(job.key)}
-                            disabled={triggering}
-                            className="px-2.5 py-1 text-[11px] font-medium rounded border border-[#B28309] text-[#B28309] hover:bg-[#B28309]/10 disabled:opacity-50 cursor-pointer"
-                          >
-                            Trigger Now
-                          </button>
-                          <button
-                            onClick={() => router.push(`/admin/settings/cron/edit?key=${job.key}`)}
-                            className="px-2.5 py-1 text-[11px] font-medium rounded bg-[#B28309] text-white hover:opacity-90 cursor-pointer"
-                          >
-                            Edit
-                          </button>
+                        <div className="flex justify-end">
+                          <ActionMenu items={getActions(job)} />
                         </div>
                       </td>
                     </tr>

@@ -8,6 +8,7 @@ export interface SystemCronConfig {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  updatedBy: string | null;
 }
 
 export interface UpdateCronPayload {

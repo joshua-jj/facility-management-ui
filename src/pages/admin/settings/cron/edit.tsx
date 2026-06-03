@@ -10,6 +10,7 @@ import { RootState } from '@/redux/reducers';
 import { cronActions } from '@/actions/cron.actions';
 import { Permission } from '@/constants/permissions.enum';
 import { SystemCronConfig } from '@/types/cron.types';
+import CronBuilder from '@/components/CronBuilder';
 
 const EditCron: NextPageWithLayout = () => {
   const router = useRouter();
@@ -92,16 +93,9 @@ const EditCron: NextPageWithLayout = () => {
         <form onSubmit={handleSave} className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-[#0F2552]/70 dark:text-white/70">
-              Cron Expression
+              Schedule
             </label>
-            <input
-              type="text"
-              value={expression}
-              onChange={(e) => setExpression(e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm bg-transparent border-gray-200 dark:border-white/10 dark:text-white outline-none focus:border-[#B28309] font-mono"
-              placeholder="e.g. 0 3 * * *"
-              required
-            />
+            <CronBuilder value={expression} onChange={setExpression} disabled={isSaving} />
           </div>
 
           <div className="flex items-center gap-3">
