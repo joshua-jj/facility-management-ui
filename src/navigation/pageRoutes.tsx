@@ -4,6 +4,7 @@ import {
   DashboardIcon,
   DepartmentsIcon,
   GeneratorLogIcon,
+  IncidenceLogIcon,
   ItemsIcon,
   MaintenanceLog,
   MapPinIcon,
@@ -130,7 +131,7 @@ export const pageRoutes: PageRoute[] = [
     id: 11,
     label: 'incidence logs',
     link: '/admin/incidence-log',
-    icon: <ReportsIcon />,
+    icon: <IncidenceLogIcon />,
     permissions: [Permission.INCIDENCE_LOGS_READ],
   },
   {

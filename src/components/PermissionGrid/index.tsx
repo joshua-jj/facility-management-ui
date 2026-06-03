@@ -76,11 +76,8 @@ const PermissionGrid: React.FC<Props> = ({
    const toggleOne = (permId: number) => {
       if (readOnly) return;
       const next = new Set(value);
-      if (next.has(permId)) {
-         next.delete(permId);
-      } else {
-         next.add(permId);
-      }
+      if (next.has(permId)) next.delete(permId);
+      else next.add(permId);
       onChange(next);
    };
 
@@ -90,11 +87,8 @@ const PermissionGrid: React.FC<Props> = ({
       PERMISSION_ACTIONS.forEach((action) => {
          const p = index.get(`${module}:${action}`);
          if (!p) return;
-         if (enableAll) {
-            next.add(p.id);
-         } else {
-            next.delete(p.id);
-         }
+         if (enableAll) next.add(p.id);
+         else next.delete(p.id);
       });
       onChange(next);
    };

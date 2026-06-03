@@ -2,7 +2,6 @@ import { put, takeLatest, all } from 'typed-redux-saga';
 import { permissionConstants } from '@/constants/permission.constant';
 import { authenticatedRequest, handleSagaError } from '@/utilities/saga-helpers';
 
-
 interface GetPermissionsAction {
    type: string;
    data?: { page?: number; limit?: number; append?: boolean; search?: string; status?: string };

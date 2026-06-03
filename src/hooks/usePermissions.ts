@@ -10,7 +10,7 @@ import { RootState } from '@/redux/reducers';
  * What used to live here (`isHod`, `isBackOffice`, `isFacilityHod`,
  * `isMember`, `isSuperAdmin`, `isAdmin`, `isOffice`, `isAnalyticsAccess`)
  * has been migrated out. Those were role-id flags and consumers should
- * now check the underlying capability — e.g. `can(Permission.REQUESTS_APPROVE)`
+ * now check the underlying capability — e.g. `can('requests:approve')`
  * instead of `isHod`. See the migration to permission-string-based
  * authorization landed across this branch.
  */

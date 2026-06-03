@@ -110,15 +110,11 @@ function createStreamChannel(ticket: string): EventChannel<StreamEvent> {
    });
 }
 
-function* fetchTicket(): Generator<unknown, string | null, unknown> {
+function* fetchTicket() {
    try {
-      const resp = (yield call(
-         authenticatedRequest,
-         notificationConstants.NOTIFICATION_STREAM_TICKET_URI,
-         { method: 'POST' },
-      )) as { data?: { ticket?: string } } | null;
+      const resp = yield* authenticatedRequest(notificationConstants.NOTIFICATION_STREAM_TICKET_URI, { method: 'POST' });
       if (!resp) return null;
-      return resp?.data?.ticket ?? null;
+      return (resp.data as { ticket?: string })?.ticket ?? null;
    } catch {
       return null;
    }
@@ -128,7 +124,8 @@ function* runStreamOnce(ticket: string) {
    const channel = (yield call(createStreamChannel, ticket)) as EventChannel<StreamEvent>;
    try {
       while (true) {
-         const ev = (yield take(channel)) as StreamEvent;
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const ev: StreamEvent = yield take(channel as any);
          if (ev.kind === 'open') {
             yield put({ type: notificationConstants.NOTIFICATION_STREAM_OPENED });
          } else if (ev.kind === 'message') {
@@ -150,7 +147,7 @@ const BACKOFF_STEPS_MS = [1000, 2000, 4000, 8000, 16000, 30000];
 function* streamWorker() {
    let attempt = 0;
    while (true) {
-      const ticket: string | null = yield call(fetchTicket);
+      const ticket = yield* fetchTicket();
       if (!ticket) {
          const delay = BACKOFF_STEPS_MS[Math.min(attempt, BACKOFF_STEPS_MS.length - 1)];
          yield call(() => new Promise<void>((r) => setTimeout(r, delay + Math.floor(Math.random() * 250))));
