@@ -1,4 +1,4 @@
-import { call, put, takeLatest, all } from 'typed-redux-saga';
+import { call, put, takeLatest, all, race, delay } from 'typed-redux-saga';
 import { authConstants } from '@/constants';
 import { appActions } from '@/actions';
 import { notificationConstants } from '@/constants/notification.constant';
@@ -23,6 +23,12 @@ import Cookies from 'js-cookie';
 
 const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined;
 
+// Hard ceiling on a single login attempt. A hung/cold-start request (e.g. a
+// freshly-restarted API on Render) must not leave the submit button spinning
+// forever: when this elapses the request loses the race, we throw, and the
+// catch dispatches LOGIN_FAILURE which resets IsLoggingIn.
+const LOGIN_TIMEOUT_MS = 25000;
+
 interface ParsedResponse {
   message: string;
   error: string;
@@ -33,7 +39,7 @@ interface ParsedResponse {
   };
 }
 
-function* login({ data }: LoginAction) {
+export function* login({ data }: LoginAction) {
   yield put({ type: authConstants.LOGGING_IN });
 
   try {
@@ -44,7 +50,19 @@ function* login({ data }: LoginAction) {
         body: JSON.stringify(data),
       });
 
-      const response: LoginAction = yield call(fetch, loginReq);
+      const { response } = yield* race({
+        response: call(fetch, loginReq),
+        timeout: delay(LOGIN_TIMEOUT_MS),
+      });
+
+      // Timeout won the race → no response. Throw so the catch resets the
+      // loading state instead of leaving the button stuck on a hung request.
+      if (!response) {
+        throw new Error(
+          'Login is taking longer than expected. Please try again.',
+        );
+      }
+
       yield call(checkStatus, response as unknown as Response);
 
       const jsonResponse: ParsedResponse = yield call(
