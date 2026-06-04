@@ -10,7 +10,7 @@ import HourMeterInput from '@/components/Inputs/HourMeterInput';
 import FuelLevelInput from '@/components/Inputs/FuelLevelInput';
 import ModalWrapper from '../ModalWrapper';
 import { Category, DieselUnit, GeneratorForm, GeneratorLog, Item } from '@/types';
-import { categoryActions, generatorActions, itemActions, meetingActions, meetingLocationActions } from '@/actions';
+import { appActions, categoryActions, generatorActions, itemActions, meetingActions, meetingLocationActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -324,6 +324,20 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                  departmentItemsList?.find((item: Item) => item.name === generatorLog.generatorType)?.id,
            )
          : Number(selectedGeneratorId);
+
+      // Never submit an unresolved generator. Guards both create (nothing
+      // selected) and the rare edit case of a legacy log with no stored
+      // generatorTypeId — without this, line below would send NaN.
+      if (Number.isNaN(generatorTypeId)) {
+         dispatch(
+            appActions.setSnackBar({
+               type: 'error',
+               message: 'Please select a generator before saving.',
+               variant: 'error',
+            }) as unknown as UnknownAction,
+         );
+         return;
+      }
 
       const base: Partial<GeneratorForm> = {
          generatorTypeId,
