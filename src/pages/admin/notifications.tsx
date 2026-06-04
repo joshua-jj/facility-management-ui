@@ -12,6 +12,7 @@ import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog, { ConfirmTone } from '@/components/ConfirmDialog';
 import SuccessModal from '@/components/Modals/SuccessModal';
+import { entityHref } from '@/constants/entityRoute';
 
 import { notificationsAdminActions } from '@/actions/notificationsAdmin.actions';
 import { RootState } from '@/redux/reducers';
@@ -78,22 +79,6 @@ const STATUS_FILTER_DEF: FilterDef = {
 };
 
 const DEFAULT_LIMIT = 10;
-
-// Maps a notification's entity.type (singular, as the backend emits it) to its
-// admin route segment. Routes are inconsistent (users is plural, request/item
-// are singular), so an explicit map avoids the /admin/user/4 → 404 class of
-// bug. Unknown types simply hide the "View entity" action.
-const ENTITY_ROUTE: Record<string, string> = {
-   user: 'users',
-   request: 'request',
-   item: 'item',
-   department: 'departments',
-   meeting: 'meetings',
-   store: 'store',
-   'maintenance-log': 'maintenance-log',
-   'generator-log': 'generator-log',
-   'incidence-log': 'incidence-log',
-};
 
 const NotificationsAdminPage: NextPageWithLayout = () => {
    const router = useRouter();
@@ -228,14 +213,11 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
          {
             label: 'View entity',
             onClick: () => {
-               const segment =
-                  row.entity?.type && ENTITY_ROUTE[row.entity.type];
-               if (segment && row.entity?.id) {
-                  router.push(`/admin/${segment}/${row.entity.id}`);
-               }
+               const href = entityHref(row.entity?.type, row.entity?.id);
+               if (href) router.push(href);
             },
             // Only offer the link when we know how to route the entity type.
-            hidden: !row.entity?.id || !ENTITY_ROUTE[row.entity?.type ?? ''],
+            hidden: !entityHref(row.entity?.type, row.entity?.id),
          },
       ];
    };
