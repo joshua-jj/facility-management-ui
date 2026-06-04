@@ -330,7 +330,7 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
    return (
       <>
          <PageHeader
-            title="Notifications"
+            title="Notification Logs"
             subtitle="Email delivery records and retry status across all notifications fired by the system."
          />
 
@@ -383,7 +383,7 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
 
 NotificationsAdminPage.getLayout = (page) => (
    <PrivateRoute permissions={[Permission.NOTIFICATIONS_ADMIN]}>
-      <Layout title="Notifications">{page}</Layout>
+      <Layout title="Notification Logs">{page}</Layout>
    </PrivateRoute>
 );
 
