@@ -238,9 +238,11 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
 
-   // Default selectedCategoryId to the last-used (persisted) or first available category.
+   // Default selectedCategoryId to the last-used (persisted) or first available
+   // category. Create mode only — edit mode resolves the generator directly from
+   // generatorLog.generatorTypeId, so it never needs the category-filtered list.
    useEffect(() => {
-      if (!selectedCategoryId && (allCategoriesList?.length ?? 0) > 0) {
+      if (!generatorLog && !selectedCategoryId && (allCategoriesList?.length ?? 0) > 0) {
          const remembered =
             typeof window !== 'undefined'
                ? window.localStorage.getItem('genlog:lastCategoryId')
@@ -313,8 +315,14 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    );
 
    const handleSubmit = (data: Omit<GeneratorForm, 'meetingId' | 'locationId' | 'generatorTypeId'>) => {
+      // Edit mode: the log already carries its generatorTypeId — use it directly
+      // so editing never depends on the category-filtered department list being
+      // loaded. Fall back to the legacy name match only if the id is absent.
       const generatorTypeId = generatorLog
-         ? departmentItemsList?.find((item: Item) => item.name === generatorLog.generatorType)?.id
+         ? Number(
+              generatorLog.generatorTypeId ??
+                 departmentItemsList?.find((item: Item) => item.name === generatorLog.generatorType)?.id,
+           )
          : Number(selectedGeneratorId);
 
       const base: Partial<GeneratorForm> = {
