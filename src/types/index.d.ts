@@ -4,6 +4,7 @@ export * from './department';
 export * from './forgotPassword';
 export * from './generator';
 export * from './item';
+export * from './category';
 export * from './maintenance';
 export * from './report';
 export * from './request';

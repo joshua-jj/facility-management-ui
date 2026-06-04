@@ -14,8 +14,8 @@ import DeleteModal from '@/components/Modals/Delete';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 
 import { RootState } from '@/redux/reducers';
-import { appActions, departmentActions, itemActions, storeActions } from '@/actions';
-import { Item } from '@/types';
+import { appActions, categoryActions, departmentActions, itemActions, storeActions } from '@/actions';
+import { Category, Item } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
@@ -58,6 +58,7 @@ const Items: NextPageWithLayout = () => {
    const { IsRequestingAllItems, allItemsList, pagination } = useSelector((s: RootState) => s.item);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { allStoresList } = useSelector((s: RootState) => s.store);
+   const { allCategoriesList } = useSelector((s: RootState) => s.category);
 
    // Defensive: `pagination` can be undefined during the first render
    // window (before the saga has dispatched GET_ALL_ITEMS_SUCCESS) or
@@ -81,6 +82,7 @@ const Items: NextPageWithLayout = () => {
    useEffect(() => {
       dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
       dispatch(storeActions.getStores({ limit: 1000 }) as unknown as UnknownAction);
+      dispatch(categoryActions.getCategories() as unknown as UnknownAction);
    }, [dispatch]);
 
    // ── Data fetching ──
@@ -207,8 +209,11 @@ const Items: NextPageWithLayout = () => {
    const handleFilterChange = (key: string, value: string) => {
       const next = { ...filterValues, [key]: value };
       setFilterValues(next);
-      // reset to page 1 on filter change and refetch server-side
-      fetchItems(1, next);
+      // categoryId is filtered client-side — no server round-trip needed.
+      // All other filters are sent to the server.
+      if (key !== 'categoryId') {
+         fetchItems(1, next);
+      }
    };
 
    const departmentOptions = useMemo(
@@ -219,6 +224,11 @@ const Items: NextPageWithLayout = () => {
    const storeOptions = useMemo(
       () => (allStoresList ?? []).map((s: { id: number; name: string }) => ({ value: String(s.id), label: s.name })),
       [allStoresList],
+   );
+
+   const categoryOptions = useMemo(
+      () => (allCategoriesList ?? []).map((c: Category) => ({ value: String(c.id), label: c.name })),
+      [allCategoriesList],
    );
 
    const filters: FilterDef[] = useMemo(
@@ -249,12 +259,23 @@ const Items: NextPageWithLayout = () => {
             label: 'Store',
             options: storeOptions,
          },
+         {
+            key: 'categoryId',
+            label: 'Category',
+            options: categoryOptions,
+         },
       ],
-      [departmentOptions, storeOptions],
+      [departmentOptions, storeOptions, categoryOptions],
    );
 
-   // Items come pre-filtered from server; use as-is
-   const filteredItems = allItemsList ?? [];
+   // Category filter is applied client-side (server GET /item does not support categoryId).
+   // All other filters are server-side. When categoryId is set we filter the currently-
+   // loaded page's rows by category; server pagination and other filters are unaffected.
+   const filteredItems = useMemo(() => {
+      const base = allItemsList ?? [];
+      if (!filterValues.categoryId) return base;
+      return base.filter((row: Item) => String(row.category?.id) === filterValues.categoryId);
+   }, [allItemsList, filterValues.categoryId]);
 
    // ── Row actions ──
 
@@ -324,6 +345,13 @@ const Items: NextPageWithLayout = () => {
          {
             key: 'name',
             header: 'Item Name',
+         },
+         {
+            key: 'category' as keyof Item,
+            header: 'Category',
+            render: (_: unknown, row: Item) => (
+               <span className="text-gray-600 dark:text-white/60">{row.category?.name || 'N/A'}</span>
+            ),
          },
          ...(canViewAllDepartments
             ? [

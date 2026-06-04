@@ -80,6 +80,13 @@ export const pageRoutes: PageRoute[] = [
     permissions: [Permission.ITEMS_READ],
   },
   {
+    id: 15,
+    label: 'categories',
+    link: '/admin/categories',
+    icon: <ItemsIcon />,
+    permissions: [Permission.CATEGORIES_READ],
+  },
+  {
     id: 4,
     label: 'stores',
     link: '/admin/store',

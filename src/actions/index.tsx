@@ -4,6 +4,7 @@ export * from './department.action';
 export * from './forgotPassword.action';
 export * from './generator.action';
 export * from './item.action';
+export * from './category.action';
 export * from './maintenance.action';
 export * from './permission.action';
 export * from './report.action';

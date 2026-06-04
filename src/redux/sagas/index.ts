@@ -5,6 +5,7 @@ import departmentRootSaga from './department.saga';
 import forgotPasswordRootSaga from './forgotPassword.saga';
 import generatorRootSaga from './generator.saga';
 import itemRootSaga from './item.saga';
+import categoryRootSaga from './category.saga';
 import maintenanceRootSaga from './maintenance.saga';
 import reportRootSaga from './report.saga';
 import requestRootSaga from './request.saga';
@@ -31,6 +32,7 @@ export default function* rootSaga() {
     forgotPasswordRootSaga(),
     generatorRootSaga(),
     itemRootSaga(),
+    categoryRootSaga(),
     maintenanceRootSaga(),
     reportRootSaga(),
     requestRootSaga(),
