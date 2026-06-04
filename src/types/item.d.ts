@@ -62,6 +62,7 @@ export interface ItemForm {
   fragile: boolean;
   trackingMode?: string;
   condition?: string;
+  categoryId?: number;
 }
 
 export interface ItemUnitsForm {
@@ -94,6 +95,11 @@ export interface Item {
     hodEmail: string;
     hodPhone: string;
     status: string;
+  };
+  category?: {
+    id: number;
+    name: string;
+    status?: string;
   };
   createdAt?: string;
   updatedAt?: string;

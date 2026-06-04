@@ -3,7 +3,7 @@ import { ItemForm, ItemUnitsForm } from '@/types';
 
 export interface GetDepartmentItemsAction {
   type: typeof itemConstants.GET_DEPARTMENT_ITEMS;
-  data: { departmentId: number; page?: number };
+  data: { departmentId: number; page?: number; categoryId?: number };
 }
 
 export interface GetAllDepartmentItemsAction {
@@ -58,6 +58,7 @@ export interface DeleteItemAction {
 const getDepartmentItems = (data: {
   departmentId: number;
   page?: number;
+  categoryId?: number;
 }): GetDepartmentItemsAction => ({
   type: itemConstants.GET_DEPARTMENT_ITEMS,
   data: data,
