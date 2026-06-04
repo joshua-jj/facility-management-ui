@@ -42,6 +42,12 @@ export enum Permission {
    // actual scoping — see facility-management-api item.controller.
    ITEMS_READ_ALL = 'items:read-all',
 
+   // ── Categories ─────────────────────────────────────────────────────
+   CATEGORIES_READ = 'categories:read',
+   CATEGORIES_WRITE = 'categories:write',
+   CATEGORIES_DELETE = 'categories:delete',
+   CATEGORIES_MANAGE = 'categories:manage',
+
    // ── Stores ────────────────────────────────────────────────────────
    STORES_READ = 'stores:read',
    STORES_WRITE = 'stores:write',
