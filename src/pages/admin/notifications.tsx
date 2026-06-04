@@ -10,6 +10,8 @@ import PageHeader from '@/components/PageHeader';
 import PrivateRoute from '@/components/PrivateRoute';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
+import ConfirmDialog, { ConfirmTone } from '@/components/ConfirmDialog';
+import { entityHref } from '@/constants/entityRoute';
 
 import { notificationsAdminActions } from '@/actions/notificationsAdmin.actions';
 import { RootState } from '@/redux/reducers';
@@ -84,10 +86,11 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
       (s: RootState) => s.notificationsAdmin,
    );
 
+   // Full delivery log: show every notification by default. A retried row
+   // stays visible (its chip just flips to Sent). Narrow via the Status filter.
    const [query, setQuery] = useState<NotificationDeliveriesQuery>({
       page: 1,
       limit: DEFAULT_LIMIT,
-      status: [EmailStatus.FAILED, EmailStatus.PERMANENTLY_FAILED],
    });
 
    useEffect(() => {
@@ -105,51 +108,62 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
          ) as unknown as UnknownAction,
       );
 
-   const handleRetry = (id: number, recipientEmail: string) => {
-      if (typeof window !== 'undefined') {
-         const ok = window.confirm(
-            `Retry sending to ${recipientEmail}? The notification will re-enter the auto-retry queue with a fresh attempt count.`,
-         );
-         if (!ok) return;
-      }
+   // Single confirm modal shared by retry / abandon / delete. Each action
+   // populates it with its own copy + tone instead of a native window.confirm.
+   const [confirm, setConfirm] = useState<{
+      title: string;
+      description: React.ReactNode;
+      confirmLabel: string;
+      tone: ConfirmTone;
+      run: () => void;
+   } | null>(null);
+
+   // Retry is non-destructive, so it fires immediately (no confirm). The saga
+   // sends synchronously, shows an outcome-aware snackbar ("Email sent to …"
+   // or the failure), and the reducer flips this row's status chip from the
+   // response — so no eager/optimistic modal is needed.
+   const handleRetry = (id: number) => {
       dispatch(
          notificationsAdminActions.retryNotification(
             id,
          ) as unknown as UnknownAction,
       );
-      // The saga auto-refetches; schedule a list refresh after a short delay
-      // so the table reflects the new status.
-      setTimeout(refetch, 1000);
    };
 
    const handleAbandon = (id: number) => {
-      if (typeof window !== 'undefined') {
-         const ok = window.confirm(
+      setConfirm({
+         title: 'Mark as abandoned',
+         description:
             'Mark this notification as abandoned? Future automatic retries will not happen and this row will be terminal in the audit log.',
-         );
-         if (!ok) return;
-      }
-      dispatch(
-         notificationsAdminActions.abandonNotification(
-            id,
-         ) as unknown as UnknownAction,
-      );
-      setTimeout(refetch, 600);
+         confirmLabel: 'Mark abandoned',
+         tone: 'danger',
+         run: () => {
+            dispatch(
+               notificationsAdminActions.abandonNotification(
+                  id,
+               ) as unknown as UnknownAction,
+            );
+            setTimeout(refetch, 600);
+         },
+      });
    };
 
    const handleDelete = (id: number) => {
-      if (typeof window !== 'undefined') {
-         const ok = window.confirm(
+      setConfirm({
+         title: 'Delete notification',
+         description:
             'Delete this notification from the queue? The row is soft-deleted; it will survive in the audit log but no longer appear here.',
-         );
-         if (!ok) return;
-      }
-      dispatch(
-         notificationsAdminActions.deleteNotification(
-            id,
-         ) as unknown as UnknownAction,
-      );
-      setTimeout(refetch, 600);
+         confirmLabel: 'Delete',
+         tone: 'danger',
+         run: () => {
+            dispatch(
+               notificationsAdminActions.deleteNotification(
+                  id,
+               ) as unknown as UnknownAction,
+            );
+            setTimeout(refetch, 600);
+         },
+      });
    };
 
    const getActions = (row: NotificationDelivery): ActionMenuItem[] => {
@@ -174,7 +188,7 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
          },
          {
             label: row.emailStatus === EmailStatus.ABANDONED ? 'Retry (un-abandon)' : 'Retry',
-            onClick: () => handleRetry(row.id, row.recipient.email),
+            onClick: () => handleRetry(row.id),
             hidden: !canRetry || isMutating,
          },
          {
@@ -192,11 +206,11 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
          {
             label: 'View entity',
             onClick: () => {
-               if (row.entity?.type && row.entity?.id) {
-                  window.location.href = `/admin/${row.entity.type}/${row.entity.id}`;
-               }
+               const href = entityHref(row.entity?.type, row.entity?.id);
+               if (href) router.push(href);
             },
-            hidden: !row.entity?.id,
+            // Only offer the link when we know how to route the entity type.
+            hidden: !entityHref(row.entity?.type, row.entity?.id),
          },
       ];
    };
@@ -216,16 +230,6 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
                      {row.recipient.type === 'guest' && ' · guest'}
                   </span>
                </div>
-            ),
-         },
-         {
-            key: 'entity',
-            header: 'Entity',
-            render: (_value, row) => (
-               <span className="text-sm text-[#0F2552] dark:text-white">
-                  {row.entity?.type ?? '—'}
-                  {row.entity?.id ? ` #${row.entity.id}` : ''}
-               </span>
             ),
          },
          {
@@ -253,12 +257,12 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
             },
          },
          {
-            key: 'emailAttemptCount',
+            key: 'emailTotalAttempts',
             header: 'Attempts',
             align: 'center',
             render: (_value, row) => (
                <span className="text-sm tabular-nums text-[#0F2552] dark:text-white">
-                  {row.emailAttemptCount}
+                  {row.emailTotalAttempts}
                </span>
             ),
          },
@@ -278,23 +282,6 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
                ) : (
                   <span className="text-xs italic text-[#0F2552]/40 dark:text-white/40">
                      never
-                  </span>
-               ),
-         },
-         {
-            key: 'emailLastError',
-            header: 'Last error',
-            render: (_value, row) =>
-               row.emailLastError ? (
-                  <span
-                     className="text-xs text-[var(--chart-coral)] line-clamp-2"
-                     title={row.emailLastError}
-                  >
-                     {row.emailLastError}
-                  </span>
-               ) : (
-                  <span className="text-xs text-[#0F2552]/30 dark:text-white/30">
-                     —
                   </span>
                ),
          },
@@ -324,11 +311,9 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
       setQuery((q) => ({
          ...q,
          page: 1,
-         status: value
-            ? [value as EmailStatus]
-            : // Empty → restore the default "needs attention" filter so the
-              // table doesn't suddenly flood with every Sent row.
-              [EmailStatus.FAILED, EmailStatus.PERMANENTLY_FAILED],
+         // A specific status filters to it; "Any status" (empty) drops the
+         // filter so the table shows every delivery record.
+         status: value ? [value as EmailStatus] : undefined,
       }));
    };
 
@@ -345,7 +330,7 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
    return (
       <>
          <PageHeader
-            title="Notifications"
+            title="Notification Logs"
             subtitle="Email delivery records and retry status across all notifications fired by the system."
          />
 
@@ -379,13 +364,26 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
                emptyDescription="No delivery records match the current filters."
             getRowId={(row) => row.id}
          />
+
+         <ConfirmDialog
+            open={!!confirm}
+            onClose={() => setConfirm(null)}
+            onConfirm={() => {
+               confirm?.run();
+               setConfirm(null);
+            }}
+            title={confirm?.title ?? ''}
+            description={confirm?.description}
+            confirmLabel={confirm?.confirmLabel}
+            tone={confirm?.tone}
+         />
       </>
    );
 };
 
 NotificationsAdminPage.getLayout = (page) => (
    <PrivateRoute permissions={[Permission.NOTIFICATIONS_ADMIN]}>
-      <Layout title="Notifications">{page}</Layout>
+      <Layout title="Notification Logs">{page}</Layout>
    </PrivateRoute>
 );
 

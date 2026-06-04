@@ -150,7 +150,7 @@ export const pageRoutes: PageRoute[] = [
   },
   {
     id: 14,
-    label: 'notifications',
+    label: 'notification logs',
     link: '/admin/notifications',
     icon: <BellIcon />,
     // SA-only delivery tracking + retry surface (spec
@@ -205,7 +205,7 @@ export const getPageNames = (link: string) => {
     case '/admin/users':
       return 'user management';
     case '/admin/notifications':
-      return 'notifications';
+      return 'notification logs';
     case '/admin/settings/access':
       return 'roles & permissions';
     case '/admin/settings/access/roles/new':
