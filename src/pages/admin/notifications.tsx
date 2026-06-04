@@ -86,10 +86,11 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
       (s: RootState) => s.notificationsAdmin,
    );
 
+   // Full delivery log: show every notification by default. A retried row
+   // stays visible (its chip just flips to Sent). Narrow via the Status filter.
    const [query, setQuery] = useState<NotificationDeliveriesQuery>({
       page: 1,
       limit: DEFAULT_LIMIT,
-      status: [EmailStatus.FAILED, EmailStatus.PERMANENTLY_FAILED],
    });
 
    useEffect(() => {
@@ -320,11 +321,9 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
       setQuery((q) => ({
          ...q,
          page: 1,
-         status: value
-            ? [value as EmailStatus]
-            : // Empty → restore the default "needs attention" filter so the
-              // table doesn't suddenly flood with every Sent row.
-              [EmailStatus.FAILED, EmailStatus.PERMANENTLY_FAILED],
+         // A specific status filters to it; "Any status" (empty) drops the
+         // filter so the table shows every delivery record.
+         status: value ? [value as EmailStatus] : undefined,
       }));
    };
 
