@@ -374,7 +374,7 @@ const NotificationAdminDetailPage: NextPageWithLayout = () => {
                      className="mt-5 pt-4 border-t grid grid-cols-2 sm:grid-cols-4 gap-4"
                      style={{ borderColor: 'var(--border-default)' }}
                   >
-                     <Stat label="Attempts" value={String(selected.emailAttemptCount)} />
+                     <Stat label="Attempts" value={String(selected.emailTotalAttempts)} />
                      <Stat
                         label="Created"
                         value={formatRelative(selected.createdAt) ?? '—'}

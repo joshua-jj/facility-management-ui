@@ -42,7 +42,10 @@ export interface NotificationDelivery {
    entity: NotificationEntityRef;
    eventType: string;
    emailStatus: EmailStatus;
+   /** Resettable backoff budget — a manual retry sets this back to 0. */
    emailAttemptCount: number;
+   /** Monotonic count of every send attempt; never reset by a retry. */
+   emailTotalAttempts: number;
    /** ISO-8601 timestamp; `null` if the row has never been attempted. */
    emailLastAttemptAt: string | null;
    /** Truncated provider error from the last failed attempt. */

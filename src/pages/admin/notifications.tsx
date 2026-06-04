@@ -274,12 +274,12 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
             },
          },
          {
-            key: 'emailAttemptCount',
+            key: 'emailTotalAttempts',
             header: 'Attempts',
             align: 'center',
             render: (_value, row) => (
                <span className="text-sm tabular-nums text-[#0F2552] dark:text-white">
-                  {row.emailAttemptCount}
+                  {row.emailTotalAttempts}
                </span>
             ),
          },
