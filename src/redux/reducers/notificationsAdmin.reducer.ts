@@ -97,15 +97,30 @@ export default function notificationsAdminReducer(
          return { ...state, isMutating: true, error: null };
       case notificationsAdminConstants.RETRY_NOTIFICATION_SUCCESS:
       case notificationsAdminConstants.ABANDON_NOTIFICATION_SUCCESS: {
-         // The saga returns the mutated row DTO. If we're on the detail
-         // page viewing this row, merge the updated state instantly so
-         // the status chip flips before the auto-refetch completes.
+         // The saga returns the mutated row DTO (its real post-attempt state,
+         // e.g. SENT after a successful retry). Merge it into BOTH the detail
+         // view and the list row so the status chip flips immediately — the
+         // authoritative response, not a delayed refetch, drives the UI.
          const mutated = action.payload as NotificationDelivery | null;
          const selectedUpdated =
             mutated && state.selected && mutated.id === state.selected.id
                ? mutated
                : state.selected;
-         return { ...state, isMutating: false, selected: selectedUpdated };
+         const pageUpdated =
+            mutated && state.page
+               ? {
+                    ...state.page,
+                    data: state.page.data.map((row) =>
+                       row.id === mutated.id ? mutated : row,
+                    ),
+                 }
+               : state.page;
+         return {
+            ...state,
+            isMutating: false,
+            selected: selectedUpdated,
+            page: pageUpdated,
+         };
       }
       case notificationsAdminConstants.DELETE_NOTIFICATION_SUCCESS:
          return { ...state, isMutating: false };

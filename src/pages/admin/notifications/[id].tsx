@@ -9,7 +9,6 @@ import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 import ConfirmDialog, { ConfirmTone } from '@/components/ConfirmDialog';
-import SuccessModal from '@/components/Modals/SuccessModal';
 
 import { notificationsAdminActions } from '@/actions/notificationsAdmin.actions';
 import { RootState } from '@/redux/reducers';
@@ -198,15 +197,13 @@ const NotificationAdminDetailPage: NextPageWithLayout = () => {
       tone: ConfirmTone;
       run: () => void;
    } | null>(null);
-   const [retryNotice, setRetryNotice] = useState<string | null>(null);
 
+   // Retry sends synchronously; the saga shows an outcome-aware snackbar and
+   // the reducer merges the fresh row, so the status here flips on its own.
    const handleRetry = () => {
       if (id == null || !selected) return;
       dispatch(
          notificationsAdminActions.retryNotification(id) as unknown as UnknownAction,
-      );
-      setRetryNotice(
-         `${selected.recipient.email} will re-enter the auto-retry queue with a fresh attempt.`,
       );
    };
 
@@ -526,14 +523,6 @@ const NotificationAdminDetailPage: NextPageWithLayout = () => {
             description={confirm?.description}
             confirmLabel={confirm?.confirmLabel}
             tone={confirm?.tone}
-         />
-
-         <SuccessModal
-            showSuccessModal={!!retryNotice}
-            setShowSuccessModal={() => setRetryNotice(null)}
-            message="Retry queued"
-            subMessage={retryNotice ?? undefined}
-            autoCloseDelay={2500}
          />
       </>
    );

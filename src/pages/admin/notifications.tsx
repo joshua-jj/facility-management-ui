@@ -11,7 +11,6 @@ import PrivateRoute from '@/components/PrivateRoute';
 import { DataTable, Column, FilterDef } from '@/components/DataTable';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 import ConfirmDialog, { ConfirmTone } from '@/components/ConfirmDialog';
-import SuccessModal from '@/components/Modals/SuccessModal';
 import { entityHref } from '@/constants/entityRoute';
 
 import { notificationsAdminActions } from '@/actions/notificationsAdmin.actions';
@@ -118,23 +117,16 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
       run: () => void;
    } | null>(null);
 
-   // Transient success modal (auto-dismisses) shown after a retry is queued.
-   const [retryNotice, setRetryNotice] = useState<string | null>(null);
-
-   // Retry is non-destructive, so it fires immediately (no confirm) and shows
-   // a brief auto-dismissing modal — clicking it must not navigate anywhere.
-   const handleRetry = (id: number, recipientEmail: string) => {
+   // Retry is non-destructive, so it fires immediately (no confirm). The saga
+   // sends synchronously, shows an outcome-aware snackbar ("Email sent to …"
+   // or the failure), and the reducer flips this row's status chip from the
+   // response — so no eager/optimistic modal is needed.
+   const handleRetry = (id: number) => {
       dispatch(
          notificationsAdminActions.retryNotification(
             id,
          ) as unknown as UnknownAction,
       );
-      setRetryNotice(
-         `${recipientEmail} will re-enter the auto-retry queue with a fresh attempt.`,
-      );
-      // The saga auto-refetches; schedule a list refresh so the table reflects
-      // the new status/attempt count.
-      setTimeout(refetch, 1000);
    };
 
    const handleAbandon = (id: number) => {
@@ -195,7 +187,7 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
          },
          {
             label: row.emailStatus === EmailStatus.ABANDONED ? 'Retry (un-abandon)' : 'Retry',
-            onClick: () => handleRetry(row.id, row.recipient.email),
+            onClick: () => handleRetry(row.id),
             hidden: !canRetry || isMutating,
          },
          {
@@ -395,14 +387,6 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
             description={confirm?.description}
             confirmLabel={confirm?.confirmLabel}
             tone={confirm?.tone}
-         />
-
-         <SuccessModal
-            showSuccessModal={!!retryNotice}
-            setShowSuccessModal={() => setRetryNotice(null)}
-            message="Retry queued"
-            subMessage={retryNotice ?? undefined}
-            autoCloseDelay={2500}
          />
       </>
    );
