@@ -233,16 +233,6 @@ const NotificationsAdminPage: NextPageWithLayout = () => {
             ),
          },
          {
-            key: 'entity',
-            header: 'Entity',
-            render: (_value, row) => (
-               <span className="text-sm text-[#0F2552] dark:text-white">
-                  {row.entity?.type ?? '—'}
-                  {row.entity?.id ? ` #${row.entity.id}` : ''}
-               </span>
-            ),
-         },
-         {
             key: 'eventType',
             header: 'Event',
             render: (_value, row) => (
