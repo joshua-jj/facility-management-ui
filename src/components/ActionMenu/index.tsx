@@ -112,7 +112,13 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ items, className = '' }) => {
                <button
                   key={i}
                   role="menuitem"
-                  onClick={() => {
+                  onClick={(e) => {
+                     // The dropdown renders through a portal, but React still
+                     // bubbles the event through the component tree — without
+                     // this, a menu-item click reaches the table row's
+                     // onRowClick and navigates away (e.g. Retry opening the
+                     // detail page). Stop it here for every ActionMenu.
+                     e.stopPropagation();
                      setOpen(false);
                      item.onClick();
                   }}
