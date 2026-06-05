@@ -32,6 +32,22 @@ const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" st
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>;
 
+const CATEGORY_CHIP_PALETTE = [
+   'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
+   'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300',
+   'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300',
+   'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300',
+   'bg-teal-100 text-teal-800 dark:bg-teal-500/15 dark:text-teal-300',
+   'bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300',
+   'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-300',
+   'bg-lime-100 text-lime-800 dark:bg-lime-500/15 dark:text-lime-300',
+];
+
+const categoryChipClass = (id?: number, name?: string): string => {
+   const key = id ?? (name ? name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) : 0);
+   return CATEGORY_CHIP_PALETTE[Math.abs(key) % CATEGORY_CHIP_PALETTE.length];
+};
+
 const Items: NextPageWithLayout = () => {
    const router = useRouter();
    const dispatch = useDispatch();
@@ -349,9 +365,16 @@ const Items: NextPageWithLayout = () => {
          {
             key: 'category' as keyof Item,
             header: 'Category',
-            render: (_: unknown, row: Item) => (
-               <span className="text-gray-600 dark:text-white/60">{row.category?.name || 'N/A'}</span>
-            ),
+            render: (_: unknown, row: Item) =>
+               row.category?.name ? (
+                  <span
+                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${categoryChipClass(row.category.id, row.category.name)}`}
+                  >
+                     {row.category.name}
+                  </span>
+               ) : (
+                  <span className="text-gray-400">—</span>
+               ),
          },
          ...(canViewAllDepartments
             ? [

@@ -29,6 +29,7 @@ const IsMutatingCategory = (
     case categoryConstants.REQUEST_CREATE_CATEGORY:
     case categoryConstants.REQUEST_UPDATE_CATEGORY:
     case categoryConstants.REQUEST_DELETE_CATEGORY:
+    case categoryConstants.REQUEST_SET_CATEGORY_STATUS:
       return true;
     case categoryConstants.CREATE_CATEGORY_SUCCESS:
     case categoryConstants.CREATE_CATEGORY_ERROR:
@@ -36,6 +37,8 @@ const IsMutatingCategory = (
     case categoryConstants.UPDATE_CATEGORY_ERROR:
     case categoryConstants.DELETE_CATEGORY_SUCCESS:
     case categoryConstants.DELETE_CATEGORY_ERROR:
+    case categoryConstants.SET_CATEGORY_STATUS_SUCCESS:
+    case categoryConstants.SET_CATEGORY_STATUS_ERROR:
       return false;
     default:
       return state;
