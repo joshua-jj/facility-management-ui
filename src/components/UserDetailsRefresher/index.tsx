@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { UnknownAction } from 'redux';
-import { authActions } from '@/actions';
+import { authActions, configActions } from '@/actions';
 import type { RootState } from '@/redux/reducers';
 
 /**
@@ -27,6 +27,7 @@ export const UserDetailsRefresher: React.FC = () => {
 
    useEffect(() => {
       if (!isAuthenticated) return;
+      dispatch(configActions.getEffectiveConfig() as unknown as UnknownAction);
       const refresh = () =>
          dispatch(authActions.refreshUserDetails() as unknown as UnknownAction);
 
