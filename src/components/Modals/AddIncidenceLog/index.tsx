@@ -16,6 +16,7 @@ import {
    meetingLocationActions,
 } from '@/actions';
 import { incidenceLogConstants, userConstants } from '@/constants';
+import { notifyRequestError } from '@/utilities/notifyRequestError';
 import { RoleId } from '@/constants/roles.constant';
 import type { IncidenceLog, IncidenceLogForm } from '@/types/incidenceLog';
 import { format, parseISO } from 'date-fns';
@@ -133,7 +134,10 @@ const AddIncidenceLog: React.FC<Props> = ({
                items:
                   (r?.data?.data?.items ?? r?.data?.data ?? []) as FacilityMember[],
             }))
-            .catch(() => ({ items: [] })),
+            .catch((err) => {
+               notifyRequestError(dispatch, err, 'Could not load members for the report.');
+               return { items: [] };
+            }),
       ];
       if (facilityHodEmail) {
          requests.push(
@@ -172,7 +176,7 @@ const AddIncidenceLog: React.FC<Props> = ({
       return () => {
          cancelled = true;
       };
-   }, [allDepartmentsList, isModalOpen, open]);
+   }, [allDepartmentsList, isModalOpen, open, dispatch]);
 
    const reportedByOptions = useMemo(
       () =>
