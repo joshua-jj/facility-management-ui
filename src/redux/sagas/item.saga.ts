@@ -81,6 +81,9 @@ function* getDepartmentItems({ data }: GetDepartmentItemsAction) {
       paginated = true;
     } else {
       itemUri = `${itemConstants.ITEM_URI}/all/${deptId}`;
+      if (data.categoryId) {
+        itemUri += `?categoryId=${data.categoryId}`;
+      }
     }
 
     const jsonResponse = yield* authenticatedRequest(itemUri, { method: 'GET' });

@@ -5,8 +5,8 @@ import SelectInput from '@/components/Inputs/SelectInput';
 import ModalWrapper from '../ModalWrapper';
 import { RootState } from '@/redux/reducers';
 import { useDispatch, useSelector } from 'react-redux';
-import { Department, Item, ItemForm, Store } from '@/types';
-import { appActions, departmentActions, itemActions, storeActions } from '@/actions';
+import { Category, Department, Item, ItemForm, Store } from '@/types';
+import { appActions, categoryActions, departmentActions, itemActions, storeActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { usePermission } from '@/hooks/usePermission';
 import { AppEmitter } from '@/controllers/EventEmitter';
@@ -27,6 +27,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    const { IsCreatingItem, allItemsList } = useSelector((s: RootState) => s.item);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { allStoresList } = useSelector((s: RootState) => s.store);
+   const { allCategoriesList } = useSelector((s: RootState) => s.category);
    const { userDetails } = useSelector((s: RootState) => s.user);
    // Department-pickable iff the user can manage items globally — back-
    // office. Otherwise we silently scope the new item to their dept.
@@ -38,6 +39,9 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedDeptId, setSelectedDeptId] = useState<string>(
       item?.department?.id ? String(item.department.id) : '',
+   );
+   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+      item?.category?.id ? String(item.category.id) : '',
    );
    const [fragile, setFragile] = useState(item?.fragile ? 'true' : 'false');
    const [trackingMode, setTrackingMode] = useState(item?.trackingMode || 'Quantity');
@@ -60,6 +64,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       setIsModalOpen(false);
       if (!item) {
          setSelectedDeptId('');
+         setSelectedCategoryId('');
          setFragile('false');
          setTrackingMode('Quantity');
          setCondition('');
@@ -81,7 +86,15 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       if (allStoresList?.length === 0) {
          dispatch(storeActions.getStores() as unknown as UnknownAction);
       }
-   }, [dispatch, allDepartmentsList, allStoresList]);
+      if (!allCategoriesList || allCategoriesList.length === 0) {
+         dispatch(categoryActions.getCategories() as unknown as UnknownAction);
+      }
+   }, [dispatch, allDepartmentsList, allStoresList, allCategoriesList]);
+
+   // Sync category selection when item prop changes (edit mode)
+   useEffect(() => {
+      setSelectedCategoryId(item?.category?.id ? String(item.category.id) : '');
+   }, [item]);
 
    // Load all items for the suggestion list on mount
    useEffect(() => {
@@ -140,6 +153,11 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       label: d.name,
    }));
 
+   const categoryOptions = (allCategoriesList ?? []).map((c: Category) => ({
+      value: String(c.id),
+      label: c.name,
+   }));
+
    const fragileOptions = [
       { value: 'true', label: 'Yes' },
       { value: 'false', label: 'No' },
@@ -170,6 +188,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
 
       // Edit mode — dispatch update, not create
       if (item?.id) {
+         data.categoryId = Number(selectedCategoryId || item?.category?.id);
          dispatch(itemActions.updateItemBasic({ ...data, id: item.id }) as unknown as UnknownAction);
          return;
       }
@@ -194,6 +213,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       }
 
       data.departmentId = Number(selectedDeptId || userDetails?.departmentId || item?.department?.id);
+      data.categoryId = Number(selectedCategoryId || item?.category?.id);
 
       // Create mode — supports batch queue
       let updatedItems: ItemForm[] = [];
@@ -217,6 +237,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       formRef.current?.reset();
       setNameInput('');
       setSelectedDeptId('');
+      setSelectedCategoryId('');
       setFragile('false');
       setTrackingMode('Quantity');
       setCondition('');
@@ -251,6 +272,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       }
       formData.name = nameInput.trim();
       formData.departmentId = Number(selectedDeptId || userDetails?.departmentId);
+      formData.categoryId = Number(selectedCategoryId);
       formData.fragile = fragile === 'true';
       formData.actualQuantity = Number(formData.actualQuantity);
       formData.trackingMode = trackingMode;
@@ -260,6 +282,7 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
       formRef.current.reset();
       setNameInput('');
       setSelectedDeptId('');
+      setSelectedCategoryId('');
       setFragile('false');
       setTrackingMode('Quantity');
       setCondition('');
@@ -487,6 +510,22 @@ const AddItem: React.FC<AddItemModalProps> = ({ className, children, item, onClo
                      disabled={isAddUnitsMode}
                   />
                </div>
+
+               {/* Row 2b — Category (always shown for create and edit) */}
+               {!isAddUnitsMode && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                     <SelectInput
+                        name="categoryId"
+                        label="Category"
+                        placeholder="Select category"
+                        options={categoryOptions}
+                        value={selectedCategoryId}
+                        onValueChange={(val) => setSelectedCategoryId(val)}
+                        searchable
+                        required
+                     />
+                  </div>
+               )}
 
                {/* Row 3 — Fragile & Condition. Condition is required for new items and
                    for adding units to existing items — real-world stock is always Good

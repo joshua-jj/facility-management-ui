@@ -5,6 +5,7 @@ import departmentRootSaga from './department.saga';
 import forgotPasswordRootSaga from './forgotPassword.saga';
 import generatorRootSaga from './generator.saga';
 import itemRootSaga from './item.saga';
+import categoryRootSaga from './category.saga';
 import maintenanceRootSaga from './maintenance.saga';
 import reportRootSaga from './report.saga';
 import requestRootSaga from './request.saga';
@@ -22,6 +23,7 @@ import notificationSaga from './notification.saga';
 import notificationsAdminSaga from './notificationsAdmin.saga';
 import workflowRootSaga from './workflow.saga';
 import cronRootSaga from './cron.saga';
+import configRootSaga from './config.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -31,6 +33,7 @@ export default function* rootSaga() {
     forgotPasswordRootSaga(),
     generatorRootSaga(),
     itemRootSaga(),
+    categoryRootSaga(),
     maintenanceRootSaga(),
     reportRootSaga(),
     requestRootSaga(),
@@ -48,5 +51,6 @@ export default function* rootSaga() {
     notificationsAdminSaga(),
     workflowRootSaga(),
     cronRootSaga(),
+    configRootSaga(),
   ]);
 }

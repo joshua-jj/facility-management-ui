@@ -14,8 +14,8 @@ import DeleteModal from '@/components/Modals/Delete';
 import ActionMenu, { ActionMenuItem } from '@/components/ActionMenu';
 
 import { RootState } from '@/redux/reducers';
-import { appActions, departmentActions, itemActions, storeActions } from '@/actions';
-import { Item } from '@/types';
+import { appActions, categoryActions, departmentActions, itemActions, storeActions } from '@/actions';
+import { Category, Item } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { exportToCsv } from '@/utilities/exportCsv';
 import ExportModal from '@/components/ExportModal';
@@ -31,6 +31,22 @@ import { Permission } from '@/constants/permissions.enum';
 const VIEW_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const EDIT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const DELETE_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>;
+
+const CATEGORY_CHIP_PALETTE = [
+   'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
+   'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300',
+   'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300',
+   'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300',
+   'bg-teal-100 text-teal-800 dark:bg-teal-500/15 dark:text-teal-300',
+   'bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300',
+   'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-300',
+   'bg-lime-100 text-lime-800 dark:bg-lime-500/15 dark:text-lime-300',
+];
+
+const categoryChipClass = (id?: number, name?: string): string => {
+   const key = id ?? (name ? name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) : 0);
+   return CATEGORY_CHIP_PALETTE[Math.abs(key) % CATEGORY_CHIP_PALETTE.length];
+};
 
 const Items: NextPageWithLayout = () => {
    const router = useRouter();
@@ -58,6 +74,7 @@ const Items: NextPageWithLayout = () => {
    const { IsRequestingAllItems, allItemsList, pagination } = useSelector((s: RootState) => s.item);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
    const { allStoresList } = useSelector((s: RootState) => s.store);
+   const { allCategoriesList } = useSelector((s: RootState) => s.category);
 
    // Defensive: `pagination` can be undefined during the first render
    // window (before the saga has dispatched GET_ALL_ITEMS_SUCCESS) or
@@ -81,6 +98,7 @@ const Items: NextPageWithLayout = () => {
    useEffect(() => {
       dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
       dispatch(storeActions.getStores({ limit: 1000 }) as unknown as UnknownAction);
+      dispatch(categoryActions.getCategories() as unknown as UnknownAction);
    }, [dispatch]);
 
    // ── Data fetching ──
@@ -207,8 +225,11 @@ const Items: NextPageWithLayout = () => {
    const handleFilterChange = (key: string, value: string) => {
       const next = { ...filterValues, [key]: value };
       setFilterValues(next);
-      // reset to page 1 on filter change and refetch server-side
-      fetchItems(1, next);
+      // categoryId is filtered client-side — no server round-trip needed.
+      // All other filters are sent to the server.
+      if (key !== 'categoryId') {
+         fetchItems(1, next);
+      }
    };
 
    const departmentOptions = useMemo(
@@ -219,6 +240,11 @@ const Items: NextPageWithLayout = () => {
    const storeOptions = useMemo(
       () => (allStoresList ?? []).map((s: { id: number; name: string }) => ({ value: String(s.id), label: s.name })),
       [allStoresList],
+   );
+
+   const categoryOptions = useMemo(
+      () => (allCategoriesList ?? []).map((c: Category) => ({ value: String(c.id), label: c.name })),
+      [allCategoriesList],
    );
 
    const filters: FilterDef[] = useMemo(
@@ -249,12 +275,23 @@ const Items: NextPageWithLayout = () => {
             label: 'Store',
             options: storeOptions,
          },
+         {
+            key: 'categoryId',
+            label: 'Category',
+            options: categoryOptions,
+         },
       ],
-      [departmentOptions, storeOptions],
+      [departmentOptions, storeOptions, categoryOptions],
    );
 
-   // Items come pre-filtered from server; use as-is
-   const filteredItems = allItemsList ?? [];
+   // Category filter is applied client-side (server GET /item does not support categoryId).
+   // All other filters are server-side. When categoryId is set we filter the currently-
+   // loaded page's rows by category; server pagination and other filters are unaffected.
+   const filteredItems = useMemo(() => {
+      const base = allItemsList ?? [];
+      if (!filterValues.categoryId) return base;
+      return base.filter((row: Item) => String(row.category?.id) === filterValues.categoryId);
+   }, [allItemsList, filterValues.categoryId]);
 
    // ── Row actions ──
 
@@ -324,6 +361,20 @@ const Items: NextPageWithLayout = () => {
          {
             key: 'name',
             header: 'Item Name',
+         },
+         {
+            key: 'category' as keyof Item,
+            header: 'Category',
+            render: (_: unknown, row: Item) =>
+               row.category?.name ? (
+                  <span
+                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${categoryChipClass(row.category.id, row.category.name)}`}
+                  >
+                     {row.category.name}
+                  </span>
+               ) : (
+                  <span className="text-gray-400">—</span>
+               ),
          },
          ...(canViewAllDepartments
             ? [
