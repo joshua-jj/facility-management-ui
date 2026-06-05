@@ -20,3 +20,4 @@ export * from './auditLog.action';
 export * from './security.action';
 export * from './incidenceLog.action';
 export * from './notification.action';
+export * from './config.action';

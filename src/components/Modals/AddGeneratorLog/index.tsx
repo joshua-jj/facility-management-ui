@@ -18,6 +18,7 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 import { generatorConstants } from '@/constants';
 import { format, parseISO } from 'date-fns';
 import { Meeting } from '@/types/meeting';
+import { configActions } from '@/actions/config.action';
 
 const SERVICE_THRESHOLD_HOURS = 48;
 
@@ -47,6 +48,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    const { allCategoriesList } = useSelector((s: RootState) => s.category);
    const { allMeetingsList } = useSelector((s: RootState) => s.meeting);
    const { allMeetingLocationsList } = useSelector((s: RootState) => s.meetingLocation);
+   const { effective } = useSelector((s: RootState) => s.config);
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -235,6 +237,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       dispatch(categoryActions.getCategories() as unknown as UnknownAction);
       dispatch(meetingActions.getMeetings() as unknown as UnknownAction);
       dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
+      dispatch(configActions.getEffectiveConfig() as unknown as UnknownAction);
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
 
@@ -254,20 +257,31 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    }, [allCategoriesList]);
 
    // When the selected category changes, fetch department items filtered by that category.
+   // The department is resolved from the configured generatorDepartmentId — never hardcoded.
    useEffect(() => {
-      if (selectedCategoryId) {
+      if (!selectedCategoryId) return;
+      const deptId = effective?.generatorDepartmentId;
+      if (deptId == null) {
          dispatch(
-            itemActions.getDepartmentItems({
-               departmentId: 1,
-               categoryId: Number(selectedCategoryId),
+            appActions.setSnackBar({
+               type: 'error',
+               variant: 'error',
+               message: 'Set the generator department in Settings → Configuration.',
             }) as unknown as UnknownAction,
          );
-         if (typeof window !== 'undefined') {
-            window.localStorage.setItem('genlog:lastCategoryId', selectedCategoryId);
-         }
+         return;
+      }
+      dispatch(
+         itemActions.getDepartmentItems({
+            departmentId: deptId,
+            categoryId: Number(selectedCategoryId),
+         }) as unknown as UnknownAction,
+      );
+      if (typeof window !== 'undefined') {
+         window.localStorage.setItem('genlog:lastCategoryId', selectedCategoryId);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [selectedCategoryId]);
+   }, [selectedCategoryId, effective?.generatorDepartmentId]);
 
    // When meeting changes, auto-fill location from meeting.location
    const handleMeetingChange = (val: string) => {

@@ -20,6 +20,7 @@ import { notifyRequestError } from '@/utilities/notifyRequestError';
 import { RoleId } from '@/constants/roles.constant';
 import type { IncidenceLog, IncidenceLogForm } from '@/types/incidenceLog';
 import { format, parseISO } from 'date-fns';
+import { configActions } from '@/actions/config.action';
 
 const FACILITY_DEPARTMENT_NAME = 'Facility';
 
@@ -58,6 +59,7 @@ const AddIncidenceLog: React.FC<Props> = ({
    const { allMeetingLocationsList } = useSelector(
       (s: RootState) => s.meetingLocation,
    );
+   const { effective } = useSelector((s: RootState) => s.config);
 
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [canSubmit, setCanSubmit] = useState(false);
@@ -105,6 +107,7 @@ const AddIncidenceLog: React.FC<Props> = ({
    useEffect(() => {
       dispatch(departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction);
       dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
+      dispatch(configActions.getEffectiveConfig() as unknown as UnknownAction);
    }, [dispatch]);
 
    /**
@@ -117,9 +120,13 @@ const AddIncidenceLog: React.FC<Props> = ({
       if (!isModalOpen && !open) return;
       const token = Cookies.get('authToken');
       if (!token) return;
-      const facility = (allDepartmentsList ?? []).find(
-         (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
-      );
+      const facility =
+         (effective?.facilityDepartmentId != null
+            ? (allDepartmentsList ?? []).find((d) => Number(d.id) === effective.facilityDepartmentId)
+            : undefined) ??
+         (allDepartmentsList ?? []).find(
+            (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
+         );
       const facilityHodEmail = facility?.hodEmail ?? null;
       let cancelled = false;
 
@@ -176,7 +183,7 @@ const AddIncidenceLog: React.FC<Props> = ({
       return () => {
          cancelled = true;
       };
-   }, [allDepartmentsList, isModalOpen, open, dispatch]);
+   }, [allDepartmentsList, isModalOpen, open, dispatch, effective]);
 
    const reportedByOptions = useMemo(
       () =>

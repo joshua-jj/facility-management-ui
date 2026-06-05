@@ -17,3 +17,4 @@ export * from './meetingLocation';
 export * from './auditLog';
 export * from './security';
 export * from './notification';
+export * from './config';

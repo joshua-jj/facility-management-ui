@@ -14,6 +14,7 @@ import PageHeader, { ActionButton } from '@/components/PageHeader';
 import { appActions, departmentActions, reportActions } from '@/actions';
 import { RootState } from '@/redux/reducers';
 import { AppEmitter } from '@/controllers/EventEmitter';
+import { configActions } from '@/actions/config.action';
 // RoleId still used for the user-list query that fetches MEMBER-role
 // users as candidate assignees — that's an identity lookup the API
 // speaks role-ids on, not a capability check.
@@ -341,6 +342,7 @@ const ReportDetailPage: NextPageWithLayout<ReportDetailProps> = ({ report: initi
    const router = useRouter();
    const { userDetails } = useSelector((s: RootState) => s.user);
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
+   const { effective } = useSelector((s: RootState) => s.config);
    // Workflow Rules Module (Phase 4) — engine's verdict on which
    // actions the viewer can fire on this complaint right now. `null`
    // until the saga returns (or when the user lacks complaints:read
@@ -359,10 +361,13 @@ const ReportDetailPage: NextPageWithLayout<ReportDetailProps> = ({ report: initi
 
    const facilityDepartment = useMemo(
       () =>
+         (effective?.facilityDepartmentId != null
+            ? (allDepartmentsList ?? []).find((d) => Number(d.id) === effective.facilityDepartmentId)
+            : undefined) ??
          (allDepartmentsList ?? []).find(
             (d) => d.name?.toLowerCase() === FACILITY_DEPARTMENT_NAME.toLowerCase(),
          ),
-      [allDepartmentsList],
+      [allDepartmentsList, effective],
    );
 
    // Assignment privileges. Capability says "you can assign / manage
@@ -403,6 +408,7 @@ const ReportDetailPage: NextPageWithLayout<ReportDetailProps> = ({ report: initi
             departmentActions.getAllDepartments({ limit: 1000 }) as unknown as UnknownAction,
          );
       }
+      dispatch(configActions.getEffectiveConfig() as unknown as UnknownAction);
    }, [dispatch, allDepartmentsList]);
 
    // Workflow Rules Module (Phase 4): fetch the engine's verdict on

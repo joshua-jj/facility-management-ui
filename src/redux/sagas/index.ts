@@ -23,6 +23,7 @@ import notificationSaga from './notification.saga';
 import notificationsAdminSaga from './notificationsAdmin.saga';
 import workflowRootSaga from './workflow.saga';
 import cronRootSaga from './cron.saga';
+import configRootSaga from './config.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -50,5 +51,6 @@ export default function* rootSaga() {
     notificationsAdminSaga(),
     workflowRootSaga(),
     cronRootSaga(),
+    configRootSaga(),
   ]);
 }
