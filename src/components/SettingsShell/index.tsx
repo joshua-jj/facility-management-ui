@@ -11,7 +11,8 @@ export type SettingsPanelKey =
    | 'access'
    | 'audit-logs'
    | 'workflows'
-   | 'cron';
+   | 'cron'
+   | 'configuration';
 
 type PanelEntry = {
    key: SettingsPanelKey;
@@ -72,6 +73,13 @@ const PANELS: PanelEntry[] = [
       label: 'Cron Scheduler',
       href: '/admin/settings/cron',
       description: 'Manage system cron jobs and execution schedules',
+      permissions: [Permission.ROLES_MANAGE],
+   },
+   {
+      key: 'configuration',
+      label: 'Configuration',
+      href: '/admin/settings/configuration',
+      description: 'System-wide operational settings',
       permissions: [Permission.ROLES_MANAGE],
    },
 ];
