@@ -9,8 +9,8 @@ import TextInput from '@/components/Inputs/TextInput';
 import HourMeterInput from '@/components/Inputs/HourMeterInput';
 import FuelLevelInput from '@/components/Inputs/FuelLevelInput';
 import ModalWrapper from '../ModalWrapper';
-import { DieselUnit, GeneratorForm, GeneratorLog, Item } from '@/types';
-import { generatorActions, itemActions, meetingActions, meetingLocationActions } from '@/actions';
+import { Category, DieselUnit, GeneratorForm, GeneratorLog, Item } from '@/types';
+import { appActions, categoryActions, generatorActions, itemActions, meetingActions, meetingLocationActions } from '@/actions';
 import { UnknownAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/reducers';
@@ -18,6 +18,7 @@ import { AppEmitter } from '@/controllers/EventEmitter';
 import { generatorConstants } from '@/constants';
 import { format, parseISO } from 'date-fns';
 import { Meeting } from '@/types/meeting';
+import { configActions } from '@/actions/config.action';
 
 const SERVICE_THRESHOLD_HOURS = 48;
 
@@ -44,17 +45,20 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    const dispatch = useDispatch();
    const { IsCreatingGeneratorLog } = useSelector((s: RootState) => s.generator);
    const { departmentItemsList } = useSelector((s: RootState) => s.item);
+   const { allCategoriesList } = useSelector((s: RootState) => s.category);
    const { allMeetingsList } = useSelector((s: RootState) => s.meeting);
    const { allMeetingLocationsList } = useSelector((s: RootState) => s.meetingLocation);
+   const { effective } = useSelector((s: RootState) => s.config);
 
    const [canSubmit, setCanSubmit] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const formRef = useRef<InstanceType<typeof Formsy> | null>(null);
 
-   // controlled IDs for the three dropdowns
+   // controlled IDs for the dropdowns
    const [meetingId, setMeetingId] = useState<string>('');
    const [locationId, setLocationId] = useState<string>('');
    const [selectedGeneratorId, setSelectedGeneratorId] = useState<string>('');
+   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
    // Paired fields — tracked in local state so we can cross-validate.
    const [onTime, setOnTime] = useState<string>(
@@ -230,11 +234,54 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    }, [generatorLog]);
 
    useEffect(() => {
-      dispatch(itemActions.getDepartmentItems({ departmentId: 1 }) as unknown as UnknownAction);
+      dispatch(categoryActions.getCategories() as unknown as UnknownAction);
       dispatch(meetingActions.getMeetings() as unknown as UnknownAction);
       dispatch(meetingLocationActions.getMeetingLocations() as unknown as UnknownAction);
+      dispatch(configActions.getEffectiveConfig() as unknown as UnknownAction);
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
+
+   // Default selectedCategoryId to the last-used (persisted) or first available
+   // category. Create mode only — edit mode resolves the generator directly from
+   // generatorLog.generatorTypeId, so it never needs the category-filtered list.
+   useEffect(() => {
+      if (!generatorLog && !selectedCategoryId && (allCategoriesList?.length ?? 0) > 0) {
+         const remembered =
+            typeof window !== 'undefined'
+               ? window.localStorage.getItem('genlog:lastCategoryId')
+               : null;
+         const fallback = String(allCategoriesList[0].id);
+         setSelectedCategoryId(remembered ?? fallback);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [allCategoriesList]);
+
+   // When the selected category changes, fetch department items filtered by that category.
+   // The department is resolved from the configured generatorDepartmentId — never hardcoded.
+   useEffect(() => {
+      if (!selectedCategoryId) return;
+      const deptId = effective?.generatorDepartmentId;
+      if (deptId == null) {
+         dispatch(
+            appActions.setSnackBar({
+               type: 'error',
+               variant: 'error',
+               message: 'Set the generator department in Settings → Configuration.',
+            }) as unknown as UnknownAction,
+         );
+         return;
+      }
+      dispatch(
+         itemActions.getDepartmentItems({
+            departmentId: deptId,
+            categoryId: Number(selectedCategoryId),
+         }) as unknown as UnknownAction,
+      );
+      if (typeof window !== 'undefined') {
+         window.localStorage.setItem('genlog:lastCategoryId', selectedCategoryId);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [selectedCategoryId, effective?.generatorDepartmentId]);
 
    // When meeting changes, auto-fill location from meeting.location
    const handleMeetingChange = (val: string) => {
@@ -245,11 +292,21 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       }
    };
 
+   const categoryOptions = useMemo(
+      () =>
+         (allCategoriesList ?? []).map((c: Category) => ({
+            value: String(c.id),
+            label: c.name,
+         })),
+      [allCategoriesList],
+   );
+
    const generatorOptions = useMemo(
       () =>
-         (departmentItemsList ?? [])
-            .filter((item: Item) => item.name.toLowerCase().includes('generator'))
-            .map((item: Item) => ({ value: String(item.id), label: item.name })),
+         (departmentItemsList ?? []).map((item: Item) => ({
+            value: String(item.id),
+            label: item.name,
+         })),
       [departmentItemsList],
    );
 
@@ -272,9 +329,29 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    );
 
    const handleSubmit = (data: Omit<GeneratorForm, 'meetingId' | 'locationId' | 'generatorTypeId'>) => {
+      // Edit mode: the log already carries its generatorTypeId — use it directly
+      // so editing never depends on the category-filtered department list being
+      // loaded. Fall back to the legacy name match only if the id is absent.
       const generatorTypeId = generatorLog
-         ? departmentItemsList?.find((item: Item) => item.name === generatorLog.generatorType)?.id
+         ? Number(
+              generatorLog.generatorTypeId ??
+                 departmentItemsList?.find((item: Item) => item.name === generatorLog.generatorType)?.id,
+           )
          : Number(selectedGeneratorId);
+
+      // Never submit an unresolved generator. Guards both create (nothing
+      // selected) and the rare edit case of a legacy log with no stored
+      // generatorTypeId — without this, line below would send NaN.
+      if (Number.isNaN(generatorTypeId)) {
+         dispatch(
+            appActions.setSnackBar({
+               type: 'error',
+               message: 'Please select a generator before saving.',
+               variant: 'error',
+            }) as unknown as UnknownAction,
+         );
+         return;
+      }
 
       const base: Partial<GeneratorForm> = {
          generatorTypeId,
@@ -353,8 +430,8 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                onInvalid={() => setCanSubmit(false)}
                className="[&_.my-3]:my-1.5"
             >
-               {/* Top row — 3 columns: Meeting, Location, Generator */}
-               <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4">
+               {/* Top row — Meeting and Location */}
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                   <SelectInput
                      name="meetingId"
                      label="Meeting Name"
@@ -373,7 +450,21 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                      onValueChange={(val) => setLocationId(val)}
                      required
                   />
-                  {!generatorLog ? (
+               </div>
+
+               {/* Generator row — Category + Generator Used (create mode) or Generator read-only (edit mode) */}
+               {!generatorLog ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                     <SelectInput
+                        name="categoryId"
+                        label="Category"
+                        placeholder="Select category"
+                        options={categoryOptions}
+                        value={selectedCategoryId}
+                        onValueChange={(val) => setSelectedCategoryId(val)}
+                        searchable
+                        required
+                     />
                      <SelectInput
                         name="generatorTypeId"
                         label="Generator Used"
@@ -383,7 +474,9 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                         onValueChange={(val) => setSelectedGeneratorId(val)}
                         required
                      />
-                  ) : (
+                  </div>
+               ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4">
                      <TextInput
                         type="text"
                         name="_generatorType"
@@ -391,8 +484,8 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                         value={generatorLog.generatorType}
                         disabled
                      />
-                  )}
-               </div>
+                  </div>
+               )}
 
                <div className="my-2" style={{ borderTop: '1px solid var(--border-default)' }} />
 

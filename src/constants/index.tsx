@@ -4,6 +4,7 @@ export * from './department.constant';
 export * from './forgotPassword.constant';
 export * from './generator.constant';
 export * from './item.constant';
+export * from './category.constant';
 export * from './maintenance.constant';
 export * from './report.constant';
 export * from './request.constant';

@@ -5,6 +5,7 @@ import departmentRootReducer from './department.reducer';
 import forgotPasswordRootReducer from './forgotPassword.reducer';
 import generatorRootReducer from './generator.reducer';
 import itemRootReducer from './item.reducer';
+import categoryRootReducer from './category.reducer';
 import maintenanceRootReducer from './maintenance.reducer';
 import reportRootReducer from './report.reducer';
 import requestRootReducer from './request.reducer';
@@ -23,6 +24,7 @@ import notificationRootReducer from './notification.reducer';
 import notificationsAdminReducer from './notificationsAdmin.reducer';
 import workflowRootReducer from './workflow.reducer';
 import cronReducer from './cron.reducer';
+import configReducer from './config.reducer';
 
 const rootReducer = combineReducers({
   auth: authRootReducer,
@@ -31,6 +33,7 @@ const rootReducer = combineReducers({
   forgotPassword: forgotPasswordRootReducer,
   generator: generatorRootReducer,
   item: itemRootReducer,
+  category: categoryRootReducer,
   maintenance: maintenanceRootReducer,
   report: reportRootReducer,
   request: requestRootReducer,
@@ -49,6 +52,7 @@ const rootReducer = combineReducers({
   notificationsAdmin: notificationsAdminReducer,
   workflow: workflowRootReducer,
   cron: cronReducer,
+  config: configReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
