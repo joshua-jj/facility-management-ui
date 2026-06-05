@@ -11,6 +11,7 @@ import { configActions } from '@/actions/config.action';
 import { departmentActions, categoryActions } from '@/actions';
 import { Permission } from '@/constants/permissions.enum';
 import { AppSetting } from '@/types/config';
+import { ComboBox } from '@/components/ui/combo-box';
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 
@@ -71,19 +72,16 @@ const SettingRow: React.FC<SettingRowProps> = ({
       switch (setting.valueType) {
          case 'boolean':
             return (
-               <select
+               <ComboBox
                   value={localValue}
-                  onChange={(e) => setLocalValue(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-sm"
-                  style={{
-                     background: 'var(--surface-medium)',
-                     border: '1px solid var(--border-strong)',
-                     color: 'var(--text-primary)',
-                  }}
-               >
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-               </select>
+                  onChange={(v) => setLocalValue(v)}
+                  searchable={false}
+                  placeholder="Select"
+                  options={[
+                     { value: 'true', label: 'Yes' },
+                     { value: 'false', label: 'No' },
+                  ]}
+               />
             );
 
          case 'number':
@@ -103,44 +101,24 @@ const SettingRow: React.FC<SettingRowProps> = ({
 
          case 'department_ref':
             return (
-               <select
+               <ComboBox
                   value={localValue}
-                  onChange={(e) => setLocalValue(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-sm"
-                  style={{
-                     background: 'var(--surface-medium)',
-                     border: '1px solid var(--border-strong)',
-                     color: 'var(--text-primary)',
-                  }}
-               >
-                  <option value="">— Select department —</option>
-                  {departments.map((d) => (
-                     <option key={d.id} value={String(d.id)}>
-                        {d.name}
-                     </option>
-                  ))}
-               </select>
+                  onChange={(v) => setLocalValue(v)}
+                  searchable
+                  placeholder="Select department"
+                  options={departments.map((d) => ({ value: String(d.id), label: d.name }))}
+               />
             );
 
          case 'category_ref':
             return (
-               <select
+               <ComboBox
                   value={localValue}
-                  onChange={(e) => setLocalValue(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-sm"
-                  style={{
-                     background: 'var(--surface-medium)',
-                     border: '1px solid var(--border-strong)',
-                     color: 'var(--text-primary)',
-                  }}
-               >
-                  <option value="">— Select category —</option>
-                  {categories.map((c) => (
-                     <option key={c.id} value={String(c.id)}>
-                        {c.name}
-                     </option>
-                  ))}
-               </select>
+                  onChange={(v) => setLocalValue(v)}
+                  searchable
+                  placeholder="Select category"
+                  options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
+               />
             );
 
          default: // string
