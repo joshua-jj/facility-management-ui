@@ -2,7 +2,9 @@ import { all, put, takeLatest } from 'typed-redux-saga';
 import { categoryConstants } from '@/constants';
 import {
   appActions,
+  ActivateCategoryAction,
   CreateCategoryAction,
+  DeactivateCategoryAction,
   DeleteCategoryAction,
   GetCategoriesAction,
   UpdateCategoryAction,
@@ -100,6 +102,54 @@ function* deleteCategory({ data }: DeleteCategoryAction) {
   }
 }
 
+function* activateCategory({ data }: ActivateCategoryAction) {
+  yield put({ type: categoryConstants.REQUEST_SET_CATEGORY_STATUS });
+  try {
+    const jsonResponse = yield* authenticatedRequest(
+      `${categoryConstants.CATEGORY_URI}/${data.id}/activate`,
+      { method: 'PATCH' },
+    );
+    if (!jsonResponse) return;
+    yield put({
+      type: categoryConstants.SET_CATEGORY_STATUS_SUCCESS,
+      category: jsonResponse?.data,
+    });
+    AppEmitter.emit(categoryConstants.SET_CATEGORY_STATUS_SUCCESS, jsonResponse?.data);
+    const payload: SetSnackBarPayload = {
+      type: 'success',
+      message: (jsonResponse?.message as string) ?? 'Category activated successfully',
+      variant: 'success',
+    };
+    yield put(appActions.setSnackBar(payload));
+  } catch (error: unknown) {
+    yield* handleSagaError(error, categoryConstants.SET_CATEGORY_STATUS_ERROR);
+  }
+}
+
+function* deactivateCategory({ data }: DeactivateCategoryAction) {
+  yield put({ type: categoryConstants.REQUEST_SET_CATEGORY_STATUS });
+  try {
+    const jsonResponse = yield* authenticatedRequest(
+      `${categoryConstants.CATEGORY_URI}/${data.id}/deactivate`,
+      { method: 'PATCH' },
+    );
+    if (!jsonResponse) return;
+    yield put({
+      type: categoryConstants.SET_CATEGORY_STATUS_SUCCESS,
+      category: jsonResponse?.data,
+    });
+    AppEmitter.emit(categoryConstants.SET_CATEGORY_STATUS_SUCCESS, jsonResponse?.data);
+    const payload: SetSnackBarPayload = {
+      type: 'success',
+      message: (jsonResponse?.message as string) ?? 'Category deactivated successfully',
+      variant: 'success',
+    };
+    yield put(appActions.setSnackBar(payload));
+  } catch (error: unknown) {
+    yield* handleSagaError(error, categoryConstants.SET_CATEGORY_STATUS_ERROR);
+  }
+}
+
 function* getCategoriesWatcher() {
   yield takeLatest(categoryConstants.GET_CATEGORIES, getCategories);
 }
@@ -112,6 +162,12 @@ function* updateCategoryWatcher() {
 function* deleteCategoryWatcher() {
   yield takeLatest(categoryConstants.DELETE_CATEGORY, deleteCategory);
 }
+function* activateCategoryWatcher() {
+  yield takeLatest(categoryConstants.ACTIVATE_CATEGORY, activateCategory);
+}
+function* deactivateCategoryWatcher() {
+  yield takeLatest(categoryConstants.DEACTIVATE_CATEGORY, deactivateCategory);
+}
 
 export default function* rootSaga() {
   yield all([
@@ -119,5 +175,7 @@ export default function* rootSaga() {
     createCategoryWatcher(),
     updateCategoryWatcher(),
     deleteCategoryWatcher(),
+    activateCategoryWatcher(),
+    deactivateCategoryWatcher(),
   ]);
 }

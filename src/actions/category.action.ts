@@ -21,6 +21,16 @@ export interface DeleteCategoryAction {
   data: { id: number };
 }
 
+export interface ActivateCategoryAction {
+  type: typeof categoryConstants.ACTIVATE_CATEGORY;
+  data: { id: number };
+}
+
+export interface DeactivateCategoryAction {
+  type: typeof categoryConstants.DEACTIVATE_CATEGORY;
+  data: { id: number };
+}
+
 const getCategories = (data?: {
   includeInactive?: boolean;
 }): GetCategoriesAction => ({
@@ -45,9 +55,21 @@ const deleteCategory = (data: { id: number }): DeleteCategoryAction => ({
   data,
 });
 
+const activateCategory = (data: { id: number }): ActivateCategoryAction => ({
+  type: categoryConstants.ACTIVATE_CATEGORY,
+  data,
+});
+
+const deactivateCategory = (data: { id: number }): DeactivateCategoryAction => ({
+  type: categoryConstants.DEACTIVATE_CATEGORY,
+  data,
+});
+
 export const categoryActions = {
   getCategories,
   createCategory,
   updateCategory,
   deleteCategory,
+  activateCategory,
+  deactivateCategory,
 };
