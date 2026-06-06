@@ -9,7 +9,6 @@ import type { UnknownAction } from 'redux';
 import { RootState } from '@/redux/reducers';
 import Image from 'next/image';
 import { useTheme } from '@/hooks/useTheme';
-import { usePermissions } from '@/hooks/usePermissions';
 import { usePermission } from '@/hooks/usePermission';
 import { departmentActions } from '@/actions';
 import { motion } from 'framer-motion';
@@ -71,11 +70,10 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
    const router = useRouter();
    const dispatch = useDispatch();
    const { userDetails } = useSelector((s: RootState) => s.user);
+   // Preloaded app-wide (below) so the log pages' row-level write gating
+   // (usePermissions().isFacilityTeam) has the department list available.
+   // The Sidebar itself gates purely on capabilities via canAny().
    const { allDepartmentsList } = useSelector((s: RootState) => s.department);
-   // Department-context flag only — capability is checked via canAny()
-   // against route.permissions. The dept flag handles "Facility-team
-   // only" routes that aren't expressible as a pure capability.
-   const { isFacilityTeam } = usePermissions();
    const { canAny } = usePermission();
    const { theme } = useTheme();
    const isDark = theme === 'dark';
@@ -121,23 +119,13 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       [router?.pathname],
    );
 
-   // Capability-driven filter. Multi-role users get the union of every
-   // hat's permissions for free — that's where the OR-of-hats class of
-   // bugs used to bite. The Facility-team flag is layered on top
-   // because it's a department check, not a capability.
-   //
-   // The back-office bypass is now a capability check: anyone holding
-   // `requests:manage` (SA / ADMIN by seed) sees the route regardless
-   // of department. Other HODs only see it if they belong to Facility.
-   // No more reading deprecated role flags here.
-   const hasBackOfficeBypass = canAny(['requests:manage']);
-   const filteredRoutes = pageRoutes.filter((route) => {
-      if (!canAny(route.permissions)) return false;
-      if (route.requiresFacilityTeam) {
-         if (!isFacilityTeam && !hasBackOfficeBypass) return false;
-      }
-      return true;
-   });
+   // Purely capability-driven: a route shows iff the user holds any of its
+   // declared permissions. Multi-role users get the union of every hat's
+   // permissions for free — that's where the OR-of-hats class of bugs used
+   // to bite. Resource-level scoping (e.g. generator logs being
+   // Facility-owned) is encoded in who the seeder grants the capability to,
+   // not in a department check here.
+   const filteredRoutes = pageRoutes.filter((route) => canAny(route.permissions));
 
    const fullName =
       userDetails?.firstName || userDetails?.lastName
