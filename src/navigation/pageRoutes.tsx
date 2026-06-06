@@ -30,13 +30,6 @@ export interface PageRoute {
    */
   permissions: readonly string[];
   section?: string;
-  /**
-   * When true, only users who belong to the Facility department see
-   * this route. This is a *department* check, not a capability — kept
-   * as a flag because it can't be expressed as a permission. The
-   * Sidebar combines it with the permission check.
-   */
-  requiresFacilityTeam?: boolean;
 }
 
 /**
@@ -126,13 +119,10 @@ export const pageRoutes: PageRoute[] = [
     label: 'generator logs',
     link: '/admin/generator-log',
     icon: <GeneratorLogIcon />,
-    // Capability-wise anyone with `generator-logs:read` sees the route,
-    // but the link itself is still Facility-team only because the
-    // operational data is Facility-owned. Back-office (any user with
-    // `generator-logs:manage`) bypasses the dept check via the Sidebar
-    // filter.
+    // Facility-owned data, but access is RBAC-driven: the route shows for
+    // anyone the seeder grants `generator-logs:read` (Facility roles +
+    // SA oversight). No department gate — the capability is the control.
     permissions: [Permission.GENERATOR_LOGS_READ],
-    requiresFacilityTeam: true,
   },
   {
     id: 11,
