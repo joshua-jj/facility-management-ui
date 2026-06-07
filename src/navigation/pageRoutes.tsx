@@ -125,6 +125,15 @@ export const pageRoutes: PageRoute[] = [
     permissions: [Permission.GENERATOR_LOGS_READ],
   },
   {
+    id: 16,
+    label: 'reconciliation',
+    link: '/admin/reconciliation',
+    icon: <ReportsIcon />,
+    // Pure capability gate — no department/facility-team restriction.
+    // The route shows for anyone the seeder grants `reconciliation:read`.
+    permissions: [Permission.RECONCILIATION_READ],
+  },
+  {
     id: 11,
     label: 'incidence logs',
     link: '/admin/incidence-log',
@@ -197,6 +206,12 @@ export const getPageNames = (link: string) => {
       return 'maintenance log';
     case '/admin/generator-log':
       return 'generator log';
+    case '/admin/reconciliation':
+      return 'reconciliation';
+    case '/admin/reconciliation/[id]':
+      return 'reconciliation';
+    case '/admin/reconciliation/report':
+      return 'reconciliation';
     case '/admin/reports':
       return 'reports';
     case '/admin/users':
