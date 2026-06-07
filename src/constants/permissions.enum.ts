@@ -113,6 +113,11 @@ export enum Permission {
    ROLES_DELETE = 'roles:delete',
    ROLES_MANAGE = 'roles:manage',
 
+   // ── Reconciliation (stock-count state machine) ────────────────────
+   RECONCILIATION_READ = 'reconciliation:read',
+   RECONCILIATION_COUNT = 'reconciliation:count',
+   RECONCILIATION_APPROVE = 'reconciliation:approve',
+
    // ── Audit logs ────────────────────────────────────────────────────
    AUDIT_LOGS_READ = 'audit-logs:read',
    AUDIT_LOGS_MANAGE = 'audit-logs:manage',
