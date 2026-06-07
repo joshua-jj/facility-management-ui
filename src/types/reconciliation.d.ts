@@ -9,7 +9,7 @@ export type ReconciliationReasonCode =
   | 'FOUND_RECOVERED'
   | 'MISCOUNT_DATA_ERROR';
 
-export type ReconciliationTrackingMode = 'QUANTITY' | 'SERIAL';
+export type ReconciliationTrackingMode = 'Serialized' | 'Quantity';
 
 // ─── Domain shapes ───────────────────────────────────────────────────
 export interface ReconciliationUnit {
