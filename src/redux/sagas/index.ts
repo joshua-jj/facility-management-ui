@@ -4,6 +4,7 @@ import dashboardRootSaga from './dashboard.saga';
 import departmentRootSaga from './department.saga';
 import forgotPasswordRootSaga from './forgotPassword.saga';
 import generatorRootSaga from './generator.saga';
+import reconciliationRootSaga from './reconciliation.saga';
 import itemRootSaga from './item.saga';
 import categoryRootSaga from './category.saga';
 import maintenanceRootSaga from './maintenance.saga';
@@ -32,6 +33,7 @@ export default function* rootSaga() {
     departmentRootSaga(),
     forgotPasswordRootSaga(),
     generatorRootSaga(),
+    reconciliationRootSaga(),
     itemRootSaga(),
     categoryRootSaga(),
     maintenanceRootSaga(),
