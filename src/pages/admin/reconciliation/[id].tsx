@@ -301,16 +301,19 @@ const ReconciliationDetail: NextPageWithLayout = () => {
    const submitBlockedReason = useMemo<string | null>(() => {
       for (const line of draft) {
          if (line.serialized) {
-            const variance = lineVariance(line);
-            if (variance !== 0) {
-               // every variance-causing unit needs a reason: missing units and
-               // not-Good conditions are what drive a non-zero / quality variance.
-               const offending = line.units.filter(
-                  (u) => u.countedPresent === false || u.conditionObserved !== DEFAULT_CONDITION,
-               );
-               const missingReason = offending.some((u) => !u.reasonCode);
-               if (missingReason) return `“${line.itemName}” has a variance unit without a reason.`;
-            }
+            // Mirrors the API's assertSubmittable: EACH variance unit needs a reason,
+            // independent of the line's NET variance. A variance unit is one that is
+            // missing (countedPresent === false), found (isFound), or downgraded
+            // (conditionObserved set and not 'Good'). This catches the found-offsets-
+            // missing case (net 0) that the API still rejects on submit.
+            const offending = line.units.filter(
+               (u) =>
+                  u.countedPresent === false ||
+                  u.isFound ||
+                  (u.conditionObserved && u.conditionObserved !== DEFAULT_CONDITION),
+            );
+            const missingReason = offending.some((u) => !u.reasonCode);
+            if (missingReason) return `“${line.itemName}” has a variance unit without a reason.`;
          } else {
             if (line.counted === '' || !Number.isFinite(Number(line.counted))) {
                return `“${line.itemName}” has no counted quantity.`;
@@ -391,8 +394,12 @@ const ReconciliationDetail: NextPageWithLayout = () => {
 
    // Segregation of duties: a counter cannot approve their own session. Mirrors
    // the API ForbiddenException — buttons hidden when the viewer IS the counter.
-   const viewerIsCounter =
-      currentUserId != null && current?.countedByUserId != null && current.countedByUserId === currentUserId;
+   const viewerIsCounter = (() => {
+      const counterId = Number(current?.countedByUserId);
+      const viewerId = Number(currentUserId);
+      // Only treat them as equal when both ids are present (non-NaN) and numerically match.
+      return Number.isFinite(counterId) && Number.isFinite(viewerId) && counterId === viewerId;
+   })();
    const showApprovalActions = isSubmitted && canApprove && !viewerIsCounter;
 
    /* ── Loading / not-found ── */
