@@ -171,12 +171,12 @@ const normaliseStates = (raw: unknown): StateRow[] => {
          if (!isRecord(entry)) continue;
          const state = String(pick(entry, ['state', 'status', 'key', 'name']) ?? '');
          if (!state) continue;
-         upsert(state, toNumber(pick(entry, ['count', 'total', 'value', 'sessions'])));
+         upsert(state, toNumber(pick(entry, ['sessionCount', 'count', 'total', 'value', 'sessions'])));
       }
    } else if (isRecord(raw)) {
       for (const [state, val] of Object.entries(raw)) {
          if (isRecord(val)) {
-            upsert(state, toNumber(pick(val, ['count', 'total', 'value', 'sessions'])));
+            upsert(state, toNumber(pick(val, ['sessionCount', 'count', 'total', 'value', 'sessions'])));
          } else {
             upsert(state, toNumber(val));
          }
