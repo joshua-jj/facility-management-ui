@@ -4,6 +4,7 @@ import dashboardRootReducer from './dashboard.reducer';
 import departmentRootReducer from './department.reducer';
 import forgotPasswordRootReducer from './forgotPassword.reducer';
 import generatorRootReducer from './generator.reducer';
+import reconciliationRootReducer from './reconciliation.reducer';
 import itemRootReducer from './item.reducer';
 import categoryRootReducer from './category.reducer';
 import maintenanceRootReducer from './maintenance.reducer';
@@ -32,6 +33,7 @@ const rootReducer = combineReducers({
   department: departmentRootReducer,
   forgotPassword: forgotPasswordRootReducer,
   generator: generatorRootReducer,
+  reconciliation: reconciliationRootReducer,
   item: itemRootReducer,
   category: categoryRootReducer,
   maintenance: maintenanceRootReducer,
