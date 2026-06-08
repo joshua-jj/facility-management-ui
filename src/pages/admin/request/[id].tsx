@@ -1174,7 +1174,7 @@ const RequestViewPage: NextPageWithLayout<RequestDetailsProps> = ({ requestDetai
             <DetailSection title="Requested Items">
                {/* Card-based layout for MEMBER action states */}
                {(isMemberAssigned || isMemberCollected) ? (
-                  <div className="space-y-3 p-4">
+                  <div className="space-y-3 p-4 max-h-[60vh] overflow-y-auto">
                      {requestDetails?.audit?.items && requestDetails.audit.items.map((item, index) => {
                         const isSerialized = itemTrackingModes[item.itemId] === 'Serialized';
                         const selectedCount = selectedUnits[item.itemId]?.length ?? 0;
