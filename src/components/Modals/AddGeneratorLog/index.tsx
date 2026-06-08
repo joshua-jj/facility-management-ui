@@ -21,6 +21,12 @@ import { Meeting } from '@/types/meeting';
 import { configActions } from '@/actions/config.action';
 
 const SERVICE_THRESHOLD_HOURS = 48;
+/**
+ * Advisory window: from this many engine hours out we surface a non-blocking
+ * heads-up so a service can be planned BEFORE log creation gets disabled at
+ * SERVICE_THRESHOLD_HOURS. Must be greater than SERVICE_THRESHOLD_HOURS.
+ */
+const SERVICE_WARNING_HOURS = 96;
 
 /** Prevents future-dated entries — today's date in ISO (yyyy-MM-dd). */
 const todayIso = () => new Date().toISOString().split('T')[0];
@@ -144,6 +150,17 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
    const isServiceOverdue =
       remainingHoursUntilService != null &&
       remainingHoursUntilService <= SERVICE_THRESHOLD_HOURS;
+
+   /**
+    * True in the advisory band — within SERVICE_WARNING_HOURS but not yet at
+    * the blocking SERVICE_THRESHOLD_HOURS. Non-blocking: log creation is still
+    * allowed; this is the heads-up so a service can be planned before the
+    * button gets disabled.
+    */
+   const isServiceApproaching =
+      !isServiceOverdue &&
+      remainingHoursUntilService != null &&
+      remainingHoursUntilService <= SERVICE_WARNING_HOURS;
 
    /** Cross-field validation — each entry is null when OK, string when bad */
    const validationErrors = useMemo(() => {
@@ -637,6 +654,24 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                   </div>
                   <TextArea type="text" name="remark" label="Remark" placeholder="Notes" value={generatorLog?.remark || ''} required rows={2} />
                </div>
+
+               {/* Advisory banner — non-blocking heads-up; log creation still allowed */}
+               {isServiceApproaching && (
+                  <div
+                     role="status"
+                     className="mt-3 px-4 py-3 rounded-lg border-2 font-semibold text-sm"
+                     style={{
+                        background: 'rgba(178, 131, 9, 0.1)',
+                        borderColor: 'var(--color-secondary, #B28309)',
+                        color: 'var(--color-secondary, #B28309)',
+                     }}
+                  >
+                     Heads up — this generator is within {SERVICE_WARNING_HOURS} engine hours of its scheduled service.
+                     <div className="font-normal text-xs mt-1 opacity-80">
+                        You can still record logs for now. Once it&apos;s within {SERVICE_THRESHOLD_HOURS} engine hours, log creation will be disabled until it&apos;s serviced — please schedule the service ahead of time.
+                     </div>
+                  </div>
+               )}
 
                {/* Overdue banner + form disable */}
                {isServiceOverdue && (
