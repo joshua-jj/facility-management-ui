@@ -21,6 +21,11 @@ export const RBAC_MODULES = [
    // was never updated.
    { slug: 'notifications', label: 'Notifications' },
    { slug: 'outbox', label: 'Outbox' },
+   // Inventory reconciliation (periodic physical stocktake). Mirrors the API's
+   // RBAC_MODULES. Exposes read / count (the counter) / approve (the approver)
+   // / manage — `count` is the module-specific verb added to PERMISSION_ACTIONS
+   // below so the role editor renders its chip.
+   { slug: 'reconciliation', label: 'Reconciliation' },
 ] as const;
 
 export type ModuleSlug = (typeof RBAC_MODULES)[number]['slug'];
@@ -49,8 +54,10 @@ export type PermissionAction =
    // row, so these don't pollute other modules' chip strips:
    //   - 'admin'    : notifications:admin (notification delivery ops UI)
    //   - 'download' : reports:download    (Daily Report PDF export)
+   //   - 'count'    : reconciliation:count (the stocktake counter capability)
    | 'admin'
-   | 'download';
+   | 'download'
+   | 'count';
 
 export const PERMISSION_ACTIONS: PermissionAction[] = [
    'read',
@@ -65,4 +72,5 @@ export const PERMISSION_ACTIONS: PermissionAction[] = [
    'manage',
    'admin',
    'download',
+   'count',
 ];
