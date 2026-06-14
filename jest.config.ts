@@ -10,7 +10,9 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^.+\\.(svg)$': '<rootDir>/__mocks__/svgMock.tsx',
   },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  // e2e/ holds Playwright specs (run via `yarn e2e`); they import
+  // @playwright/test, which is not a Jest module, so keep Jest out of e2e/.
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/e2e/'],
 };
 
 export default createJestConfig(config);
