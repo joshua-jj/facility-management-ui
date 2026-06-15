@@ -203,6 +203,22 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       if (eStart != null && eOff != null && eOff < eStart) {
          errs.engineOffHours = 'Engine Off must be the same as or greater than Engine Start.';
       }
+      // A log cannot be created/edited once a reading has passed the next
+      // service hour — the generator must be serviced first. Strictly greater:
+      // a reading exactly at the next service hour is still allowed. The API
+      // enforces this authoritatively; this is the matching client-side block.
+      if (scheduleNextHour != null) {
+         if (eStart != null && eStart > scheduleNextHour) {
+            errs.engineStartHours =
+               errs.engineStartHours ??
+               `Engine Start (${eStart}) is beyond the Next Service Hour (${scheduleNextHour.toFixed(1)} hrs). Service the generator first.`;
+         }
+         if (eOff != null && eOff > scheduleNextHour) {
+            errs.engineOffHours =
+               errs.engineOffHours ??
+               `Engine Off (${eOff}) is beyond the Next Service Hour (${scheduleNextHour.toFixed(1)} hrs). Service the generator first.`;
+         }
+      }
       const dOn = dieselLevelOn ? Number(dieselLevelOn) : null;
       const dOff = dieselLevelOff ? Number(dieselLevelOff) : null;
       if (dOn != null && dOff != null && dOff > dOn) {
@@ -215,7 +231,7 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
             errs.dieselLevelOff = errs.dieselLevelOff ?? 'Must be between 0 and 100.';
       }
       return errs;
-   }, [onTime, offTime, engineStartHours, engineOffHours, dieselLevelOn, dieselLevelOff, dieselUnit, scheduleLastHour]);
+   }, [onTime, offTime, engineStartHours, engineOffHours, dieselLevelOn, dieselLevelOff, dieselUnit, scheduleLastHour, scheduleNextHour]);
 
    const hasValidationErrors = Object.values(validationErrors).some((v) => v);
 
