@@ -28,6 +28,15 @@ const SERVICE_THRESHOLD_HOURS = 48;
  */
 const SERVICE_WARNING_HOURS = 96;
 
+/**
+ * Soft typo guard for Engine Start. The hour meter reads in the thousands, so
+ * a value this fraction (or less) of the generator's known service magnitude
+ * is almost certainly a mistyped reading (e.g. 700 for 7000). Backlog readings
+ * sit just below the Last Service Hour — well inside this band — so they never
+ * trip it. Purely advisory: it warns, it never blocks submission.
+ */
+const LOW_READING_RATIO = 0.5;
+
 /** Prevents future-dated entries — today's date in ISO (yyyy-MM-dd). */
 const todayIso = () => new Date().toISOString().split('T')[0];
 
@@ -194,12 +203,12 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
       }
       const eStart = engineStartHours ? Number(engineStartHours) : null;
       const eOff = engineOffHours ? Number(engineOffHours) : null;
-      // Engine Start must not regress past the generator's last serviced
-      // hour — the hour meter only goes up, so a reading below the last
-      // service value means the reading is wrong or was mis-entered.
-      if (eStart != null && scheduleLastHour != null && eStart < scheduleLastHour) {
-         errs.engineStartHours = `Engine Start must be at least the Last Service Hour (${scheduleLastHour.toFixed(1)} hrs).`;
-      }
+      // NOTE: We intentionally do NOT block Engine Start readings below the
+      // Last Service Hour. Backlogged logs that couldn't be recorded while the
+      // generator was overdue (log creation disabled near the service window)
+      // need to be entered after it's serviced — by then the schedule has
+      // advanced, so those genuine pre-service readings sit below the new Last
+      // Service Hour. Enforcing a lower bound here would reject them.
       if (eStart != null && eOff != null && eOff < eStart) {
          errs.engineOffHours = 'Engine Off must be the same as or greater than Engine Start.';
       }
@@ -231,9 +240,27 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
             errs.dieselLevelOff = errs.dieselLevelOff ?? 'Must be between 0 and 100.';
       }
       return errs;
-   }, [onTime, offTime, engineStartHours, engineOffHours, dieselLevelOn, dieselLevelOff, dieselUnit, scheduleLastHour, scheduleNextHour]);
+   }, [onTime, offTime, engineStartHours, engineOffHours, dieselLevelOn, dieselLevelOff, dieselUnit, scheduleNextHour]);
 
    const hasValidationErrors = Object.values(validationErrors).some((v) => v);
+
+   /**
+    * Non-blocking heads-up for an implausibly low Engine Start reading — the
+    * data-sanity concern that used to live in the (now removed) Last Service
+    * Hour bound, but decoupled from the service schedule so genuine backlog
+    * entries flow through. Judged against the generator's known service
+    * magnitude; null when there's nothing to compare against. Never blocks.
+    */
+   const engineStartWarning = useMemo((): string | null => {
+      const eStart = engineStartHours ? Number(engineStartHours) : null;
+      if (eStart == null || !Number.isFinite(eStart) || eStart <= 0) return null;
+      const reference = scheduleLastHour ?? scheduleNextHour;
+      if (reference == null || reference <= 0) return null;
+      if (eStart < reference * LOW_READING_RATIO) {
+         return `Engine Start (${eStart}) is well below this generator's recent service hours (~${reference.toFixed(1)} hrs). Double-check it isn't a typo — you can still save if it's correct.`;
+      }
+      return null;
+   }, [engineStartHours, scheduleLastHour, scheduleNextHour]);
 
    const resetForm = useCallback(() => {
       setMeetingId('');
@@ -596,6 +623,11 @@ const AddGeneratorLog: React.FC<AddItemModalProps> = ({
                      />
                      {validationErrors.engineStartHours && (
                         <p className="text-red-500 text-xs -mt-1">{validationErrors.engineStartHours}</p>
+                     )}
+                     {!validationErrors.engineStartHours && engineStartWarning && (
+                        <p className="text-xs -mt-1" style={{ color: 'var(--color-secondary, #B28309)' }}>
+                           {engineStartWarning}
+                        </p>
                      )}
                   </div>
                   <div>
